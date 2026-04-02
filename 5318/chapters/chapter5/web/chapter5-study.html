@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 5 - Decision Trees &amp; Ensembles</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F333;</span>
+    <h2 data-i18n="sidebar_h2">Week 5</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-trees" class="nav-link" data-section="sec-trees" data-i18n="nav_trees">Decision trees</a></li>
+    <li><a href="#sec-ens" class="nav-link" data-section="sec-ens" data-i18n="nav_ens">Ensembles</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter5-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter5-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=5" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=5" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=5&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 6</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="5">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 5: Decision Trees &amp; Ensembles</h1>
+    <p class="hero-subtitle">Week 5 starts with interpretable tree models and ends with some of the most practically strong classical ensembles. The tree lecture explains entropy, information gain, pruning, and gain ratio; the ensemble lecture explains bagging, random forests, AdaBoost, and gradient boosting; the notebook turns those ideas into side-by-side sklearn experiments on iris and the moons dataset.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F332;</span><span>Entropy splits</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x2702;</span><span>Pruning</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F381;</span><span>Bagging / RF</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F680;</span><span>Boosting</span></div>
+    </div>
+    <div class="chip-list">
+      <span>DecisionTreeClassifier</span>
+      <span>entropy / information gain</span>
+      <span>BaggingClassifier</span>
+      <span>RandomForestClassifier</span>
+      <span>AdaBoost / GradientBoosting</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter5-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter5-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">These files together answer two questions: how does a single tree decide where to split, and why do many imperfect trees often outperform one perfectly fitted tree?</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What it contributes</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../materials/w5.ipynb">w5.ipynb</a></td><td>Iris decision trees, graphviz visualisation, pre-pruning, moons-based bagging/random forest/boosting experiments, and concrete sklearn parameters.</td></tr>
+        <tr><td><a href="../materials/w5-solutions.ipynb">w5-solutions.ipynb</a></td><td>Interpretation of pruning and comparison of ensemble families.</td></tr>
+        <tr><td><a href="../materials/ml5a.pdf">ml5a.pdf</a></td><td>Decision-tree theory: entropy, information gain, pruning strategies, numeric splits, gain-ratio correction, and CART's Gini note.</td></tr>
+        <tr><td><a href="../materials/ml5b.pdf">ml5b.pdf</a></td><td>Ensemble theory: why diversity matters, bootstrap aggregation, AdaBoost, gradient boosting, and random forest construction.</td></tr>
+        <tr><td><a href="../materials/t5.pdf">t5.pdf</a></td><td>By-hand entropy and information-gain calculations for a small toy dataset.</td></tr>
+        <tr><td><a href="../materials/t5-solutions.pdf">t5-solutions.pdf</a></td><td>Worked entropy values, gain comparison, and the final tree root choice.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-trees" class="section" data-track="trees">
+  <h2 class="section-title">Decision trees: purity, splits, and pruning</h2>
+  <p class="section-lead">A decision tree recursively partitions the feature space. Each internal node tests an attribute, each branch corresponds to an outcome, and each leaf predicts a class. The central design question is always: which split should be chosen next?</p>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Entropy</h3>
+      <p>Measures class impurity. For a binary task, entropy is 0 when all examples belong to one class and 1 when the classes are evenly mixed.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Information gain</h3>
+      <p>The reduction in entropy caused by splitting on an attribute. The lecture defines the best split as the one with the highest gain.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Gain ratio</h3>
+      <p>A correction for information gain's bias toward highly branching attributes, such as ID-like features.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Gini note</h3>
+      <p>The lecture mentions that CART uses Gini rather than entropy. Same goal, different impurity measure.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Lecture formulas</div>
+    <p style="margin:0; color:var(--text-muted);">Entropy measures purity, and information gain is the decrease in entropy after a split. The Week 5 tutorial trains you to compute both by hand because that is the logic behind root and branch selection.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Numeric attributes</h3>
+      <p>The lecture discretises numeric features by considering binary thresholds. The procedure is: sort by the numeric value, propose split points where the class changes, evaluate each candidate split, and keep the best one.</p>
+    </div>
+    <div class="col-card">
+      <h3>Pruning</h3>
+      <p>Deep trees overfit easily. The lecture distinguishes <strong>pre-pruning</strong> (stop earlier) from <strong>post-pruning</strong> (grow fully, then remove subtrees using validation performance).</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Notebook implementation:</strong> the iris example uses <code>DecisionTreeClassifier(criterion='entropy', random_state=42)</code>. The pre-pruning example limits tree depth with <code>max_depth=4</code>. The visualisation step exists to make the node statistics legible: sample counts, class counts, and predicted majority class at each node.</p>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Interpretability</h3>
+      <p>The lecture repeatedly frames tree models as transparent. You can follow a single path from root to leaf and explain the prediction as a chain of tests.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why highly branching features are risky</h3>
+      <p>A feature such as an ID code can create very pure tiny subsets and therefore look artificially attractive to raw information gain, even though it overfits badly.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Validation-set role</h3>
+      <p>When pruning, the lecture explicitly uses a validation set to decide whether replacing a subtree with a leaf improves or preserves generalisation.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="If an attribute creates many tiny pure subsets, raw information gain can become misleadingly large; gain ratio is designed to reduce this bias.">
+    <div class="qc-h">Quick check - Gain ratio</div>
+    <div class="qc-question">Why does the lecture introduce gain ratio as an alternative to plain information gain?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because information gain cannot handle binary classes</div>
+      <div class="qc-opt" data-idx="1">Because trees otherwise cannot be visualised with graphviz</div>
+      <div class="qc-opt" data-idx="2">Because information gain is biased toward attributes with many branches</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-ens" class="section" data-track="ens">
+  <h2 class="section-title">Ensembles: why many weak or unstable models can win</h2>
+  <p class="section-lead">The second half of Week 5 is about diversity. Ensembles help when the base models are individually useful but make different mistakes. If all models are identical, voting does nothing.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Bagging</h3>
+      <p>Bagging stands for bootstrap aggregation. Build many models on bootstrap samples and combine their predictions, usually by majority vote for classification.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">The notebook uses <code>BaggingClassifier</code> with 500 decision trees, each trained on 100 bootstrapped examples from the moons training split.</p>
+    </div>
+    <div class="col-card">
+      <h3>Random forest</h3>
+      <p>Random forest adds a second source of randomness: at each split, only a subset of features is considered. The lecture emphasises that this reduces correlation between trees.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">The notebook uses 500 trees and highlights <code>max_features</code> as a key parameter because it controls the strength-vs-correlation tradeoff.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>AdaBoost</h3>
+      <p>Sequentially focuses on examples that earlier learners handled badly. The lecture describes weighted training data and weighted voting; the notebook uses shallow trees (decision stumps) as base learners.</p>
+    </div>
+    <div class="col-card">
+      <h3>Gradient boosting</h3>
+      <p>Also adds models sequentially, but instead of reweighting data in the AdaBoost style, it adds new learners that minimise the error of the current ensemble.</p>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <h4>Lecture intuition for why ensembles help</h4>
+    <ol>
+      <li>If all base learners make the same mistakes, voting does not improve anything.</li>
+      <li>If their errors are less correlated, combining them reduces variance.</li>
+      <li>Bagging and random-feature selection are tools for creating that diversity.</li>
+    </ol>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Bagging boundary</h3>
+      <p>The notebook explicitly shows that bagging creates a smoother decision boundary than a single unpruned tree on the moons data.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Random-forest comment</h3>
+      <p>The lecture says the ideal forest has accurate individual trees that are still not too correlated with each other.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Boosting comment</h3>
+      <p>AdaBoost can turn weak learners into a strong learner if they are slightly better than random. That is the conceptual point of the theorem slide.</p>
+    </div>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.ensemble import BaggingClassifier, RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+bag_clf = BaggingClassifier(
+    DecisionTreeClassifier(criterion="entropy", random_state=42),
+    n_estimators=500,
+    max_samples=100,
+    bootstrap=True,
+    random_state=42
+)
+
+rnd_clf = RandomForestClassifier(
+    criterion="entropy",
+    n_estimators=500,
+    max_leaf_nodes=16,
+    random_state=42
+)</code></pre>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Random forests use bootstrap sampling plus random feature subsets so the trees are not all making near-identical decisions.">
+    <div class="qc-h">Quick check - Random forest</div>
+    <div class="qc-question">Why does random forest select only a subset of features at each split?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">To guarantee every tree is shallow</div>
+      <div class="qc-opt" data-idx="1">To reduce correlation between trees and increase ensemble diversity</div>
+      <div class="qc-opt" data-idx="2">Because decision trees cannot evaluate all features</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial calculation: entropy and information gain by hand</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Toy dataset result</div>
+      <div class="problem-tag warm-up">Entropy</div>
+    </div>
+    <div class="problem-body">
+      <p>The tutorial solution computes the class entropy of the 8-example dataset as:</p>
+      <p style="color:var(--text-muted);"><strong>\(H(S)=0.95\) bits</strong></p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Shape vs color</div>
+      <div class="problem-tag problem-solving">Information gain</div>
+    </div>
+    <div class="problem-body">
+      <p>The solution then computes:</p>
+      <ul style="padding-left:1.1rem; color:var(--text-muted); line-height:1.75;">
+        <li><strong>gain(shape) = 0.45 bits</strong></li>
+        <li><strong>gain(color) = 0.34 bits</strong></li>
+      </ul>
+      <p style="color:var(--text-muted);">Therefore <strong>shape</strong> is selected as the root of the decision tree.</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w5-tutorial">Show Solution</button>
+      <div class="solution-content" id="sol-w5-tutorial">
+        <p>The important exam habit is to show the weighted entropy after the split, not just the parent entropy. You first compute the impurity of each branch subset, weight those impurities by branch size, and subtract the result from the parent entropy. The attribute with the largest reduction is chosen.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Comparison skill</div>
+      <div class="problem-tag advanced">Model tradeoffs</div>
+    </div>
+    <div class="problem-body">
+      <p>Be ready to compare trees with k-NN and linear models. Trees give interpretability and nonlinear splits; ensembles trade away some interpretability for accuracy and stability.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=5" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=5&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [{left:"\\[", right:"\\]", display:true},{left:"\\(", right:"\\)", display:false}],
+        throwOnError: false
+      });
+    } else setTimeout(tryRender, 200);
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

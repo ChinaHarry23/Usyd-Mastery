@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50; background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+}
+.back-bar a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+#mainContent { margin-left: 0; max-width: 860px; margin-right: auto; margin-left: auto; padding: 1rem 1.5rem 3rem; }
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; display: none; }
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter2-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim); text-transform:uppercase;" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+
+<main id="mainContent">
+
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 2 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Distance, scaling, voting, and computational trade-offs for nearest-neighbour methods and the rule-based exercises used this week.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">L2</span><strong>Core distance</strong><span>Euclidean and Manhattan norms compare numeric feature vectors.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">01</span><strong>Nominal distance</strong><span>For categorical features, mismatch = 1 and match = 0 before summing.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">x'</span><strong>Scaling rule</strong><span>Min-max scaling prevents large-scale attributes from dominating.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">k</span><strong>Voting logic</strong><span>Changing from 1-NN to k-NN smooths the decision boundary.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-distance" data-track="distance">
+  <h2 class="section-title">Distance measures and neighbour voting</h2>
+  <p class="section-lead">Week 2 treats each example as a vector of feature values. Prediction is then reduced to two steps: compute a distance from the new example to every training example, then let the nearest neighbour or nearest <em>k</em> neighbours decide the class.</p>
+  <div class="def-box">
+    <div class="def-label">Numeric features</div>
+    <p>For examples \(A=(a_1,\dots,a_d)\) and \(B=(b_1,\dots,b_d)\):</p>
+    <p style="margin-top:0.7rem;">Euclidean distance: \[D_{L2}(A,B)=\sqrt{\sum_{j=1}^d(a_j-b_j)^2}\]</p>
+    <p style="margin-top:0.7rem;">Manhattan distance: \[D_{L1}(A,B)=\sum_{j=1}^d|a_j-b_j|\]</p>
+    <p style="margin-top:0.7rem; color:var(--text-muted);">Euclidean distance is the geometric straight-line distance. Manhattan distance measures how much total coordinate movement is required.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Nominal features</div>
+    <p>For a categorical attribute, use difference \(0\) if the two values match and \(1\) if they differ. The tutorial then sums these per-attribute differences inside the Euclidean square root.</p>
+  </div>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>1-NN</h3>
+      <p>Uses the single closest example. Very local, very flexible, but sensitive to noise.</p>
+    </div>
+    <div class="glance-card">
+      <h3>k-NN</h3>
+      <p>Uses the majority label among the closest \(k\) examples. Bigger \(k\) means smoother decisions.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Odd \(k\)</h3>
+      <p>For binary classification, odd values reduce tie frequency, though ties can still happen in multiclass tasks or equal-distance cases.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-scaling" data-track="scaling">
+  <h2 class="section-title">Why scaling matters before distance is computed</h2>
+  <p>If one feature is measured in dollars and another in years, the large-scale feature can dominate the distance even if it is not more informative. That is why the lecture emphasizes normalization before using k-NN.</p>
+  <div class="theorem-box">
+    <h3>Min-max scaling</h3>
+    <p>For one attribute vector \(x\), the scaled value is</p>
+    <p style="margin-top:0.7rem;">\[
+      x'=\frac{x-\min(x)}{\max(x)-\min(x)}
+    \]</p>
+    <p style="margin-top:0.7rem; color:var(--text-muted);">Apply this independently to each feature column. After scaling, all transformed values lie in \([0,1]\).</p>
+  </div>
+  <div class="callout">
+    <h3 style="margin-top:0;">Mini scaling check</h3>
+    <p>Lecture example: \(A=[20, 40000]\), \(B=[40, 60000]\). Without scaling, Manhattan distance is \(|20-40|+|40000-60000|=20020\), so income overwhelms age. If age is scaled by min \(0\), max \(100\), and income by min \(0\), max \(100000\), then \(A'=[0.2,0.4]\), \(B'=[0.4,0.6]\), and the distance becomes \(0.4\), with both features contributing comparably.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: numeric 1-NN and 3-NN</h2>
+  <p>This is the same Week 2 tutorial dataset used in the lecture. The new example is \(x_{\text{new}}=(2,4,2)\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Training data</h3>
+      <div class="table-responsive" style="margin:0.9rem 0 0;">
+        <table class="styled-table">
+          <thead>
+            <tr><th>Example</th><th>\(a_1\)</th><th>\(a_2\)</th><th>\(a_3\)</th><th>Class</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>1</td><td>3</td><td>1</td><td>yes</td></tr>
+            <tr><td>2</td><td>3</td><td>5</td><td>2</td><td>yes</td></tr>
+            <tr><td>3</td><td>3</td><td>2</td><td>2</td><td>no</td></tr>
+            <tr><td>4</td><td>5</td><td>2</td><td>3</td><td>no</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-card">
+      <h3>Distance calculations</h3>
+      <p>\[
+        D(x_{\text{new}},1)=\sqrt{(2-1)^2+(4-3)^2+(2-1)^2}=\sqrt{3}
+      \]</p>
+      <p style="margin-top:0.7rem;">\[
+        D(x_{\text{new}},2)=\sqrt{(2-3)^2+(4-5)^2+(2-2)^2}=\sqrt{2}
+      \]</p>
+      <p style="margin-top:0.7rem;">\[
+        D(x_{\text{new}},3)=\sqrt{(2-3)^2+(4-2)^2+(2-2)^2}=\sqrt{5}
+      \]</p>
+      <p style="margin-top:0.7rem;">\[
+        D(x_{\text{new}},4)=\sqrt{(2-5)^2+(4-2)^2+(2-3)^2}=\sqrt{14}
+      \]</p>
+      <div class="insight-box" style="margin-bottom:0;">
+        <p><strong>1-NN:</strong> the closest neighbour is example 2, so the prediction is <strong>yes</strong>.</p>
+        <p style="margin-top:0.55rem;"><strong>3-NN:</strong> the three closest neighbours are 2 (yes), 1 (yes), 3 (no), so the majority class is still <strong>yes</strong>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: nominal-feature distance</h2>
+  <p>For the iPhone tutorial exercise, the new example is <code>age&lt;=30</code>, <code>income=medium</code>, <code>student=yes</code>, <code>credit=fair</code>. We use difference \(0\) for a match and \(1\) for a mismatch.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Distances to the closest examples</h3>
+      <p>Example 7 is \((\le 30,\ \text{medium},\ \text{no},\ \text{fair})\), so only the student attribute differs:</p>
+      <p style="margin-top:0.7rem;">\[
+        D(7,\text{new})=\sqrt{0+0+1+0}=1
+      \]</p>
+      <p style="margin-top:0.9rem;">Example 1 is \((\le 30,\ \text{high},\ \text{no},\ \text{fair})\):</p>
+      <p style="margin-top:0.7rem;">\[
+        D(1,\text{new})=\sqrt{0+1+1+0}=\sqrt{2}
+      \]</p>
+      <p style="margin-top:0.9rem;">Example 4 is \((&gt;40,\ \text{medium},\ \text{no},\ \text{fair})\):</p>
+      <p style="margin-top:0.7rem;">\[
+        D(4,\text{new})=\sqrt{1+0+1+0}=\sqrt{2}
+      \]</p>
+    </div>
+    <div class="col-card">
+      <h3>Vote and interpretation</h3>
+      <p>The smallest distance is \(1\), achieved by example 7, whose class is <strong>no</strong>. So <strong>1-NN predicts no</strong>.</p>
+      <p style="margin-top:0.8rem;">For 3-NN, the three nearest neighbours are example 7 (no), example 1 (no), and example 4 (yes). The majority label is again <strong>no</strong>.</p>
+      <div class="callout" style="margin-bottom:0;">
+        <p><strong>Key lesson:</strong> the mathematics is still the same pattern as with numeric features: define a per-feature difference, aggregate across all features, then vote.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-traps" data-track="traps">
+  <h2 class="section-title">Common mistakes and exam-ready habits</h2>
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Do this</h4>
+      <ul>
+        <li>Check whether features live on comparable scales before computing distance.</li>
+        <li>Sort neighbours by actual distance, not by coordinate difference on one feature.</li>
+        <li>State clearly whether you are answering 1-NN or \(k\)-NN.</li>
+        <li>Remember that training is cheap for k-NN, but prediction costs \(O(mn)\) for \(m\) training examples and \(n\) features.</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>Avoid this</h4>
+      <ul>
+        <li>Normalizing the test example differently from the training feature ranges.</li>
+        <li>Mixing Euclidean and Manhattan formulas in the same calculation.</li>
+        <li>Using even \(k\) in a binary setting without explaining how ties are handled.</li>
+        <li>Assuming “nearest” means visually nearest in one plot when the feature space is higher-dimensional.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="Distance-based methods compare coordinate-wise differences, so an unscaled large-range feature can dominate the whole distance." data-explanation-zh="基于距离的方法比较各维坐标差异，因此未经缩放的大范围特征会主导整体距离。">
+    <div class="qc-question">Why does the lecture insist on scaling before applying k-NN to features like age and income?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because k-NN requires every feature to be categorical</div>
+      <div class="qc-opt" data-idx="1">Because large-range features can dominate the distance and hide smaller-scale features</div>
+      <div class="qc-opt" data-idx="2">Because scaling automatically chooses the best value of \(k\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0;">Math quizzes</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p>
+    <p style="margin-top:0.75rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=2" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

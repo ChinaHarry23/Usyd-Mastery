@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50; background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+}
+.back-bar a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+#mainContent { margin-left: 0; max-width: 860px; margin-right: auto; margin-left: auto; padding: 1rem 1.5rem 3rem; }
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; display: none; }
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter1-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim); text-transform:uppercase;" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+
+<main id="mainContent">
+
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 1 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">How Python tables become vectors and matrices, how reductions over axes work, and which statistics and linear-algebra operations keep appearing throughout the rest of the course.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">X</span><strong>Data layout</strong><span>\(X \in \mathbb{R}^{n \times d}\) means \(n\) examples by \(d\) features.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">ax</span><strong>Axis logic</strong><span><code>axis=0</code> aggregates down rows and returns one value per feature.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">mu</span><strong>Core stats</strong><span>Mean, variance, covariance, and correlation describe columns of data.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">w.x</span><strong>Linear score</strong><span>The dot product \(w^\top x+b\) is the backbone of later linear models.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-layout" data-track="layout">
+  <h2 class="section-title">From notebook tables to matrices and vectors</h2>
+  <p class="section-lead">The Week 1 notebook is not mathematically heavy, but it quietly establishes the representation used everywhere else in the unit: arrays, shapes, slices, and tabular columns as features. If this layer is shaky, later formulas feel harder than they actually are.</p>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>One sample</h3>
+      <p>A single example is a feature vector \(x=(x_1,\dots,x_d)\in\mathbb{R}^d\).</p>
+    </div>
+    <div class="glance-card">
+      <h3>Whole dataset</h3>
+      <p>Stack samples as rows to get \(X \in \mathbb{R}^{n \times d}\). Row \(i\) is sample \(i\); column \(j\) is feature \(j\).</p>
+    </div>
+    <div class="glance-card">
+      <h3>NumPy shape</h3>
+      <p><code>X.shape == (n, d)</code>. Reshaping changes how values are interpreted, not how many values exist.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Pandas view</h3>
+      <p>A DataFrame is the same idea with labels: rows are observations, columns are named variables.</p>
+    </div>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Axis rule</div>
+    <p>For a 2D array with shape \((n,d)\), <code>axis=0</code> means “reduce over rows” and return one number per column, while <code>axis=1</code> means “reduce over columns” and return one number per row.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-formulas" data-track="formulas">
+  <h2 class="section-title">The formulas you should already be comfortable with</h2>
+  <div class="theorem-box">
+    <h3>Feature-wise statistics</h3>
+    <p>For one feature column \(x_1,\dots,x_n\):</p>
+    <p style="margin-top:0.7rem;">Sample mean: \[\bar{x}=\frac{1}{n}\sum_{i=1}^n x_i\]</p>
+    <p style="margin-top:0.7rem;">Sample variance: \[s^2=\frac{1}{n-1}\sum_{i=1}^n(x_i-\bar{x})^2\]</p>
+    <p style="margin-top:0.7rem;">Standard deviation: \(s=\sqrt{s^2}\)</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Relationships between two features</h3>
+    <p>For centred features \(a\) and \(b\):</p>
+    <p style="margin-top:0.7rem;">Sample covariance: \[\operatorname{cov}(a,b)=\frac{1}{n-1}\sum_{i=1}^n(a_i-\bar{a})(b_i-\bar{b})\]</p>
+    <p style="margin-top:0.7rem;">Correlation: \[\operatorname{corr}(a,b)=\frac{\operatorname{cov}(a,b)}{s_a s_b}\]</p>
+    <p style="margin-top:0.7rem; color:var(--text-muted);">Covariance depends on units; correlation is unitless and always lies between \(-1\) and \(1\).</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Dot product and linear scoring</h3>
+    <p>\[
+      a \cdot b = a^\top b = \sum_{j=1}^d a_j b_j
+    \]</p>
+    <p style="margin-top:0.7rem;">Later models use this as \(w^\top x+b\), where \(w\) contains feature weights and \(b\) is the intercept or bias.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: axes, means, and sample variance</h2>
+  <p>Take the Week 1 style data matrix</p>
+  <p style="margin-top:0.7rem;">\[
+    X=\begin{bmatrix}
+    2 &amp; 1\\
+    4 &amp; 3\\
+    6 &amp; 5
+    \end{bmatrix}
+  \]</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Column-wise reductions</h3>
+      <p>Each column is a feature, so</p>
+      <p style="margin-top:0.7rem;">\[
+        \bar{x}_{\text{col}}=\frac{1}{3}
+        \begin{bmatrix}
+        2+4+6,\ 1+3+5
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        4,\ 3
+        \end{bmatrix}
+      \]</p>
+      <p style="margin-top:0.8rem;">In NumPy this is <code>np.mean(X, axis=0)</code>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Sample variance per feature</h3>
+      <p>For feature 1, deviations are \((-2,0,2)\), so</p>
+      <p style="margin-top:0.7rem;">\[
+        s_1^2=\frac{(-2)^2+0^2+2^2}{3-1}=\frac{8}{2}=4
+      \]</p>
+      <p style="margin-top:0.8rem;">For feature 2, deviations are also \((-2,0,2)\), so \(s_2^2=4\).</p>
+      <p style="margin-top:0.8rem;">Therefore the feature-wise sample variances are \([4,4]\).</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: covariance and a linear score</h2>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Covariance and correlation</h3>
+      <p>Using the same two feature columns \(a=(2,4,6)\) and \(b=(1,3,5)\), the means are \(\bar{a}=4\) and \(\bar{b}=3\). So both centred columns are \((-2,0,2)\).</p>
+      <p style="margin-top:0.7rem;">\[
+        \operatorname{cov}(a,b)=\frac{(-2)(-2)+0\cdot0+2\cdot2}{2}=\frac{8}{2}=4
+      \]</p>
+      <p style="margin-top:0.8rem;">Since \(s_a=s_b=2\), the correlation is \(4/(2 \cdot 2)=1\). These two features move perfectly together.</p>
+    </div>
+    <div class="col-card">
+      <h3>Dot product and model score</h3>
+      <p>Let \(w=(1.5,-0.5,2)\), \(x=(2,0,1)\), and \(b=-1\). Then</p>
+      <p style="margin-top:0.7rem;">\[
+        w^\top x+b=(1.5)(2)+(-0.5)(0)+(2)(1)-1=3+0+2-1=4
+      \]</p>
+      <p style="margin-top:0.8rem;">That scalar \(4\) is the model score. Later weeks turn this same pattern into regression predictions, logistic probabilities, and SVM decision values.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-takeaways" data-track="takeaways">
+  <h2 class="section-title">What to carry into the next chapters</h2>
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Keep straight</h4>
+      <ul>
+        <li>Rows are examples and columns are features unless the code explicitly says otherwise.</li>
+        <li><code>axis=0</code> gives one result per feature; <code>axis=1</code> gives one result per example.</li>
+        <li>Variance needs a denominator choice: \(n\) for population style, \(n-1\) for sample estimation.</li>
+        <li>The dot product is the reusable building block for linear machine-learning models.</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>Typical confusion</h4>
+      <ul>
+        <li>Mixing up shape \((n,d)\) with \((d,n)\).</li>
+        <li>Taking row means when the question asks for feature means.</li>
+        <li>Treating covariance and correlation as interchangeable.</li>
+        <li>Forgetting the intercept \(b\) when evaluating a linear score.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="With X shaped (n,d), axis=0 reduces across the n rows and returns one number per feature column." data-explanation-zh="当 X 的形状为 (n,d) 时，axis=0 会沿着 n 行做聚合，并为每个特征列返回一个数。">
+    <div class="qc-question">If \(X\) has shape \((n,d)\), what does <code>np.mean(X, axis=0)</code> return?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">One mean per row, so shape \((n,)\)</div>
+      <div class="qc-opt" data-idx="1">One mean per feature, so shape \((d,)\)</div>
+      <div class="qc-opt" data-idx="2">The full matrix unchanged</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0;">Math quizzes</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p>
+    <p style="margin-top:0.75rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=1" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

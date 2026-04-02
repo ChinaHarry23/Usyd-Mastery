@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 - k-Nearest Neighbours, 1R &amp; PRISM</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F3AF;</span>
+    <h2 data-i18n="sidebar_h2">Week 2</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-knn" class="nav-link" data-section="sec-knn" data-i18n="nav_knn">k-NN idea</a></li>
+    <li><a href="#sec-split" class="nav-link" data-section="sec-split" data-i18n="nav_split">Train / test</a></li>
+    <li><a href="#sec-norm" class="nav-link" data-section="sec-norm" data-i18n="nav_norm">Normalisation</a></li>
+    <li><a href="#sec-rules" class="nav-link" data-section="sec-rules" data-i18n="nav_rules">1R &amp; PRISM</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=2" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=2" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=2&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="4">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 2: k-Nearest Neighbours</h1>
+    <p class="hero-subtitle">This week really has two threads: instance-based learning with <strong>k-NN</strong> and symbolic rule learners such as <strong>1R</strong> and <strong>PRISM</strong>. The lecture focuses on distance, voting, scaling, and rule construction; the notebook shows the full sklearn workflow on iris; the tutorial makes you compute predictions and rules by hand.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4CD;</span><span>Distance</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F465;</span><span>Voting</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x2696;</span><span>Generalisation</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4DC;</span><span>Rules</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Iris notebook</span>
+      <span>Euclidean / Manhattan</span>
+      <span>MinMaxScaler</span>
+      <span>1R</span>
+      <span>PRISM</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter2-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter2-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">The page below is a synthesis of the local files in this folder. Read the lecture for concepts, run the notebook for the sklearn workflow, and use the tutorial sheet to check whether you can reason through the algorithm without code.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What it contributes</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../materials/w2.ipynb">w2.ipynb</a></td><td>Iris dataset walkthrough, train/test split, scatter-matrix inspection, <code>KNeighborsClassifier</code>, prediction, and <code>MinMaxScaler</code>.</td></tr>
+        <tr><td><a href="../materials/ml2.pdf">ml2.pdf</a></td><td>Lecture theory: nearest neighbour, Euclidean and Manhattan distance, normalisation, computational cost, distance weighting, 1R, and PRISM.</td></tr>
+        <tr><td><a href="../materials/t2.pdf">t2.pdf</a></td><td>Hand calculations: numeric 1-NN / 3-NN, nominal-distance k-NN, and PRISM rule generation.</td></tr>
+        <tr><td><a href="../materials/t2-solutions.pdf">t2-solutions.pdf</a></td><td>Worked distances and the final PRISM rule set.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Core mental model</h3>
+      <p>k-NN does not build an explicit parametric model. It stores the training set and predicts by comparing a new point with remembered examples.</p>
+    </div>
+    <div class="glance-card">
+      <h3>What makes the week tricky</h3>
+      <p>Distance is only meaningful if the features are on compatible scales and if you do not leak test-set statistics into preprocessing.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Exam-style skill</h3>
+      <p>You should be able to compute distances manually, identify nearest neighbours, explain the effect of <code>k</code>, and derive simple rules by hand.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-knn" class="section" data-track="knn">
+  <h2 class="section-title">What k-NN is really doing</h2>
+  <p class="section-lead">The lecture frames classification as: given labelled examples, learn something that predicts the class of new unseen examples. For nearest neighbour, the "learning" step is mostly memory; the heavy lifting happens at prediction time.</p>
+
+  <div class="def-box">
+    <div class="def-label">Classification setup</div>
+    <p style="margin:0; color:var(--text-muted);">A dataset contains training examples, features, and class labels. The training set is used to build the classifier; the test set is used later to estimate how well it generalises to unseen data.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>1-NN</h3>
+      <p>Store all training examples. For a new point \(x\), find the closest stored example and copy its class label.</p>
+      <p style="font-size:1.02rem; color:var(--text); margin:0.8rem 0;">\[
+      \hat{y}(x) = y_{(1)}
+      \]</p>
+      <p style="font-size:0.9rem; color:var(--text-muted);">This is a very local rule: one noisy neighbour can flip the answer.</p>
+    </div>
+    <div class="col-card">
+      <h3>k-NN</h3>
+      <p>Find the \(k\) closest training examples and combine their labels, usually by majority vote for classification or by averaging for regression.</p>
+      <p style="font-size:1.02rem; color:var(--text); margin:0.8rem 0;">\[
+      \hat{y}(x) = \operatorname{majority}(y_{(1)}, \dots, y_{(k)})
+      \]</p>
+      <p style="font-size:0.9rem; color:var(--text-muted);">More neighbours usually means lower variance but higher bias.</p>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Euclidean distance</h3>
+      <p>\(d_2(A,B)=\sqrt{\sum_j (a_j-b_j)^2}\). This is the default distance used in the notebook via Minkowski distance with <code>p=2</code>.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Manhattan distance</h3>
+      <p>\(d_1(A,B)=\sum_j |a_j-b_j|\). The lecture contrasts it with Euclidean distance and the Week 4 grid-search section later tunes this with <code>p=1</code> or <code>p=2</code>.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Nominal attributes</h3>
+      <p>For categorical features, the tutorial uses a simple mismatch count: same value contributes 0, different value contributes 1 before taking the square root.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Slide heuristic, not a theorem:</strong> the lecture gives a rule of thumb \(k \le \sqrt{\#\text{training examples}}\). Treat this as a starting point. Real selection should be done with validation or cross-validation.
+  </div>
+
+  <div class="insight-box">
+    <strong>Computational profile:</strong> training is cheap because the model just stores data, but prediction is expensive because each query is compared to many stored points. The lecture explicitly states naive lookup for one unseen example costs \(O(mn)\) for \(m\) training examples of dimensionality \(n\), with the same order of memory usage.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="The iris dataset is ordered by class, so shuffling prevents the test split from accidentally containing only one class block.">
+    <div class="qc-h">Quick check - Data splitting</div>
+    <div class="qc-question">Why does the notebook stress shuffling before the train/test split on iris?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">To make Euclidean distance smaller</div>
+      <div class="qc-opt" data-idx="1">Because the examples are ordered by class and we want both splits to contain all classes</div>
+      <div class="qc-opt" data-idx="2">Because <code>KNeighborsClassifier</code> only works on shuffled arrays</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-split" class="section" data-track="split">
+  <h2 class="section-title">Notebook workflow on the iris dataset</h2>
+  <p class="section-lead">The notebook is not just about calling sklearn. It demonstrates the full pattern you will reuse all semester: inspect data, make a reproducible split, fit the estimator on training data only, and report performance on held-out data.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Load and inspect</h3>
+      <p><code>load_iris()</code> returns a dictionary-like object with <code>data</code>, <code>target</code>, <code>target_names</code>, and <code>feature_names</code>. The dataset has 150 flowers, 4 numeric features, and 3 classes.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Split reproducibly</h3>
+      <p><code>train_test_split(..., random_state=0)</code> gives a 75/25 split by default. Fixing the seed matters so your results are repeatable and debuggable.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Visualise before modelling</h3>
+      <p>The notebook converts <code>X_train</code> to a pandas DataFrame and plots a scatter-matrix. This is your reminder that inspection comes before blind fitting.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <h3>Fit and evaluate</h3>
+      <p><code>KNeighborsClassifier(n_neighbors=1)</code>, then <code>fit</code>, then <code>predict</code> or <code>score</code>. The notebook reports roughly 97% test accuracy on its split.</p>
+    </div>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+iris_dataset = load_iris()
+X_train, X_test, y_train, y_test = train_test_split(
+    iris_dataset["data"], iris_dataset["target"], random_state=0
+)
+
+knn = KNeighborsClassifier(n_neighbors=1)
+knn.fit(X_train, y_train)
+test_accuracy = knn.score(X_test, y_test)</code></pre>
+
+  <div class="def-box">
+    <div class="def-label">Prediction for a new example</div>
+    <p style="margin:0; color:var(--text-muted);">The notebook creates <code>X_new = np.array([[5, 2.9, 1, 0.2]])</code> and predicts its species. This is the minimal shape sklearn expects: one row per example, one column per feature.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Generalisation principle:</strong> evaluating on the training set tells you how well the algorithm can match memorised data. Evaluating on a held-out test set tells you something about new data. Those are different questions.
+  </div>
+</section>
+
+<section id="sec-norm" class="section" data-track="norm">
+  <h2 class="section-title">Scaling, leakage, and practical behavior</h2>
+  <p class="section-lead">The lecture's age-income example shows exactly why raw distances can be misleading: one large-scale feature can dominate the calculation and effectively erase smaller-scale features.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why normalise</h3>
+      <p>If age is in years and income is in tens of thousands, income can overwhelm the distance. The lecture explicitly recommends normalisation for distance-based methods such as nearest neighbour.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">The notebook uses <code>MinMaxScaler</code>, which maps training features into a bounded range using training-set minima and maxima.</p>
+    </div>
+    <div class="col-card">
+      <h3>What not to do</h3>
+      <p>Never <code>fit</code> the scaler on the test set. The scaler must learn its min/max from the training data, then apply the same transformation to both train and test.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Otherwise you leak future information into preprocessing and inflate your reported accuracy.</p>
+    </div>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
+scaler.fit(X_train)
+X_train_norm = scaler.transform(X_train)
+X_test_norm = scaler.transform(X_test)</code></pre>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Weighted k-NN</h3>
+      <p>The lecture also mentions distance-weighted voting: closer neighbours contribute more than farther ones, which helps when a fixed <code>k</code> includes some less-relevant points.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Voronoi view</h3>
+      <p>In 1-NN, each training example owns a region of space whose points are closest to it. The decision boundary is made of Voronoi edges, which explains why it can look irregular.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Regression mode</h3>
+      <p>The lecture notes that k-NN is not only for classification. For regression, the prediction is the average target value of the nearest neighbours.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="Preprocessing parameters must come from training data only; the test set should only be transformed with those learned parameters.">
+    <div class="qc-h">Quick check - Leakage</div>
+    <div class="qc-question">Which statement about scaling for k-NN is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Fit one scaler on the training set and a different scaler on the test set</div>
+      <div class="qc-opt" data-idx="1">Fit the scaler on the full dataset so train and test use the same statistics</div>
+      <div class="qc-opt" data-idx="2">Fit the scaler on the training set, then transform both train and test with it</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-rules" class="section" data-track="rules">
+  <h2 class="section-title">Rule-based classifiers: 1R and PRISM</h2>
+  <p class="section-lead">Week 2 is not only about distances. The lecture also introduces simple symbolic learners that produce explicit if-then rules. These are interpretable, hand-checkable, and good preparation for later decision-tree ideas.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>1R</h3>
+      <p><strong>1R = one rule.</strong> Build one rule per attribute, where each attribute value is assigned the majority class of the training examples matching that value. Count training errors for each attribute-specific rule and keep the attribute with the smallest error.</p>
+      <ul style="padding-left:1.1rem; color:var(--text-muted); line-height:1.75;">
+        <li>Produces a single-attribute decision stump.</li>
+        <li>Very simple and fast.</li>
+        <li>Numeric data needs discretisation first.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>PRISM</h3>
+      <p>PRISM is a covering algorithm. It takes one class at a time and keeps adding conditions that maximise rule accuracy \(p/t\) until the current rule becomes perfect, then removes the covered examples and repeats.</p>
+      <ul style="padding-left:1.1rem; color:var(--text-muted); line-height:1.75;">
+        <li>Rules for a class are order-independent.</li>
+        <li>Uncovered test examples need a default rule.</li>
+        <li>Numeric data again needs discretisation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <h4>PRISM pseudocode from the lecture</h4>
+    <ol>
+      <li>Choose a target class \(C\).</li>
+      <li>Start a new empty rule that predicts \(C\).</li>
+      <li>Add the condition that maximises rule accuracy \(p/t\) on the remaining examples.</li>
+      <li>Repeat until the rule is perfect.</li>
+      <li>Remove covered examples of class \(C\), then continue until none remain.</li>
+    </ol>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Final PRISM rules from <code>t2-solutions.pdf</code>:</strong></p>
+    <ul style="padding-left:1.1rem; color:var(--text-muted); line-height:1.8; margin-top:0.65rem;">
+      <li><strong>Class = no:</strong> if <code>outlook=rainy</code> and <code>windy=true</code> then <code>no</code></li>
+      <li><strong>Class = no:</strong> if <code>outlook=sunny</code> and <code>humidity=high</code> then <code>no</code></li>
+      <li><strong>Class = yes:</strong> if <code>outlook=overcast</code> then <code>yes</code></li>
+      <li><strong>Class = yes:</strong> if <code>humidity=normal</code> and <code>windy=false</code> then <code>yes</code></li>
+      <li><strong>Class = yes:</strong> if <code>temperature=mild</code> and <code>humidity=normal</code> then <code>yes</code></li>
+      <li><strong>Class = yes:</strong> if <code>temperature=mild</code> and <code>windy=false</code> then <code>yes</code></li>
+    </ul>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="The lecture says uncovered test examples need a default rule, usually assigning the class with the most training examples.">
+    <div class="qc-h">Quick check - PRISM</div>
+    <div class="qc-question">What does the lecture recommend if a new example is not covered by any PRISM rule?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Discard the example and make no prediction forever</div>
+      <div class="qc-opt" data-idx="1">Use a default rule that predicts the class with the most training examples</div>
+      <div class="qc-opt" data-idx="2">Force the first rule in the rule list to fire</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial reasoning you should be able to reproduce</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Exercise 1</div>
+      <div class="problem-tag warm-up">Numeric k-NN</div>
+    </div>
+    <div class="problem-body">
+      <p>The tutorial asks for 1-NN and 3-NN on a new numeric example \(a_1=2, a_2=4, a_3=2\).</p>
+      <ul style="padding-left:1.1rem; color:var(--text-muted); line-height:1.7;">
+        <li>\(D(\text{new}, ex1)=\sqrt{3}\), class yes</li>
+        <li>\(D(\text{new}, ex2)=\sqrt{2}\), class yes</li>
+        <li>\(D(\text{new}, ex3)=\sqrt{5}\), class no</li>
+        <li>\(D(\text{new}, ex4)=\sqrt{14}\), class no</li>
+      </ul>
+      <p style="color:var(--text-muted);">So 1-NN predicts <strong>yes</strong> (closest is example 2), and 3-NN also predicts <strong>yes</strong> because the three closest labels are yes, yes, no.</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Exercise 2</div>
+      <div class="problem-tag problem-solving">Nominal-distance k-NN</div>
+    </div>
+    <div class="problem-body">
+      <p>For the iPhone dataset, each attribute mismatch contributes 1 and each match contributes 0.</p>
+      <p style="color:var(--text-muted);">The closest neighbour is example 7 with distance 1 and class <strong>no</strong>, so 1-NN predicts <strong>no</strong>. The three closest neighbours are example 7 (no), example 1 (no), and example 4 (yes), so 3-NN also predicts <strong>no</strong>.</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Exercise 3</div>
+      <div class="problem-tag advanced">Interpretability</div>
+    </div>
+    <div class="problem-body">
+      <p>The tutorial's PRISM exercise matters because it forces you to reason about rule coverage and rule accuracy \(p/t\) rather than just memorising final if-then statements.</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w2-prism">Show Solution</button>
+      <div class="solution-content" id="sol-w2-prism">
+        <p>For class <code>no</code>, the solution first finds <code>outlook=sunny</code> as a strong test, then refines it to the perfect rule <code>outlook=sunny and humidity=high</code>. It then builds a second perfect rule <code>outlook=rainy and windy=true</code>.</p>
+        <p>For class <code>yes</code>, PRISM generates a direct rule for overcast days and then several additional rules involving <code>humidity=normal</code>, <code>temperature=mild</code>, and <code>windy=false</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=2" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=2&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [{left:"\\[", right:"\\]", display:true},{left:"\\(", right:"\\)", display:false}],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 6</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar { position: sticky; top: 0; z-index: 50; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.back-bar a { color: var(--accent); text-decoration: none; font-weight: 600; }
+#mainContent { max-width: 860px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin: 1rem 0; }
+.qc-opt { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; margin: 0.25rem 0; }
+.qc-opt.chosen { pointer-events: none; } .qc-opt.right { border-color: var(--green); background: var(--green-bg); } .qc-opt.not-right { border-color: var(--red); background: var(--red-bg); opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; } .qc-feedback.show { display: block; padding: 0.75rem; font-size: 0.85rem; } .qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); } .qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter6-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 6 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Hyperplanes, geometric margin, kernels, covariance/eigenvectors, and the projection math behind principal component analysis.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">w</span><strong>SVM geometry</strong><span>A linear SVM classifies with the sign of \(w^\top x+b\).</span></div>
+      <div class="hero-card"><span class="hero-card-icon">mrg</span><strong>Margin</strong><span>The maximum-margin hyperplane improves robustness to small perturbations.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">K</span><strong>Kernels</strong><span>Similarity in feature space can be computed without explicitly building the mapped features.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">PCA</span><strong>Projection</strong><span>Principal components are orthogonal directions of largest variance.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-svm" data-track="svm">
+  <h2 class="section-title">Linear SVM: score, boundary, and margin</h2>
+  <p class="section-lead">The lecture starts from the geometric question: among all separating hyperplanes, which one gives the widest safety buffer between the two classes? SVM answers: choose the maximum-margin hyperplane.</p>
+  <div class="theorem-box">
+    <h3>Core SVM formulas</h3>
+    <p>Decision boundary: \[
+      w^\top x+b=0
+    \]</p>
+    <p style="margin-top:0.7rem;">Classification rule: \[
+      \hat{y}=\operatorname{sign}(w^\top x+b)
+    \]</p>
+    <p style="margin-top:0.7rem;">Distance from point \(x\) to the hyperplane: \[
+      \frac{|w^\top x+b|}{\lVert w\rVert}
+    \]</p>
+    <p style="margin-top:0.7rem;">For the canonical support-vector planes \(w^\top x+b=\pm 1\), the full margin width is \[
+      \frac{2}{\lVert w\rVert}
+    \]</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Kernel idea</div>
+    <p>A kernel computes \(K(x,x')=\langle \phi(x),\phi(x')\rangle\). The classic RBF kernel is \[
+      K(x,x')=\exp(-\gamma \lVert x-x' \rVert^2)
+    \]
+    and lets SVM form nonlinear boundaries while still using inner products.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: classify with a linear boundary and compute margin distance</h2>
+  <p>Take the line shown in the lecture style notation:</p>
+  <p style="margin-top:0.7rem;">\[
+    x_1 + 0.5x_2 - 1 = 0
+  \]</p>
+  <p>This means \(w=(1,0.5)\) and \(b=-1\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Point \(x=(2,1)\)</h3>
+      <p>\[
+        w^\top x+b=1\cdot 2 + 0.5\cdot 1 -1 = 1.5
+      \]</p>
+      <p style="margin-top:0.8rem;">The score is positive, so the point is classified into the \(+1\) side.</p>
+      <p style="margin-top:0.8rem;">Norm of \(w\): \[
+        \lVert w\rVert=\sqrt{1^2+0.5^2}=\sqrt{1.25}\approx 1.118
+      \]</p>
+      <p style="margin-top:0.8rem;">Distance to the boundary: \[
+        \frac{|1.5|}{1.118}\approx1.34
+      \]</p>
+    </div>
+    <div class="col-card">
+      <h3>Point \(x=(0,1)\) and margin width</h3>
+      <p>\[
+        w^\top x+b=1\cdot 0 + 0.5\cdot 1 -1 = -0.5
+      \]</p>
+      <p style="margin-top:0.8rem;">This point is on the negative side of the boundary.</p>
+      <p style="margin-top:0.8rem;">Its distance to the boundary is \[
+        \frac{0.5}{1.118}\approx0.45
+      \]</p>
+      <p style="margin-top:0.8rem;">The canonical margin width for this \(w\) would be \[
+        \frac{2}{1.118}\approx1.79
+      \]</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-pca" data-track="pca">
+  <h2 class="section-title">PCA: variance, covariance, eigenvectors, and SVD</h2>
+  <p>PCA is a dimensionality-reduction method that looks only at the geometry of the input data, not the class labels. It rotates the coordinate system to align with directions of highest variance, then keeps only the first few directions.</p>
+  <div class="theorem-box">
+    <h3>PCA pipeline</h3>
+    <p>1. Centre the data matrix \(X\) by subtracting the column means.</p>
+    <p style="margin-top:0.45rem;">2. Compute the covariance matrix of the centred data.</p>
+    <p style="margin-top:0.45rem;">3. Find eigenvalues and eigenvectors of the covariance matrix.</p>
+    <p style="margin-top:0.45rem;">4. Sort eigenvectors by descending eigenvalue.</p>
+    <p style="margin-top:0.45rem;">5. Project onto the first \(k\) eigenvectors.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">SVD link</div>
+    <p>The lecture also states that any matrix can be factored as \(X=U\Sigma V^\top\). In PCA, the columns of \(V\) give the principal directions, and the singular values in \(\Sigma\) encode how much variance each direction captures.</p>
+  </div>
+  <div class="callout">
+    <h3 style="margin-top:0;">Explained variance</h3>
+    <p>If eigenvalues are \(\lambda_1,\dots,\lambda_m\), then the explained-variance ratio of principal component \(j\) is \(\lambda_j / \sum_k \lambda_k\). This is what drives the “keep 95% of the variance” rule from the lecture and notebook.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: a 2D PCA projection</h2>
+  <p>Consider the 2D points \((-2,-1),(-1,0),(0,1),(1,2),(2,3)\). They lie almost perfectly on a line, so PCA should discover one dominant direction.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Mean and covariance</h3>
+      <p>The feature means are \((0,1)\). After centring, the covariance matrix is</p>
+      <p style="margin-top:0.7rem;">\[
+        \Sigma=
+        \begin{bmatrix}
+        2.5 &amp; 2.5\\
+        2.5 &amp; 2.5
+        \end{bmatrix}
+      \]</p>
+      <p style="margin-top:0.8rem;">Its eigenvalues are \(5\) and \(0\). That means all variance lies in one direction, with none left in the orthogonal direction.</p>
+    </div>
+    <div class="col-card">
+      <h3>Principal component and projection</h3>
+      <p>The first principal component can be taken as</p>
+      <p style="margin-top:0.7rem;">\[
+        v_1=\frac{1}{\sqrt{2}}(1,1)
+      \]</p>
+      <p style="margin-top:0.8rem;">Projecting the centred points onto \(v_1\) gives approximately</p>
+      <p style="margin-top:0.6rem;">\[
+        -2.83,\ -1.41,\ 0,\ 1.41,\ 2.83
+      \]</p>
+      <p style="margin-top:0.8rem;">So 2D data have been compressed to one coordinate per point without losing meaningful variance. This is exactly the geometric objective of PCA.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-kernels" data-track="kernels">
+  <h2 class="section-title">How to think about kernels and dimensionality choice</h2>
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>SVM tuning intuition</h4>
+      <ul>
+        <li>Linear kernel first if the data may already be close to linearly separable.</li>
+        <li>For RBF SVM, larger \(\gamma\) makes each point’s influence more local and can create very wiggly boundaries.</li>
+        <li>Smaller \(C\) means stronger regularisation and a wider tolerance for margin violations.</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>PCA interpretation traps</h4>
+      <ul>
+        <li>PCA is unsupervised: class labels do not enter the covariance calculation.</li>
+        <li>High explained variance does not automatically mean best classification accuracy.</li>
+        <li>Always fit PCA on the training data only, then transform the test data with the same fitted projection.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="PCA is based on the covariance structure of the input features. It does not use the labels when choosing principal components." data-explanation-zh="PCA 基于输入特征的协方差结构来选主成分，不使用标签。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Which information does PCA use to choose its principal components?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">Only the class labels</div><div class="qc-opt" data-idx="1">Labels and features together</div><div class="qc-opt" data-idx="2">Only the input-feature covariance structure</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=6" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

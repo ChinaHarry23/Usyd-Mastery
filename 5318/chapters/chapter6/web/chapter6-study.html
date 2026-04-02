@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6 - SVMs &amp; PCA</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4CF;</span>
+    <h2 data-i18n="sidebar_h2">Week 6</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-svm" class="nav-link" data-section="sec-svm" data-i18n="nav_svm">SVM</a></li>
+    <li><a href="#sec-pca" class="nav-link" data-section="sec-pca" data-i18n="nav_pca">PCA</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter6-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter6-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=6" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=6" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=6&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 6</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="6">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 6: SVMs &amp; PCA</h1>
+    <p class="hero-subtitle">Week 6 combines a strong discriminative classifier with a strong unsupervised representation method. The SVM lecture explains maximum-margin hyperplanes, support vectors, soft margins, and kernels; the dimensionality-reduction lecture explains PCA, SVD, feature extraction, and compression; the notebook applies SVM and PCA to breast cancer, moons, and MNIST data.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4D0;</span><span>Maximum margin</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F300;</span><span>Kernels</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4CA;</span><span>Principal components</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F5C3;</span><span>Compression</span></div>
+    </div>
+    <div class="chip-list">
+      <span>SVC / LinearSVC</span>
+      <span>RBF gamma and C</span>
+      <span>Pipeline + StandardScaler</span>
+      <span>PCA explained variance</span>
+      <span>MNIST compression</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter6-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter6-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">This is a high-concept week. The lecture slides give the geometric intuition; the notebook shows the practical sklearn moves that make those ideas useful.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What you should learn from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../materials/w6.ipynb">w6.ipynb</a></td><td>Breast-cancer SVMs, moons hyperparameter intuition, PCA on breast cancer, explained-variance selection, and MNIST compression tasks.</td></tr>
+        <tr><td><a href="../materials/ml6a.pdf">ml6a.pdf</a></td><td>Support Vector Machines: maximum-margin hyperplanes, support vectors, soft margins, nonlinear mappings, kernel trick, and common kernels.</td></tr>
+        <tr><td><a href="../materials/ml6b.pdf">ml6b.pdf</a></td><td>Dimensionality reduction: motivation, PCA geometry, choosing dimensions, SVD, feature extraction, and compression examples.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-svm" class="section" data-track="svm">
+  <h2 class="section-title">Support Vector Machines: geometry first, code second</h2>
+  <p class="section-lead">The SVM lecture is about one core idea: among separating boundaries, prefer the one with the largest margin. A larger margin usually means more robustness to small perturbations in the data and therefore better generalisation.</p>
+
+  <div class="def-box">
+    <div class="def-label">Maximum-margin view</div>
+    <p style="margin:0; color:var(--text-muted);">The separating hyperplane lies midway between two margin boundaries \(H_1\) and \(H_2\). The points that touch those boundaries are the <strong>support vectors</strong>. They are the training examples that actually determine the solution.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Hard margin</h3>
+      <p>If the classes are linearly separable, the optimisation seeks the hyperplane with the largest margin and no training errors.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">The lecture connects larger margins to lower sensitivity to noise and less overfitting.</p>
+    </div>
+    <div class="col-card">
+      <h3>Soft margin</h3>
+      <p>If perfect separation is unrealistic, SVM introduces a tradeoff between margin width and classification error. The lecture uses the hyperparameter <code>C</code> for this.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Large <code>C</code> emphasises fewer training errors; smaller <code>C</code> allows a wider, more regularised margin.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Scaling is not optional</h3>
+      <p>The notebook normalises the breast-cancer data before fitting SVMs because distance and dot-product based methods are sensitive to feature scale.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Linear vs nonlinear</h3>
+      <p>The notebook compares <code>kernel="linear"</code>, <code>kernel="poly"</code>, and <code>kernel="rbf"</code>. The lecture explains that nonlinear SVMs work by mapping data to a space where linear separation is easier.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Kernel trick</h3>
+      <p>The lecture's key computational idea is that you can work with dot products in the original space while implicitly representing a higher-dimensional feature map.</p>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Polynomial kernel</h3>
+      <p>\(K(x,y) = (x \cdot y + 1)^p\). Useful when interactions of bounded degree are meaningful.</p>
+    </div>
+    <div class="metric-card">
+      <h3>RBF kernel</h3>
+      <p>\(K(x,y)=\exp(-\|x-y\|^2 / 2\sigma^2)\). Smooth nonlinear boundary; the notebook explores its behaviour via <code>gamma</code>.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Gamma</h3>
+      <p>Controls the width of the RBF influence region. Small <code>gamma</code> gives smoother boundaries; large <code>gamma</code> creates more local, wiggly boundaries.</p>
+    </div>
+    <div class="metric-card">
+      <h3>LinearSVC note</h3>
+      <p>The notebook recommends trying a linear kernel first and notes that <code>LinearSVC</code> is often faster than <code>SVC(kernel="linear")</code> on large datasets.</p>
+    </div>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
+
+cancer = load_breast_cancer()
+X_train, X_test, y_train, y_test = train_test_split(
+    cancer.data, cancer.target, stratify=cancer.target, random_state=42
+)
+
+scaler = MinMaxScaler().fit(X_train)
+X_train_norm = scaler.transform(X_train)
+X_test_norm = scaler.transform(X_test)</code></pre>
+
+  <div class="concept-box">
+    <p><strong>Notebook tuning intuition on moons:</strong> the four-way plot over \((\gamma, C)\) is there to make regularisation visible. Smaller <code>gamma</code> means broader influence and smoother boundaries; larger <code>gamma</code> means more local influence. Smaller <code>C</code> means a more restricted model; larger <code>C</code> bends harder to fit difficult points.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Large gamma makes the RBF kernel more local, so the decision boundary can become more irregular and overfit individual training points.">
+    <div class="qc-h">Quick check - Gamma</div>
+    <div class="qc-question">What usually happens when you increase <code>gamma</code> a lot in an RBF SVM?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The boundary necessarily becomes linear</div>
+      <div class="qc-opt" data-idx="1">The boundary becomes more local and potentially more irregular</div>
+      <div class="qc-opt" data-idx="2">The training data no longer affects the classifier</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-pca" class="section" data-track="pca">
+  <h2 class="section-title">PCA: lower-dimensional structure without labels</h2>
+  <p class="section-lead">The dimensionality-reduction lecture begins with a practical problem: high-dimensional data is slow, sparse, noisy, and hard to interpret. PCA addresses this by replacing the original axes with new orthogonal axes ordered by captured variance.</p>
+
+  <div class="def-box">
+    <div class="def-label">Principal components</div>
+    <p style="margin:0; color:var(--text-muted);">PCA finds orthogonal axes \(Z_1, Z_2, \dots\) such that \(Z_1\) captures the largest variance, \(Z_2\) the next largest, and so on. The data is then projected onto the leading components.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why it is unsupervised</h3>
+      <p>PCA uses only the feature matrix \(X\). The lecture explicitly states that it does not use class labels, which is why PCA is an unsupervised method.</p>
+    </div>
+    <div class="col-card">
+      <h3>Choosing how many dimensions</h3>
+      <p>The lecture gives two strategies: preserve a chosen percentage of variance, or inspect the explained-variance curve for an elbow.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Lecture example: iris</h3>
+      <p>The PCA-on-iris slide reports that PC1 captures about 92.5% of the variance and PC2 about 5.3%, so a 2D representation preserves almost all variance.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Notebook example: breast cancer</h3>
+      <p>The notebook reduces 30 features down to 2 components and then compares 1-NN on the original and reduced data. It reports roughly 0.94 vs 0.92 accuracy, showing that a tiny representation can still remain useful.</p>
+    </div>
+    <div class="glance-card">
+      <h3>95% variance result</h3>
+      <p>On the breast-cancer notebook example, preserving 95% of the variance requires 9 principal components.</p>
+    </div>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.decomposition import PCA
+from sklearn.neighbors import KNeighborsClassifier
+
+pca = PCA(n_components=2).fit(X_train_norm)
+X_train_pca = pca.transform(X_train_norm)
+X_test_pca = pca.transform(X_test_norm)
+
+knn = KNeighborsClassifier(n_neighbors=1)
+knn.fit(X_train_pca, y_train)</code></pre>
+
+  <div class="insight-box">
+    <strong>SVD connection from the lecture:</strong> PCA can be found through Singular Value Decomposition \(X = U \Lambda V^\top\). The lecture uses this to explain that the columns of \(V\) define the new principal axes and the singular values indicate how much variance each axis captures.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Compression</h3>
+      <p>The lecture and notebook both treat PCA as a compression tool. On MNIST, the slides note that 784 original features can be reduced to about 153 while preserving 95% variance.</p>
+    </div>
+    <div class="col-card">
+      <h3>Feature extraction</h3>
+      <p>The lecture also frames PCA as representation learning: if the projected features separate classes better or more compactly, a downstream classifier may become simpler or more accurate.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Train-only fit rule still applies:</strong> just like scaling, PCA must be <code>fit</code> on the training data only and then <code>transform</code> both train and test with the learned projection.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="PCA is unsupervised because it learns directions from feature variance in X alone and does not consult class labels y.">
+    <div class="qc-h">Quick check - PCA</div>
+    <div class="qc-question">Why is PCA considered unsupervised in the Week 6 materials?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because it can only be applied after a classifier is trained</div>
+      <div class="qc-opt" data-idx="1">Because it does not reduce dimensionality unless labels are provided</div>
+      <div class="qc-opt" data-idx="2">Because it uses feature variance only and does not use class labels</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Study questions to answer before moving on</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 1</div>
+      <div class="problem-tag warm-up">SVM intuition</div>
+    </div>
+    <div class="problem-body">
+      <p>Why does a large-margin separator usually generalise better than a tiny-margin separator?</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w6-margin">Show Solution</button>
+      <div class="solution-content" id="sol-w6-margin">
+        <p>The lecture's rationale is robustness: if the margin is small, slight perturbations of the data or decision boundary can flip classifications. A larger margin leaves more room for perturbation and is therefore less sensitive to noise and overfitting.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 2</div>
+      <div class="problem-tag problem-solving">PCA workflow</div>
+    </div>
+    <div class="problem-body">
+      <p>Why must PCA be fitted on the training set only, even though it is unsupervised?</p>
+      <p style="color:var(--text-muted);">Because the learned projection still depends on the distribution of the data. Fitting PCA on the full dataset would let information from the test distribution leak into preprocessing, just like fitting a scaler on the full dataset.</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 3</div>
+      <div class="problem-tag advanced">When to try what</div>
+    </div>
+    <div class="problem-body">
+      <p>The notebook's practical advice is: start with a linear SVM, then try RBF if needed; for PCA, either target a variance threshold such as 95% or inspect the elbow of the explained-variance curve rather than choosing dimensions arbitrarily.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=6" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=6&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [{left:"\\[", right:"\\]", display:true},{left:"\\(", right:"\\)", display:false}],
+        throwOnError: false
+      });
+    } else setTimeout(tryRender, 200);
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

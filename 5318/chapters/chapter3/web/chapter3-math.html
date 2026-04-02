@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar { position: sticky; top: 0; z-index: 50; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.back-bar a { color: var(--accent); text-decoration: none; font-weight: 600; }
+#mainContent { max-width: 860px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin: 1rem 0; }
+.qc-opt { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; margin: 0.25rem 0; }
+.qc-opt.chosen { pointer-events: none; } .qc-opt.right { border-color: var(--green); background: var(--green-bg); } .qc-opt.not-right { border-color: var(--red); background: var(--red-bg); opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; } .qc-feedback.show { display: block; padding: 0.75rem; font-size: 0.85rem; } .qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); } .qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter3-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 3 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Least-squares fitting, residuals, \(R^2\), logistic probabilities, and the regularisation terms that control overfitting in Ridge and Lasso.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">SSE</span><strong>Regression fit</strong><span>OLS chooses the line or hyperplane that minimizes squared residuals.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">R2</span><strong>Goodness of fit</strong><span>\(R^2\) compares the model against the baseline of predicting the mean.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">sig</span><strong>Logistic link</strong><span>\(\sigma(z)\) converts a linear score into a probability in \([0,1]\).</span></div>
+      <div class="hero-card"><span class="hero-card-icon">reg</span><strong>Regularisation</strong><span>Ridge shrinks with \(L2\); Lasso can drive coefficients exactly to zero.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-ols" data-track="ols">
+  <h2 class="section-title">Linear regression: objective, residuals, and \(R^2\)</h2>
+  <p class="section-lead">The lecture frames regression as fitting a straight line or hyperplane that predicts a numeric target. The mathematics is about choosing coefficients that make prediction errors as small as possible in squared form.</p>
+  <div class="theorem-box">
+    <h3>Core regression formulas</h3>
+    <p>Prediction: \(\hat{y}=b_0+b_1x\) in the simple one-feature case, or \(\hat{y}=Xw+b\) in matrix form.</p>
+    <p style="margin-top:0.7rem;">Residual for example \(i\): \(\varepsilon_i=y_i-\hat{y}_i\)</p>
+    <p style="margin-top:0.7rem;">Sum of squared errors: \[\operatorname{SSE}=\sum_{i=1}^n(y_i-\hat{y}_i)^2\]</p>
+    <p style="margin-top:0.7rem;">Total squared variation: \[\operatorname{SST}=\sum_{i=1}^n(y_i-\bar{y})^2\]</p>
+    <p style="margin-top:0.7rem;">Coefficient of determination: \[R^2=1-\frac{\operatorname{SSE}}{\operatorname{SST}}\]</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Matrix view</div>
+    <p>Ordinary least squares solves \(\min_w \lVert Xw-y \rVert^2\). When \(X^\top X\) is invertible, the normal-equation solution is \[w=(X^\top X)^{-1}X^\top y.\]</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: fitting a simple regression line</h2>
+  <p>Suppose the training data are \((x,y)=(1,3),(2,5),(3,7)\). The points lie exactly on a line, so this is a clean place to see the formulas.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Find slope and intercept</h3>
+      <p>The means are \(\bar{x}=2\) and \(\bar{y}=5\).</p>
+      <p style="margin-top:0.7rem;">\[
+        b_1=\frac{\sum (x_i-\bar{x})(y_i-\bar{y})}{\sum (x_i-\bar{x})^2}
+        =\frac{(-1)(-2)+0\cdot0+(1)(2)}{(-1)^2+0^2+1^2}
+        =\frac{4}{2}=2
+      \]</p>
+      <p style="margin-top:0.8rem;">\[
+        b_0=\bar{y}-b_1\bar{x}=5-2\cdot2=1
+      \]</p>
+      <p style="margin-top:0.8rem;">So the fitted line is \(\hat{y}=1+2x\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Prediction, residual, and \(R^2\)</h3>
+      <p>At \(x=4\), the prediction is \(\hat{y}=1+2(4)=9\).</p>
+      <p style="margin-top:0.8rem;">For the training points, predictions are exactly \(3,5,7\), so every residual is \(0\). Therefore \(\operatorname{SSE}=0\).</p>
+      <p style="margin-top:0.8rem;">Because \(R^2=1-\operatorname{SSE}/\operatorname{SST}\), we get \(R^2=1\): a perfect fit.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-logit" data-track="logit">
+  <h2 class="section-title">Logistic regression: from linear score to class probability</h2>
+  <p>Logistic regression still builds a linear score, but instead of using that score directly as a numeric prediction, it passes it through a sigmoid curve so the output can be interpreted as a probability.</p>
+  <div class="theorem-box">
+    <h3>Core logistic formulas</h3>
+    <p>Linear score: \(z=w^\top x+b\)</p>
+    <p style="margin-top:0.7rem;">Sigmoid: \[\sigma(z)=\frac{1}{1+e^{-z}}\]</p>
+    <p style="margin-top:0.7rem;">Probability model: \(P(y=1\mid x)=\sigma(w^\top x+b)\)</p>
+    <p style="margin-top:0.7rem;">Logit form: \[\log\frac{p}{1-p}=w^\top x+b\]</p>
+    <p style="margin-top:0.7rem; color:var(--text-muted);">Thresholding at \(0.5\) is equivalent to asking whether \(w^\top x+b\) is positive.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: logistic probability and regularisation effect</h2>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Probability from a linear score</h3>
+      <p>Take a one-feature model with \(w=0.8\), \(b=-1\), and a new input \(x=3\).</p>
+      <p style="margin-top:0.7rem;">\[
+        z=0.8(3)-1=1.4
+      \]</p>
+      <p style="margin-top:0.7rem;">\[
+        P(y=1\mid x)=\sigma(1.4)=\frac{1}{1+e^{-1.4}}\approx 0.80
+      \]</p>
+      <p style="margin-top:0.8rem;">With a \(0.5\) threshold, this example is classified as the positive class.</p>
+    </div>
+    <div class="col-card">
+      <h3>How Ridge and Lasso change the objective</h3>
+      <p>Suppose \(w=(3,-1,0.5)\) and \(\alpha=0.2\).</p>
+      <p style="margin-top:0.7rem;">Ridge penalty: \[
+        \alpha \sum_j w_j^2 = 0.2(9+1+0.25)=2.05
+      \]</p>
+      <p style="margin-top:0.7rem;">Lasso penalty: \[
+        \alpha \sum_j |w_j| = 0.2(3+1+0.5)=0.9
+      \]</p>
+      <p style="margin-top:0.8rem;">The penalties measure complexity differently. Ridge spreads shrinkage smoothly across all weights; Lasso is more willing to set some weights exactly to zero.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-regularisation" data-track="regularisation">
+  <h2 class="section-title">Overfitting, Ridge, and Lasso</h2>
+  <p>The lecture and notebook both show that adding too many effective degrees of freedom can make training performance look great while test performance collapses. Regularisation deliberately makes the model simpler to improve generalisation.</p>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Ridge</h3>
+      <p>\[
+        \frac{1}{n}\sum_{i=1}^n(\hat{y}_i-y_i)^2 + \alpha \sum_{j=1}^m w_j^2
+      \]
+      Penalises large weights with an \(L2\) term.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Lasso</h3>
+      <p>\[
+        \frac{1}{n}\sum_{i=1}^n(\hat{y}_i-y_i)^2 + \alpha \sum_{j=1}^m |w_j|
+      \]
+      Uses an \(L1\) penalty, so sparse solutions are common.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Interpretation</h3>
+      <p>Higher \(\alpha\) means stronger restriction in Ridge/Lasso. For logistic regression, the tutorial parameter is \(C\), where smaller \(C\) means stronger regularisation.</p>
+    </div>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="Lasso uses an L1 penalty and can push some coefficients exactly to zero, which is why it is often described as performing feature selection." data-explanation-zh="Lasso 使用 L1 惩罚，并且可以把一些系数压到精确的 0，所以常被看作具有特征选择效果。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Which linear-model penalty is most associated with sparse coefficients?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">Lasso (L1)</div><div class="qc-opt" data-idx="1">Ridge (L2)</div><div class="qc-opt" data-idx="2">Neither; both always keep all coefficients non-zero</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=3" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

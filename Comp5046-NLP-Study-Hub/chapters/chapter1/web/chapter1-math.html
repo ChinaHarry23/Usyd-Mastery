@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Lecture 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../shared/chat-panel.css">
+<style>
+.back-bar { position:sticky; top:0; z-index:50; background:var(--bg-sidebar); border-bottom:1px solid var(--border); padding:0.75rem 1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.back-bar a { color:var(--accent); text-decoration:none; font-size:0.88rem; font-weight:600; }
+#mainContent { margin-left:0; max-width:820px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+.math-section { margin-bottom:2.5rem; }
+.math-section h2 { font-size:1.35rem; margin-bottom:1rem; }
+.math-section h3 { font-size:1.05rem; margin:1.25rem 0 0.5rem; color:var(--accent); }
+.formula-block { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; margin:0.75rem 0; overflow-x:auto; }
+.quick-check { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; margin-top:1rem; }
+.quick-check h4 { font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem; }
+.qc-opt { margin:0.35rem 0.35rem 0 0; padding:0.35rem 0.75rem; font-size:0.82rem; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-family:var(--font); }
+.qc-opt:hover { border-color:var(--accent); color:var(--accent); }
+.def-row { display:flex; gap:0.75rem; margin:0.4rem 0; flex-wrap:wrap; }
+.def-row .sym { flex-shrink:0; min-width:6rem; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter1-study.html">&larr; Study Guide</a>
+  <a href="chapter1-mindmap.html">Mind Map</a>
+  <a href="../../../index.html">Home</a>
+</div>
+
+<main id="mainContent">
+
+<h1 style="font-size:1.6rem; margin-bottom:0.25rem;">Math Foundations — Lecture 1</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">Notation, sets, vectors, TF–IDF, BM25, cosine, SVD, softmax, cross-entropy.</p>
+
+<!-- ========== Sets & Notation ========== -->
+<section class="math-section" id="sec-sets">
+  <h2>Sets &amp; notation</h2>
+  <div class="def-row"><span class="sym">\(V\)</span><span>Vocabulary — finite set of word types, \(|V|\) = vocab size.</span></div>
+  <div class="def-row"><span class="sym">\(w_1,\dots,w_N\)</span><span>A corpus or document of \(N\) tokens, each \(w_i\in V\).</span></div>
+  <div class="def-row"><span class="sym">\(\text{count}(t,d)\)</span><span>How many times term \(t\) appears in document \(d\).</span></div>
+  <div class="def-row"><span class="sym">\(\text{df}(t)\)</span><span>Document frequency — number of documents containing \(t\).</span></div>
+  <div class="def-row"><span class="sym">\(N_\text{docs}\)</span><span>Total number of documents in the collection.</span></div>
+</section>
+
+<!-- ========== One-hot & BoW ========== -->
+<section class="math-section" id="sec-onehot">
+  <h2>One-hot &amp; bag-of-words vectors</h2>
+  <p><strong>One-hot:</strong> word \(w\) at index \(j\) in \(V\) → vector \(\mathbf{e}_w\in\{0,1\}^{|V|}\) with a single 1 at position \(j\).</p>
+  <div class="formula-block">
+    \[\mathbf{e}_w[i] = \begin{cases}1 & i=j \\ 0 & \text{otherwise}\end{cases}\]
+  </div>
+  <p><strong>BoW document vector</strong> (count variant): \(\mathbf{d}[j]=\text{count}(w_j,d)\). Binary variant uses OR instead of sum.</p>
+  <p style="margin-top:0.5rem;">Orthogonality: \(\mathbf{e}_a\cdot\mathbf{e}_b=0\) for \(a\neq b\) — synonyms have zero overlap.</p>
+
+  <div class="quick-check" id="qc-onehot" data-answer="1" data-explanation="The BoW vector has one entry per vocabulary word. Only the 120 unique words present in the document get non-zero counts; the other 49,880 entries remain zero.">
+    <div class="qc-question">Quick Check: If \(|V|=50{,}000\) and a document has 120 unique words, how many entries are non-zero in the BoW vector?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">50,000</div>
+      <div class="qc-opt" data-idx="1">120</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== TF-IDF ========== -->
+<section class="math-section" id="sec-tfidf">
+  <h2>TF–IDF</h2>
+  <p>Raw counts over-weight frequent but uninformative terms (e.g. <em>the</em>). TF–IDF re-weights:</p>
+
+  <h3>Term frequency (log-scaled)</h3>
+  <div class="formula-block">
+    \[\mathrm{tf}_{t,d} = \begin{cases}1 + \log_{10}\mathrm{count}(t,d) & \mathrm{count}(t,d)>0\\0 & \text{otherwise}\end{cases}\]
+  </div>
+
+  <h3>Inverse document frequency</h3>
+  <div class="formula-block">
+    \[\mathrm{idf}_t = \log_{10}\frac{N_\text{docs}}{\mathrm{df}(t)}\]
+  </div>
+  <p>If \(t\) appears in every document, \(\mathrm{idf}_t=\log_{10}1=0\) — term has no discriminative power.</p>
+
+  <h3>Combined</h3>
+  <div class="formula-block">
+    \[\mathrm{tf\text{-}idf}_{t,d} = \mathrm{tf}_{t,d}\times\mathrm{idf}_t\]
+  </div>
+
+  <div class="quick-check" id="qc-tfidf" data-answer="0" data-explanation="Log-scaled TF is 1 + log₁₀(count). With count = 1000, that gives 1 + log₁₀(1000) = 1 + 3 = 4.">
+    <div class="qc-question">Quick Check: A term appears 1000 times in doc \(d\). What is its log-scaled tf?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(1+\log_{10}1000=4\)</div>
+      <div class="qc-opt" data-idx="1">\(\log_{10}1000=3\)</div>
+      <div class="qc-opt" data-idx="2">\(1000\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== BM25 ========== -->
+<section class="math-section" id="sec-bm25">
+  <h2>BM25 (Okapi)</h2>
+  <p>Information retrieval scoring; same spirit as TF–IDF with saturation and length normalisation.</p>
+  <div class="formula-block">
+    \[\mathrm{BM25}(q,d)=\sum_{t\in q}\underbrace{\log\frac{N_\text{docs}-\mathrm{df}(t)+0.5}{\mathrm{df}(t)+0.5}}_{\text{IDF-like}}\;\cdot\;\frac{\mathrm{count}(t,d)\,(a+1)}{\mathrm{count}(t,d)+a\!\left(1-b+b\,\frac{|d|}{L_\text{avg}}\right)}\]
+  </div>
+  <div class="def-row"><span class="sym">\(a\in[0.1,4]\)</span><span>Controls TF saturation (higher → slower saturation).</span></div>
+  <div class="def-row"><span class="sym">\(b\in[0.1,1]\)</span><span>Controls length normalisation (\(b=0\) → ignore doc length).</span></div>
+  <div class="def-row"><span class="sym">\(L_\text{avg}\)</span><span>Average document length in the collection.</span></div>
+</section>
+
+<!-- ========== Cosine similarity ========== -->
+<section class="math-section" id="sec-cosine">
+  <h2>Cosine similarity</h2>
+  <p>Dot product favours longer vectors; cosine normalises by magnitude:</p>
+  <div class="formula-block">
+    \[\cos(\mathbf{u},\mathbf{v})=\frac{\mathbf{u}\cdot\mathbf{v}}{\|\mathbf{u}\|\;\|\mathbf{v}\|}=\frac{\sum_i u_i v_i}{\sqrt{\sum_i u_i^2}\;\sqrt{\sum_i v_i^2}}\]
+  </div>
+  <p>Range \([-1,1]\); 1 = same direction; 0 = orthogonal; −1 = opposite.</p>
+
+  <h3>Analogy arithmetic</h3>
+  <p>Check: \(\mathbf{v}_{w_1}-\mathbf{v}_{w_2}+\mathbf{v}_{w_3}\approx\mathbf{v}_{w_4}\) via nearest-neighbour in cosine. Example: Paris − France + Italy ≈ Rome.</p>
+
+  <div class="quick-check" id="qc-cosine" data-answer="0" data-explanation="For unit vectors the denominator ‖u‖·‖v‖ = 1·1 = 1, so cosine similarity equals the dot product directly.">
+    <div class="qc-question">Quick Check: Two unit vectors have dot product 0.95. Is their cosine similarity 0.95?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Yes — unit vectors already normalised</div>
+      <div class="qc-opt" data-idx="1">No — need to divide by norms first</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== SVD ========== -->
+<section class="math-section" id="sec-svd">
+  <h2>SVD for distributional vectors</h2>
+  <p>Co-occurrence matrix \(M\in\mathbb{R}^{|V|\times|V|}\) (or \(|V|\times C\) for context features). Truncated SVD:</p>
+  <div class="formula-block">
+    \[M \approx U_k \Sigma_k V_k^\top\]
+  </div>
+  <p>Keep top-\(k\) singular values → each word gets a dense \(k\)-dimensional vector (row of \(U_k\Sigma_k\)). Captures latent semantic structure (Schütze 1993, LSA).</p>
+</section>
+
+<!-- ========== Softmax & cross-entropy ========== -->
+<section class="math-section" id="sec-softmax">
+  <h2>Softmax &amp; cross-entropy (preview)</h2>
+  <p>Maps raw scores (logits) \(z_1,\dots,z_C\) to a probability distribution over \(C\) classes:</p>
+  <div class="formula-block">
+    \[\mathrm{softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{C}e^{z_j}}\]
+  </div>
+  <p>Always positive; sums to 1. Sensitive to scale of \(z\).</p>
+
+  <h3>Cross-entropy loss</h3>
+  <p>Measures distance between predicted distribution \(\hat{\mathbf{p}}\) and one-hot target \(\mathbf{y}\):</p>
+  <div class="formula-block">
+    \[\mathcal{L}_\text{CE}=-\sum_c y_c\log\hat p_c = -\log\hat p_{y^*}\]
+  </div>
+  <p>where \(y^*\) is the true class. Minimising CE = maximising log-probability of the correct label.</p>
+
+  <div class="quick-check" id="qc-softmax" data-answer="0" data-explanation="Cross-entropy is −log(p) for the correct class. If p = 1.0, then −log(1) = 0 — perfect prediction means zero loss.">
+    <div class="qc-question">Quick Check: If the model assigns probability 1.0 to the correct class, what is the cross-entropy loss?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(-\log 1 = 0\)</div>
+      <div class="qc-opt" data-idx="1">\(1\)</div>
+      <div class="qc-opt" data-idx="2">\(\infty\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== Dense embeddings ========== -->
+<section class="math-section" id="sec-embed">
+  <h2>Dense embeddings</h2>
+  <p>Map each word to a learned vector \(\mathbf{e}_w\in\mathbb{R}^d\) with \(d\ll|V|\). Equivalent to a lookup in an embedding matrix \(E\in\mathbb{R}^{|V|\times d}\):</p>
+  <div class="formula-block">
+    \[\mathbf{e}_w = E[w,:] = E^\top \mathbf{1}_w\]
+  </div>
+  <p>Properties (animacy, part-of-speech, etc.) encoded as directions, axes, or regions in embedding space — not always a single dimension.</p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, { delimiters: [{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}], throwOnError: false });
+  }
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<script src="../../../shared/chat-panel.js"></script>
+</body>
+</html>

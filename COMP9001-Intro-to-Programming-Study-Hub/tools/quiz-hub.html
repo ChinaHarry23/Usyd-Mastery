@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Hub · COMP9001</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/study.css">
+<script defer src="../data/site-data.js"></script>
+<script defer src="../data/quiz-data-extract.js"></script>
+<script defer src="../shared/progress-tracker.js"></script>
+</head>
+<body>
+  <div class="site-shell">
+    <nav class="top-nav">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">C9</span>
+        <span class="brand-copy"><strong>Quiz Hub</strong><span>Starter self-check questions</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html">Home</a>
+        <a href="progress-dashboard.html">Progress</a>
+      </div>
+    </nav>
+    <section class="page-hero hero-card">
+      <span class="eyebrow">Shared tool</span>
+      <h1>Quiz Hub</h1>
+      <p>This is a small but working quiz scaffold. As the chapter notes grow, you can keep adding richer questions to <code>data/quiz-data-extract.js</code>.</p>
+    </section>
+    <section class="page-grid">
+      <aside class="stack">
+        <article class="panel">
+          <h3>Chapter filter</h3>
+          <div class="filter-row">
+            <select id="quizFilter">
+              <option value="all">All quiz questions</option>
+              <option value="1">Chapter 1</option>
+              <option value="2">Chapter 2</option>
+              <option value="3">Chapter 3</option>
+              <option value="4">Chapter 4</option>
+              <option value="5">Chapter 5</option>
+            </select>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>Score</h3>
+          <p id="scoreLine" class="muted">0 / 0 answered</p>
+        </article>
+      </aside>
+      <div class="stack" id="quizRoot"></div>
+    </section>
+  </div>
+  <script>
+    window.addEventListener("DOMContentLoaded", function () {
+      var allQuestions = window.COMP9001_QUIZ_DATA || [];
+      var filter = document.getElementById("quizFilter");
+      var root = document.getElementById("quizRoot");
+      var scoreLine = document.getElementById("scoreLine");
+
+      function render() {
+        var value = filter.value;
+        var questions = value === "all"
+          ? allQuestions
+          : allQuestions.filter(function (item) { return String(item.chapter) === value; });
+        var score = { answered: 0, correct: 0 };
+
+        root.innerHTML = "";
+
+        questions.forEach(function (item, index) {
+          var card = document.createElement("article");
+          card.className = "quiz-card";
+          card.innerHTML =
+            '<span class="chapter-number">Chapter ' + item.chapter + '</span>' +
+            "<h3>Question " + (index + 1) + "</h3>" +
+            "<p>" + item.question + "</p>";
+
+          var options = document.createElement("div");
+          options.className = "quiz-options";
+
+          item.options.forEach(function (option, optionIndex) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.textContent = option;
+            button.addEventListener("click", function () {
+              if (button.dataset.done) return;
+              var buttons = options.querySelectorAll("button");
+              buttons.forEach(function (node, idx) {
+                node.dataset.done = "true";
+                if (idx === item.answer) node.classList.add("correct");
+              });
+              if (optionIndex !== item.answer) {
+                button.classList.add("incorrect");
+              } else {
+                score.correct += 1;
+              }
+              score.answered += 1;
+              scoreLine.textContent = score.correct + " correct / " + score.answered + " answered";
+              if (window.COMP9001_PROGRESS) {
+                window.COMP9001_PROGRESS.markQuiz(item.chapter, optionIndex === item.answer ? 1 : 0, 1);
+              }
+              explanation.classList.remove("hidden");
+            });
+            options.appendChild(button);
+          });
+
+          var explanation = document.createElement("p");
+          explanation.className = "muted hidden";
+          explanation.textContent = item.explanation;
+
+          card.appendChild(options);
+          card.appendChild(explanation);
+          root.appendChild(card);
+        });
+
+        if (!questions.length) {
+          root.innerHTML = '<article class="quiz-card"><h3>No quiz items yet</h3><p>Add more questions to the data file as you flesh out the chapter content.</p></article>';
+        }
+
+        scoreLine.textContent = "0 correct / 0 answered";
+      }
+
+      filter.addEventListener("change", render);
+      render();
+    });
+  </script>
+</body>
+</html>

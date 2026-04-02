@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3 - Linear &amp; Logistic Regression</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4C8;</span>
+    <h2 data-i18n="sidebar_h2">Week 3</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-linear" class="nav-link" data-section="sec-linear" data-i18n="nav_linear">Linear regression</a></li>
+    <li><a href="#sec-reg" class="nav-link" data-section="sec-reg" data-i18n="nav_reg">Regularisation</a></li>
+    <li><a href="#sec-logistic" class="nav-link" data-section="sec-logistic" data-i18n="nav_logistic">Logistic regression</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter3-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter3-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=3" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=3" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=3&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 7</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="6">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 3: Linear &amp; Logistic Regression</h1>
+    <p class="hero-subtitle">This chapter moves from memory-based models to parametric models. The lecture explains linear regression, logistic regression, overfitting, and regularisation; the notebook turns that into sklearn workflows on wave data, California housing, and the breast-cancer dataset; the solutions show how Ridge, Lasso, and <code>C</code> tuning change behaviour in practice.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4C9;</span><span>Prediction lines</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F512;</span><span>L1 / L2 penalties</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x03C3;</span><span>Sigmoid probabilities</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F50E;</span><span>Overfitting control</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Wave dataset</span>
+      <span>California housing</span>
+      <span>PolynomialFeatures</span>
+      <span>Breast cancer</span>
+      <span>Ridge / Lasso / LogisticRegression</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter3-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter3-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">Week 3 is one of the most reusable chapters in the unit because the same ideas reappear later: fit on training data, watch train-vs-test behaviour, and tune regularisation instead of assuming the default is right.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What it teaches</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../materials/w3.ipynb">w3.ipynb</a></td><td>Wave-data regression, California housing, extended polynomial features, Ridge, Lasso, and logistic regression in sklearn.</td></tr>
+        <tr><td><a href="../materials/w3-solutions.ipynb">w3-solutions.ipynb</a></td><td>Interpretation of underfitting vs overfitting, alpha sweeps, and why one Lasso setting is especially attractive.</td></tr>
+        <tr><td><a href="../materials/ml3.pdf">ml3.pdf</a></td><td>Lecture concepts: regression lines, \(R^2\), logistic curve, log-odds, overfitting, underfitting, Ridge, and Lasso.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Main distinction</h3>
+      <p><strong>Linear regression</strong> predicts a numeric target. <strong>Logistic regression</strong> predicts a class via a probability in \((0,1)\).</p>
+    </div>
+    <div class="glance-card">
+      <h3>Main danger</h3>
+      <p>When feature space becomes richer, the model can fit the training data too closely and fail badly on new data.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Main cure</h3>
+      <p>Regularisation shrinks or removes coefficients so the fitted model becomes less complex and more likely to generalise.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-linear" class="section" data-track="linear">
+  <h2 class="section-title">Linear regression and what \(R^2\) is telling you</h2>
+  <p class="section-lead">The lecture starts with simple regression: fit a straight line that approximates the relationship between a feature \(x\) and a numeric target \(y\). The notebook extends that idea to multiple features and real datasets.</p>
+
+  <div class="def-box">
+    <div class="def-label">Model form</div>
+    <p style="margin:0; color:var(--text-muted);">For multiple regression the prediction is linear in the features: \(\hat{y} = w^\top x + b\). Training chooses coefficients that minimise squared error on the training set.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Notebook example 1: wave data</h3>
+      <p>The notebook generates a synthetic one-feature dataset with <code>make_wave</code>. It is deliberately simple so you can see what fitting a line means before touching a larger real dataset.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">The sklearn API is minimal: create <code>LinearRegression()</code>, <code>fit(X_train, y_train)</code>, then inspect <code>coef_</code>, <code>intercept_</code>, and <code>score</code>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Notebook example 2: California housing</h3>
+      <p>The real dataset has 20,640 examples, 8 numeric features, and a numeric housing-value target. On this version, train and test \(R^2\) are similar, so plain linear regression does not obviously overfit.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">This matters because later you compare it with the expanded 44-feature version where behaviour changes dramatically.</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Interpret \(R^2\) carefully:</strong> the notebook and lecture both emphasise that a good model has similar train and test performance. On the extended California example, the training \(R^2\) is good while the test \(R^2\) becomes <em>negative</em>, which means the fitted model performs worse on the test set than simply predicting the mean target value.</p>
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Split</h3>
+      <p>Always create separate training and test subsets before fitting.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Fit</h3>
+      <p>Use the training set only to estimate coefficients.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Compare scores</h3>
+      <p>Similar train and test scores suggest stable generalisation; a wide gap suggests overfitting.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <h3>Question the features</h3>
+      <p>Adding more features can help, but it can also create a model that is too flexible.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="A negative test-set R^2 means the fitted model is worse than the baseline that always predicts the mean target value on that test data.">
+    <div class="qc-h">Quick check - \(R^2\)</div>
+    <div class="qc-question">What does a negative \(R^2\) on the test set mean in the Week 3 notebook discussion?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The model is impossible to interpret but still generalises well</div>
+      <div class="qc-opt" data-idx="1">The training set is too small, but performance is otherwise fine</div>
+      <div class="qc-opt" data-idx="2">The model is doing worse than predicting the average target value on the test data</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-reg" class="section" data-track="reg">
+  <h2 class="section-title">Regularisation: Ridge and Lasso</h2>
+  <p class="section-lead">The lecture defines overfitting as high performance on training data but low performance on test data. Regularisation is the direct response: make the model more restrictive so it cannot chase every accidental pattern in the training set.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Ridge (L2)</h3>
+      <p>\[
+      \frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i-y_i)^2 + \alpha\sum_{j=1}^{m} w_j^2
+      \]</p>
+      <p style="color:var(--text-muted);">Ridge keeps all features but shrinks coefficients toward zero. Larger <code>alpha</code> means a more constrained model. Very small <code>alpha</code> makes Ridge behave like plain linear regression.</p>
+    </div>
+    <div class="col-card">
+      <h3>Lasso (L1)</h3>
+      <p>\[
+      \frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i-y_i)^2 + \alpha\sum_{j=1}^{m} |w_j|
+      \]</p>
+      <p style="color:var(--text-muted);">Lasso not only shrinks coefficients, it can set some of them to exactly zero. That makes it a built-in feature-selection mechanism.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>What the notebook actually demonstrates:</strong> the expanded California dataset is created by scaling the original 8 features and then applying <code>PolynomialFeatures(degree=2, include_bias=False)</code>, producing 44 features. Plain linear regression overfits here; regularisation is not optional, it is the point of the exercise.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Underfitting case</h3>
+      <p>The solutions notebook explains that default Lasso with <code>alpha=1</code> is too aggressive: both train and test scores are low and all coefficients can collapse to zero.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Best illustrated tradeoff</h3>
+      <p>The provided solutions single out <code>alpha=0.0001</code> as a strong Lasso setting: it beats Ridge on the test set while using only 19 of the 44 features.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Reading the trend</h3>
+      <p>If <code>alpha</code> becomes too small, the effect of regularisation fades and Lasso starts to behave like overfitting linear regression again.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Takeaway:</strong> a better training score is not automatically good news. On these examples, the better model is the one that gives up a little training performance to improve the held-out score.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Lasso's L1 penalty can drive some coefficients exactly to zero, so some features are dropped from the model.">
+    <div class="qc-h">Quick check - Lasso</div>
+    <div class="qc-question">What makes Lasso especially useful compared with Ridge on the Week 3 feature-expanded dataset?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It always gives the highest training score</div>
+      <div class="qc-opt" data-idx="1">It can eliminate some features entirely by setting coefficients to zero</div>
+      <div class="qc-opt" data-idx="2">It avoids having to tune any hyperparameters</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-logistic" class="section" data-track="logistic">
+  <h2 class="section-title">Logistic regression: linear model, probabilistic output</h2>
+  <p class="section-lead">Despite the name, logistic regression is used for classification. The lecture's key move is to replace the straight regression line with a sigmoid that maps any real-valued score into a probability between 0 and 1.</p>
+
+  <div class="def-box">
+    <div class="def-label">Probability model</div>
+    <p style="margin:0; color:var(--text-muted);">\[
+    p(y=1\mid x)=\sigma(w^\top x+b)=\frac{1}{1+e^{-(w^\top x+b)}}
+    \]
+    The model outputs a probability for class 1. A common classification rule is to predict class 1 when \(p \ge 0.5\).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Log-odds view</div>
+    <p style="margin:0; color:var(--text-muted);">\[
+    \log\frac{p}{1-p} = w^\top x + b
+    \]
+    This is why logistic regression is still linear in the parameters even though the output probability curve is nonlinear.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Notebook dataset</h3>
+      <p>The notebook uses the Breast Cancer Wisconsin dataset: 569 examples, 30 features describing cell nuclei from a biopsy, and a binary target of malignant vs benign.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">The example uses <code>LogisticRegression(solver='liblinear')</code> after a stratified train/test split.</p>
+    </div>
+    <div class="col-card">
+      <h3>Regularisation parameter</h3>
+      <p>For logistic regression the control knob is <code>C</code>, not <code>alpha</code>. The notebook explains that this behaves in the opposite direction to Ridge/Lasso <code>alpha</code>: a <strong>larger</strong> <code>C</code> means weaker regularisation.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">High <code>C</code> focuses more on fitting training data; low <code>C</code> shrinks coefficients more strongly.</p>
+    </div>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_breast_cancer
+
+cancer = load_breast_cancer()
+X_train, X_test, y_train, y_test = train_test_split(
+    cancer.data, cancer.target, stratify=cancer.target, random_state=42
+)
+
+logreg = LogisticRegression(solver="liblinear")
+logreg.fit(X_train, y_train)</code></pre>
+
+  <div class="concept-box">
+    <p><strong>The naming trap:</strong> logistic regression is called "regression" because it models a continuous quantity, the probability or equivalently the log-odds, but the end task in this chapter is classification.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="For logistic regression in sklearn, larger C means weaker regularisation and therefore more emphasis on fitting the training data.">
+    <div class="qc-h">Quick check - \(C\)</div>
+    <div class="qc-question">How does increasing <code>C</code> change logistic regression regularisation in the notebook discussion?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It weakens regularisation and lets the model fit the training data more closely</div>
+      <div class="qc-opt" data-idx="1">It strengthens regularisation in the same direction as increasing Lasso's <code>alpha</code></div>
+      <div class="qc-opt" data-idx="2">It has no effect on the coefficients, only on the test split size</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">How to talk about Week 3 in an exam or assignment</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Pattern 1</div>
+      <div class="problem-tag warm-up">Model diagnosis</div>
+    </div>
+    <div class="problem-body">
+      <p>If training performance is high but test performance collapses, your first interpretation should be <strong>overfitting</strong>. If both are poor, the solutions notebook explicitly labels that as <strong>underfitting</strong>.</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Pattern 2</div>
+      <div class="problem-tag problem-solving">Feature expansion</div>
+    </div>
+    <div class="problem-body">
+      <p>Adding polynomial features can increase model capacity sharply. The Week 3 housing example is there to show that a richer feature space is not automatically better unless you control complexity.</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w3-overfit">Show Solution</button>
+      <div class="solution-content" id="sol-w3-overfit">
+        <p>The extended housing design matrix has 44 features instead of 8. That gives linear regression many more ways to fit idiosyncrasies of the training set. Ridge and Lasso work because they restrict coefficients, making the effective model smoother and less likely to chase noise.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Pattern 3</div>
+      <div class="problem-tag advanced">Naming and interpretation</div>
+    </div>
+    <div class="problem-body">
+      <p><strong>Typical oral explanation:</strong> linear regression predicts a number directly; logistic regression predicts a probability and then thresholds it for classification; both are linear in the features before the final output transformation.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=3" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=3&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [{left:"\\[", right:"\\]", display:true},{left:"\\(", right:"\\)", display:false}],
+        throwOnError: false
+      });
+    } else setTimeout(tryRender, 200);
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

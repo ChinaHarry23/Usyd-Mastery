@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4 - Naive Bayes &amp; Evaluation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F9E0;</span>
+    <h2 data-i18n="sidebar_h2">Week 4</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-nb" class="nav-link" data-section="sec-nb" data-i18n="nav_nb">Naive Bayes</a></li>
+    <li><a href="#sec-metrics" class="nav-link" data-section="sec-metrics" data-i18n="nav_metrics">Metrics</a></li>
+    <li><a href="#sec-cv" class="nav-link" data-section="sec-cv" data-i18n="nav_cv">CV &amp; grid search</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter4-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter4-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=4" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=4" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=4&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 7</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="6">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 4: Naive Bayes &amp; Evaluation</h1>
+    <p class="hero-subtitle">Week 4 combines a probabilistic classifier with the evaluation discipline needed for the rest of the course. The lecture covers Bayes' theorem, Naive Bayes, holdout, cross-validation, leave-one-out, stratification, and grid search; the notebook shows the sklearn workflow on iris; the tutorial solutions make you compute posteriors by hand for both nominal and numeric features.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4DD;</span><span>Bayes rule</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x2696;</span><span>Precision / recall</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F504;</span><span>Cross-validation</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F50D;</span><span>Model selection</span></div>
+    </div>
+    <div class="chip-list">
+      <span>GaussianNB</span>
+      <span>classification_report</span>
+      <span>confusion_matrix</span>
+      <span>LeaveOneOut</span>
+      <span>GridSearchCV</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter4-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter4-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">This is the week where "getting a good score once" stops being enough. The source materials force you to separate model building, parameter tuning, and final reporting.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What to extract from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../materials/w4.ipynb">w4.ipynb</a></td><td>Sklearn usage for GaussianNB, precision/recall/F1, confusion matrices, cross-validation, leave-one-out, and grid search.</td></tr>
+        <tr><td><a href="../materials/w4-solutions.ipynb">w4-solutions.ipynb</a></td><td>Interpretation of per-class metrics, reliability of cross-validation, and the role of the training set inside grid search.</td></tr>
+        <tr><td><a href="../materials/ml4.pdf">ml4.pdf</a></td><td>Bayes theorem, Naive Bayes assumptions, missing values, Gaussian treatment of numeric features, evaluation procedures, and performance measures.</td></tr>
+        <tr><td><a href="../materials/t4.pdf">t4.pdf</a></td><td>Manual Naive Bayes on loan-default data for nominal and numeric attributes.</td></tr>
+        <tr><td><a href="../materials/t4-solutions.pdf">t4-solutions.pdf</a></td><td>Worked posterior calculations, Gaussian likelihood values, class priors, and final decisions.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-nb" class="section" data-track="nb">
+  <h2 class="section-title">Naive Bayes from lecture formula to sklearn model</h2>
+  <p class="section-lead">The lecture introduces probabilistic classifiers as models that estimate class-membership probabilities. Naive Bayes is the simplest prominent example: it is easy to compute because it assumes the features are conditionally independent given the class.</p>
+
+  <div class="def-box">
+    <div class="def-label">Posterior calculation</div>
+    <p style="margin:0; color:var(--text-muted);">\[
+    P(H \mid E) = \frac{P(E \mid H)P(H)}{P(E)}
+    \]
+    In classification terms, \(H\) is a class hypothesis and \(E\) is the observed feature vector.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Naive Bayes assumption</div>
+    <p style="margin:0; color:var(--text-muted);">\[
+    P(E \mid H) = \prod_i P(E_i \mid H)
+    \]
+    The "naive" part is the conditional-independence assumption. The lecture explicitly says this assumption is unrealistic but often still works surprisingly well.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Classifier variants in the notebook</h3>
+      <p>The notebook lists four sklearn variants: <code>GaussianNB</code>, <code>CategoricalNB</code>, <code>MultinomialNB</code>, and <code>BernoulliNB</code>. For Week 4, iris is numeric, so the notebook uses <code>GaussianNB</code>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Numeric features</h3>
+      <p>The lecture handles numeric attributes by assuming a Gaussian likelihood per class. The tutorial's second exercise follows this exactly: estimate class-specific mean and standard deviation, then evaluate the Gaussian density at the new value.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Robustness</h3>
+      <p>The lecture notes that Naive Bayes is robust to isolated noisy points because one unusual example has only limited effect on conditional probabilities.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Weak spot</h3>
+      <p>Correlated features reduce its power because correlation violates the independence assumption. The lecture suggests feature selection as a remedy.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Missing values</h3>
+      <p>The lecture points out that Naive Bayes can deal with missing values naturally by skipping unavailable attribute terms during classification.</p>
+    </div>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+
+iris = load_iris()
+X_train, X_test, y_train, y_test = train_test_split(
+    iris.data, iris.target, stratify=iris.target, random_state=42
+)
+
+nb = GaussianNB()
+nb.fit(X_train, y_train)
+y_pred = nb.predict(X_test)</code></pre>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="Naive Bayes becomes easy to compute because it assumes conditional independence of feature values given the class.">
+    <div class="qc-h">Quick check - Assumption</div>
+    <div class="qc-question">What simplifying assumption is responsible for the "naive" in Naive Bayes?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Features are conditionally independent given the class</div>
+      <div class="qc-opt" data-idx="1">Every class has the same prior probability by definition</div>
+      <div class="qc-opt" data-idx="2">All attributes must be binary</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-metrics" class="section" data-track="metrics">
+  <h2 class="section-title">Beyond accuracy: confusion matrices, precision, recall, and F1</h2>
+  <p class="section-lead">The notebook and lecture both push the same message: accuracy alone can hide important failure modes. You need a confusion matrix and class-sensitive metrics to see where errors go.</p>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Confusion matrix</h3>
+      <p>Rows are true classes and columns are predicted classes. Correct classifications lie on the main diagonal.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Precision</h3>
+      <p>Of the examples predicted as a class, how many were actually that class?</p>
+    </div>
+    <div class="metric-card">
+      <h3>Recall</h3>
+      <p>Of the examples truly in a class, how many did the model recover?</p>
+    </div>
+    <div class="metric-card">
+      <h3>F1 score</h3>
+      <p>The harmonic mean of precision and recall, useful when both matter and class imbalance exists.</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Notebook interpretation for iris:</strong> the solutions notebook emphasises that precision, recall, and F1 are reported per class, plus averages. It also explains how to read a multi-class confusion matrix: for its iris run, 1 example of class 1 was misclassified as class 2 and 2 examples of class 2 were misclassified as class 1.</p>
+  </div>
+
+  <pre class="code-block"><code>from sklearn import metrics
+
+actual = y_test
+predicted = nb.predict(X_test)
+print(metrics.classification_report(actual, predicted))
+print(metrics.confusion_matrix(actual, predicted))</code></pre>
+
+  <div class="callout">
+    <strong>Why this matters:</strong> a model can have high accuracy and still be unusable for a minority class. Later weeks rely on this exact idea when discussing honest model selection and class imbalance.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="In the convention used here, rows are true labels and columns are predicted labels, so the diagonal contains correct predictions.">
+    <div class="qc-h">Quick check - Confusion matrix</div>
+    <div class="qc-question">In the Week 4 notes, where are the correctly classified examples in a confusion matrix?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">In the first row only</div>
+      <div class="qc-opt" data-idx="1">In the last column only</div>
+      <div class="qc-opt" data-idx="2">Along the main diagonal</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-cv" class="section" data-track="cv">
+  <h2 class="section-title">Holdout, cross-validation, leave-one-out, and grid search</h2>
+  <p class="section-lead">The evaluation half of Week 4 is foundational. It tells you which score you are allowed to trust, what the validation loop is doing, and why the test set must remain untouched until the end.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Holdout</h3>
+      <p>Split once into train and test. Easy, but variance can be high because the result depends on a single random split.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Stratification</h3>
+      <p>Preserve class proportions in the splits so rare classes are not accidentally missing from training or test data.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>10-fold CV</h3>
+      <p>The lecture calls stratified 10-fold cross-validation the standard evaluation method for classification in ML.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <h3>LOOCV</h3>
+      <p>Use each example as its own test fold once. Better use of data, but slow because the number of evaluations equals the number of examples.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Validation set logic</div>
+    <p style="margin:0; color:var(--text-muted);">When hyperparameters must be tuned, the lecture explicitly separates <strong>training</strong>, <strong>validation</strong>, and <strong>test</strong>. The test set cannot be used for parameter tuning. Grid search with cross-validation operationalises exactly this idea.</p>
+  </div>
+
+  <pre class="code-block"><code>from sklearn.model_selection import cross_val_score, LeaveOneOut, GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier
+
+scores = cross_val_score(nb, iris.data, iris.target, cv=10)
+
+one_out = LeaveOneOut()
+loo_scores = cross_val_score(nb, iris.data, iris.target, cv=one_out)
+
+param_grid = {"n_neighbors": [1, 3, 5, 11, 15], "p": [1, 2]}
+grid_search = GridSearchCV(KNeighborsClassifier(), param_grid, cv=10, return_train_score=True)
+grid_search.fit(X_train, y_train)</code></pre>
+
+  <div class="insight-box">
+    <strong>Critical distinction from the solutions notebook:</strong> <code>grid_search.best_score_</code> is the mean cross-validation score computed <em>inside the training data</em>. <code>grid_search.score(X_test, y_test)</code> is the final held-out test score of the model retrained on the full training set with the chosen parameters. These are not the same number and they serve different purposes.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="If you tune hyperparameters on the test set, you leak test information into model selection and lose an honest estimate of generalisation.">
+    <div class="qc-h">Quick check - Tuning</div>
+    <div class="qc-question">Why does the Week 4 lecture insist that the test set must not be used for hyperparameter tuning?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because sklearn cannot compute metrics on tuned models</div>
+      <div class="qc-opt" data-idx="1">Because it would leak information and make the final generalisation estimate unreliable</div>
+      <div class="qc-opt" data-idx="2">Because only Naive Bayes forbids tuning</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial calculations worth memorising structurally</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Exercise 1</div>
+      <div class="problem-tag warm-up">Nominal Naive Bayes</div>
+    </div>
+    <div class="problem-body">
+      <p>The new example is <code>home owner = no</code>, <code>marital status = married</code>, <code>annual income = very high</code>. The solutions compute both class posteriors and conclude:</p>
+      <p style="color:var(--text-muted);"><strong>\(P(no \mid E) &gt; P(yes \mid E)\)</strong>, so the prediction is <strong>loan default = no</strong>.</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Exercise 2</div>
+      <div class="problem-tag problem-solving">Gaussian Naive Bayes</div>
+    </div>
+    <div class="problem-body">
+      <p>The same example is revisited with numeric income \(=120\). The solutions first estimate class-specific Gaussian parameters:</p>
+      <ul style="padding-left:1.1rem; color:var(--text-muted); line-height:1.75;">
+        <li>Class yes: \(\mu=99\), \(\sigma=15.57\)</li>
+        <li>Class no: \(\mu=109\), \(\sigma=66.18\)</li>
+      </ul>
+      <p style="color:var(--text-muted);">Then they compute \(f(income=120\mid yes)\) and \(f(income=120\mid no)\), combine them with the nominal-feature probabilities, and again conclude <strong>loan default = no</strong>.</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w4-tutorial">Show Solution</button>
+      <div class="solution-content" id="sol-w4-tutorial">
+        <p>The important study pattern is: separate the data by class, estimate the Gaussian parameters per class, evaluate the density of the new feature value under each class, then multiply by the class prior and any remaining feature-conditionals. You compare posteriors; you do not need to compute the common denominator \(P(E)\) explicitly if you only care about the winning class.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=4" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=4&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [{left:"\\[", right:"\\]", display:true},{left:"\\(", right:"\\)", display:false}],
+        throwOnError: false
+      });
+    } else setTimeout(tryRender, 200);
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

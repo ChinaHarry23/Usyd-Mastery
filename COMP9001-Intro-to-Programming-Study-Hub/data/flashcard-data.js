@@ -1,0 +1,21 @@
+window.COMP9001_FLASHCARDS = [
+  { chapter: 1, prompt: "What is an algorithm?", answer: "A clear sequence of steps for solving a problem." },
+  { chapter: 1, prompt: "What are the three high-level parts of many programs?", answer: "Input, processing, and output." },
+  { chapter: 1, prompt: "How does the lecture define a program?", answer: "A set of instructions for a computer to execute in sequence to perform a certain task." },
+  { chapter: 1, prompt: "Why must instructions be precise and logical?", answer: "Because computers follow instructions literally and repetitive execution only works when the instructions are clear and correct." },
+  { chapter: 1, prompt: "What is source code?", answer: "A text file containing the commands to be executed by the computer, written using the syntax of a programming language." },
+  { chapter: 1, prompt: "What is the main difference between a compiler and an interpreter?", answer: "A compiler translates the whole program before it runs, while an interpreter translates and executes code statement by statement while the program runs." },
+  { chapter: 1, prompt: "What are the three steps to write and run a Python program from the lecture?", answer: "Create a .py file, write code into the file, and run the file." },
+  { chapter: 1, prompt: "What does `pwd` do?", answer: "It shows the current working directory." },
+  { chapter: 1, prompt: "What does `ls` do?", answer: "It lists the contents of the current directory." },
+  { chapter: 1, prompt: "What does `touch hello.py` do?", answer: "It creates a file named hello.py." },
+  { chapter: 1, prompt: "What does `print()` do?", answer: "It is a built-in Python function that outputs text or values." },
+  { chapter: 1, prompt: "What is the Python interpreter useful for?", answer: "It lets you execute Python code immediately in the terminal and see the result right away." },
+  { chapter: 2, prompt: "What does assignment do?", answer: "It stores a value in a variable name." },
+  { chapter: 2, prompt: "How is a string different from a number?", answer: "A string represents text, while a number represents a numeric value used in arithmetic." },
+  { chapter: 3, prompt: "What controls whether an `if` branch runs?", answer: "The branch runs when its condition evaluates to true." },
+  { chapter: 3, prompt: "Why can condition order matter?", answer: "Earlier branches can prevent later ones from ever being checked." },
+  { chapter: 4, prompt: "What should you do first for Chapter 4 in this study hub?", answer: "Review the Lecture 4 PDF and extract its main topic headings before expanding the chapter content further." },
+  { chapter: 5, prompt: "When is a `for` loop usually a good fit?", answer: "When you know the sequence or range you want to iterate over." },
+  { chapter: 5, prompt: "What commonly causes an infinite loop?", answer: "A condition that never becomes false because the loop state is not updated correctly." }
+];
