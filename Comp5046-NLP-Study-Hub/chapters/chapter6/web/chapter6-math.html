@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Lecture 6</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../shared/chat-panel.css">
+<style>
+.back-bar { position:sticky; top:0; z-index:50; background:var(--bg-sidebar); border-bottom:1px solid var(--border); padding:0.75rem 1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.back-bar a { color:var(--accent); text-decoration:none; font-size:0.88rem; font-weight:600; }
+#mainContent { margin-left:0; max-width:820px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+.math-section { margin-bottom:2.5rem; }
+.math-section h2 { font-size:1.35rem; margin-bottom:1rem; }
+.math-section h3 { font-size:1.05rem; margin:1.25rem 0 0.5rem; color:var(--accent); }
+.formula-block { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; margin:0.75rem 0; overflow-x:auto; }
+.quick-check { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; margin-top:1rem; }
+.quick-check h4 { font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem; }
+.qc-opt { margin:0.35rem 0.35rem 0 0; padding:0.35rem 0.75rem; font-size:0.82rem; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-family:var(--font); }
+.qc-opt:hover { border-color:var(--accent); color:var(--accent); }
+.def-row { display:flex; gap:0.75rem; margin:0.4rem 0; flex-wrap:wrap; }
+.def-row .sym { flex-shrink:0; min-width:6rem; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter6-study.html">&larr; Study Guide</a>
+  <a href="chapter6-mindmap.html">Mind Map</a>
+  <a href="../../../index.html">Home</a>
+</div>
+
+<main id="mainContent">
+
+<h1 style="font-size:1.6rem; margin-bottom:0.25rem;">Math Foundations — Lecture 6</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">Attention score functions, self-attention, QKV projections, multi-head, positional encodings, residuals, layer norm, causal mask.</p>
+
+<!-- ========== Attention scores ========== -->
+<section class="math-section" id="sec-attn-scores">
+  <h2>Attention score functions</h2>
+  <p>All attention mechanisms compute a relevance score \(e\) between a query and a key, then softmax over keys.</p>
+
+  <h3>Dot-product</h3>
+  <div class="formula-block">
+    \[e = \mathbf{s}^\top\mathbf{h}\]
+  </div>
+
+  <h3>Bilinear (general)</h3>
+  <div class="formula-block">
+    \[e = \mathbf{s}^\top W\,\mathbf{h}\]
+  </div>
+  <p>Learnable \(W\) allows the model to weight dimensions differently.</p>
+
+  <h3>Additive (Bahdanau)</h3>
+  <div class="formula-block">
+    \[e = \mathbf{b}^\top\tanh(W_1\mathbf{h}+W_2\mathbf{s})\]
+  </div>
+  <p>Projects query and key into a shared space, then scores with a learned vector \(\mathbf{b}\).</p>
+
+  <h3>Scaled dot-product (Vaswani et al.)</h3>
+  <div class="formula-block">
+    \[e = \frac{\mathbf{q}^\top\mathbf{k}}{\sqrt{d_k}}\]
+  </div>
+  <p>For random unit-variance vectors in \(\mathbb{R}^{d_k}\), \(\mathbb{E}[\mathbf{q}^\top\mathbf{k}]=0\) but \(\mathrm{Var}[\mathbf{q}^\top\mathbf{k}]=d_k\). Dividing by \(\sqrt{d_k}\) restores unit variance → softmax stays in a non-saturated regime → healthier gradients.</p>
+
+  <div class="quick-check" id="qc-scale" data-answer="0" data-explanation="Scaled dot-product attention divides by √dₖ. For dₖ=64, that is √64 = 8.">
+    <div class="qc-question">Quick Check: If \(d_k=64\), what is the scaling denominator?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\sqrt{64}=8\)</div>
+      <div class="qc-opt" data-idx="1">\(64\)</div>
+      <div class="qc-opt" data-idx="2">\(\log 64\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== Self-attention ========== -->
+<section class="math-section" id="sec-self-attn">
+  <h2>Self-attention</h2>
+  <p>Every position attends to every other position in the same sequence:</p>
+  <div class="formula-block">
+    \[e_{ij}=\mathbf{x}_i^\top\mathbf{x}_j,\quad \alpha_{ij}=\frac{e^{e_{ij}}}{\sum_k e^{e_{ik}}},\quad \mathbf{o}_i=\sum_j\alpha_{ij}\,\mathbf{x}_j\]
+  </div>
+  <p>Output \(\mathbf{o}_i\) is a weighted average of all input vectors — weights determined by pairwise similarity.</p>
+</section>
+
+<!-- ========== QKV projections ========== -->
+<section class="math-section" id="sec-qkv">
+  <h2>Query, key, value projections</h2>
+  <p>Instead of raw \(\mathbf{x}\), project into three roles:</p>
+  <div class="formula-block">
+    \[\mathbf{q}_i=W^Q\mathbf{x}_i,\quad \mathbf{k}_j=W^K\mathbf{x}_j,\quad \mathbf{v}_j=W^V\mathbf{x}_j\]
+  </div>
+  <div class="formula-block">
+    \[\alpha_{ij}=\mathrm{softmax}_j\!\left(\frac{\mathbf{q}_i^\top\mathbf{k}_j}{\sqrt{d_k}}\right),\qquad \mathbf{t}_i=\sum_j\alpha_{ij}\,\mathbf{v}_j\]
+  </div>
+  <p>In matrix form for all positions simultaneously:</p>
+  <div class="formula-block">
+    \[\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V\]
+  </div>
+  <p>where \(Q,K,V\in\mathbb{R}^{n\times d_k}\) (or \(d_v\) for values).</p>
+</section>
+
+<!-- ========== Multi-head ========== -->
+<section class="math-section" id="sec-multihead">
+  <h2>Multi-head attention</h2>
+  <div class="formula-block">
+    \[\mathrm{head}_h=\mathrm{Attention}(XW_h^Q,\;XW_h^K,\;XW_h^V)\]
+    \[\mathrm{MultiHead}(X)=\mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_H)\,W^O\]
+  </div>
+  <p>\(H\) heads, each with \(d_k=d_\text{model}/H\). Heads can specialise (e.g. one attends to syntax, another to coreference). Output projection \(W^O\in\mathbb{R}^{d_\text{model}\times d_\text{model}}\) mixes them.</p>
+
+  <div class="quick-check" id="qc-mh" data-answer="0" data-explanation="Each head's dimension dₖ = d_model / H = 512 / 8 = 64.">
+    <div class="qc-question">Quick Check: With \(d_\text{model}=512\) and \(H=8\) heads, each head operates in dimension:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(512/8=64\)</div>
+      <div class="qc-opt" data-idx="1">\(512\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== Positional encodings ========== -->
+<section class="math-section" id="sec-pos">
+  <h2>Positional encodings</h2>
+  <p>Self-attention is permutation-invariant. Add position information to inputs:</p>
+
+  <h3>Sinusoidal (original Transformer)</h3>
+  <div class="formula-block">
+    \[\mathrm{PE}(t,2i)=\sin\!\left(\frac{t}{10000^{2i/d}}\right),\quad \mathrm{PE}(t,2i+1)=\cos\!\left(\frac{t}{10000^{2i/d}}\right)\]
+  </div>
+  <p>Different frequencies per dimension; the model can learn to attend to relative positions.</p>
+
+  <h3>Learned positional embeddings</h3>
+  <p>A trainable vector per position index — simple and effective; limited to max seen length.</p>
+
+  <h3>RoPE (rotary)</h3>
+  <p>Rotates query/key pairs by position-dependent angles so that \(\mathbf{q}_m^\top\mathbf{k}_n\) depends only on \(m-n\). Preserves relative distance in cosine similarity.</p>
+</section>
+
+<!-- ========== Causal mask ========== -->
+<section class="math-section" id="sec-mask">
+  <h2>Causal masking</h2>
+  <p>For autoregressive decoding, position \(i\) must not see positions \(j>i\):</p>
+  <div class="formula-block">
+    \[e_{ij}=\begin{cases}\mathbf{q}_i^\top\mathbf{k}_j/\sqrt{d_k}&j\le i\\-\infty&j>i\end{cases}\]
+  </div>
+  <p>After softmax, \(\alpha_{ij}=0\) for future positions. Enables parallel training of all positions while preserving the autoregressive property.</p>
+</section>
+
+<!-- ========== Residual connections ========== -->
+<section class="math-section" id="sec-residual">
+  <h2>Residual connections</h2>
+  <div class="formula-block">
+    \[\mathbf{x}' = \mathbf{x} + \mathrm{SubLayer}(\mathbf{x})\]
+  </div>
+  <p>Gradient flows directly through the addition, avoiding degradation in deep stacks. Also stabilises training by keeping the input "highway" intact.</p>
+</section>
+
+<!-- ========== Layer norm ========== -->
+<section class="math-section" id="sec-layernorm">
+  <h2>Layer normalisation</h2>
+  <div class="formula-block">
+    \[\mathrm{LayerNorm}(\mathbf{x})=\gamma\odot\frac{\mathbf{x}-\mu}{\sigma+\epsilon}+\beta\]
+  </div>
+  <div class="def-row"><span class="sym">\(\mu,\sigma\)</span><span>Mean and std computed over the feature dimension of a single example.</span></div>
+  <div class="def-row"><span class="sym">\(\gamma,\beta\)</span><span>Learned scale and shift (element-wise).</span></div>
+  <p>Normalises activations per token; independent of batch size (unlike batch norm).</p>
+
+  <div class="quick-check" id="qc-ln" data-answer="0" data-explanation="Layer normalisation computes mean and standard deviation over the feature dimension of a single example, unlike batch norm which operates across the batch.">
+    <div class="qc-question">Quick Check: Layer norm computes statistics over:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The feature dimension of one example</div>
+      <div class="qc-opt" data-idx="1">The batch dimension</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== Full encoder block ========== -->
+<section class="math-section" id="sec-enc-block">
+  <h2>Transformer encoder block (summary)</h2>
+  <div class="formula-block">
+    \[\mathbf{a}=\mathrm{LayerNorm}\bigl(\mathbf{x}+\mathrm{MultiHeadAttn}(\mathbf{x})\bigr)\]
+    \[\mathbf{h}=\mathrm{LayerNorm}\bigl(\mathbf{a}+\mathrm{FFN}(\mathbf{a})\bigr)\]
+  </div>
+  <p>where \(\mathrm{FFN}(\mathbf{a})=\mathrm{ReLU}(\mathbf{a}W_1+\mathbf{b}_1)W_2+\mathbf{b}_2\). Stack \(N\) such blocks (e.g. 6 in the original paper).</p>
+</section>
+
+<!-- ========== Cross-attention ========== -->
+<section class="math-section" id="sec-cross">
+  <h2>Cross-attention (decoder)</h2>
+  <p>Decoder block has three sub-layers: masked self-attention, cross-attention, FFN.</p>
+  <div class="formula-block">
+    \[Q=\text{decoder hidden},\quad K=V=\text{encoder output}\]
+  </div>
+  <p>Queries from the decoder, keys and values from the encoder — this replaces the single bottleneck vector of vanilla seq2seq.</p>
+
+  <div class="quick-check" id="qc-cross" data-answer="0" data-explanation="In cross-attention, queries come from the decoder's hidden states while keys and values come from the encoder output, allowing the decoder to attend over the full source sequence.">
+    <div class="qc-question">Quick Check: In cross-attention, where do Q, K, V come from?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Q from decoder; K,V from encoder</div>
+      <div class="qc-opt" data-idx="1">All three from encoder</div>
+      <div class="qc-opt" data-idx="2">All three from decoder</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, { delimiters: [{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}], throwOnError: false });
+  }
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<script src="../../../shared/chat-panel.js"></script>
+</body>
+</html>
