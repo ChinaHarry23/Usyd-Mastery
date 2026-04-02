@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 6 — Transformer Models</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../shared/chat-panel.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x26A1;</span>
+    <h2>Lecture 6</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-motivation" class="nav-link" data-section="sec-motivation">Motivation</a></li>
+    <li><a href="#sec-attn-forms" class="nav-link" data-section="sec-attn-forms">Attention variants</a></li>
+    <li><a href="#sec-self" class="nav-link" data-section="sec-self">Self-attention</a></li>
+    <li><a href="#sec-qkv" class="nav-link" data-section="sec-qkv">Q, K, V</a></li>
+    <li><a href="#sec-pos" class="nav-link" data-section="sec-pos">Position &amp; masking</a></li>
+    <li><a href="#sec-block" class="nav-link" data-section="sec-block">Transformer block</a></li>
+    <li><a href="#sec-decoder" class="nav-link" data-section="sec-decoder">Decoder &amp; cross-attention</a></li>
+    <li><a href="#sec-scaling" class="nav-link" data-section="sec-scaling">Models &amp; scaling</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Lab &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter6-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter6-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=6" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=6" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 11</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 6: Models &mdash; Transformer</h1>
+    <p class="hero-subtitle">Attention · Q/K/V · position &amp; masks · encoder block · decoder cross-attention.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use:</strong> know each score formula’s role · close the page and answer <strong>Recall</strong> lines.</p>
+  </div>
+</section>
+
+<section id="sec-motivation" class="section" data-track="sec-motivation">
+  <p class="section-kicker">Beyond RNN</p>
+  <h2 class="section-title">Why move beyond RNN encoders?</h2>
+  <ul class="kp-list tight">
+    <li>Enc–dec RNNs: information bottleneck in <strong>one vector</strong>; tokens processed strictly sequentially.</li>
+    <li><strong>Attention:</strong> each output step builds context as <strong>weighted sum</strong> of encoder states (or embeddings) → less bottleneck, more parallelism.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What two RNN limits does attention mitigate?</p>
+</section>
+
+<section id="sec-attn-forms" class="section" data-track="sec-attn-forms">
+  <p class="section-kicker">Scores</p>
+  <h2 class="section-title">Forms of attention</h2>
+  <ul class="kp-list tight">
+    <li><strong>Dot-product:</strong> \(e = s^\top h\).</li>
+    <li><strong>Bilinear:</strong> \(e = s^\top W h\).</li>
+    <li><strong>Reduced-rank</strong> factorisations of bilinear.</li>
+    <li><strong>Additive (Bahdanau):</strong> \(e = b^\top \tanh(W_1 h + W_2 s)\).</li>
+    <li><strong>Scaled dot-product:</strong> \(e = q^\top k / \sqrt{d_k}\) — dot magnitudes grow with \(d_k\); scaling keeps softmax from saturating (gradients healthier).</li>
+    <li>View: <strong>key–value</strong> lookup — queries attend to keys; blend values.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why divide by \(\sqrt{d_k}\)?</p>
+</section>
+
+<section id="sec-self" class="section" data-track="sec-self">
+  <p class="section-kicker">All-to-all</p>
+  <h2 class="section-title">Self-attention</h2>
+  <ul class="kp-list tight">
+    <li>Inputs \(\mathbf{x}_i\): scores \(e_{ij} = \mathbf{x}_i^\top \mathbf{x}_j\), softmax over \(j\), then \(\mathbf{o}_i = \sum_j \alpha_{ij} \mathbf{x}_j\).</li>
+    <li>Each position gets a contextual vector from <strong>all</strong> positions.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Self-attention output \(\mathbf{o}_i\) as weighted sum — weights from what?</p>
+</section>
+
+<section id="sec-qkv" class="section" data-track="sec-qkv">
+  <p class="section-kicker">Learned</p>
+  <h2 class="section-title">Query, key, value projections</h2>
+  <ul class="kp-list tight">
+    <li>Learn \(Q, K, V\): \(\mathbf{q}_i = Q\tilde{\mathbf{x}}_i\), \(\mathbf{k}_j = K\tilde{\mathbf{x}}_j\), \(\mathbf{v}_j = V\tilde{\mathbf{x}}_j\).</li>
+    <li>\(\alpha_{ij} = \mathrm{softmax}_j(\mathbf{q}_i^\top \mathbf{k}_j / \sqrt{d_k})\), \(\mathbf{t}_i = \sum_j \alpha_{ij}\mathbf{v}_j\); often + feed-forward.</li>
+    <li><strong>Multi-head:</strong> parallel heads (different subspaces) → concat — heads can specialise (syntax vs entities).</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 440 190" width="440" height="190">
+      <defs><marker id="a6" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Input -->
+      <rect x="180" y="160" width="80" height="24" class="node-box" rx="6"/><text x="220" y="172" class="node-label" style="font-size:10px">Input X</text>
+      <!-- 3 projections -->
+      <rect x="30" y="110" width="60" height="24" class="node-box" rx="6"/><text x="60" y="122" class="node-label" style="font-size:10px">W_Q</text>
+      <rect x="180" y="110" width="60" height="24" class="node-box" rx="6"/><text x="210" y="122" class="node-label" style="font-size:10px">W_K</text>
+      <rect x="340" y="110" width="60" height="24" class="node-box" rx="6"/><text x="370" y="122" class="node-label" style="font-size:10px">W_V</text>
+      <line x1="195" y1="160" x2="60" y2="134" class="arrow-line" marker-end="url(#a6)"/>
+      <line x1="220" y1="160" x2="210" y2="134" class="arrow-line" marker-end="url(#a6)"/>
+      <line x1="245" y1="160" x2="370" y2="134" class="arrow-line" marker-end="url(#a6)"/>
+      <!-- Q K V labels -->
+      <text x="60" y="98" class="node-label" style="fill:var(--accent);font-size:11px;font-weight:700">Q</text>
+      <text x="210" y="98" class="node-label" style="fill:var(--accent);font-size:11px;font-weight:700">K</text>
+      <text x="370" y="98" class="node-label" style="fill:var(--accent);font-size:11px;font-weight:700">V</text>
+      <!-- MatMul QK^T -->
+      <rect x="90" y="60" width="90" height="24" class="node-box-yellow" rx="6"/><text x="135" y="72" class="node-label" style="font-size:9px">QKᵀ / √dₖ</text>
+      <line x1="60" y1="98" x2="115" y2="84" class="arrow-line" marker-end="url(#a6)"/>
+      <line x1="210" y1="98" x2="160" y2="84" class="arrow-line" marker-end="url(#a6)"/>
+      <!-- Softmax -->
+      <rect x="110" y="24" width="60" height="22" class="node-box-green" rx="6"/><text x="140" y="35" class="node-label" style="font-size:10px">softmax</text>
+      <line x1="135" y1="60" x2="138" y2="46" class="arrow-line" marker-end="url(#a6)"/>
+      <!-- MatMul with V -->
+      <rect x="250" y="24" width="70" height="22" class="node-box-green" rx="6"/><text x="285" y="35" class="node-label" style="font-size:10px">α × V</text>
+      <line x1="170" y1="34" x2="250" y2="34" class="arrow-line" marker-end="url(#a6)"/>
+      <line x1="370" y1="98" x2="300" y2="46" class="arrow-line" marker-end="url(#a6)"/>
+      <!-- Output -->
+      <rect x="360" y="8" width="70" height="22" class="node-box-green" rx="6"/><text x="395" y="19" class="node-label" style="font-size:10px;fill:var(--green)">Output</text>
+      <line x1="320" y1="30" x2="360" y2="20" class="arrow-line" marker-end="url(#a6)"/>
+    </svg>
+    <div class="arch-caption">Scaled dot-product attention: Q, K, V projected from input; scores = QKᵀ/√dₖ → softmax → weighted V.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What do multiple heads buy you vs one head?</p>
+</section>
+
+<section id="sec-pos" class="section" data-track="sec-pos">
+  <p class="section-kicker">Order</p>
+  <h2 class="section-title">Position and causal masking</h2>
+  <ul class="kp-list tight">
+    <li>Without position info, self-attention is <strong>permutation-invariant</strong>.</li>
+    <li>Add <strong>positional encodings</strong> \(\mathbf{p}_i\): learned per index, sinusoidal, or <strong>RoPE</strong> (rotary) — relative cosine similarity for same-distance pairs.</li>
+    <li><strong>Decoder</strong> LM: <strong>causal mask</strong> — \(e_{ij}=-\infty\) for \(j>i\) so position \(i\) cannot attend to future tokens.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 260 260" width="220" height="220">
+      <text x="130" y="16" class="node-label" style="font-size:11px">Causal Attention Mask (4×4)</text>
+      <!-- Column headers -->
+      <text x="80" y="40" class="node-label-sm">t=1</text>
+      <text x="120" y="40" class="node-label-sm">t=2</text>
+      <text x="160" y="40" class="node-label-sm">t=3</text>
+      <text x="200" y="40" class="node-label-sm">t=4</text>
+      <!-- Row headers -->
+      <text x="44" y="72" class="node-label-sm">t=1</text>
+      <text x="44" y="112" class="node-label-sm">t=2</text>
+      <text x="44" y="152" class="node-label-sm">t=3</text>
+      <text x="44" y="192" class="node-label-sm">t=4</text>
+      <!-- Row 1 -->
+      <rect x="64" y="52" width="36" height="36" class="mask-cell mask-ok"/><text x="82" y="70" class="node-label" style="font-size:10px">✓</text>
+      <rect x="104" y="52" width="36" height="36" class="mask-cell mask-blocked"/><text x="122" y="70" class="node-label" style="font-size:9px;fill:var(--red)">−∞</text>
+      <rect x="144" y="52" width="36" height="36" class="mask-cell mask-blocked"/><text x="162" y="70" class="node-label" style="font-size:9px;fill:var(--red)">−∞</text>
+      <rect x="184" y="52" width="36" height="36" class="mask-cell mask-blocked"/><text x="202" y="70" class="node-label" style="font-size:9px;fill:var(--red)">−∞</text>
+      <!-- Row 2 -->
+      <rect x="64" y="92" width="36" height="36" class="mask-cell mask-ok"/><text x="82" y="110" class="node-label" style="font-size:10px">✓</text>
+      <rect x="104" y="92" width="36" height="36" class="mask-cell mask-ok"/><text x="122" y="110" class="node-label" style="font-size:10px">✓</text>
+      <rect x="144" y="92" width="36" height="36" class="mask-cell mask-blocked"/><text x="162" y="110" class="node-label" style="font-size:9px;fill:var(--red)">−∞</text>
+      <rect x="184" y="92" width="36" height="36" class="mask-cell mask-blocked"/><text x="202" y="110" class="node-label" style="font-size:9px;fill:var(--red)">−∞</text>
+      <!-- Row 3 -->
+      <rect x="64" y="132" width="36" height="36" class="mask-cell mask-ok"/><text x="82" y="150" class="node-label" style="font-size:10px">✓</text>
+      <rect x="104" y="132" width="36" height="36" class="mask-cell mask-ok"/><text x="122" y="150" class="node-label" style="font-size:10px">✓</text>
+      <rect x="144" y="132" width="36" height="36" class="mask-cell mask-ok"/><text x="162" y="150" class="node-label" style="font-size:10px">✓</text>
+      <rect x="184" y="132" width="36" height="36" class="mask-cell mask-blocked"/><text x="202" y="150" class="node-label" style="font-size:9px;fill:var(--red)">−∞</text>
+      <!-- Row 4 -->
+      <rect x="64" y="172" width="36" height="36" class="mask-cell mask-ok"/><text x="82" y="190" class="node-label" style="font-size:10px">✓</text>
+      <rect x="104" y="172" width="36" height="36" class="mask-cell mask-ok"/><text x="122" y="190" class="node-label" style="font-size:10px">✓</text>
+      <rect x="144" y="172" width="36" height="36" class="mask-cell mask-ok"/><text x="162" y="190" class="node-label" style="font-size:10px">✓</text>
+      <rect x="184" y="172" width="36" height="36" class="mask-cell mask-ok"/><text x="202" y="190" class="node-label" style="font-size:10px">✓</text>
+    </svg>
+    <div class="arch-caption">Causal mask: position i can attend to j ≤ i (blue ✓) but not future j > i (red −∞). After softmax, future weights become 0.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why causal mask in decoder training?</p>
+</section>
+
+<section id="sec-block" class="section" data-track="sec-block">
+  <p class="section-kicker">Stack</p>
+  <h2 class="section-title">Transformer encoder layer</h2>
+  <ul class="kp-list tight">
+    <li>Self-attention sublayer + position-wise FFN (e.g. ReLU MLP).</li>
+    <li><strong>Residual</strong> connections (add input to sublayer output — smoother gradients).</li>
+    <li><strong>Layer norm:</strong> \(\mathrm{LN}(\mathbf{x})=\gamma\odot\frac{\mathbf{x}-\mu}{\sigma+\epsilon}+\beta\); \(\mu,\sigma\) over feature dim per token; learned \(\gamma,\beta\).</li>
+    <li>Original: \(N\) repeated layers (e.g. 6), multiple heads per layer.</li>
+  </ul>
+  <div class="diagram-flow" style="margin-top:1rem;">
+    <div class="flow-node">\(\mathbf{x}\)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">Self-Attn</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node flow-highlight">+ Residual</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">LayerNorm</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">FFN</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node flow-highlight">+ Residual</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">LayerNorm</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">\(\mathbf{h}\)</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Residual + LN: one purpose each.</p>
+</section>
+
+<section id="sec-decoder" class="section" data-track="sec-decoder">
+  <p class="section-kicker">Seq2seq</p>
+  <h2 class="section-title">Decoder and cross-attention</h2>
+  <ul class="kp-list tight">
+    <li>Decoder: <strong>masked self-attention</strong> (autoregressive) + <strong>cross-attention</strong>.</li>
+    <li>Cross-attention: <strong>queries</strong> from decoder; <strong>keys/values</strong> from encoder output — seq2seq path without single fixed-length bottleneck vector.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 480 200" width="480" height="200">
+      <defs><marker id="a6d" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Encoder stack -->
+      <rect x="10" y="20" width="120" height="160" rx="8" style="fill:rgba(108,140,255,0.06);stroke:var(--accent);stroke-width:1;stroke-dasharray:4 3"/>
+      <text x="70" y="14" class="node-label" style="font-size:10px;fill:var(--accent)">Encoder (×N)</text>
+      <rect x="25" y="40" width="90" height="22" class="node-box" rx="5"/><text x="70" y="51" class="node-label" style="font-size:9px">Self-Attn</text>
+      <rect x="25" y="72" width="90" height="22" class="node-box" rx="5"/><text x="70" y="83" class="node-label" style="font-size:9px">+ Res + LN</text>
+      <rect x="25" y="104" width="90" height="22" class="node-box" rx="5"/><text x="70" y="115" class="node-label" style="font-size:9px">FFN</text>
+      <rect x="25" y="136" width="90" height="22" class="node-box" rx="5"/><text x="70" y="147" class="node-label" style="font-size:9px">+ Res + LN</text>
+      <!-- K,V arrows from encoder -->
+      <line x1="130" y1="85" x2="230" y2="85" class="arrow-line-accent" style="stroke-width:2" marker-end="url(#a6d)"/>
+      <text x="175" y="78" class="node-label-sm" style="fill:var(--accent);font-weight:700">K, V</text>
+      <!-- Decoder stack -->
+      <rect x="230" y="10" width="140" height="180" rx="8" style="fill:rgba(167,139,250,0.06);stroke:var(--purple);stroke-width:1;stroke-dasharray:4 3"/>
+      <text x="300" y="6" class="node-label" style="font-size:10px;fill:var(--purple)">Decoder (×N)</text>
+      <rect x="245" y="28" width="110" height="22" class="node-box-purple" rx="5"/><text x="300" y="39" class="node-label" style="font-size:8.5px">Masked Self-Attn</text>
+      <rect x="245" y="58" width="110" height="22" class="node-box-purple" rx="5"/><text x="300" y="69" class="node-label" style="font-size:9px">+ Res + LN</text>
+      <rect x="245" y="88" width="110" height="22" class="node-box" rx="5" style="stroke:var(--green)"/><text x="300" y="99" class="node-label" style="font-size:9px;fill:var(--green)">Cross-Attn</text>
+      <text x="300" y="119" class="node-label-sm" style="fill:var(--green)">Q from decoder</text>
+      <rect x="245" y="128" width="110" height="22" class="node-box-purple" rx="5"/><text x="300" y="139" class="node-label" style="font-size:9px">FFN + Res + LN</text>
+      <!-- Output -->
+      <rect x="400" y="80" width="65" height="24" class="node-box-green" rx="6"/><text x="432" y="92" class="node-label" style="font-size:10px;fill:var(--green)">Output</text>
+      <line x1="355" y1="139" x2="400" y2="95" class="arrow-line" marker-end="url(#a6d)"/>
+    </svg>
+    <div class="arch-caption">Full Transformer: encoder produces K,V; decoder uses masked self-attention + cross-attention (Q from decoder, K/V from encoder) + FFN. Stacked N times.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Where do Q vs K,V come from in cross-attention?</p>
+</section>
+
+<section id="sec-scaling" class="section" data-track="sec-scaling">
+  <p class="section-kicker">Impact</p>
+  <h2 class="section-title">Landmark models &amp; scaling</h2>
+  <ul class="kp-list tight">
+    <li><strong>BERT</strong> (2018): encoder-only Transformer + WordPiece + masked LM + next-sentence prediction → state-of-the-art on GLUE benchmarks.</li>
+    <li><strong>GPT-1</strong> (2018): decoder-only Transformer + BPE + causal LM → strong zero/few-shot via prompting.</li>
+    <li><strong>Scaling laws</strong> (Kaplan 2020; Chinchilla 2022): performance improves as a power law with compute, data, and parameters — guides cost/quality trade-offs.</li>
+    <li>Training costs range from ~$500 (small) to ~$10M+ (frontier); most university labs cannot train from scratch.</li>
+    <li><strong>Efficiency:</strong> self-attention is \(O(n^2)\) in sequence length; efficient variants (Longformer, LinFormer, FlashAttention) reduce memory or exploit sparsity.</li>
+    <li>Modern models (e.g. Llama): BPE tokenisation, RoPE, carefully mixed data, multiple sizes.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>BERT vs GPT: encoder-only or decoder-only? What do scaling laws predict?</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop 7 &amp; materials</h2>
+  <ul class="kp-list tight">
+    <li><code>chapters/chapter6/Materials/Workshop7/workshop7.ipynb</code> — char or word seq2seq; optional attention on Fr–En pairs (bridge from Lec 5 RNN to attention here).</li>
+  </ul>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="0" data-explanation="Random unit-variance vectors in ℝ^dₖ produce dot products with variance dₖ; dividing by √dₖ keeps the softmax non-saturated.">
+    <div class="qc-question">Why scale dot products by \(\sqrt{d_k}\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Dot products grow with \(d_k\), saturating softmax and shrinking gradients; scaling restores stable variance</div>
+      <div class="qc-opt" data-idx="1">It makes the model faster</div>
+      <div class="qc-opt" data-idx="2">Without scaling, attention weights are always uniform</div>
+      <div class="qc-opt" data-idx="3">The scale factor is a learned parameter</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="Without a causal mask, each position could attend to future tokens, leaking the answer and breaking the left-to-right generation assumption at test time.">
+    <div class="qc-question">Why does the decoder use a causal mask?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">To reduce computation by ignoring some positions</div>
+      <div class="qc-opt" data-idx="1">To handle variable-length sequences</div>
+      <div class="qc-opt" data-idx="2">To prevent attending to future tokens, preserving the autoregressive property</div>
+      <div class="qc-opt" data-idx="3">To mask padding tokens only</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice for this lecture.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=6" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=6&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, { delimiters: [{left:"\\[", right:"\\]", display: true},{left:"\\(", right:"\\)", display: false}], throwOnError: false });
+    } else setTimeout(tryRender, 200);
+  }
+  tryRender();
+});
+</script>
+<script src="chapter6-study.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<script src="../../../shared/chat-panel.js"></script>
+</body>
+</html>
