@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 5</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.back-bar a {
+  color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;
+}
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar {
+  font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed; top: 50px; left: 0; width: var(--sidebar-w);
+  height: calc(100vh - 50px); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem 0; z-index: 40;
+}
+.toc-sidebar .home-link {
+  display: block; padding: 0.5rem 1.5rem 0.75rem; font-size: 0.8rem;
+  color: var(--text-dim); text-decoration: none; transition: color var(--transition);
+}
+.toc-sidebar .home-link:hover { color: var(--accent); }
+.toc-sidebar .sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0 1.5rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
+}
+.toc-sidebar .sidebar-brand .brand-icon { font-size: 1.4rem; }
+.toc-sidebar .sidebar-brand h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block; padding: 0.45rem 1.5rem; color: var(--text-muted); text-decoration: none;
+  font-size: 0.82rem; border-left: 3px solid transparent; transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active {
+  color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); font-weight: 500;
+}
+.toc-group {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); padding: 0.75rem 1.5rem 0.35rem; margin-top: 0.5rem;
+}
+.toc-sidebar .back-to-study {
+  display: block; padding: 0.75rem 1.5rem; margin-top: 0.5rem;
+  border-top: 1px solid var(--border); font-size: 0.82rem;
+  color: var(--accent); text-decoration: none; font-weight: 500;
+}
+.toc-sidebar .back-to-study:hover { background: var(--accent-glow); }
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+.symbol-grid {
+  display: grid; grid-template-columns: auto 1fr 1fr; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 1.5rem 0; font-size: 0.9rem;
+}
+.sym-header {
+  background: var(--bg-card); padding: 0.6rem 1rem; font-weight: 600;
+  color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.04em; border-bottom: 1px solid var(--border);
+}
+.sym-cell {
+  padding: 0.65rem 1rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+}
+.sym-cell:nth-child(3n+1) { background: var(--bg-card); justify-content: center; font-size: 1.1rem; }
+.sym-cell:nth-child(3n+2) { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+
+.def-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.def-box .def-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); margin-bottom: 0.5rem; font-weight: 600;
+}
+.def-box.theorem-box { border-left-color: var(--purple); }
+.def-box.theorem-box .def-label { color: var(--purple); }
+.def-box.example-box { border-left-color: var(--green); }
+.def-box.example-box .def-label { color: var(--green); }
+.def-box.warning-box { border-left-color: var(--yellow); }
+.def-box.warning-box .def-label { color: var(--yellow); }
+
+.quick-check {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback {
+  margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+  font-size: 0.85rem; display: none;
+}
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+@media (max-width: 900px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="back-bar">
+  <div>
+    <a href="chapter5-study.html">&larr; Back to Chapter 5 Study Guide</a>
+    <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+    <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  </div>
+  <span class="page-title-bar">Math Foundations &mdash; Ch.5</span>
+</div>
+
+<!-- ===== TABLE OF CONTENTS SIDEBAR ===== -->
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#x1F4C8;</span>
+    <h2>Ch 5 Math</h2>
+  </div>
+  <div class="toc-group">Graph Foundations</div>
+  <ul>
+    <li><a href="#sec-graph-review" class="toc-link">Graph Theory Review</a></li>
+    <li><a href="#sec-contraction" class="toc-link">Edge Contraction</a></li>
+  </ul>
+  <div class="toc-group">Probability &amp; Recurrences</div>
+  <ul>
+    <li><a href="#sec-conditional-prob" class="toc-link">Conditional Products</a></li>
+    <li><a href="#sec-recurrences" class="toc-link">Recurrence Relations</a></li>
+  </ul>
+  <div class="toc-group">MST Theory</div>
+  <ul>
+    <li><a href="#sec-mst-props" class="toc-link">MST Properties</a></li>
+  </ul>
+  <div class="toc-group">Counting</div>
+  <ul>
+    <li><a href="#sec-counting-math" class="toc-link">Counting Arguments</a></li>
+  </ul>
+  <a href="chapter5-study.html" class="back-to-study">&larr; Chapter 5 Study Guide</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="math-content" id="mainContent">
+
+<!-- HERO -->
+<section class="section hero-section" id="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 — Chapter 5 Supplement</p>
+    <h1>Mathematical Foundations: Graph Algorithms</h1>
+    <p class="hero-subtitle">Graph theory, edge contraction, conditional probability products, recurrence relations, MST properties, and counting arguments behind min-cuts and spanning trees.</p>
+  </div>
+</section>
+
+<!-- ===== GRAPH THEORY REVIEW ===== -->
+<section class="section" id="sec-graph-review">
+  <h2 class="section-title">Graph Theory Review</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Graph &amp; Multigraph</div>
+    <p>A <strong>graph</strong> is a pair \(G = (V, E)\) where \(V\) is a finite set of vertices and \(E\) is a set of edges. A <strong>multigraph</strong> allows <strong>parallel edges</strong> (multiple edges between the same pair of vertices) but <strong>no self-loops</strong>. In a multigraph, \(E\) is a multiset over \(\binom{V}{2}\).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Degree</div>
+    <p>The <strong>degree</strong> of a vertex \(v\), denoted \(\deg(v)\), is the number of edges incident to \(v\). In a multigraph, parallel edges each contribute separately to the degree.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Handshaking Lemma</div>
+    <p>For any graph (or multigraph) \(G = (V, E)\):</p>
+    \[\sum_{v \in V} \deg(v) = 2|E|\]
+    <p>Each edge contributes exactly 2 to the total degree sum — one for each endpoint.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Cut</div>
+    <p>A <strong>cut</strong> in \(G = (V, E)\) is a partition of the vertex set into two non-empty subsets \((A, B)\) with \(A \cup B = V\) and \(A \cap B = \emptyset\). The <strong>cut edges</strong> (or <strong>cut-set</strong>) are:</p>
+    \[\delta(A) = \bigl\{\{u, v\} \in E : u \in A,\; v \in B\bigr\}\]
+    <p>The <strong>size</strong> of the cut is \(|\delta(A)|\). A <strong>minimum cut</strong> (min-cut) is a cut of smallest size.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Connectivity &amp; Spanning Trees</div>
+    <p>A graph is <strong>connected</strong> if there is a path between every pair of vertices. A <strong>spanning tree</strong> of a connected graph \(G = (V, E)\) is a subgraph \(T = (V, E')\) that is connected, acyclic, and spans all vertices. Every spanning tree has exactly:</p>
+    \[|E'| = |V| - 1 \text{ edges}\]
+  </div>
+
+  <div class="concept-box">
+    <h3>Min-Cut &amp; Min-Degree</h3>
+    <p>If \(G\) has a min-cut of size \(k\), then every vertex has degree at least \(k\). (Otherwise, the single vertex on one side would give a smaller cut.) By the handshaking lemma:</p>
+    \[2|E| = \sum_{v \in V} \deg(v) \geq k \cdot |V| \implies |E| \geq \frac{k|V|}{2}\]
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="By the handshaking lemma, Σ deg(v) = 2|E| = 2·10 = 20." data-explanation-zh="根据握手引理，Σ deg(v) = 2|E| = 2·10 = 20。">
+    <div class="qc-question">Quick Check: What is the sum of all vertex degrees in a graph with 10 edges?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(10\)</div>
+      <div class="qc-opt" data-idx="1">\(15\)</div>
+      <div class="qc-opt" data-idx="2">\(20\)</div>
+      <div class="qc-opt" data-idx="3">\(40\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== EDGE CONTRACTION ===== -->
+<section class="section" id="sec-contraction">
+  <h2 class="section-title">Edge Contraction</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Edge Contraction \(G/e\)</div>
+    <p>Given a multigraph \(G = (V, E)\) and an edge \(e = \{u, v\}\), the <strong>contraction</strong> \(G/e\) is the multigraph obtained by:</p>
+    <ol>
+      <li>Merging \(u\) and \(v\) into a single new vertex \(w\).</li>
+      <li>For every edge incident to \(u\) or \(v\) (other than \(e\) itself), reconnecting it to \(w\).</li>
+      <li>Removing self-loops (edges that would connect \(w\) to itself) but <strong>keeping parallel edges</strong>.</li>
+    </ol>
+    <p>The resulting multigraph has \(|V| - 1\) vertices.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Key Property — Cuts Preserved</div>
+    <p>Let \((A, B)\) be a cut in \(G\) such that both endpoints of \(e = \{u, v\}\) lie on the <strong>same side</strong> (i.e., \(u, v \in A\) or \(u, v \in B\)). Then \((A', B')\) in \(G/e\) (where the merged vertex \(w\) replaces \(u, v\) on their shared side) has <strong>exactly the same cut edges</strong>:</p>
+    \[|\delta_{G/e}(A')| = |\delta_G(A)|\]
+    <p>In particular, if the min-cut of \(G\) does not separate \(u\) and \(v\), then the min-cut size is preserved in \(G/e\).</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Multigraph Evolution during Karger's Algorithm</h3>
+    <p>Karger's algorithm repeatedly contracts a <strong>uniformly random edge</strong>. After each contraction:</p>
+    <ul>
+      <li>The number of vertices decreases by exactly 1.</li>
+      <li>Parallel edges accumulate — they represent multiple original edges between the "super-vertices."</li>
+      <li>When only 2 vertices remain, the parallel edges between them form a candidate cut.</li>
+    </ul>
+    <p>Starting from \(n\) vertices, the algorithm performs \(n - 2\) contractions.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Triangle Graph</div>
+    <p>Consider the triangle \(K_3\) with vertices \(\{a, b, c\}\) and edges \(\{ab, bc, ac\}\). Contracting edge \(ab\) merges \(a\) and \(b\) into a super-vertex \(w\). Both edges \(ac\) and \(bc\) become edges from \(w\) to \(c\), creating a multigraph with 2 vertices and 2 parallel edges. The resulting cut has size 2, which matches the min-cut of the original triangle.</p>
+  </div>
+</section>
+
+<!-- ===== PROBABILITY VIA CONDITIONAL PRODUCTS ===== -->
+<section class="section" id="sec-conditional-prob">
+  <h2 class="section-title">Probability via Conditional Products</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Chain Rule of Probability</div>
+    <p>For events \(E_1, E_2, \ldots, E_n\):</p>
+    \[\Pr[E_1 \cap E_2 \cap \cdots \cap E_n] = \prod_{i=1}^{n} \Pr[E_i \mid E_1 \cap \cdots \cap E_{i-1}]\]
+    <p>where \(\Pr[E_1 \mid \emptyset] = \Pr[E_1]\).</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Application to Karger's Algorithm</h3>
+    <p>Let \(E_i\) be the event "the \(i\)-th contraction does not destroy the min-cut." We want \(\Pr[E_1 \cap E_2 \cap \cdots \cap E_{n-2}]\). By the chain rule:</p>
+    \[\Pr[\text{min-cut survives}] = \prod_{i=1}^{n-2} \Pr[E_i \mid E_1 \cap \cdots \cap E_{i-1}]\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Key Bound — Conditional Survival Probability</div>
+    <p>After \(i - 1\) successful contractions, the multigraph has \(n - (i-1)\) vertices. If the min-cut has size \(k\), then every vertex has degree \(\geq k\), so by the handshaking lemma:</p>
+    \[|E_i| \geq \frac{k(n - i + 1)}{2}\]
+    <p>Since at most \(k\) of these edges belong to the min-cut, the probability of picking a min-cut edge is at most:</p>
+    \[\Pr[\text{bad}] \leq \frac{k}{\frac{k(n - i + 1)}{2}} = \frac{2}{n - i + 1}\]
+    <p>Therefore:</p>
+    \[\Pr[E_i \mid E_1 \cap \cdots \cap E_{i-1}] \geq 1 - \frac{2}{n - i + 1} = \frac{n - i - 1}{n - i + 1}\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Telescoping Product</div>
+    <p>Multiplying all conditional probabilities:</p>
+    \[\prod_{i=1}^{n-2} \frac{n - i - 1}{n - i + 1} = \frac{n-2}{n} \cdot \frac{n-3}{n-1} \cdot \frac{n-4}{n-2} \cdots \frac{2}{4} \cdot \frac{1}{3}\]
+    <p>This is a telescoping product. Rewriting with \(j = n - i + 1\) ranging from \(n\) down to \(3\):</p>
+    \[\prod_{j=3}^{n} \frac{j - 2}{j} = \frac{1 \cdot 2}{(n-1) \cdot n} = \frac{2}{n(n-1)} = \frac{1}{\binom{n}{2}}\]
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Verification — Small Case \(n = 4\)</div>
+    <p>For \(n = 4\), the product is:</p>
+    \[\frac{2}{4} \cdot \frac{1}{3} = \frac{2}{12} = \frac{1}{6} = \frac{1}{\binom{4}{2}}\]
+    <p>confirming the formula.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="Π_{j=3}^{6} (j−2)/j = (1/3)·(2/4)·(3/5)·(4/6) = 1·2·3·4 / (3·4·5·6) = 24/360 = 1/15." data-explanation-zh="Π_{j=3}^{6} (j−2)/j = (1/3)·(2/4)·(3/5)·(4/6) = 1·2·3·4 / (3·4·5·6) = 24/360 = 1/15。">
+    <div class="qc-question">Quick Check: What is \(\displaystyle\prod_{j=3}^{6} \frac{j-2}{j}\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\frac{1}{10}\)</div>
+      <div class="qc-opt" data-idx="1">\(\frac{1}{15}\)</div>
+      <div class="qc-opt" data-idx="2">\(\frac{1}{20}\)</div>
+      <div class="qc-opt" data-idx="3">\(\frac{1}{30}\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== RECURRENCE RELATIONS ===== -->
+<section class="section" id="sec-recurrences">
+  <h2 class="section-title">Recurrence Relations</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Master Theorem (Simplified)</div>
+    <p>For recurrences of the form \(T(n) = a\,T(n/b) + O(n^d)\):</p>
+    \[T(n) = \begin{cases} O(n^d) & \text{if } a < b^d \\ O(n^d \log n) & \text{if } a = b^d \\ O(n^{\log_b a}) & \text{if } a > b^d \end{cases}\]
+  </div>
+
+  <h3>Karger–Stein Time Recurrence</h3>
+  <div class="concept-box">
+    <p>The Karger–Stein algorithm contracts the graph from \(n\) vertices to \(n/\sqrt{2}\) vertices, then runs two independent copies on the reduced graph. The running time satisfies:</p>
+    \[T(n) = 2\,T\!\left(\frac{n}{\sqrt{2}}\right) + O(n^2)\]
+    <p>Here \(a = 2\), \(b = \sqrt{2}\), \(d = 2\). Checking: \(b^d = (\sqrt{2})^2 = 2 = a\). So we are in the \(a = b^d\) case:</p>
+    \[T(n) = O(n^2 \log n)\]
+    <p>where \(\log\) is base \(\sqrt{2}\), but since \(\log_{\sqrt{2}} n = 2\log_2 n = O(\log n)\), the result is \(O(n^2 \log n)\).</p>
+  </div>
+
+  <h3>Probability Recurrence</h3>
+  <div class="def-box theorem-box">
+    <div class="def-label">Karger–Stein Success Probability</div>
+    <p>Let \(p(n)\) be the probability that the Karger–Stein algorithm finds the min-cut. By contracting to \(n/\sqrt{2}\) vertices, each branch succeeds with probability at least \(1/2 \cdot p(n/\sqrt{2})\) (the factor \(1/2\) comes from the survival probability during contraction). Two independent trials give:</p>
+    \[p(n) \geq 1 - \left(1 - \frac{p(n/\sqrt{2})}{2}\right)^2\]
+    <p>since failure requires both trials to fail.</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Substitution Method</h3>
+    <p>Let \(t = \log_{\sqrt{2}} n\), so \(n = (\sqrt{2})^t\). Define \(f(t) = p((\sqrt{2})^t)\). We guess \(f(t) \geq \frac{1}{t + c}\) for a suitable constant \(c\). The recurrence becomes:</p>
+    \[f(t) \geq 1 - \left(1 - \frac{f(t-1)}{2}\right)^2 = f(t-1) - \frac{f(t-1)^2}{4}\]
+    <p>By induction with the ansatz \(f(t) \geq \frac{1}{t + 2}\), one verifies:</p>
+    \[\frac{1}{t+1} - \frac{1}{4(t+1)^2} \geq \frac{1}{t+2}\]
+    <p>holds for \(t \geq 2\). Since \(t = O(\log n)\), we conclude:</p>
+    \[p(n) = \Omega\!\left(\frac{1}{\log n}\right)\]
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Comparison — Karger vs Karger–Stein</div>
+    <p><strong>Basic Karger</strong>: one trial has success probability \(1/\binom{n}{2} = \Theta(1/n^2)\). Need \(O(n^2)\) trials for constant success → total time \(O(n^4)\).</p>
+    <p><strong>Karger–Stein</strong>: one trial has success probability \(\Omega(1/\log n)\). Need \(O(\log n)\) trials → total time \(O(n^2 \log^2 n)\), or \(O(n^2 \log^3 n)\) with boosting.</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="T(n) = 2T(n/2) + O(n²). Here a = 2, b = 2, d = 2. Since a = 2 < b^d = 4, we are in the a < b^d case, so T(n) = O(n²)." data-explanation-zh="T(n) = 2T(n/2) + O(n²)。这里 a = 2, b = 2, d = 2。由于 a = 2 < b^d = 4，属于 a < b^d 的情况，所以 T(n) = O(n²)。">
+    <div class="qc-question">Quick Check: If \(T(n) = 2T(n/2) + O(n^2)\), what is \(T(n)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(O(n^2 \log n)\)</div>
+      <div class="qc-opt" data-idx="1">\(O(n \log n)\)</div>
+      <div class="qc-opt" data-idx="2">\(O(n^2)\)</div>
+      <div class="qc-opt" data-idx="3">\(O(n^3)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MST PROPERTIES ===== -->
+<section class="section" id="sec-mst-props">
+  <h2 class="section-title">MST Properties</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Cut Property</div>
+    <p>For any cut \((A, B)\) of a connected weighted graph \(G\), if edge \(e\) is the unique <strong>lightest</strong> edge crossing the cut, then \(e\) belongs to every minimum spanning tree (MST) of \(G\).</p>
+    <p>More generally, if \(e\) is a lightest crossing edge (possibly tied), then there exists an MST containing \(e\).</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-cut-property">
+      <span class="toggle-icon">&#9654;</span> Proof of the Cut Property
+    </button>
+    <div class="proof-content" id="proof-cut-property">
+      <p>Let \(T\) be an MST that does not contain \(e\). Adding \(e\) to \(T\) creates a cycle \(C\). Since \(e\) crosses \((A, B)\) and \(T\) is a spanning tree, the cycle \(C\) must contain another edge \(f\) that also crosses \((A, B)\). Since \(e\) is the unique lightest crossing edge, \(w(e) < w(f)\). Replacing \(f\) by \(e\) in \(T\) gives a spanning tree of smaller weight — contradicting that \(T\) is an MST. \(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Cycle Property</div>
+    <p>For any cycle \(C\) in a connected weighted graph \(G\), if edge \(e\) is the unique <strong>heaviest</strong> edge in \(C\), then \(e\) does not belong to any MST of \(G\).</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-cycle-property">
+      <span class="toggle-icon">&#9654;</span> Proof of the Cycle Property
+    </button>
+    <div class="proof-content" id="proof-cycle-property">
+      <p>Suppose an MST \(T\) contains \(e\). Removing \(e\) from \(T\) splits it into two components, defining a cut \((A, B)\). The cycle \(C\) must contain another edge \(f \neq e\) crossing this cut. Since \(e\) is the unique heaviest in \(C\), \(w(f) < w(e)\). Replacing \(e\) by \(f\) gives a spanning tree of smaller weight — contradiction. \(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition 29.1 — F-Heaviness</div>
+    <p>Given a forest \(F\) that is a subgraph of \(G\), an edge \(e = \{u, v\} \in E \setminus F\) is called <strong>\(F\)-heavy</strong> if \(w(e)\) is strictly greater than the weight of every edge on the (unique) path from \(u\) to \(v\) in \(F\) (if such a path exists). An edge is <strong>\(F\)-light</strong> if it is not \(F\)-heavy.</p>
+    <p>By the cycle property, \(F\)-heavy edges (with respect to the MST) cannot be in any MST.</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Borůvka's Algorithm Idea</h3>
+    <p>Each vertex selects its lightest incident edge. All such edges are added to the MST (they are safe by the cut property — each vertex forms its own singleton cut). Then each connected component is <strong>contracted</strong> into a single super-vertex, and the process repeats. Each round at least halves the number of vertices, so after \(O(\log n)\) rounds the MST is found. One Borůvka step runs in \(O(m)\) time.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Random Subsampling Lemma</div>
+    <p>Let \(G = (V, E)\) be a connected multigraph and \(F\) a random subgraph obtained by including each edge independently with probability \(p\). Let \(T_F\) be the MST of \(F\). Then the expected number of \(T_F\)-light edges in \(G\) is at most:</p>
+    \[\mathbb{E}[\text{# of } T_F\text{-light edges}] \leq \frac{|V|}{p}\]
+    <p>This is the key lemma behind the randomised linear-time MST algorithm.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Property</div><div class="sym-header">Statement</div><div class="sym-header">Use</div>
+    <div class="sym-cell">Cut Property</div><div class="sym-cell">Lightest crossing edge ∈ MST</div><div class="sym-cell">Proves edges belong to MST</div>
+    <div class="sym-cell">Cycle Property</div><div class="sym-cell">Heaviest cycle edge ∉ MST</div><div class="sym-cell">Eliminates edges from MST</div>
+    <div class="sym-cell">F-heavy</div><div class="sym-cell">\(w(e) >\) all path edges in \(F\)</div><div class="sym-cell">Identifies safe-to-remove edges</div>
+    <div class="sym-cell">Borůvka step</div><div class="sym-cell">Contract lightest edges</div><div class="sym-cell">Halves vertex count per round</div>
+    <div class="sym-cell">Subsampling</div><div class="sym-cell">Light edges \(\leq |V|/p\)</div><div class="sym-cell">Bounds work in random MST alg</div>
+  </div>
+</section>
+
+<!-- ===== COUNTING ARGUMENTS ===== -->
+<section class="section" id="sec-counting-math">
+  <h2 class="section-title">Counting Arguments</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Theorem — Upper Bound on Number of Min-Cuts</div>
+    <p>Any undirected graph on \(n\) vertices has at most \(\binom{n}{2}\) minimum cuts.</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-num-mincuts">
+      <span class="toggle-icon">&#9654;</span> Proof via Karger's algorithm
+    </button>
+    <div class="proof-content" id="proof-num-mincuts">
+      <p>Let \(M\) be the number of distinct min-cuts. Karger's algorithm finds each specific min-cut with probability \(\geq 1/\binom{n}{2}\). Since different min-cuts produce disjoint success events (only one cut can survive as the final 2-vertex partition), and the total probability cannot exceed 1:</p>
+      \[M \cdot \frac{1}{\binom{n}{2}} \leq 1 \implies M \leq \binom{n}{2}\]
+      <p>\(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <h3>Total Number of Distinct Cuts</h3>
+    <p>A cut is a partition \((A, B)\) of \(V\) into two non-empty subsets. Since \((A, B)\) and \((B, A)\) are the same cut, the number of distinct cuts is:</p>
+    \[\frac{2^n - 2}{2} = 2^{n-1} - 1\]
+    <p>We subtract 2 for the empty-set partitions (\(A = \emptyset\) or \(B = \emptyset\)), then divide by 2 for symmetry.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Cycle Graph \(C_n\)</div>
+    <p>The cycle graph \(C_n\) has \(n\) vertices and \(n\) edges arranged in a single cycle. Every edge has the same weight, and the min-cut has size 2 (remove any two edges to disconnect). The number of min-cuts is exactly:</p>
+    \[\binom{n}{2}\]
+    <p>To see why: each min-cut corresponds to choosing 2 edges to remove, which is equivalent to choosing 2 "cut points" on the cycle. There are \(\binom{n}{2}\) ways to do this, and each gives a distinct min-cut. This shows the bound \(M \leq \binom{n}{2}\) is <strong>tight</strong>.</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Subtlety — Cuts vs Partitions</div>
+    <p>Do not confuse:</p>
+    <ul>
+      <li><strong>Distinct cuts</strong> (partitions into two non-empty subsets): \(2^{n-1} - 1\) total.</li>
+      <li><strong>Minimum cuts</strong>: at most \(\binom{n}{2}\), achieved by the cycle graph.</li>
+    </ul>
+    <p>For large \(n\), \(\binom{n}{2} = O(n^2)\) is much smaller than \(2^{n-1} - 1\), so min-cuts are a tiny fraction of all cuts.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="The number of distinct cuts in a graph with 5 vertices is (2^5 − 2)/2 = 30/2 = 15, or equivalently 2^(5−1) − 1 = 16 − 1 = 15." data-explanation-zh="5 个顶点的图中不同割的数量为 (2^5 − 2)/2 = 30/2 = 15，即 2^(5−1) − 1 = 16 − 1 = 15。">
+    <div class="qc-question">Quick Check: How many distinct cuts does a graph with 5 vertices have?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(10\)</div>
+      <div class="qc-opt" data-idx="1">\(15\)</div>
+      <div class="qc-opt" data-idx="2">\(16\)</div>
+      <div class="qc-opt" data-idx="3">\(31\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MATH QUIZ ===== -->
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=5" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div><!-- /math-content -->
+
+<script src="chapter5-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

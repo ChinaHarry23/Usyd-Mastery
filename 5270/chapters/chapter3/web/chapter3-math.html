@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.back-bar a {
+  color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;
+}
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar {
+  font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed; top: 50px; left: 0; width: var(--sidebar-w);
+  height: calc(100vh - 50px); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem 0; z-index: 40;
+}
+.toc-sidebar .home-link {
+  display: block; padding: 0.5rem 1.5rem 0.75rem; font-size: 0.8rem;
+  color: var(--text-dim); text-decoration: none; transition: color var(--transition);
+}
+.toc-sidebar .home-link:hover { color: var(--accent); }
+.toc-sidebar .sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0 1.5rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
+}
+.toc-sidebar .sidebar-brand .brand-icon { font-size: 1.4rem; }
+.toc-sidebar .sidebar-brand h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block; padding: 0.45rem 1.5rem; color: var(--text-muted); text-decoration: none;
+  font-size: 0.82rem; border-left: 3px solid transparent; transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active {
+  color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); font-weight: 500;
+}
+.toc-group {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); padding: 0.75rem 1.5rem 0.35rem; margin-top: 0.5rem;
+}
+.toc-sidebar .back-to-study {
+  display: block; padding: 0.75rem 1.5rem; margin-top: 0.5rem;
+  border-top: 1px solid var(--border); font-size: 0.82rem;
+  color: var(--accent); text-decoration: none; font-weight: 500;
+}
+.toc-sidebar .back-to-study:hover { background: var(--accent-glow); }
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+.symbol-grid {
+  display: grid; grid-template-columns: auto 1fr 1fr; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 1.5rem 0; font-size: 0.9rem;
+}
+.sym-header {
+  background: var(--bg-card); padding: 0.6rem 1rem; font-weight: 600;
+  color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.04em; border-bottom: 1px solid var(--border);
+}
+.sym-cell {
+  padding: 0.65rem 1rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+}
+.sym-cell:nth-child(3n+1) { background: var(--bg-card); justify-content: center; font-size: 1.1rem; }
+.sym-cell:nth-child(3n+2) { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+
+.def-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.def-box .def-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); margin-bottom: 0.5rem; font-weight: 600;
+}
+.def-box.theorem-box { border-left-color: var(--purple); }
+.def-box.theorem-box .def-label { color: var(--purple); }
+.def-box.example-box { border-left-color: var(--green); }
+.def-box.example-box .def-label { color: var(--green); }
+.def-box.warning-box { border-left-color: var(--yellow); }
+.def-box.warning-box .def-label { color: var(--yellow); }
+
+.quick-check {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback {
+  margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+  font-size: 0.85rem; display: none;
+}
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+@media (max-width: 900px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="back-bar">
+  <div>
+    <a href="chapter3-study.html">&larr; Back to Chapter 3 Study Guide</a>
+    <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+    <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  </div>
+  <span class="page-title-bar">Math Foundations &mdash; Ch.3</span>
+</div>
+
+<!-- ===== TABLE OF CONTENTS SIDEBAR ===== -->
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#x1F3B2;</span>
+    <h2>Ch 3 Math</h2>
+  </div>
+  <div class="toc-group">Counting</div>
+  <ul>
+    <li><a href="#sec-counting" class="toc-link">Counting &amp; Combinatorics</a></li>
+    <li><a href="#sec-stirling" class="toc-link">Stirling's Approximation</a></li>
+  </ul>
+  <div class="toc-group">Series &amp; Distributions</div>
+  <ul>
+    <li><a href="#sec-harmonic" class="toc-link">Harmonic Numbers</a></li>
+    <li><a href="#sec-geometric" class="toc-link">Geometric Distribution</a></li>
+  </ul>
+  <div class="toc-group">Variance Techniques</div>
+  <ul>
+    <li><a href="#sec-indicators" class="toc-link">Indicators &amp; Variance</a></li>
+    <li><a href="#sec-moment" class="toc-link">Moment Methods</a></li>
+  </ul>
+  <div class="toc-group">Advanced Tools</div>
+  <ul>
+    <li><a href="#sec-poisson" class="toc-link">Poisson Approximation</a></li>
+    <li><a href="#sec-jensen" class="toc-link">Jensen &amp; MGF Trick</a></li>
+  </ul>
+  <a href="chapter3-study.html" class="back-to-study">&larr; Chapter 3 Study Guide</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="math-content" id="mainContent">
+
+<!-- HERO -->
+<section class="section hero-section" id="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 — Chapter 3 Supplement</p>
+    <h1>Mathematical Foundations: Balls in Bins</h1>
+    <p class="hero-subtitle">The counting, distribution theory, and analytic techniques behind the birthday paradox, coupon collector, and load balancing.</p>
+  </div>
+</section>
+
+<!-- ===== COUNTING & COMBINATORICS ===== -->
+<section class="section" id="sec-counting">
+  <h2 class="section-title">Counting &amp; Combinatorics</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Binomial Coefficient</div>
+    <p>The number of ways to choose \(k\) items from \(n\) without regard to order:</p>
+    \[\binom{n}{k} = \frac{n!}{k!\,(n-k)!}\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Fact 20.1 — Key Bound on \(\binom{n}{k}\)</div>
+    <p>For all integers \(1 \leq k \leq n\):</p>
+    \[\left(\frac{n}{k}\right)^k \;\leq\; \binom{n}{k} \;\leq\; \left(\frac{en}{k}\right)^k\]
+    <p>The lower bound follows from \(\binom{n}{k} \geq \frac{n^k}{k^k}\) (each factor \(\frac{n-i}{k} \geq \frac{n}{k}\cdot\frac{k-i}{k}\)), and the upper bound from \(k! \geq (k/e)^k\) (Stirling).</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-upper-binom">
+      <span class="toggle-icon">&#9654;</span> Proof of the upper bound \(\binom{n}{k} \leq (en/k)^k\)
+    </button>
+    <div class="proof-content" id="proof-upper-binom">
+      <p>Start from:</p>
+      \[\binom{n}{k} = \frac{n(n-1)\cdots(n-k+1)}{k!} \leq \frac{n^k}{k!}\]
+      <p>By Stirling's approximation, \(k! \geq \sqrt{2\pi k}\,(k/e)^k \geq (k/e)^k\). Therefore:</p>
+      \[\binom{n}{k} \leq \frac{n^k}{(k/e)^k} = \left(\frac{en}{k}\right)^k \qquad \blacksquare\]
+    </div>
+  </div>
+
+  <h3>Multinomial Coefficients</h3>
+  <div class="concept-box">
+    <p>The number of ways to partition \(n\) objects into groups of sizes \(k_1, k_2, \ldots, k_r\) (where \(\sum k_i = n\)):</p>
+    \[\binom{n}{k_1, k_2, \ldots, k_r} = \frac{n!}{k_1!\, k_2!\, \cdots\, k_r!}\]
+    <p>The binomial coefficient is the special case \(r = 2\).</p>
+  </div>
+
+  <h3>Counting Pairs</h3>
+  <div class="concept-box">
+    <p>The number of unordered pairs from \(m\) items appears constantly in birthday-type problems:</p>
+    \[\binom{m}{2} = \frac{m(m-1)}{2}\]
+    <p>For \(m\) balls thrown into bins, there are \(\binom{m}{2}\) pairs that could potentially collide.</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="C(10,3) = 10!/(3!·7!) = (10·9·8)/(3·2·1) = 720/6 = 120." data-explanation-zh="C(10,3) = 10!/(3!·7!) = (10·9·8)/(3·2·1) = 720/6 = 120。">
+    <div class="qc-question">Quick Check: What is \(\binom{10}{3}\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(30\)</div>
+      <div class="qc-opt" data-idx="1">\(720\)</div>
+      <div class="qc-opt" data-idx="2">\(120\)</div>
+      <div class="qc-opt" data-idx="3">\(210\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== STIRLING'S APPROXIMATION ===== -->
+<section class="section" id="sec-stirling">
+  <h2 class="section-title">Stirling's Approximation</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Stirling's Formula</div>
+    <p>For large \(n\):</p>
+    \[n! \;\approx\; \sqrt{2\pi n}\left(\frac{n}{e}\right)^n\]
+    <p>More precisely: \(n! = \sqrt{2\pi n}\left(\frac{n}{e}\right)^n \left(1 + O(1/n)\right)\).</p>
+  </div>
+
+  <h3>Application to the Birthday Paradox</h3>
+  <div class="concept-box">
+    <p>To show a collision is likely when \(m \approx \sqrt{n}\) balls land in \(n\) bins, we need to estimate the probability of <em>no</em> collision:</p>
+    \[\Pr[\text{no collision}] = \prod_{i=0}^{m-1}\left(1 - \frac{i}{n}\right) = \frac{n!}{(n-m)!\,n^m}\]
+    <p>Using Stirling to approximate the factorials converts this to a tractable exponential form.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Key Limit</div>
+    <p>For a constant \(c > 0\), as \(n \to \infty\):</p>
+    \[\left(1 - \frac{c}{\sqrt{n}}\right)^{\!\sqrt{n}} \;\longrightarrow\; e^{-c}\]
+    <p>This arises directly from the birthday analysis: with \(m = c\sqrt{n}\) balls, the probability of no collision converges to \(e^{-\binom{m}{2}/n} \approx e^{-c^2/2}\).</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-limit">
+      <span class="toggle-icon">&#9654;</span> Why \((1 - c/\sqrt{n})^{\sqrt{n}} \to e^{-c}\)
+    </button>
+    <div class="proof-content" id="proof-limit">
+      <p>Take the logarithm:</p>
+      \[\sqrt{n}\,\ln\!\left(1 - \frac{c}{\sqrt{n}}\right)\]
+      <p>For small \(x\), \(\ln(1-x) = -x - x^2/2 - \cdots \approx -x\). With \(x = c/\sqrt{n}\):</p>
+      \[\sqrt{n}\left(-\frac{c}{\sqrt{n}} - \frac{c^2}{2n} - \cdots\right) = -c - \frac{c^2}{2\sqrt{n}} - \cdots \;\to\; -c\]
+      <p>Exponentiating: \(e^{-c}\). \(\blacksquare\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HARMONIC NUMBERS ===== -->
+<section class="section" id="sec-harmonic">
+  <h2 class="section-title">Harmonic Numbers</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(H_n\)</div>
+    <p>The \(n\)-th <strong>harmonic number</strong> is:</p>
+    \[H_n = \sum_{k=1}^{n} \frac{1}{k} = 1 + \frac{1}{2} + \frac{1}{3} + \cdots + \frac{1}{n}\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Asymptotic Expansion</div>
+    \[H_n = \ln n + \gamma + O\!\left(\frac{1}{n}\right)\]
+    <p>where \(\gamma \approx 0.5772\) is the <strong>Euler–Mascheroni constant</strong>. In particular, \(H_n = \Theta(\ln n)\).</p>
+  </div>
+
+  <h3>Connection to the Coupon Collector</h3>
+  <div class="concept-box">
+    <p>To collect all \(n\) coupons, the expected time is:</p>
+    \[\mathbb{E}[T] = n \sum_{k=1}^{n}\frac{1}{k} = n\,H_n = n\ln n + \gamma n + O(1)\]
+    <p>Each "phase" (going from \(k-1\) distinct to \(k\) distinct) is geometric with success probability \((n-k+1)/n\), contributing \(\frac{n}{n-k+1}\) in expectation. Summing over all \(n\) phases gives \(n\,H_n\).</p>
+  </div>
+
+  <h3>The Basel Problem</h3>
+  <div class="concept-box">
+    <p>A related but different series:</p>
+    \[\sum_{k=1}^{\infty} \frac{1}{k^2} = \frac{\pi^2}{6} \approx 1.6449\]
+    <p>This converges (unlike the harmonic series) and appears in variance calculations for the coupon collector problem.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="H_3 = 1 + 1/2 + 1/3 = 6/6 + 3/6 + 2/6 = 11/6." data-explanation-zh="H_3 = 1 + 1/2 + 1/3 = 6/6 + 3/6 + 2/6 = 11/6。">
+    <div class="qc-question">Quick Check: What is \(H_3 = 1 + \frac{1}{2} + \frac{1}{3}\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\frac{3}{2}\)</div>
+      <div class="qc-opt" data-idx="1">\(\frac{11}{6}\)</div>
+      <div class="qc-opt" data-idx="2">\(2\)</div>
+      <div class="qc-opt" data-idx="3">\(\frac{7}{4}\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== GEOMETRIC DISTRIBUTION ===== -->
+<section class="section" id="sec-geometric">
+  <h2 class="section-title">Geometric Distribution</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Geometric(\(p\))</div>
+    <p>The number of independent Bernoulli trials until the first success, where each trial has success probability \(p\):</p>
+    \[\Pr[T = k] = (1-p)^{k-1}\,p, \quad k = 1, 2, 3, \ldots\]
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Mean &amp; Variance</h3>
+      <ul>
+        <li>\(\mathbb{E}[T] = \dfrac{1}{p}\)</li>
+        <li>\(\operatorname{Var}[T] = \dfrac{1-p}{p^2}\)</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Memorylessness</h3>
+      <p>The geometric distribution is the <strong>only</strong> discrete memoryless distribution:</p>
+      \[\Pr[T > s + t \mid T > s] = \Pr[T > t]\]
+      <p>"Past failures don't change the future."</p>
+    </div>
+  </div>
+
+  <h3>Connection to the Coupon Collector</h3>
+  <div class="concept-box">
+    <p>The coupon collector decomposes into \(n\) phases. In phase \(i\) (already have \(i-1\) distinct coupons, waiting for the \(i\)-th new one), each trial succeeds with probability:</p>
+    \[p_i = \frac{n - (i-1)}{n}\]
+    <p>The waiting time \(T_i \sim \text{Geometric}(p_i)\) with \(\mathbb{E}[T_i] = \frac{n}{n-i+1}\). The total time is \(T = \sum_{i=1}^{n} T_i\), and by linearity:</p>
+    \[\mathbb{E}[T] = \sum_{i=1}^{n} \frac{n}{n-i+1} = n \sum_{j=1}^{n} \frac{1}{j} = nH_n\]
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="Geometric distribution with p = 1/4. E[T] = 1/p = 4. Var[T] = (1-p)/p² = (3/4)/(1/16) = 12." data-explanation-zh="几何分布，p = 1/4。E[T] = 1/p = 4。Var[T] = (1-p)/p² = (3/4)/(1/16) = 12。">
+    <div class="qc-question">Quick Check: If \(T \sim \text{Geometric}(1/4)\), what is \(\operatorname{Var}[T]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(12\)</div>
+      <div class="qc-opt" data-idx="1">\(4\)</div>
+      <div class="qc-opt" data-idx="2">\(16\)</div>
+      <div class="qc-opt" data-idx="3">\(3\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== INDICATOR VARIABLES & VARIANCE ===== -->
+<section class="section" id="sec-indicators">
+  <h2 class="section-title">Indicator Variables &amp; Variance</h2>
+
+  <div class="def-box">
+    <div class="def-label">Recall — Indicator Random Variables</div>
+    <p>For an event \(A\), define \(\mathbf{1}_A \in \{0,1\}\) with \(\mathbb{E}[\mathbf{1}_A] = \Pr[A]\).</p>
+    <p>Products of indicators give joint probabilities: \(\mathbb{E}[\mathbf{1}_A \cdot \mathbf{1}_B] = \Pr[A \cap B]\).</p>
+  </div>
+
+  <h3>When Is Variance Additive?</h3>
+  <div class="concept-box">
+    <p>For \(X = \sum_i X_i\):</p>
+    \[\operatorname{Var}[X] = \sum_i \operatorname{Var}[X_i] + 2\sum_{i < j} \operatorname{Cov}[X_i, X_j]\]
+    <p>The covariance terms vanish when \(X_i, X_j\) are <strong>pairwise independent</strong> (i.e., \(\mathbb{E}[X_i X_j] = \mathbb{E}[X_i]\mathbb{E}[X_j]\)).</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Pairwise vs Full Independence</div>
+    <p><strong>Pairwise independence</strong>: every pair is independent. Sufficient for \(\operatorname{Var}[\sum X_i] = \sum \operatorname{Var}[X_i]\) and for Chebyshev.</p>
+    <p><strong>Full (mutual) independence</strong>: every subset factors. Required for Chernoff bounds and MGF factorization.</p>
+  </div>
+
+  <h3>The "Magic Cancellation" in Collision Variance</h3>
+  <div class="concept-box">
+    <p>Let \(C = \sum_{\{i,j\}} \mathbf{1}_{ij}\) count collisions among \(m\) balls in \(n\) bins, where \(\mathbf{1}_{ij}\) indicates balls \(i,j\) land in the same bin. There are \(\binom{m}{2}\) such indicators. Computing \(\operatorname{Var}[C]\) requires analyzing \(\mathbb{E}[\mathbf{1}_{ij}\,\mathbf{1}_{kl}]\) for all pairs of pairs. Three cases arise:</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Case</div><div class="sym-header">Count</div><div class="sym-header">\(\mathbb{E}[\mathbf{1}_{ij}\cdot\mathbf{1}_{kl}]\)</div>
+    <div class="sym-cell">Same pair \(\{i,j\} = \{k,l\}\)</div><div class="sym-cell">\(\binom{m}{2}\) terms</div><div class="sym-cell">\(\frac{1}{n}\) (since \(\mathbf{1}_{ij}^2 = \mathbf{1}_{ij}\))</div>
+    <div class="sym-cell">Disjoint: \(\{i,j\}\cap\{k,l\}=\emptyset\)</div><div class="sym-cell">\(\binom{m}{2}\binom{m-2}{2}/2\) terms</div><div class="sym-cell">\(\frac{1}{n^2}\) (independent)</div>
+    <div class="sym-cell">Overlapping: share exactly one ball</div><div class="sym-cell">\(6\binom{m}{3}\) terms</div><div class="sym-cell">\(\frac{1}{n^2}\) (both need the shared ball's bin)</div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1rem;">
+    <p>The "magic": overlapping pairs have \(\mathbb{E}[\mathbf{1}_{ij}\mathbf{1}_{jk}] = 1/n^2 = \mathbb{E}[\mathbf{1}_{ij}]\cdot\mathbb{E}[\mathbf{1}_{jk}]\), so even though \(\mathbf{1}_{ij}\) and \(\mathbf{1}_{jk}\) share ball \(j\), they are uncorrelated! This makes the variance calculation much cleaner:</p>
+    \[\operatorname{Var}[C] = \mathbb{E}[C^2] - \mathbb{E}[C]^2 \leq \mathbb{E}[C] = \binom{m}{2}\frac{1}{n}\]
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="Pairwise independence suffices for Var[∑Xi] = ∑Var[Xi]. Full independence is NOT needed for variance of sums." data-explanation-zh="两两独立足以使 Var[∑Xi] = ∑Var[Xi]。和的方差分解不需要完全独立。">
+    <div class="qc-question">Quick Check: What is the minimum independence condition for \(\operatorname{Var}\!\left[\sum X_i\right] = \sum \operatorname{Var}[X_i]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Full mutual independence</div>
+      <div class="qc-opt" data-idx="1">Pairwise independence</div>
+      <div class="qc-opt" data-idx="2">No independence needed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MOMENT METHODS ===== -->
+<section class="section" id="sec-moment">
+  <h2 class="section-title">Moment Methods</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">First Moment Method (Markov for integer r.v.)</div>
+    <p>If \(X\) is a non-negative integer-valued random variable:</p>
+    \[\Pr[X \geq 1] \leq \mathbb{E}[X]\]
+    <p>This is just Markov's inequality with \(t = 1\). It gives a quick upper bound on the probability that a count is nonzero.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Application — Birthday Lower Bound</div>
+    <p>Let \(C\) count collisions among \(m\) balls in \(n\) bins. Then \(\Pr[\text{collision}] = \Pr[C \geq 1] \leq \mathbb{E}[C] = \binom{m}{2}/n\).</p>
+    <p>So if \(m \ll \sqrt{n}\), collisions are unlikely. But this doesn't tell us when collisions become <em>likely</em>.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Second Moment Method</div>
+    <p>For a non-negative integer-valued random variable \(X\):</p>
+    \[\Pr[X = 0] \leq \frac{\operatorname{Var}[X]}{\mathbb{E}[X]^2}\]
+    <p>Equivalently: \(\Pr[X \geq 1] \geq 1 - \frac{\operatorname{Var}[X]}{\mathbb{E}[X]^2} = \frac{\mathbb{E}[X]^2 - \operatorname{Var}[X]}{\mathbb{E}[X]^2}\).</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-second-moment">
+      <span class="toggle-icon">&#9654;</span> Derivation from Chebyshev
+    </button>
+    <div class="proof-content" id="proof-second-moment">
+      <p>Chebyshev gives:</p>
+      \[\Pr[|X - \mu| \geq \mu] \leq \frac{\operatorname{Var}[X]}{\mu^2}\]
+      <p>Since \(\{X = 0\} \subseteq \{|X - \mu| \geq \mu\}\) (because \(X \geq 0\) and \(\mu > 0\)):</p>
+      \[\Pr[X = 0] \leq \Pr[|X - \mu| \geq \mu] \leq \frac{\operatorname{Var}[X]}{\mu^2} \qquad \blacksquare\]
+    </div>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Application — Birthday Threshold</div>
+    <p>With \(m = c\sqrt{n}\) balls, \(\mathbb{E}[C] = \binom{m}{2}/n \approx c^2/2\) and \(\operatorname{Var}[C] \leq \mathbb{E}[C]\). So:</p>
+    \[\Pr[\text{collision}] \geq 1 - \frac{\operatorname{Var}[C]}{\mathbb{E}[C]^2} \geq 1 - \frac{1}{\mathbb{E}[C]} = 1 - \frac{2}{c^2}\]
+    <p>For \(c\) large (say \(c = 3\)), this gives \(\Pr[\text{collision}] \geq 7/9 \approx 78\%\).</p>
+  </div>
+</section>
+
+<!-- ===== POISSON APPROXIMATION ===== -->
+<section class="section" id="sec-poisson">
+  <h2 class="section-title">Poisson Approximation</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Poisson Limit Theorem</div>
+    <p>If \(X \sim \text{Bin}(n, \lambda/n)\) and \(n \to \infty\) with \(\lambda\) fixed, then:</p>
+    \[X \xrightarrow{d} \text{Poisson}(\lambda)\]
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Poisson PMF</div>
+    <p>For \(X \sim \text{Poisson}(\lambda)\) and integer \(k \geq 0\):</p>
+    \[\Pr[X = k] = \frac{e^{-\lambda}\,\lambda^k}{k!}\]
+    <p>Key facts: \(\mathbb{E}[X] = \lambda\), \(\operatorname{Var}[X] = \lambda\).</p>
+  </div>
+
+  <h3>Independence after Poissonization</h3>
+  <div class="concept-box">
+    <p>The key power of the Poisson model: if we throw \(\text{Poisson}(\lambda)\) balls (instead of exactly \(m\)) uniformly into \(n\) bins, then the bin loads \(B_1, B_2, \ldots, B_n\) are <strong>mutually independent</strong>, each distributed as \(\text{Poisson}(\lambda/n)\).</p>
+    <p>This makes the maximum load analysis tractable — we can analyze each bin separately and apply a union bound.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Application to Load Balancing</div>
+    <p>With \(m = n\) balls and \(n\) bins, Poissonize with \(\lambda = n\). Each bin has load \(B_i \sim \text{Poisson}(1)\). The probability a single bin has load \(\geq k\) is:</p>
+    \[\Pr[B_i \geq k] = 1 - \sum_{j=0}^{k-1}\frac{e^{-1}}{j!} \leq \frac{1}{k!}\]
+    <p>By union bound over \(n\) bins: \(\Pr[\max B_i \geq k] \leq n/k!\). Setting \(k = \Theta(\ln n / \ln\ln n)\) makes this vanish.</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="For Poisson(λ), both mean and variance equal λ. So Var[X] = 3." data-explanation-zh="对于 Poisson(λ)，均值和方差都等于 λ。因此 Var[X] = 3。">
+    <div class="qc-question">Quick Check: If \(X \sim \text{Poisson}(3)\), what is \(\operatorname{Var}[X]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(9\)</div>
+      <div class="qc-opt" data-idx="1">\(\sqrt{3}\)</div>
+      <div class="qc-opt" data-idx="2">\(3\)</div>
+      <div class="qc-opt" data-idx="3">\(6\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== JENSEN'S INEQUALITY & MGF TRICK ===== -->
+<section class="section" id="sec-jensen">
+  <h2 class="section-title">Jensen's Inequality &amp; MGF Trick</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Jensen's Inequality</div>
+    <p>If \(f\) is <strong>convex</strong>: \(\;f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]\)</p>
+    <p>If \(f\) is <strong>concave</strong>: \(\;f(\mathbb{E}[X]) \geq \mathbb{E}[f(X)]\)</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Key Instance: \(\mathbb{E}[\ln X] \leq \ln \mathbb{E}[X]\)</h3>
+    <p>Since \(\ln\) is concave, Jensen gives \(\mathbb{E}[\ln X] \leq \ln(\mathbb{E}[X])\). Equivalently, by exponentiation:</p>
+    \[\mathbb{E}[e^Y] \geq e^{\mathbb{E}[Y]}\]
+    <p>for any random variable \(Y\) (using \(f(y) = e^y\), which is convex).</p>
+  </div>
+
+  <h3>The MGF Trick: Max → Sum via Exponentiation</h3>
+  <div class="concept-box">
+    <p>To bound the maximum of random variables, convert it to a sum using the exponential function. For any \(t > 0\):</p>
+    \[\max_i X_i = \frac{1}{t}\ln\!\left(\max_i e^{tX_i}\right) \leq \frac{1}{t}\ln\!\left(\sum_i e^{tX_i}\right)\]
+    <p>The inequality holds because \(\max \leq \sum\) for non-negative quantities.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Application to Load Balancing Upper Bound</div>
+    <p>Let \(M = \max_j B_j\) be the maximum bin load. For any \(t > 0\):</p>
+    \[\mathbb{E}[e^{tM}] = \mathbb{E}\!\left[\max_j e^{tB_j}\right] \leq \sum_{j=1}^{n}\mathbb{E}[e^{tB_j}]\]
+    <p>By Markov: \(\Pr[M \geq k] = \Pr[e^{tM} \geq e^{tk}] \leq \frac{\sum_j \mathbb{E}[e^{tB_j}]}{e^{tk}}\).</p>
+    <p>Each \(B_j \sim \text{Poisson}(1)\) has \(\mathbb{E}[e^{tB_j}] = e^{e^t - 1}\), giving:</p>
+    \[\Pr[M \geq k] \leq n \cdot \frac{e^{e^t - 1}}{e^{tk}}\]
+  </div>
+
+  <h3>Free Parameter Optimization</h3>
+  <div class="concept-box">
+    <p>The bound holds for <em>all</em> \(t > 0\), so we choose \(t\) to minimize \(e^{e^t - 1 - tk}\). Taking the derivative and setting to zero:</p>
+    \[\frac{d}{dt}(e^t - 1 - tk) = e^t - k = 0 \implies t^* = \ln k\]
+    <p>Substituting: the exponent becomes \(k - 1 - k\ln k \approx -k\ln k\) for large \(k\). Combined with the union bound factor \(n\), we get the maximum load is \(O(\ln n / \ln\ln n)\) with high probability — by balancing \(n \cdot e^{-k\ln k} \leq 1/n\).</p>
+  </div>
+</section>
+
+<!-- ===== MATH QUIZ ===== -->
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=3" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div><!-- /math-content -->
+
+<script src="chapter3-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

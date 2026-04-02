@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.back-bar a { color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s; }
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed; top: 50px; left: 0; width: var(--sidebar-w);
+  height: calc(100vh - 50px); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem 0; z-index: 40;
+}
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block; padding: 0.45rem 1.5rem; color: var(--text-muted); text-decoration: none;
+  font-size: 0.82rem; border-left: 3px solid transparent; transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); font-weight: 500; }
+.toc-group { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); padding: 0.75rem 1.5rem 0.35rem; margin-top: 0.5rem; }
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+.symbol-grid {
+  display: grid; grid-template-columns: auto 1fr 1fr; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 1.5rem 0; font-size: 0.9rem;
+}
+.sym-header { background: var(--bg-card); padding: 0.6rem 1rem; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.sym-cell { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); }
+.sym-cell:nth-child(3n+1) { font-weight: 600; color: var(--accent); background: rgba(108,140,255,0.03); }
+
+.quick-check {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem; margin: 1.5rem 0;
+}
+.quick-check h4 { color: var(--yellow); margin-bottom: 0.75rem; }
+.qc-opt {
+  display: block; padding: 0.5rem 0.75rem; margin: 0.3rem 0; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.5; }
+.qc-feedback { display: none; margin-top: 0.75rem; padding: 0.75rem; border-radius: var(--radius-sm); }
+.qc-feedback.show { display: block; }
+.correct-fb { background: var(--green-bg); color: var(--green); }
+.wrong-fb { background: var(--red-bg); color: var(--red); }
+
+@media (max-width: 800px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <div>
+    <a href="chapter2-study.html">&larr; Back to Chapter 2 Study Guide</a>
+    <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+    <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  </div>
+  <span class="page-title-bar">Math Foundations &mdash; Ch.2</span>
+</div>
+
+<nav class="toc-sidebar">
+  <div class="toc-group">Fundamentals</div>
+  <ul>
+    <li><a href="#sec-mgf" class="toc-link">Moment-Generating Functions</a></li>
+    <li><a href="#sec-exp-properties" class="toc-link">Exponential &amp; Logarithm</a></li>
+    <li><a href="#sec-series" class="toc-link">Series &amp; Convergence</a></li>
+  </ul>
+  <div class="toc-group">Distributions</div>
+  <ul>
+    <li><a href="#sec-poisson" class="toc-link">Poisson Distribution</a></li>
+    <li><a href="#sec-geometric" class="toc-link">Geometric Distribution</a></li>
+  </ul>
+  <div class="toc-group">Inequalities</div>
+  <ul>
+    <li><a href="#sec-markov-deep" class="toc-link">Markov Deep Dive</a></li>
+    <li><a href="#sec-chebyshev-deep" class="toc-link">Chebyshev Deep Dive</a></li>
+    <li><a href="#sec-chernoff-proof" class="toc-link">Chernoff Proof</a></li>
+    <li><a href="#sec-hoeffding-detail" class="toc-link">Hoeffding Details</a></li>
+  </ul>
+  <div class="toc-group">Techniques</div>
+  <ul>
+    <li><a href="#sec-optimization" class="toc-link">Calculus Optimization</a></li>
+    <li><a href="#sec-key-inequalities" class="toc-link">Key Analytic Inequalities</a></li>
+  </ul>
+  </nav>
+
+<main id="mainContent">
+<div class="math-content">
+
+<!-- ===== MGF ===== -->
+<section id="sec-mgf" class="section">
+  <h2 class="section-title">Moment-Generating Functions</h2>
+  <div class="concept-box">
+    <p>The <strong>moment-generating function (MGF)</strong> of a random variable \(X\) is defined as:</p>
+    \[M_X(t) = \mathbb{E}[e^{tX}]\]
+    <p>when this expectation exists for \(t\) in a neighborhood of 0.</p>
+  </div>
+
+  <h3>Why MGFs?</h3>
+  <p>The MGF is the key tool behind the Chernoff bound. The idea is to transform the event \(\{X \geq a\}\) into \(\{e^{tX} \geq e^{ta}\}\) for a parameter \(t > 0\), then apply Markov's inequality to the non-negative random variable \(e^{tX}\).</p>
+
+  <h3>Key Properties</h3>
+  <ul>
+    <li>If \(X_1, \ldots, X_n\) are <strong>independent</strong>, then \(M_{X_1 + \cdots + X_n}(t) = \prod_{i=1}^{n} M_{X_i}(t)\)</li>
+    <li>For \(X \sim \text{Bern}(p)\): \(M_X(t) = 1 - p + pe^t = 1 + p(e^t - 1)\)</li>
+    <li>The \(k\)-th moment can be recovered: \(\mathbb{E}[X^k] = M_X^{(k)}(0)\)</li>
+  </ul>
+
+  <div class="quick-check" data-answer="1" data-explanation="By independence, the MGF of a sum is the product of MGFs." data-explanation-zh="由独立性，和的矩母函数等于各矩母函数之积。">
+    <h4>Quick Check</h4>
+    <p>If \(X\) and \(Y\) are independent, what is \(M_{X+Y}(t)\)?</p>
+    <div class="qc-opt" data-idx="0">\(M_X(t) + M_Y(t)\)</div>
+    <div class="qc-opt" data-idx="1">\(M_X(t) \cdot M_Y(t)\)</div>
+    <div class="qc-opt" data-idx="2">\(M_X(t)^2\)</div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== EXPONENTIAL & LOGARITHM ===== -->
+<section id="sec-exp-properties" class="section">
+  <h2 class="section-title">Exponential &amp; Logarithm Properties</h2>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Expression</div><div class="sym-header">Meaning</div><div class="sym-header">Key Property</div>
+    <div class="sym-cell">\(e^x\)</div><div class="sym-cell">Exponential function</div><div class="sym-cell">Always positive; convex; \(\frac{d}{dx}e^x = e^x\)</div>
+    <div class="sym-cell">\(\ln(x)\)</div><div class="sym-cell">Natural logarithm</div><div class="sym-cell">Inverse of \(e^x\); concave; defined for \(x > 0\)</div>
+    <div class="sym-cell">\(\ln(1+x) \leq x\)</div><div class="sym-cell">Fundamental inequality</div><div class="sym-cell">Used in Chernoff proof; equality only at \(x=0\)</div>
+    <div class="sym-cell">\(1 + x \leq e^x\)</div><div class="sym-cell">Equivalent form</div><div class="sym-cell">Follows from exponentiating both sides of \(\ln(1+x) \leq x\)</div>
+  </div>
+
+  <div class="concept-box">
+    <h3>The Crucial Inequality: \(\ln(1+x) \leq x\)</h3>
+    <p>This is arguably the single most important inequality in the Chernoff proof. It follows from the concavity of \(\ln\): the tangent line at \(x=0\) (which is \(y = x\)) lies above the curve.</p>
+    <p style="margin-top:0.5rem;">Equivalently: \(1 + x \leq e^x\) for all \(x \in \mathbb{R}\).</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="ln(1+x) ≤ x for all x > -1, with equality only at x = 0." data-explanation-zh="对所有 x > -1，ln(1+x) ≤ x，仅在 x = 0 时取等号。">
+    <h4>Quick Check</h4>
+    <p>Which is true for all \(x > -1\)?</p>
+    <div class="qc-opt" data-idx="0">\(\ln(1+x) \leq x\)</div>
+    <div class="qc-opt" data-idx="1">\(\ln(1+x) \geq x\)</div>
+    <div class="qc-opt" data-idx="2">\(\ln(1+x) = x\)</div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== SERIES & CONVERGENCE ===== -->
+<section id="sec-series" class="section">
+  <h2 class="section-title">Series &amp; Convergence</h2>
+
+  <div class="concept-box">
+    <h3>Geometric Series</h3>
+    <p>For \(|r| < 1\):</p>
+    \[\sum_{k=0}^{\infty} r^k = \frac{1}{1-r}\]
+    <p>This is used extensively in algorithm analysis (e.g., bounding the expected number of geometric repetitions).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Exponential Series</h3>
+    \[e^x = \sum_{k=0}^{\infty} \frac{x^k}{k!}\]
+    <p>Used when computing MGFs and Poisson probabilities. Converges for all \(x \in \mathbb{R}\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Taylor Expansion of \(\ln(1+\gamma)\)</h3>
+    \[\ln(1+\gamma) = \gamma - \frac{\gamma^2}{2} + \frac{\gamma^3}{3} - \cdots = \sum_{k=1}^{\infty} \frac{(-1)^{k+1} \gamma^k}{k}\]
+    <p>The expansion \((1+\gamma)\ln(1+\gamma) - \gamma = \frac{\gamma^2}{2} - O(\gamma^3)\) shows the quadratic dependence that appears in the Chernoff exponent.</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="The geometric series ∑r^k = 1/(1-r) for |r| < 1." data-explanation-zh="几何级数 ∑r^k = 1/(1-r)，其中 |r| < 1。">
+    <h4>Quick Check</h4>
+    <p>What is \(\sum_{k=0}^{\infty} (3/16)^k\)?</p>
+    <div class="qc-opt" data-idx="0">\(\dfrac{3}{13}\)</div>
+    <div class="qc-opt" data-idx="1">\(\dfrac{13}{16}\)</div>
+    <div class="qc-opt" data-idx="2">\(\dfrac{16}{13}\)</div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== POISSON ===== -->
+<section id="sec-poisson" class="section">
+  <h2 class="section-title">Poisson Distribution</h2>
+  <div class="concept-box">
+    <p>If \(X \sim \text{Poisson}(\lambda)\), then for integer \(k \geq 0\):</p>
+    \[\Pr[X = k] = \frac{e^{-\lambda} \lambda^k}{k!}\]
+    <p>Key facts: \(\mathbb{E}[X] = \lambda\), \(\operatorname{Var}[X] = \lambda\).</p>
+    <p style="margin-top:0.5rem;"><strong>Poisson limit theorem:</strong> If \(X \sim \text{Bin}(n, p)\) and \(n \to \infty\) with \(np \to \lambda\), then \(X\) converges in distribution to \(\text{Poisson}(\lambda)\).</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="For Poisson(λ), both E[X] and Var[X] equal λ." data-explanation-zh="对于 Poisson(λ)，E[X] 和 Var[X] 都等于 λ。">
+    <h4>Quick Check</h4>
+    <p>If \(X \sim \text{Poisson}(5)\), what is \(\operatorname{Var}[X]\)?</p>
+    <div class="qc-opt" data-idx="0">\(25\)</div>
+    <div class="qc-opt" data-idx="1">\(5\)</div>
+    <div class="qc-opt" data-idx="2">\(\sqrt{5}\)</div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== GEOMETRIC ===== -->
+<section id="sec-geometric" class="section">
+  <h2 class="section-title">Geometric Distribution</h2>
+  <div class="concept-box">
+    <p>The geometric distribution models the number of independent trials until the first success. If each trial succeeds with probability \(p\):</p>
+    \[\Pr[K = k] = (1-p)^{k-1} p, \quad k = 1, 2, 3, \ldots\]
+    <p>\(\mathbb{E}[K] = \frac{1}{p}\), \(\operatorname{Var}[K] = \frac{1-p}{p^2}\).</p>
+    <p style="margin-top:0.5rem;">This appears directly in the MC &rarr; LV conversion: the number of repetitions until success is geometric.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Tail-Sum Formula</h3>
+    <p>For non-negative integer-valued \(K\):</p>
+    \[\mathbb{E}[K] = \sum_{k=1}^{\infty} \Pr[K \geq k]\]
+    <p>For geometric \(K\) with parameter \(p\):</p>
+    \[\mathbb{E}[K] = \sum_{k=1}^{\infty} (1-p)^{k-1} = \frac{1}{p}\]
+  </div>
+</section>
+
+<!-- ===== MARKOV DEEP DIVE ===== -->
+<section id="sec-markov-deep" class="section">
+  <h2 class="section-title">Markov's Inequality: Deep Dive</h2>
+
+  <div class="concept-box">
+    <h3>Statement</h3>
+    <p>For non-negative \(X\) with \(\mathbb{E}[X] < \infty\) and \(t > 0\):</p>
+    \[\Pr[X \geq t] \leq \frac{\mathbb{E}[X]}{t}\]
+  </div>
+
+  <h3>Proof (indicator method)</h3>
+  <p>Note that \(t \cdot \mathbf{1}[X \geq t] \leq X\) pointwise (since \(X \geq 0\)). Taking expectations:</p>
+  \[t \cdot \Pr[X \geq t] = t \cdot \mathbb{E}[\mathbf{1}[X \geq t]] = \mathbb{E}[t \cdot \mathbf{1}[X \geq t]] \leq \mathbb{E}[X]\]
+
+  <h3 style="margin-top:1.5rem;">When is Markov tight?</h3>
+  <p>Markov is tight for random variables that place all their mass at 0 and some value \(a > 0\). For example, \(\Pr[X = a] = 1/a\) and \(\Pr[X = 0] = 1 - 1/a\) gives \(\mathbb{E}[X] = 1\) and \(\Pr[X \geq a] = 1/a = \mathbb{E}[X]/a\).</p>
+
+  <h3 style="margin-top:1.5rem;">The "First Moment Method"</h3>
+  <p>Markov's inequality is sometimes called the <strong>first moment method</strong> because it only uses the first moment (\(\mathbb{E}[X]\)). Chebyshev uses the second moment (variance), and the Chernoff/MGF approach uses all moments.</p>
+
+  <div class="quick-check" data-answer="2" data-explanation="Markov gives Pr[X ≥ 200] ≤ 50/200 = 1/4 = 25%." data-explanation-zh="马尔可夫给出 Pr[X ≥ 200] ≤ 50/200 = 1/4 = 25%。">
+    <h4>Quick Check</h4>
+    <p>If \(X \geq 0\) and \(\mathbb{E}[X] = 50\), what does Markov tell us about \(\Pr[X \geq 200]\)?</p>
+    <div class="qc-opt" data-idx="0">\(\leq 50\%\)</div>
+    <div class="qc-opt" data-idx="1">\(\leq 50\)</div>
+    <div class="qc-opt" data-idx="2">\(\leq 25\%\)</div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== CHEBYSHEV DEEP DIVE ===== -->
+<section id="sec-chebyshev-deep" class="section">
+  <h2 class="section-title">Chebyshev's Inequality: Deep Dive</h2>
+
+  <div class="concept-box">
+    <h3>Statement</h3>
+    \[\Pr[|X - \mathbb{E}[X]| \geq t] \leq \frac{\operatorname{Var}[X]}{t^2}\]
+  </div>
+
+  <h3>Derivation from Markov</h3>
+  <p>Apply Markov to \(Y = (X - \mathbb{E}[X])^2 \geq 0\):</p>
+  \[\Pr[|X - \mu| \geq t] = \Pr[Y \geq t^2] \leq \frac{\mathbb{E}[Y]}{t^2} = \frac{\operatorname{Var}[X]}{t^2}\]
+
+  <h3 style="margin-top:1.5rem;">Standard Deviation Interpretation</h3>
+  <p>Setting \(t = k\sigma\) where \(\sigma = \sqrt{\operatorname{Var}[X]}\):</p>
+  \[\Pr[|X - \mu| \geq k\sigma] \leq \frac{1}{k^2}\]
+  <ul>
+    <li>\(k = 2\): at most 25% probability</li>
+    <li>\(k = 3\): at most 11.1% probability</li>
+    <li>\(k = 10\): at most 1% probability</li>
+  </ul>
+
+  <h3 style="margin-top:1.5rem;">Pairwise Independence Suffices</h3>
+  <p>Chebyshev only uses \(\operatorname{Var}[X]\). For \(X = \sum X_i\), we need \(\operatorname{Var}[\sum X_i] = \sum \operatorname{Var}[X_i]\), which holds under <strong>pairwise independence</strong> (not full independence). This is strictly weaker than what Chernoff requires.</p>
+
+  <div class="quick-check" data-answer="1" data-explanation="Chebyshev only needs pairwise independence for the variance of a sum to decompose." data-explanation-zh="切比雪夫只需两两独立即可将和的方差分解。">
+    <h4>Quick Check</h4>
+    <p>What is the minimum independence assumption for Chebyshev?</p>
+    <div class="qc-opt" data-idx="0">Full (mutual) independence</div>
+    <div class="qc-opt" data-idx="1">Pairwise independence</div>
+    <div class="qc-opt" data-idx="2">No independence at all</div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== CHERNOFF PROOF ===== -->
+<section id="sec-chernoff-proof" class="section">
+  <h2 class="section-title">Chernoff Bound: Full Proof</h2>
+
+  <div class="concept-box">
+    <p>We prove: for \(X_1, \ldots, X_n\) i.i.d. \(\text{Bern}(p)\), \(X = \sum X_i\), and \(\gamma \in (0,1]\):</p>
+    \[\Pr[X > (1+\gamma)\mathbb{E}[X]] \leq e^{-\gamma^2 \mathbb{E}[X] / 3}\]
+  </div>
+
+  <h3>Step 1: Exponential Transform</h3>
+  <p>For any \(t > 0\), since \(x \mapsto e^{tx}\) is increasing:</p>
+  \[\Pr[X > (1+\gamma)\mu] = \Pr[e^{tX} > e^{t(1+\gamma)\mu}]\]
+
+  <h3>Step 2: Markov's Inequality</h3>
+  \[\Pr[e^{tX} > e^{t(1+\gamma)\mu}] \leq \frac{\mathbb{E}[e^{tX}]}{e^{t(1+\gamma)\mu}}\]
+
+  <h3>Step 3: Independence + MGF</h3>
+  \[\mathbb{E}[e^{tX}] = \mathbb{E}\left[\prod_{i=1}^n e^{tX_i}\right] = \prod_{i=1}^n \mathbb{E}[e^{tX_i}] = \left(\mathbb{E}[e^{tX_1}]\right)^n\]
+  <p>For \(X_1 \sim \text{Bern}(p)\):</p>
+  \[\mathbb{E}[e^{tX_1}] = (1-p) \cdot 1 + p \cdot e^t = 1 + p(e^t - 1)\]
+
+  <h3>Step 4: Apply \(\ln(1+x) \leq x\)</h3>
+  \[\frac{(1 + p(e^t-1))^n}{e^{t(1+\gamma)np}} = \frac{e^{n\ln(1+p(e^t-1))}}{e^{t(1+\gamma)np}} \leq \frac{e^{np(e^t-1)}}{e^{t(1+\gamma)np}} = e^{-np \cdot f(t)}\]
+  <p>where \(f(t) = (1+\gamma)t - (e^t - 1)\).</p>
+
+  <h3>Step 5: Optimize over \(t\)</h3>
+  <p>Since the bound holds for <em>any</em> \(t > 0\), we pick the best one. Differentiate:</p>
+  \[f'(t) = (1+\gamma) - e^t = 0 \implies t^* = \ln(1+\gamma)\]
+  <p>Substituting:</p>
+  \[f(t^*) = (1+\gamma)\ln(1+\gamma) - \gamma\]
+
+  <h3>Step 6: Final Simplification</h3>
+  <p>One can verify (by Taylor expansion or calculus) that for \(\gamma \in (0,1]\):</p>
+  \[(1+\gamma)\ln(1+\gamma) - \gamma \geq \frac{\gamma^2}{3}\]
+  <p>Therefore:</p>
+  \[\Pr[X > (1+\gamma)\mu] \leq e^{-np \cdot \gamma^2/3} = e^{-\gamma^2 \mu / 3} \quad \square\]
+</section>
+
+<!-- ===== HOEFFDING DETAILS ===== -->
+<section id="sec-hoeffding-detail" class="section">
+  <h2 class="section-title">Hoeffding Bound: Details</h2>
+
+  <div class="concept-box">
+    <h3>General Form</h3>
+    <p>For independent \(X_i \in [a_i, b_i]\):</p>
+    \[\Pr\!\left[\sum X_i - \sum \mathbb{E}[X_i] \geq t\right] \leq \exp\!\left(-\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}\right)\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>i.i.d. Simplified Form</h3>
+    <p>For i.i.d. \(X_i \in [0,1]\) with mean \(\mu\):</p>
+    \[\Pr\!\left[\left|\frac{1}{n}\sum_{i=1}^n X_i - \mu\right| > \varepsilon\right] \leq 2\exp(-2\varepsilon^2 n)\]
+    <p>This is an <strong>additive</strong> bound: the deviation is measured as an absolute quantity \(\varepsilon\), not relative to \(\mu\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Chernoff vs Hoeffding</h3>
+    <ul>
+      <li><strong>Chernoff (multiplicative):</strong> bound is \(e^{-\delta^2 P/3}\) where \(P = n\mu\). Better when \(\mu \ll 1\) (sparse regime).</li>
+      <li><strong>Hoeffding (additive):</strong> bound is \(e^{-2\varepsilon^2 n}\). Better when \(\mu\) is moderate and you want additive guarantees.</li>
+    </ul>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="The Chernoff (multiplicative) bound is better when μ ≪ 1 since its exponent scales with P = nμ, capturing the sparsity." data-explanation-zh="当 μ ≪ 1 时，切尔诺夫（乘法）界更好，因为其指数与 P = nμ 成比例，能捕捉稀疏性。">
+    <h4>Quick Check</h4>
+    <p>When is the Chernoff bound preferable to Hoeffding?</p>
+    <div class="qc-opt" data-idx="0">When \(\mu \ll 1\) (sparse regime)</div>
+    <div class="qc-opt" data-idx="1">When \(\mu \approx 1/2\)</div>
+    <div class="qc-opt" data-idx="2">They are always identical</div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== CALCULUS OPTIMIZATION ===== -->
+<section id="sec-optimization" class="section">
+  <h2 class="section-title">Calculus Optimization in Proofs</h2>
+
+  <div class="concept-box">
+    <h3>The "Free Parameter" Technique</h3>
+    <p>In the Chernoff proof, we derive a bound valid for <em>any</em> \(t > 0\). Since every choice of \(t\) gives a valid upper bound, we optimize to find the tightest one:</p>
+    <ol>
+      <li>Write the bound as \(e^{-np \cdot f(t)}\)</li>
+      <li>To minimize the bound, <strong>maximize</strong> \(f(t)\)</li>
+      <li>Set \(f'(t) = 0\) and verify it's a maximum</li>
+      <li>Substitute back to get the final expression</li>
+    </ol>
+    <p>This is a standard technique that appears throughout the analysis of randomized algorithms.</p>
+  </div>
+</section>
+
+<!-- ===== KEY ANALYTIC INEQUALITIES ===== -->
+<section id="sec-key-inequalities" class="section">
+  <h2 class="section-title">Key Analytic Inequalities</h2>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Inequality</div><div class="sym-header">Conditions</div><div class="sym-header">Use</div>
+    <div class="sym-cell">\(\ln(1+x) \leq x\)</div><div class="sym-cell">\(x > -1\)</div><div class="sym-cell">Chernoff bound proof (Step 4)</div>
+    <div class="sym-cell">\(1 + x \leq e^x\)</div><div class="sym-cell">All \(x \in \mathbb{R}\)</div><div class="sym-cell">Equivalent to above; bounding products</div>
+    <div class="sym-cell">\((1+\gamma)\ln(1+\gamma) - \gamma \geq \frac{\gamma^2}{3}\)</div><div class="sym-cell">\(\gamma \in (0,1]\)</div><div class="sym-cell">Simplifying the Chernoff exponent</div>
+    <div class="sym-cell">\((1-\gamma)\ln(1-\gamma) + \gamma \geq \frac{\gamma^2}{2}\)</div><div class="sym-cell">\(\gamma \in (0,1)\)</div><div class="sym-cell">Lower tail Chernoff bound</div>
+    <div class="sym-cell">\((1-x)^n \leq e^{-nx}\)</div><div class="sym-cell">\(x \in [0,1]\)</div><div class="sym-cell">Approximating Binomial tail</div>
+    <div class="sym-cell">\(1 - x \leq e^{-x}\)</div><div class="sym-cell">All \(x\)</div><div class="sym-cell">Special case of above; very common</div>
+  </div>
+</section>
+
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=2" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div>
+</main>
+
+<script src="chapter2-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

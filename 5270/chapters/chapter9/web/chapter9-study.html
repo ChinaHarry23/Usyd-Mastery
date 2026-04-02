@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 9: Streaming and Sketching II</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F3AF;</span>
+    <h2>Chapter 9</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-sketching" class="nav-link" data-section="sec-sketching" data-i18n="nav_sketching">Sketching</a></li>
+    <li><a href="#sec-turnstile" class="nav-link" data-section="sec-turnstile" data-i18n="nav_turnstile">Turnstile Model</a></li>
+    <li><a href="#sec-countsketch" class="nav-link" data-section="sec-countsketch" data-i18n="nav_countsketch">CountSketch</a></li>
+    <li><a href="#sec-countmin" class="nav-link" data-section="sec-countmin" data-i18n="nav_countmin">CountMinSketch</a></li>
+    <li><a href="#sec-comparison" class="nav-link" data-section="sec-comparison" data-i18n="nav_comparison">Comparison</a></li>
+    <li><a href="#sec-cs-vs-cms" class="nav-link" data-section="sec-cs-vs-cms">CS vs CMS Demo</a></li>
+    <li><a href="#sec-simulator" class="nav-link" data-section="sec-simulator" data-i18n="nav_simulator">Simulator</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter9-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; <span data-i18n="nav_math">Math Foundations</span></a>
+    </li>
+    <li>
+      <a href="chapter9-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; <span data-i18n="nav_mindmap">Mind Map</span></a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=9" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=9" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=9&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1 data-i18n="hero_title">Chapter 9: Streaming and Sketching II</h1>
+    <p class="hero-subtitle" data-i18n="hero_subtitle">Linear sketching, CountSketch with \(\ell_2\) guarantees, CountMinSketch with \(\ell_1\) guarantees, the turnstile streaming model, and comparisons of frequency estimation algorithms.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4D0;</span>
+        <span data-i18n="card_sketching">Linear Sketching</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AF;</span>
+        <span data-i18n="card_countsketch">CountSketch</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4CA;</span>
+        <span data-i18n="card_countmin">CountMinSketch</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F504;</span>
+        <span data-i18n="card_turnstile">Turnstile Model</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter9-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter9-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;" data-i18n="hero_math_desc">Strongly universal hash families, \(\ell_p\) norms, pairwise independence, Chebyshev&rsquo;s inequality</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SKETCHING ===== -->
+<section id="sec-sketching" class="section" data-track="sketching">
+  <h2 class="section-title" data-i18n="title_sketching">Linear Sketching</h2>
+
+  <div class="concept-box">
+    <h3 data-i18n="sketching_what">What is a Sketch?</h3>
+    <p data-i18n="sketching_intro">A <strong>sketching</strong> algorithm computes a compact summary (sketch) of a data stream that supports <strong>composability</strong>: given two streams, the sketch of their concatenation can be obtained from their individual sketches.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="sketching_linear_def">Definition: Linear Sketch</h3>
+    <p>A streaming algorithm \(A\) is a <strong>linear sketch</strong> if for any two streams \(\sigma_1\) and \(\sigma_2\):</p>
+    \[A(\sigma_1 \circ \sigma_2) = A(\sigma_1) + A(\sigma_2)\]
+    <p data-i18n="sketching_linear_note">Here \(\circ\) denotes stream concatenation and \(+\) denotes pointwise addition of the internal state. Linearity enables parallel and distributed processing of stream segments.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="sketching_why">Why Linearity Matters</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.75rem;">
+      <div class="info-card">
+        <h4 data-i18n="sketching_parallel">Parallelism</h4>
+        <p data-i18n="sketching_parallel_desc">Split the stream across machines, sketch each part independently, then combine.</p>
+      </div>
+      <div class="info-card">
+        <h4 data-i18n="sketching_merge">Mergeability</h4>
+        <p data-i18n="sketching_merge_desc">Two data centres can merge their sketches without re-processing the raw data.</p>
+      </div>
+      <div class="info-card">
+        <h4 data-i18n="sketching_turnstile_support">Turnstile Support</h4>
+        <p data-i18n="sketching_turnstile_desc">Linearity naturally handles negative updates: subtract contributions.</p>
+      </div>
+      <div class="info-card">
+        <h4 data-i18n="sketching_space_eff">Space Efficiency</h4>
+        <p data-i18n="sketching_space_desc">The sketch is typically much smaller than the full frequency vector.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong data-i18n="sketching_note_title">Key Insight:</strong> <span data-i18n="sketching_note_body">Both CountSketch and CountMinSketch are linear sketches. In contrast, Misra-Gries is <em>not</em> a linear sketch (though it is still a sketching algorithm in a weaker sense &mdash; see Tutorial Problem 6).</span>
+  </div>
+</section>
+
+<!-- ===== TURNSTILE MODEL ===== -->
+<section id="sec-turnstile" class="section" data-track="turnstile">
+  <h2 class="section-title" data-i18n="title_turnstile">The Turnstile Model</h2>
+
+  <div class="concept-box">
+    <h3 data-i18n="turnstile_def_title">Definition</h3>
+    <p data-i18n="turnstile_def_body">In the <strong>turnstile model</strong>, each stream element is a pair \((j, c)\) where \(j \in [n]\) and \(c \in \{-B, \ldots, B\}\). The update means \(f_j \leftarrow f_j + c\). This generalises the cash register model (where \(c = 1\) always) by allowing <strong>negative</strong> updates.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="turnstile_strict">Strict Turnstile Model</h3>
+    <p data-i18n="turnstile_strict_body">In the <strong>strict turnstile</strong> model, we additionally require \(f_j \geq 0\) at all times. This models real-world scenarios like inventory tracking where counts cannot go negative.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem; margin-top:1.5rem;">
+    <div class="info-card">
+      <h4 data-i18n="model_cash_register">Cash Register</h4>
+      <p>\(c = 1\) always. \(f_j \geq 0\).</p>
+    </div>
+    <div class="info-card">
+      <h4 data-i18n="model_strict_turnstile">Strict Turnstile</h4>
+      <p>\(c \in \{-B, \ldots, B\}\). \(f_j \geq 0\) always.</p>
+    </div>
+    <div class="info-card">
+      <h4 data-i18n="model_general_turnstile">General Turnstile</h4>
+      <p>\(c \in \{-B, \ldots, B\}\). \(f_j\) may be negative.</p>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong data-i18n="turnstile_note_title">Important:</strong> <span data-i18n="turnstile_note_body">CountSketch works in the general turnstile model. CountMinSketch only works in the cash register model (it always overestimates, which fails when frequencies can decrease). See Tutorial Problem 5 for extending CMS to the strict turnstile model.</span>
+  </div>
+</section>
+
+<!-- ===== COUNTSKETCH ===== -->
+<section id="sec-countsketch" class="section" data-track="countsketch">
+  <h2 class="section-title" data-i18n="title_countsketch">CountSketch</h2>
+
+  <div class="algo-block">
+    <h4>Algorithm 19: CountSketch</h4>
+    <p><strong>Input:</strong> Stream \(\sigma\), parameters \(k, T\)</p>
+    <p><strong>Hash functions:</strong> \(h_t : [n] \to [k]\) (strongly universal), \(g_t : [n] \to \{-1, +1\}\) (strongly universal), for \(t = 1, \ldots, T\)</p>
+    <p><strong>Data structure:</strong> Array \(C[1..T][1..k]\), initialised to 0</p>
+    <ol>
+      <li>For each element \((j, c)\) in the stream:</li>
+      <li>&emsp;For each \(t = 1, \ldots, T\):</li>
+      <li>&emsp;&emsp;\(C[t][h_t(j)] \leftarrow C[t][h_t(j)] + g_t(j) \cdot c\)</li>
+      <li>On query for element \(j\):</li>
+      <li>&emsp;Return \(\hat{f}_j = \text{median}_{t=1}^{T}\{g_t(j) \cdot C[t][h_t(j)]\}\)</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">Space \(O\!\left(\frac{\log(nm)}{\varepsilon^2} \cdot \log\frac{1}{\delta}\right)\)</span>
+      <span class="fact-pill red">\(\ell_2\) guarantee</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 44 (CountSketch Guarantee)</h3>
+    <p>For any element \(j\), with \(k = \lceil 3/\varepsilon^2 \rceil\) and \(T = O(\log(1/\delta))\):</p>
+    \[|\hat{f}_j - f_j| \leq \varepsilon \|f_{-j}\|_2\]
+    <p>with probability \(\geq 1 - \delta\), where \(\|f_{-j}\|_2 = \sqrt{\sum_{i \neq j} f_i^2}\) is the \(\ell_2\) norm of the frequency vector with element \(j\) removed.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-cs">Show Proof</button>
+  <div class="proof-content" id="proof-cs">
+    <p><strong>Fix a row \(t\).</strong> Define \(X_t = g_t(j) \cdot C[t][h_t(j)]\). Then:</p>
+    \[X_t = g_t(j) \sum_{i : h_t(i) = h_t(j)} g_t(i) \cdot f_i = f_j + \sum_{i \neq j : h_t(i) = h_t(j)} g_t(j) g_t(i) \cdot f_i\]
+    <p>Let \(Z_t = X_t - f_j = \sum_{i \neq j, h_t(i)=h_t(j)} g_t(j) g_t(i) f_i\). Using strong universality:</p>
+    <ul>
+      <li>\(\mathbb{E}[Z_t] = 0\) (since \(\mathbb{E}[g_t(j)g_t(i)] = 0\) for \(i \neq j\))</li>
+      <li>\(\mathbb{E}[Z_t^2] \leq \|f_{-j}\|_2^2 / k\) (by pairwise independence of \(h_t\))</li>
+    </ul>
+    <p style="margin-top:0.75rem;">By Chebyshev with \(k = 3/\varepsilon^2\): \(\Pr[|Z_t| > \varepsilon\|f_{-j}\|_2] \leq 1/3\).</p>
+    <p>Taking the median over \(T = O(\log(1/\delta))\) rows, by Chernoff: \(\Pr[|\hat{f}_j - f_j| > \varepsilon\|f_{-j}\|_2] \leq \delta\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="cs_role_of_g">Role of the Sign Function \(g\)</h3>
+    <p data-i18n="cs_role_of_g_body">The function \(g_t : [n] \to \{-1, +1\}\) ensures that collisions cancel out in expectation. Without \(g\), collisions would always add positively, leading to systematic overestimation (like in CountMinSketch). The sign hash creates an unbiased estimator: \(\mathbb{E}[\hat{f}_j] = f_j\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="cs_median_trick">Probability Amplification: Median Trick</h3>
+    <p data-i18n="cs_median_body">A single row gives correct estimates with probability \(\geq 2/3\). Running \(T = O(\log(1/\delta))\) independent rows and taking the median boosts success probability to \(1 - \delta\). This is the same median trick used in Chapter 8.</p>
+  </div>
+</section>
+
+<!-- ===== COUNTMINSKETCH ===== -->
+<section id="sec-countmin" class="section" data-track="countmin">
+  <h2 class="section-title" data-i18n="title_countmin">CountMinSketch</h2>
+
+  <div class="algo-block">
+    <h4>Algorithm 20: CountMinSketch</h4>
+    <p><strong>Input:</strong> Stream \(\sigma\) (cash register model), parameters \(k, T\)</p>
+    <p><strong>Hash functions:</strong> \(h_t : [n] \to [k]\) (pairwise independent), for \(t = 1, \ldots, T\)</p>
+    <p><strong>Data structure:</strong> Array \(C[1..T][1..k]\), initialised to 0</p>
+    <ol>
+      <li>For each element \(j\) in the stream (with implicit \(c = 1\)):</li>
+      <li>&emsp;For each \(t = 1, \ldots, T\):</li>
+      <li>&emsp;&emsp;\(C[t][h_t(j)] \leftarrow C[t][h_t(j)] + 1\)</li>
+      <li>On query for element \(j\):</li>
+      <li>&emsp;Return \(\hat{f}_j = \min_{t=1}^{T} C[t][h_t(j)]\)</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">Space \(O\!\left(\frac{\log(nm)}{\varepsilon} \cdot \log\frac{1}{\delta}\right)\)</span>
+      <span class="fact-pill red">Always overestimates</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 45 (CountMinSketch Guarantee)</h3>
+    <p>With \(k = \lceil e/\varepsilon \rceil\) and \(T = \lceil \ln(1/\delta) \rceil\):</p>
+    \[f_j \leq \hat{f}_j \leq f_j + \varepsilon \|f_{-j}\|_1\]
+    <p>with probability \(\geq 1 - \delta\), where \(\|f_{-j}\|_1 = \sum_{i \neq j} f_i = m - f_j\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-cms">Show Proof</button>
+  <div class="proof-content" id="proof-cms">
+    <p><strong>Lower bound:</strong> \(\hat{f}_j \geq f_j\) always, since every occurrence of \(j\) is counted in every row, and other elements only add to the count.</p>
+    <p style="margin-top:0.75rem;"><strong>Upper bound:</strong> Fix row \(t\). Define \(Y_{t,j} = C[t][h_t(j)] - f_j = \sum_{i \neq j : h_t(i) = h_t(j)} f_i\). By Markov:</p>
+    \[\mathbb{E}[Y_{t,j}] = \sum_{i \neq j} f_i \cdot \Pr[h_t(i) = h_t(j)] \leq \frac{\|f_{-j}\|_1}{k}\]
+    \[\Pr[Y_{t,j} > \varepsilon \|f_{-j}\|_1] \leq \frac{1}{k\varepsilon} \leq \frac{1}{e}\]
+    <p style="margin-top:0.75rem;">Since we take the minimum over \(T\) independent rows, the estimate exceeds \(f_j + \varepsilon\|f_{-j}\|_1\) only if <em>all</em> \(T\) rows exceed it:</p>
+    \[\Pr[\hat{f}_j > f_j + \varepsilon\|f_{-j}\|_1] \leq \left(\frac{1}{e}\right)^T = e^{-T} \leq \delta\]
+    <p>Setting \(T = \lceil\ln(1/\delta)\rceil\) gives the result. \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="cms_builtin_amp">Built-in Probability Amplification</h3>
+    <p data-i18n="cms_builtin_body">Unlike CountSketch, CountMinSketch does <strong>not</strong> need the median trick. The \(\min\) operation provides built-in probability amplification: each independent row is an independent chance for the estimate to be close to \(f_j\), and taking the minimum ensures we use the best one. The failure probability decays exponentially with \(T\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="cms_overestimate">One-Sided Error: Always Overestimates</h3>
+    <p data-i18n="cms_overestimate_body">CountMinSketch <strong>always</strong> satisfies \(\hat{f}_j \geq f_j\). This is because collisions only add to the count, never subtract. This is useful in applications where overestimation is acceptable but underestimation is dangerous (e.g., heavy hitter detection).</p>
+  </div>
+</section>
+
+<!-- ===== COMPARISON ===== -->
+<section id="sec-comparison" class="section" data-track="comparison">
+  <h2 class="section-title" data-i18n="title_comparison">Comparison: MG vs CountSketch vs CountMinSketch</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="styled-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th data-i18n="col_property">Property</th>
+          <th>Misra-Gries</th>
+          <th>CountSketch</th>
+          <th>CountMinSketch</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-i18n="row_type">Type</td>
+          <td data-i18n="val_deterministic">Deterministic</td>
+          <td data-i18n="val_randomised">Randomised</td>
+          <td data-i18n="val_randomised">Randomised</td>
+        </tr>
+        <tr>
+          <td data-i18n="row_error">Error bound</td>
+          <td>\(\varepsilon m\) (\(\ell_1\))</td>
+          <td>\(\varepsilon \|f_{-j}\|_2\) (\(\ell_2\))</td>
+          <td>\(\varepsilon \|f_{-j}\|_1\) (\(\ell_1\))</td>
+        </tr>
+        <tr>
+          <td data-i18n="row_direction">Direction</td>
+          <td data-i18n="val_under">Underestimates</td>
+          <td data-i18n="val_either">Either direction</td>
+          <td data-i18n="val_over">Overestimates</td>
+        </tr>
+        <tr>
+          <td data-i18n="row_space">Space</td>
+          <td>\(O(k(\log m + \log n))\)</td>
+          <td>\(O\!\left(\frac{\log(nm)}{\varepsilon^2} \cdot \log\frac{1}{\delta}\right)\)</td>
+          <td>\(O\!\left(\frac{\log(nm)}{\varepsilon} \cdot \log\frac{1}{\delta}\right)\)</td>
+        </tr>
+        <tr>
+          <td data-i18n="row_model">Stream model</td>
+          <td data-i18n="val_cash">Cash register</td>
+          <td data-i18n="val_turnstile">General turnstile</td>
+          <td data-i18n="val_cash">Cash register</td>
+        </tr>
+        <tr>
+          <td data-i18n="row_linear">Linear sketch?</td>
+          <td data-i18n="val_no_weak">No (weaker sketching)</td>
+          <td data-i18n="val_yes">Yes</td>
+          <td data-i18n="val_yes">Yes</td>
+        </tr>
+        <tr>
+          <td data-i18n="row_amplification">Prob. amplification</td>
+          <td>N/A</td>
+          <td data-i18n="val_median">Median trick</td>
+          <td data-i18n="val_builtin">Built-in (min)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="cmp_l1_vs_l2">\(\ell_1\) vs \(\ell_2\) Guarantees</h3>
+    <p data-i18n="cmp_body">The \(\ell_2\) guarantee of CountSketch is <strong>stronger</strong> when the frequency distribution is spread out (many elements with similar frequencies), since \(\|f_{-j}\|_2 \leq \|f_{-j}\|_1\). The \(\ell_1\) guarantee of CountMinSketch is better when there are a few dominant heavy hitters, and CountMinSketch uses less space (\(1/\varepsilon\) vs \(1/\varepsilon^2\) per row).</p>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong data-i18n="cmp_norm_relations">Norm Relations:</strong> <span data-i18n="cmp_norm_body">For any vector \(x \in \mathbb{R}^d\): \(\|x\|_\infty \leq \|x\|_2 \leq \|x\|_1\), and \(\|x\|_2 \geq \|x\|_1 / \sqrt{d}\). So the \(\ell_2\) error can be up to \(\sqrt{d}\) times smaller than the \(\ell_1\) error.</span>
+  </div>
+</section>
+
+<!-- ===== CS vs CMS SIDE-BY-SIDE ===== -->
+<section id="sec-cs-vs-cms" class="section" data-track="cs-vs-cms">
+  <h2 class="section-title">Interactive: CountSketch vs CountMinSketch Side-by-Side</h2>
+
+  <div class="sim-container">
+    <p>Compare how CountSketch and CountMinSketch process the same stream with shared column hashes. CS uses sign hashes \(g(j)\in\{-1,+1\}\) for unbiased estimation; CMS always adds +1 and overestimates.</p>
+    <div class="sim-controls" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+      <label>Element:
+        <select id="csvsCmsElem" style="padding:0.4rem 0.6rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text); font-size:0.9rem;">
+          <option value="0">a</option>
+          <option value="1">b</option>
+          <option value="2">c</option>
+          <option value="3">d</option>
+          <option value="4">e</option>
+        </select>
+      </label>
+      <button id="btnCsVsCmsAdd" class="btn btn-primary">Add Element</button>
+      <button id="btnCsVsCmsQuery" class="btn btn-secondary">Query</button>
+      <button id="btnCsVsCmsReset" class="btn btn-outline">Reset</button>
+      <span style="font-size:0.85rem; color:var(--text-muted);">Stream length: <strong id="csVsCmsStreamLen">0</strong></span>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1.25rem;">
+      <div>
+        <h4 style="text-align:center; margin-bottom:0.5rem; color:var(--accent);">CountSketch</h4>
+        <div id="csGrid" style="overflow-x:auto;"></div>
+        <div style="text-align:center; margin-top:0.5rem; font-size:0.82rem; color:var(--text-dim);">Estimate = median of row estimates</div>
+      </div>
+      <div>
+        <h4 style="text-align:center; margin-bottom:0.5rem; color:var(--green);">CountMinSketch</h4>
+        <div id="cmsGrid2" style="overflow-x:auto;"></div>
+        <div style="text-align:center; margin-top:0.5rem; font-size:0.82rem; color:var(--text-dim);">Estimate = min of row values</div>
+      </div>
+    </div>
+
+    <div id="csVsCmsQueryResult" style="display:none; margin-top:1rem; padding:1rem; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);"></div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:0.75rem; margin-top:1rem;">
+      <div class="stat-card"><div class="stat-value" id="csVsCmsTrueFreq">&mdash;</div><div class="stat-label">True Freq</div></div>
+      <div class="stat-card"><div class="stat-value" id="csVsCmsCSEst">&mdash;</div><div class="stat-label">CS Estimate</div></div>
+      <div class="stat-card"><div class="stat-value" id="csVsCmsCMSEst">&mdash;</div><div class="stat-label">CMS Estimate</div></div>
+      <div class="stat-card"><div class="stat-value" id="csVsCmsCSErr">&mdash;</div><div class="stat-label">CS Error</div></div>
+      <div class="stat-card"><div class="stat-value" id="csVsCmsCMSErr">&mdash;</div><div class="stat-label">CMS Error</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INTERACTIVE SIMULATOR ===== -->
+<section id="sec-simulator" class="section" data-track="simulator">
+  <h2 class="section-title" data-i18n="title_simulator">Interactive: CountMinSketch Simulator</h2>
+
+  <div class="sim-container">
+    <p data-i18n="sim_desc">Insert elements into a CountMinSketch with \(T = 3\) rows and \(k = 7\) columns. Observe how collisions affect the estimated frequencies.</p>
+    <div class="sim-controls" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+      <label for="cmsInput" data-i18n="sim_element">Element (1&ndash;20):</label>
+      <input type="number" id="cmsInput" min="1" max="20" value="1" style="width:4rem; padding:0.4rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text);">
+      <button id="btnCmsInsert" class="btn btn-primary" data-i18n="sim_insert">Insert</button>
+      <button id="btnCmsInsert10" class="btn btn-secondary" data-i18n="sim_insert10">Insert 10 Random</button>
+      <button id="btnCmsQuery" class="btn btn-secondary" data-i18n="sim_query">Query</button>
+      <button id="btnCmsReset" class="btn btn-outline" data-i18n="sim_reset">Reset</button>
+    </div>
+    <div id="cmsGrid" style="margin-top:1.25rem; overflow-x:auto;"></div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="cmsTotalInserted">0</div><div class="stat-label" data-i18n="sim_total">Total Insertions</div></div>
+      <div class="stat-card"><div class="stat-value" id="cmsTrueFreq">&mdash;</div><div class="stat-label" data-i18n="sim_true_freq">True Frequency</div></div>
+      <div class="stat-card"><div class="stat-value" id="cmsEstFreq">&mdash;</div><div class="stat-label" data-i18n="sim_est_freq">CMS Estimate</div></div>
+      <div class="stat-card"><div class="stat-value" id="cmsOverest">&mdash;</div><div class="stat-label" data-i18n="sim_overest">Overestimation</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title" data-i18n="title_tutorial">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;" data-i18n="tutorial_intro">Work through these problems to solidify your understanding of sketching algorithms.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p data-i18n="p1_q">Describe the parallels between Bloom filters and CountMinSketch. How is the AND of bits in a Bloom filter analogous to the MIN of counts in CMS?</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p data-i18n="p1_a">CountMinSketch is essentially a <strong>counting Bloom filter</strong>. In a Bloom filter, each element sets \(T\) bits (one per hash function) to 1. A query returns the AND of the \(T\) bits &mdash; all must be 1 for a positive. In CMS, each element increments \(T\) counters (one per hash function). A query returns the MIN of the \(T\) counters.</p>
+      <p style="margin-top:0.5rem;" data-i18n="p1_a2">The parallel: BF has false positives (bits set by other elements), CMS has overestimation (counts inflated by collisions). BF uses AND to minimise false positives; CMS uses MIN to minimise overestimation. Both use \(T\) independent hash functions for probability amplification, and both have one-sided error.</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p data-i18n="p2_q">Prove the monotonicity of \(\ell_p\) norms: for any vector \(x \in \mathbb{R}^d\),</p>
+    \[\|x\|_\infty \leq \|x\|_2 \leq \|x\|_1\]
+    <p data-i18n="p2_q2">Also show that \(\|x\|_2 \geq \|x\|_1 / \sqrt{d}\).</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p><strong>\(\|x\|_\infty \leq \|x\|_2\):</strong> Let \(x_k\) be the largest absolute value. Then \(\|x\|_\infty^2 = x_k^2 \leq \sum_i x_i^2 = \|x\|_2^2\).</p>
+      <p style="margin-top:0.5rem;"><strong>\(\|x\|_2 \leq \|x\|_1\):</strong> \(\|x\|_2^2 = \sum x_i^2 \leq \left(\sum |x_i|\right)^2 = \|x\|_1^2\) since all cross-terms \(|x_i||x_j| \geq 0\).</p>
+      <p style="margin-top:0.5rem;"><strong>\(\|x\|_2 \geq \|x\|_1/\sqrt{d}\):</strong> By Cauchy-Schwarz, \(\|x\|_1 = \sum |x_i| \cdot 1 \leq \sqrt{\sum x_i^2} \cdot \sqrt{d} = \|x\|_2 \sqrt{d}\). Rearranging gives the result. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p data-i18n="p3_q">Compare Misra-Gries and CountMinSketch. What are the advantages and disadvantages of each? When would you prefer one over the other?</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p><strong>Misra-Gries advantages:</strong></p>
+      <ul>
+        <li>Deterministic &mdash; guaranteed error bound with no probability of failure.</li>
+        <li>Never overestimates: \(\hat{f}_j \leq f_j\).</li>
+        <li>No hash functions needed.</li>
+      </ul>
+      <p style="margin-top:0.5rem;"><strong>CountMinSketch advantages:</strong></p>
+      <ul>
+        <li>Linear sketch &mdash; composable, works in distributed settings.</li>
+        <li>Easy point queries: \(O(T)\) time per query vs.\ \(O(\log k)\) for MG.</li>
+        <li>Probability amplification is built-in.</li>
+        <li>Simpler to implement for large \(k\).</li>
+      </ul>
+      <p style="margin-top:0.5rem;"><strong>Misra-Gries disadvantages:</strong> Not a linear sketch; hard to compose results from distributed computations. CMS disadvantage: always overestimates; requires randomness. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p data-i18n="p4_q">Suppose you allocate the same total space budget to CountSketch and CountMinSketch. Compare the error guarantees. In what regime is each algorithm better?</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p>For the same total space \(S\), ignoring logarithmic factors:</p>
+      <ul>
+        <li><strong>CountSketch:</strong> Uses \(k = S\) columns per row. Error \(\leq \|f_{-j}\|_2 / \sqrt{k} = \|f_{-j}\|_2 / \sqrt{S}\).</li>
+        <li><strong>CountMinSketch:</strong> Uses \(k = S\) columns per row. Error \(\leq \|f_{-j}\|_1 / k = \|f_{-j}\|_1 / S\).</li>
+      </ul>
+      <p style="margin-top:0.5rem;"><strong>CS is better when</strong> \(\|f_{-j}\|_2 / \sqrt{S} < \|f_{-j}\|_1 / S\), i.e., when \(\|f_{-j}\|_1 / \|f_{-j}\|_2 > \sqrt{S}\). This happens when the frequency distribution is <strong>spread out</strong> (many elements with similar frequencies).</p>
+      <p style="margin-top:0.5rem;"><strong>CMS is better when</strong> the frequency distribution is <strong>concentrated</strong> (a few heavy hitters dominate), so \(\|f_{-j}\|_1\) is relatively small compared to \(\|f_{-j}\|_2 \sqrt{S}\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p data-i18n="p5_q">Generalise CountMinSketch to work in the <strong>strict turnstile model</strong> (where \(f_j \geq 0\) always). What modifications are needed, and does the same guarantee hold?</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p>In the strict turnstile model, updates are \((j, c)\) with \(c \in \{-B, \ldots, B\}\), but \(f_j \geq 0\) always. Modify CMS:</p>
+      <ul>
+        <li><strong>Update:</strong> For each \(t\), set \(C[t][h_t(j)] \leftarrow C[t][h_t(j)] + c\) (allow negative increments).</li>
+        <li><strong>Query:</strong> Still return \(\hat{f}_j = \min_t C[t][h_t(j)]\).</li>
+      </ul>
+      <p style="margin-top:0.5rem;">The guarantee \(f_j \leq \hat{f}_j\) still holds because: at any time, \(C[t][h_t(j)] = f_j + \sum_{i \neq j, h_t(i) = h_t(j)} f_i \geq f_j\) since all \(f_i \geq 0\) in the strict turnstile model. The upper bound analysis also carries through since \(\|f_{-j}\|_1 = \sum_{i \neq j} f_i\) is still well-defined and non-negative. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p data-i18n="p6_q">Show that Misra-Gries is a <strong>sketching algorithm</strong> (in a non-linear sense). Given two MG outputs from independent runs on \(\sigma_1\) and \(\sigma_2\), describe how to combine them into a valid MG output for \(\sigma_1 \circ \sigma_2\). Is MG a linear sketch?</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>Combining MG outputs:</strong> Let \(\hat{f}^{(1)}\) and \(\hat{f}^{(2)}\) be the two MG outputs (associative arrays with at most \(k\) keys each).</p>
+      <ol>
+        <li>Add them pointwise: \(\hat{f}^{(\text{combined})}[j] = \hat{f}^{(1)}[j] + \hat{f}^{(2)}[j]\).</li>
+        <li>If the combined output has more than \(k\) non-zero keys, find the \((k+1)\)-th largest value \(v_{k+1}\).</li>
+        <li>Subtract \(v_{k+1}\) from all values and remove non-positive entries.</li>
+      </ol>
+      <p style="margin-top:0.5rem;">This preserves the MG invariant: at most \(k\) keys, and \(f_j - m/(k+1) \leq \hat{f}_j \leq f_j\). The combined error at most doubles: \(f_j - (m_1 + m_2)/(k+1) \leq \hat{f}_j \leq f_j\).</p>
+      <p style="margin-top:0.5rem;"><strong>MG is NOT a linear sketch</strong> because the combination involves a non-linear step (finding the \((k+1)\)-th largest and subtracting). Linear sketches require only pointwise addition. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p data-i18n="p7_q">Modify CountMinSketch to output all \(\ell_1\) heavy hitters in the <strong>strict turnstile model</strong>: find all \(j\) with \(f_j \geq \varepsilon \|f\|_1\). What space does this require?</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p><strong>Approach:</strong> Run CMS with \(k = \lceil 2e/\varepsilon \rceil\) and \(T = \lceil \ln(n/\delta) \rceil\). Additionally, maintain \(\|f\|_1 = \sum_j f_j\) as a running counter (costs \(O(\log m)\) space).</p>
+      <p style="margin-top:0.5rem;"><strong>Finding heavy hitters:</strong> After processing the stream, iterate over all \(j \in [n]\) and query CMS for each. Report \(j\) if \(\hat{f}_j \geq \varepsilon \|f\|_1\). By the CMS guarantee:</p>
+      <ul>
+        <li>If \(f_j \geq \varepsilon \|f\|_1\), then \(\hat{f}_j \geq f_j \geq \varepsilon \|f\|_1\), so \(j\) is reported (no false negatives).</li>
+        <li>If \(f_j < \varepsilon \|f\|_1 / 2\), then with high probability \(\hat{f}_j < f_j + \varepsilon\|f\|_1/2 < \varepsilon\|f\|_1\), so \(j\) is not reported.</li>
+      </ul>
+      <p style="margin-top:0.5rem;"><strong>Space:</strong> \(O\!\left(\frac{\log(nm)}{\varepsilon} \cdot \log\frac{n}{\delta}\right)\). The query time is \(O(nT)\), which can be improved using a hierarchical scheme. \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=9" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=9&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter9-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

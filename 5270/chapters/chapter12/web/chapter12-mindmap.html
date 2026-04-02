@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Chapter 12</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../shared/mindmap.css">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter12-study.html">&larr; Study Guide</a>
+  <a href="chapter12-math.html">Math Foundations</a>
+  <a href="../../../index.html">&#x1F3E0; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title" data-label-en="Chapter 12 Mind Map" data-label-zh="&#x7B2C;&#x5341;&#x4E8C;&#x7AE0; &#x601D;&#x7EF4;&#x5BFC;&#x56FE;">Chapter 12 Mind Map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand All</button>
+    <button id="btnCollapseAll">Collapse All</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Setting &amp; Lower Bounds</span>
+  <span><span class="dot" style="background:var(--green)"></span> Algorithms</span>
+  <span><span class="dot" style="background:var(--purple)"></span> Analysis</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Key Results</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../shared/mindmap.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+var data = {
+  label: "Chapter 12: Learning from Experts",
+  label_zh: "\u7b2c\u5341\u4e8c\u7ae0\uff1a\u5411\u4e13\u5bb6\u5b66\u4e60",
+  children: [
+    {
+      label: "Setting",
+      label_zh: "\u8bbe\u5b9a",
+      color: "blue",
+      children: [
+        { label: "T time steps, n experts", label_zh: "T\u4e2a\u65f6\u95f4\u6b65\uff0cn\u4e2a\u4e13\u5bb6" },
+        { label: "Advice v_{i,t}, predict u_t, truth u_bar_t", label_zh: "\u5efa\u8bae v_{i,t}\uff0c\u9884\u6d4b u_t\uff0c\u771f\u503c u_bar_t" },
+        { label: "Cost c_t = 1[u_t != u_bar_t]", label_zh: "\u4ee3\u4ef7 c_t = 1[u_t != u_bar_t]" },
+        { label: "No assumptions on truth sequence", label_zh: "\u5bf9\u771f\u503c\u5e8f\u5217\u6ca1\u6709\u5047\u8bbe" },
+        { label: "Goal: C(T) close to C*(T)", label_zh: "\u76ee\u6807\uff1aC(T)\u63a5\u8fd1C*(T)", color: "yellow" }
+      ]
+    },
+    {
+      label: "Bad News (Lower Bounds)",
+      label_zh: "\u574f\u6d88\u606f\uff08\u4e0b\u754c\uff09",
+      color: "blue",
+      children: [
+        { label: "Deterministic: adversary forces C(T) = T", label_zh: "\u786e\u5b9a\u6027\uff1a\u5bf9\u624b\u8feb\u4f7f C(T) = T" },
+        { label: "Random (no experts): E[C(T)] >= T/2", label_zh: "\u968f\u673a\uff08\u65e0\u4e13\u5bb6\uff09\uff1aE[C(T)] >= T/2" },
+        { label: "Fact 56.3: factor 2 is necessary (det.)", label_zh: "\u4e8b\u5b9e56.3\uff1a\u56e0\u5b502\u662f\u5fc5\u8981\u7684\uff08\u786e\u5b9a\u6027\uff09", color: "yellow" }
+      ]
+    },
+    {
+      label: "Consistent Expert (Alg 22)",
+      label_zh: "\u4e00\u81f4\u4e13\u5bb6\uff08\u7b97\u6cd522\uff09",
+      color: "green",
+      href: "chapter12-study.html#sec-consistent",
+      children: [
+        { label: "Requires C* = 0", label_zh: "\u9700\u8981 C* = 0" },
+        { label: "Eliminate wrong experts", label_zh: "\u6dd8\u6c70\u9519\u8bef\u4e13\u5bb6" },
+        { label: "C(T) <= n - 1", label_zh: "C(T) <= n - 1", color: "yellow" },
+        { label: "Potential: |S_t|, decreases by >= 1", label_zh: "\u52bf\u51fd\u6570\uff1a|S_t|\uff0c\u6bcf\u6b21\u81f3\u5c11\u51cf1", color: "purple" }
+      ]
+    },
+    {
+      label: "Halving Algorithm (Alg 23)",
+      label_zh: "\u51cf\u534a\u7b97\u6cd5\uff08\u7b97\u6cd523\uff09",
+      color: "green",
+      href: "chapter12-study.html#sec-halving",
+      children: [
+        { label: "Requires C* = 0", label_zh: "\u9700\u8981 C* = 0" },
+        { label: "Majority vote among survivors", label_zh: "\u5b58\u6d3b\u8005\u4e2d\u591a\u6570\u6295\u7968" },
+        { label: "C(T) <= log_2(n)", label_zh: "C(T) <= log_2(n)", color: "yellow" },
+        { label: "Potential: |S_t|, halves per mistake", label_zh: "\u52bf\u51fd\u6570\uff1a|S_t|\uff0c\u6bcf\u6b21\u9519\u8bef\u51cf\u534a", color: "purple" }
+      ]
+    },
+    {
+      label: "Basic MWU (Alg 24)",
+      label_zh: "\u57fa\u672cMWU\uff08\u7b97\u6cd524\uff09",
+      color: "green",
+      href: "chapter12-study.html#sec-basic-mwu",
+      children: [
+        { label: "No assumption on C*", label_zh: "\u5bf9 C* \u65e0\u5047\u8bbe" },
+        { label: "Weighted majority, penalise by x(1/2)", label_zh: "\u52a0\u6743\u591a\u6570\uff0c\u60e9\u7f5a\u4e58\u4ee5 1/2" },
+        { label: "C(T) <= 2.41(C* + log_2 n)", label_zh: "C(T) <= 2.41(C* + log_2 n)", color: "yellow" },
+        { label: "Potential: W_t, factor 3/4 per mistake", label_zh: "\u52bf\u51fd\u6570\uff1aW_t\uff0c\u6bcf\u6b21\u9519\u8bef\u4e58\u4ee5 3/4", color: "purple" }
+      ]
+    },
+    {
+      label: "MWU with beta (Alg 25)",
+      label_zh: "\u5e26\u53c2\u6570\u03b2\u7684MWU\uff08\u7b97\u6cd525\uff09",
+      color: "green",
+      href: "chapter12-study.html#sec-mwu-beta",
+      children: [
+        { label: "Penalise by x(beta)", label_zh: "\u60e9\u7f5a\u4e58\u4ee5 \u03b2" },
+        {
+          label: "Bound: (C* log(1/beta) + log n) / log(2/(1+beta))",
+          label_zh: "\u754c\uff1a(C* log(1/\u03b2) + log n) / log(2/(1+\u03b2))",
+          color: "yellow"
+        },
+        {
+          label: "Trade-off",
+          label_zh: "\u6743\u8861",
+          color: "purple",
+          children: [
+            { label: "beta -> 0: better additive, worse multiplicative", label_zh: "\u03b2 -> 0\uff1a\u52a0\u6cd5\u66f4\u597d\uff0c\u4e58\u6cd5\u66f4\u5dee" },
+            { label: "beta -> 1: multiplicative -> 1, additive -> inf", label_zh: "\u03b2 -> 1\uff1a\u4e58\u6cd5 -> 1\uff0c\u52a0\u6cd5 -> \u221e" },
+            { label: "Optimal: beta = 1 - sqrt(log n / C*)", label_zh: "\u6700\u4f18\uff1a\u03b2 = 1 - sqrt(log n / C*)" }
+          ]
+        }
+      ]
+    },
+    {
+      label: "Randomised MWU (Alg 26)",
+      label_zh: "\u968f\u673a\u5316MWU\uff08\u7b97\u6cd526\uff09",
+      color: "green",
+      href: "chapter12-study.html#sec-randomised",
+      children: [
+        { label: "Sample expert by weight", label_zh: "\u6309\u6743\u91cd\u91c7\u6837\u4e13\u5bb6" },
+        {
+          label: "E[C(T)] <= (C* ln(1/beta) + ln n) / (1-beta)",
+          label_zh: "E[C(T)] <= (C* ln(1/\u03b2) + ln n) / (1-\u03b2)",
+          color: "yellow"
+        },
+        { label: "No factor of 2!", label_zh: "\u6ca1\u6709\u56e0\u5b502\uff01", color: "yellow" },
+        { label: "Key: 1-x <= -ln(x) + telescoping", label_zh: "\u5173\u952e\uff1a1-x <= -ln(x) + \u4f38\u7f29", color: "purple" }
+      ]
+    },
+    {
+      label: "Key Techniques",
+      label_zh: "\u5173\u952e\u6280\u672f",
+      color: "purple",
+      children: [
+        {
+          label: "Potential Function Argument",
+          label_zh: "\u52bf\u51fd\u6570\u8bba\u8bc1",
+          children: [
+            { label: "Upper: Phi decreases per mistake", label_zh: "\u4e0a\u754c\uff1aPhi\u6bcf\u6b21\u9519\u8bef\u51cf\u5c11" },
+            { label: "Lower: Phi >= best expert weight", label_zh: "\u4e0b\u754c\uff1aPhi >= \u6700\u4f73\u4e13\u5bb6\u6743\u91cd" },
+            { label: "Take logarithms to get bound", label_zh: "\u53d6\u5bf9\u6570\u5f97\u5230\u754c" }
+          ]
+        },
+        {
+          label: "Randomisation Advantage",
+          label_zh: "\u968f\u673a\u5316\u4f18\u52bf",
+          children: [
+            { label: "Removes factor 2 from det. lower bound", label_zh: "\u53bb\u9664\u786e\u5b9a\u6027\u4e0b\u754c\u7684\u56e0\u5b502" },
+            { label: "Adversary cannot predict our choice", label_zh: "\u5bf9\u624b\u65e0\u6cd5\u9884\u6d4b\u6211\u4eec\u7684\u9009\u62e9" }
+          ]
+        },
+        {
+          label: "Telescoping Sum",
+          label_zh: "\u4f38\u7f29\u6c42\u548c",
+          children: [
+            { label: "sum ln(W_t/W_{t+1}) = ln(W_1/W_{T+1})", label_zh: "sum ln(W_t/W_{t+1}) = ln(W_1/W_{T+1})" },
+            { label: "Uses inequality 1-x <= -ln(x)", label_zh: "\u4f7f\u7528\u4e0d\u7b49\u5f0f 1-x <= -ln(x)" }
+          ]
+        }
+      ]
+    }
+  ]
+};
+renderMindmap("mindmapCanvas", data);
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 10: Linear Programming &amp; Randomised Rounding</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4C8;</span>
+    <h2>Chapter 10</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-lp" class="nav-link" data-section="sec-lp">Linear Programming</a></li>
+    <li><a href="#sec-ilp" class="nav-link" data-section="sec-ilp">Integer LP</a></li>
+    <li><a href="#sec-relax" class="nav-link" data-section="sec-relax">LP Relaxation</a></li>
+    <li><a href="#sec-rounding" class="nav-link" data-section="sec-rounding">Randomised Rounding</a></li>
+    <li><a href="#sec-maxsat" class="nav-link" data-section="sec-maxsat">Max-SAT</a></li>
+    <li><a href="#sec-bestof2" class="nav-link" data-section="sec-bestof2">Best-of-Two</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter10-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter10-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=10" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=10" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=10&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 10: Linear Programming &amp; Randomised Rounding</h1>
+    <p class="hero-subtitle">LP relaxation of ILPs, randomised rounding for Min-Cut, Max-SAT approximation algorithms achieving \(\frac{1}{2}\), \(1-\frac{1}{e}\), and \(\frac{3}{4}\) ratios.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4C8;</span><span>Linear Programming</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F3AF;</span><span>LP Relaxation</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F3B2;</span><span>Randomised Rounding</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x2705;</span><span>Max-SAT</span></div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter10-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter10-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-lp" class="section" data-track="lp">
+  <h2 class="section-title">Linear Programming (LP)</h2>
+  <div class="concept-box">
+    <h3>Standard Form</h3>
+    <p>A Linear Program maximises a linear objective subject to linear constraints:</p>
+    \[\text{maximise } c^\top x \quad \text{subject to } Ax \leq b, \; x \geq 0\]
+    <p>where \(x \in \mathbb{R}^n\) are variables, \(c \in \mathbb{R}^n\) the objective, \(A \in \mathbb{R}^{m \times n}\) and \(b \in \mathbb{R}^m\) encode constraints.</p>
+  </div>
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Key facts:</strong> LP is P-complete. Every LP can be solved in poly time. Very efficient solvers exist in practice (simplex, interior point). An incredibly powerful tool for algorithm design.
+  </div>
+</section>
+
+<section id="sec-ilp" class="section" data-track="ilp">
+  <h2 class="section-title">Integer Linear Programs (ILP)</h2>
+  <div class="concept-box">
+    <h3>From LP to ILP</h3>
+    <p>An ILP adds <strong>integrality constraints</strong>: \(x_i \in \{0, 1\}\) (or \(\mathbb{Z}\)). This allows encoding NP-hard problems like Max-Cut, Max-SAT, and Knapsack.</p>
+  </div>
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Example: st-Min-Cut as ILP</h3>
+    <p>Variables: \(x_e \in \{0,1\}\) (edge in cut?), \(y_v \in \{0,1\}\) (vertex on sink side?).</p>
+    \[\text{minimise } \sum_{e \in E} c_e x_e \quad \text{s.t. } y_s = 0, \; y_t = 1, \; y_v \leq y_u + x_e \;\forall e=(u,v)\]
+  </div>
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>The dilemma:</strong> ILPs can express NP-hard problems, but we cannot solve ILPs efficiently in general. LPs are efficient but may not capture our problem. Solution: LP relaxation + rounding.
+  </div>
+</section>
+
+<section id="sec-relax" class="section" data-track="relax">
+  <h2 class="section-title">LP Relaxation</h2>
+  <div class="concept-box">
+    <h3>The Key Idea</h3>
+    <p>Replace the hard constraint \(x_i \in \{0,1\}\) with \(x_i \in [0, 1]\). This converts the ILP into an LP we can solve efficiently.</p>
+  </div>
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 45.1: LP Relaxation Bound</h3>
+    <p>For a maximisation ILP and its LP relaxation:</p>
+    \[\text{opt}_{ILP} \leq \text{opt}_{LP}\]
+    <p>The LP relaxation <em>over-estimates</em> the optimal (for maximisation). For minimisation, the inequality reverses.</p>
+  </div>
+  <div class="callout" style="margin-top:1.5rem;">
+    The LP solution gives fractional values like \(y_v = 0.5786\). What does it mean for a vertex to be "half in the cut"? We need to <strong>round</strong> these to integer values.
+  </div>
+</section>
+
+<section id="sec-rounding" class="section" data-track="rounding">
+  <h2 class="section-title">Randomised Rounding for Min-Cut</h2>
+  <div class="algo-block">
+    <h4>Algorithm 21: Randomised Rounding for Min-Cut LP</h4>
+    <ol>
+      <li>Solve the LP relaxation to get optimal \((x^*, y^*)\).</li>
+      <li>Pick \(\tau \in (0, 1)\) uniformly at random.</li>
+      <li>For each \(v \in V\): set \(y_v = 1\) if \(y_v^* > \tau\), else \(y_v = 0\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">Optimal in expectation</span>
+    </div>
+  </div>
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 46</h3>
+    <p>The cut \(y\) returned by Algorithm 21 satisfies \(\mathbb{E}[\text{val}(y)] = \text{opt}_{ILP}\).</p>
+    <p>Moreover, since \(\text{val}(y) \geq \text{opt}_{MinCut}\) always (it is a valid cut), and the expectation equals the optimum, we must have \(\text{val}(y) = \text{opt}_{MinCut}\) with probability 1!</p>
+  </div>
+  <button class="proof-toggle" data-target="proof-thm46">Show Proof</button>
+  <div class="proof-content" id="proof-thm46">
+    <p>By linearity of expectation:</p>
+    \[\mathbb{E}[\text{val}(y)] = \sum_{e=(u,v) \in E} c_e \Pr[y_u = 0, y_v = 1]\]
+    <p>For edge \(e = (u,v)\): \(\Pr[y_u = 0, y_v = 1] = \Pr[y_u^* \leq \tau < y_v^*] \leq y_v^* - y_u^* \leq x_e^*\) (by LP constraint).</p>
+    <p>Therefore \(-\mathbb{E}[\text{val}(y)] \leq \sum c_e x_e^* = -\text{opt}_{LP} \leq -\text{opt}_{ILP}\). \(\square\)</p>
+  </div>
+</section>
+
+<section id="sec-maxsat" class="section" data-track="maxsat">
+  <h2 class="section-title">Max-SAT Approximation</h2>
+  <div class="concept-box">
+    <h3>The Max-SAT Problem</h3>
+    <p>\(n\) Boolean variables \(x_1, \ldots, x_n\), \(m\) clauses \(C_1, \ldots, C_m\). Each clause is a disjunction (OR) of literals. Goal: maximise the number of satisfied clauses. <strong>NP-Hard</strong>.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 47: Naive Random &mdash; \(\frac{1}{2}\)-approximation</h3>
+    <p>Set each \(x_i = 1\) independently with probability \(\frac{1}{2}\). Then:</p>
+    \[\mathbb{E}[\text{val}(x)] = \sum_{j=1}^{m} \left(1 - \frac{1}{2^{\ell_j}}\right) \geq \frac{m}{2} \geq \frac{1}{2}\text{opt}(\varphi)\]
+    <p>For Max-E3SAT (all clauses have 3 literals): this gives a \(\frac{7}{8}\)-approximation!</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>ILP Formulation for Max-SAT</h3>
+    <p>Variables: \(y_i \in \{0,1\}\) for Boolean variables, \(z_j \in \{0,1\}\) for clause satisfaction.</p>
+    \[\text{maximise } \sum_{j=1}^{m} z_j \quad \text{s.t. } \sum_{i: x_i \in C_j} y_i + \sum_{i: \neg x_i \in C_j} (1 - y_i) \geq z_j, \;\; y_i, z_j \in \{0,1\}\]
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 48: LP Rounding &mdash; \((1-1/e)\)-approximation</h3>
+    <p>Solve the LP relaxation to get \((y^*, z^*)\). Set \(x_i = 1\) w.p. \(y_i^*\) independently. Then:</p>
+    \[\mathbb{E}[\text{val}(x)] \geq \left(1 - \frac{1}{e}\right)\text{opt}_{LP} \geq \left(1 - \frac{1}{e}\right)\text{opt}(\varphi) \approx 0.632 \cdot \text{opt}(\varphi)\]
+    <p>Uses the AM-GM inequality to relate the product (probability of failure) to the sum (LP constraint).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm48">Show Proof Sketch</button>
+  <div class="proof-content" id="proof-thm48">
+    <p>For clause \(C_j\) with \(\ell_j\) literals, by independence and AM-GM:</p>
+    \[\Pr[C_j \text{ not sat}] = \prod_{i: x_i \in C_j}(1-y_i^*) \cdot \prod_{i: \neg x_i \in C_j} y_i^* \leq \left(1 - \frac{z_j^*}{\ell_j}\right)^{\ell_j}\]
+    <p>The function \(f(z) = 1 - (1-z/\ell)^\ell\) is concave, so \(f(z) \geq (1-(1-1/\ell)^\ell) z\). Since \(\sup_{\ell \geq 1}(1-1/\ell)^\ell = 1/e\):</p>
+    \[\mathbb{E}[\text{val}] \geq \sum_j (1-1/e) z_j^* = (1-1/e) \cdot \text{opt}_{LP} \qquad \square\]
+  </div>
+
+  <!-- Max-SAT Simulator -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Max-SAT Approximation Demo</h3>
+    <p>Generate a random 3-SAT instance and compare the three algorithms.</p>
+    <div class="sim-controls">
+      <label>Variables: <input type="number" id="satN" value="6" min="3" max="12" style="width:60px;"></label>
+      <label>Clauses: <input type="number" id="satM" value="15" min="5" max="40" style="width:60px;"></label>
+      <button id="btnSatRun" class="btn btn-primary">Generate &amp; Compare</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="satOpt">-</div><div class="stat-label">Optimal (brute force)</div></div>
+      <div class="stat-card"><div class="stat-value" id="satNaive">-</div><div class="stat-label">Naive Random</div></div>
+      <div class="stat-card"><div class="stat-value" id="satLP">-</div><div class="stat-label">LP Rounding</div></div>
+      <div class="stat-card"><div class="stat-value" id="satBest">-</div><div class="stat-label">Best-of-Two</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-bestof2" class="section" data-track="bestof2">
+  <h2 class="section-title">The \(\frac{3}{4}\)-Approximation: Best-of-Two</h2>
+  <div class="theorem-box">
+    <h3>Theorem 49</h3>
+    <p>Run <em>both</em> the naive random algorithm and the LP rounding. Return the better solution. This gives, in expectation, a \(\frac{3}{4}\)-approximation for Max-SAT.</p>
+    \[\mathbb{E}[\max(\text{val}(x), \text{val}(x'))] \geq \frac{3}{4} \cdot \text{opt}(\varphi)\]
+  </div>
+  <button class="proof-toggle" data-target="proof-thm49">Show Proof</button>
+  <div class="proof-content" id="proof-thm49">
+    <p>Since \(\max \geq \text{average}\):</p>
+    \[\mathbb{E}[\max(\text{val}(x), \text{val}(x'))] \geq \frac{1}{2}\left(\sum_j\left(1-\frac{1}{2^{\ell_j}}\right) + \sum_j\left(1-\left(1-\frac{1}{\ell_j}\right)^{\ell_j}\right)z_j^*\right)\]
+    <p>The key inequality: for every \(\ell \geq 1\) (integer):</p>
+    \[\left(1 - \frac{1}{2^\ell}\right) + \left(1 - \left(1-\frac{1}{\ell}\right)^\ell\right) \geq \frac{3}{2}\]
+    <p>This gives \(\mathbb{E}[\max] \geq \frac{1}{2} \cdot \frac{3}{2}\sum_j z_j^* = \frac{3}{4}\text{opt}_{LP} \geq \frac{3}{4}\text{opt}(\varphi)\). \(\square\)</p>
+  </div>
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Remarkable:</strong> Combining two algorithms, each giving less than \(\frac{3}{4}\), yields a \(\frac{3}{4}\)-approximation! The naive approach is better for long clauses, LP rounding for short ones &mdash; they complement each other.
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Recall the definitions of LP and ILP, and summarise the key differences.</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p><strong>LP:</strong> Optimise a linear function subject to linear constraints on continuous domain. P-complete, efficiently solvable.</p>
+      <p><strong>ILP:</strong> LP with integrality constraints (e.g., \(x_i \in \{0,1\}\)). More expressive (can encode NP-hard problems), but hard to solve in general. \(\square\)</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p><strong>(a)</strong> Formulate Max-Cut as an ILP and give its LP relaxation.</p>
+    <p><strong>(b)</strong> Show that \(y^* = (1,\ldots,1)\) and \(x^* = (1/2,\ldots,1/2)\) is always optimal for the LP relaxation.</p>
+    <p><strong>(c)</strong> What does randomised rounding become with this solution?</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p><strong>(a)</strong> Maximise \(\sum_{e \in E} w_e y_e\) subject to \(y_e \leq x_u + x_v\) and \(y_e \leq 2 - (x_u + x_v)\) for all \(e = (u,v)\), with \(x_v, y_e \in \{0,1\}\). Relax to \([0,1]\).</p>
+      <p><strong>(b)</strong> With \(x^* = (1/2, \ldots, 1/2)\), every constraint \(y_e \leq x_u + x_v = 1\) and \(y_e \leq 2 - 1 = 1\) is satisfied, allowing \(y_e^* = 1\) for all edges. Value = \(\sum w_e\), the maximum possible.</p>
+      <p><strong>(c)</strong> Setting \(v \in S\) w.p. \(x_v^* = 1/2\) independently is just the simple random algorithm! LP relaxation gives nothing new for Max-Cut. \(\square\)</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Describe how to <strong>derandomise</strong> the \(\frac{3}{4}\)-approximation for Max-SAT.</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p>Use the method of conditional expectations on both algorithms separately. For the naive algorithm: iterate through \(x_1, \ldots, x_n\), choosing the value that maximises the conditional expectation. For the LP rounding: same approach using \(y_i^*\) as the probability. Take the best of the two deterministic solutions. \(\square\)</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Consider the <strong>Knapsack problem</strong>: \(n\) items, weight limit \(W\), item \(i\) has value \(v_i\) and weight \(w_i\).</p>
+    <p><strong>(a)</strong> Give the ILP. <strong>(b)</strong> LP relaxation. <strong>(c-e)</strong> Solve numerically for \((v_i, w_i) = (i^2, i)\), \(W = 20\).</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p><strong>(a)</strong> Maximise \(\sum_i v_i x_i\) s.t. \(\sum_i w_i x_i \leq W\), \(x_i \in \{0,1\}\).</p>
+      <p><strong>(b)</strong> Relax to \(x_i \in [0,1]\). The LP solution is the same as greedy fractional knapsack: sort by \(v_i/w_i\) (here \(v_i/w_i = i\)), pack from largest ratio. For \(W=20\): take items 10, 9 (weight 19), then 0.125 of item 8. LP value = 181.125, ILP optimum = 182 (items 1, 9, 10). \(\square\)</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>For Max-SAT with no negated unit clauses, set each variable to 1 with probability \(p > 1/2\).</p>
+    <p><strong>(a)</strong> Show this gives a \(\min(p, 1-p^2)\)-approximation.</p>
+    <p><strong>(b)</strong> Find the optimal \(p\).</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>(a)</strong> Unit clause (non-negated): satisfied w.p. \(p\). Clause of length \(\ell \geq 2\) with \(a\) negated, \(b\) non-negated variables: not satisfied w.p. \(p^a(1-p)^b < p^{a+b} \leq p^2\). So each clause is satisfied w.p. \(\geq \min(p, 1-p^2)\).</p>
+      <p><strong>(b)</strong> Setting \(p = 1 - p^2\) gives \(p = \frac{\sqrt{5}-1}{2} \approx 0.618\), the golden ratio minus 1. This gives a 0.618-approximation (slightly worse than \(1-1/e \approx 0.632\)). \(\square\)</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Show a direct \(\frac{3}{4}\)-approximation via modified rounding: \(p_i = f(y_i^*)\) where \(1 - 1/4^x \leq f(x) \leq 1/4^{1-x}\).</p>
+    <p><strong>(b)</strong> Show \(\Pr[C_j \text{ not sat}] \leq 1/4^{z_j^*}\). <strong>(c)</strong> Deduce \(\Pr[C_j \text{ sat}] \geq \frac{3}{4}z_j^*\).</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>(b)</strong> \(\Pr[\text{not sat}] = \prod_{i: x_i \in C_j}(1-f(y_i^*)) \cdot \prod_{i: \neg x_i \in C_j}f(y_i^*) \leq \prod 1/4^{y_i^*} \cdot \prod 1/4^{1-y_i^*} = 4^{-z_j^*}\).</p>
+      <p><strong>(c)</strong> Since \(g(x) = 1 - 1/4^x\) is concave and \(g(0) = 0\): \(\Pr[\text{sat}] \geq 1 - 1/4^{z_j^*} \geq z_j^* \cdot g(1) = \frac{3}{4}z_j^*\).</p>
+      <p>Summing: \(\mathbb{E}[\text{val}] \geq \frac{3}{4}\sum z_j^* \geq \frac{3}{4}\text{opt}(\varphi)\). \(\square\)</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p>Show a direct \(\frac{3}{4}\)-approximation using the <em>linear</em> rounding: \(p_i = y_i^*/2 + 1/4\).</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p>This is a specific \(f\) that satisfies the bounds in Problem 6: \(f(x) = x/2 + 1/4\). Verify: \(f(0) = 1/4 = 1/4^1\) and \(f(1) = 3/4 = 1 - 1/4^1\). The bounds hold because the linear function lies between the two curves. The same analysis as Problem 6 applies. \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=10" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=10&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter10-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

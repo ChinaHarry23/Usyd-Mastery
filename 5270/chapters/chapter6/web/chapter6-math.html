@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 6</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.back-bar a {
+  color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;
+}
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar {
+  font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed; top: 50px; left: 0; width: var(--sidebar-w);
+  height: calc(100vh - 50px); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem 0; z-index: 40;
+}
+.toc-sidebar .home-link {
+  display: block; padding: 0.5rem 1.5rem 0.75rem; font-size: 0.8rem;
+  color: var(--text-dim); text-decoration: none; transition: color var(--transition);
+}
+.toc-sidebar .home-link:hover { color: var(--accent); }
+.toc-sidebar .sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0 1.5rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
+}
+.toc-sidebar .sidebar-brand .brand-icon { font-size: 1.4rem; }
+.toc-sidebar .sidebar-brand h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block; padding: 0.45rem 1.5rem; color: var(--text-muted); text-decoration: none;
+  font-size: 0.82rem; border-left: 3px solid transparent; transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active {
+  color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); font-weight: 500;
+}
+.toc-group {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); padding: 0.75rem 1.5rem 0.35rem; margin-top: 0.5rem;
+}
+.toc-sidebar .back-to-study {
+  display: block; padding: 0.75rem 1.5rem; margin-top: 0.5rem;
+  border-top: 1px solid var(--border); font-size: 0.82rem;
+  color: var(--accent); text-decoration: none; font-weight: 500;
+}
+.toc-sidebar .back-to-study:hover { background: var(--accent-glow); }
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+.def-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.def-box .def-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); margin-bottom: 0.5rem; font-weight: 600;
+}
+.def-box.theorem-box { border-left-color: var(--purple); }
+.def-box.theorem-box .def-label { color: var(--purple); }
+.def-box.example-box { border-left-color: var(--green); }
+.def-box.example-box .def-label { color: var(--green); }
+.def-box.warning-box { border-left-color: var(--yellow); }
+.def-box.warning-box .def-label { color: var(--yellow); }
+
+.quick-check {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback {
+  margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+  font-size: 0.85rem; display: none;
+}
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+@media (max-width: 900px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="back-bar">
+  <div>
+    <a href="chapter6-study.html">&larr; Back to Chapter 6 Study Guide</a>
+    <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+    <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  </div>
+  <span class="page-title-bar">Math Foundations &mdash; Ch.6</span>
+</div>
+
+<!-- ===== TABLE OF CONTENTS SIDEBAR ===== -->
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#x1F5C3;</span>
+    <h2>Ch 6 Math</h2>
+  </div>
+  <div class="toc-group">Number Theory</div>
+  <ul>
+    <li><a href="#sec-modular" class="toc-link">Modular Arithmetic</a></li>
+    <li><a href="#sec-pigeonhole" class="toc-link">Pigeonhole Principle</a></li>
+  </ul>
+  <div class="toc-group">Hash Constructions</div>
+  <ul>
+    <li><a href="#sec-hash-construct" class="toc-link">Hash Function Maths</a></li>
+    <li><a href="#sec-collisions" class="toc-link">Expected Collisions</a></li>
+  </ul>
+  <div class="toc-group">Probability Analysis</div>
+  <ul>
+    <li><a href="#sec-load-birthday" class="toc-link">Load Factor &amp; Birthday</a></li>
+    <li><a href="#sec-bloom-prob" class="toc-link">Bloom Filter Analysis</a></li>
+  </ul>
+  <a href="chapter6-study.html" class="back-to-study">&larr; Chapter 6 Study Guide</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="math-content" id="mainContent">
+
+<!-- HERO -->
+<section class="section hero-section" id="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Chapter 6 Supplement</p>
+    <h1>Mathematical Foundations: Hashing</h1>
+    <p class="hero-subtitle">Modular arithmetic over finite fields, the pigeonhole principle, polynomial hash constructions, collision counting via indicator variables, load factor analysis, and Bloom filter probability derivations.</p>
+  </div>
+</section>
+
+<!-- ===== MODULAR ARITHMETIC ===== -->
+<section class="section" id="sec-modular">
+  <h2 class="section-title">Modular Arithmetic &amp; Finite Fields</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; Modular Arithmetic</div>
+    <p>For a positive integer \(n\), we say \(a \equiv b \pmod{n}\) if \(n\) divides \(a - b\). The set \(\mathbb{Z}_n = \{0, 1, \ldots, n-1\}\) with addition and multiplication modulo \(n\) forms a <strong>ring</strong>.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Theorem &mdash; \(\mathbb{Z}_p\) is a Field</div>
+    <p>When \(p\) is prime, \(\mathbb{Z}_p\) is a <strong>field</strong>: every non-zero element has a multiplicative inverse. Specifically, for \(a \not\equiv 0 \pmod{p}\), there exists a unique \(a^{-1} \in \mathbb{Z}_p\) such that \(a \cdot a^{-1} \equiv 1 \pmod{p}\).</p>
+    <p style="margin-top:0.5rem;">This follows from <strong>Fermat's Little Theorem</strong>: \(a^{p-1} \equiv 1 \pmod{p}\), so \(a^{-1} = a^{p-2} \bmod p\).</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example &mdash; Inverses in \(\mathbb{Z}_7\)</div>
+    <p>In \(\mathbb{Z}_7\): \(3^{-1} = 5\) because \(3 \times 5 = 15 \equiv 1 \pmod{7}\). Similarly, \(2^{-1} = 4\) because \(2 \times 4 = 8 \equiv 1 \pmod{7}\).</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Why Primes Matter for Hashing</h3>
+    <p>Universal hash families are constructed over \(\mathbb{Z}_p\) because:</p>
+    <ul>
+      <li>Every non-zero element has an inverse, so the linear system in the universality proof has a unique solution.</li>
+      <li>Products and sums behave like a &ldquo;nice&rdquo; algebra without zero divisors.</li>
+    </ul>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="4 &times; 2 = 8 &equiv; 1 (mod 7), so 4^{-1} = 2 in Z_7." data-explanation-zh="4 &times; 2 = 8 &equiv; 1 (mod 7)\uff0c\u6240\u4ee5 Z_7 \u4e2d 4^{-1} = 2\u3002">
+    <div class="qc-question">Quick Check: What is \(4^{-1}\) in \(\mathbb{Z}_7\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(3\)</div>
+      <div class="qc-opt" data-idx="1">\(4\)</div>
+      <div class="qc-opt" data-idx="2">\(2\)</div>
+      <div class="qc-opt" data-idx="3">\(5\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== PIGEONHOLE PRINCIPLE ===== -->
+<section class="section" id="sec-pigeonhole">
+  <h2 class="section-title">Pigeonhole Principle</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Pigeonhole Principle</div>
+    <p>If \(n\) items are placed into \(m\) containers and \(n > m\), then at least one container holds more than one item. More generally, some container holds at least \(\lceil n/m \rceil\) items.</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Application to Hashing</h3>
+    <p>A hash function \(h : X \to Y\) maps a universe of size \(|X| = m\) to a table of size \(|Y| = m'\) where \(m \gg m'\). By the pigeonhole principle, there must exist distinct \(x, x' \in X\) with \(h(x) = h(x')\). In fact, for any fixed hash function, there exist at least \(\lceil m/m' \rceil\) elements mapping to the same slot.</p>
+    <p style="margin-top:0.5rem;">This is why <strong>no single hash function can avoid all collisions</strong> &mdash; we need random selection from a hash family.</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Adversarial Input</div>
+    <p>For any fixed \(h\), an adversary who knows \(h\) can find \(n\) elements that all collide: pick \(n\) elements from the set \(\{x \in X : h(x) = y_0\}\) for some target slot \(y_0\). By the pigeonhole principle, this set has size \(\geq m/m'\), so this attack is always possible. Randomising over \(h\) defeats the adversary.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="By the pigeonhole principle, with 100 elements and 10 slots, some slot must have &ge; &lceil;100/10&rceil; = 10 elements." data-explanation-zh="\u6839\u636e\u9e3d\u5de2\u539f\u7406\uff0c100 \u4e2a\u5143\u7d20\u548c 10 \u4e2a\u69fd\uff0c\u67d0\u4e2a\u69fd\u5fc5\u987b\u6709 &ge; &lceil;100/10&rceil; = 10 \u4e2a\u5143\u7d20\u3002">
+    <div class="qc-question">Quick Check: If 100 elements are hashed into 10 slots, what is the minimum number of elements in the most-loaded slot?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(1\)</div>
+      <div class="qc-opt" data-idx="1">\(10\)</div>
+      <div class="qc-opt" data-idx="2">\(50\)</div>
+      <div class="qc-opt" data-idx="3">\(100\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== HASH FUNCTION CONSTRUCTIONS ===== -->
+<section class="section" id="sec-hash-construct">
+  <h2 class="section-title">Hash Function Constructions</h2>
+
+  <div class="def-box">
+    <div class="def-label">Construction 1 &mdash; Linear Hash (Strongly Universal)</div>
+    <p>For a prime \(p \geq |X|\), define \(h_{a,b}(x) = (ax + b) \bmod p\) for \(a, b \in \mathbb{Z}_p\). The family \(\mathcal{H} = \{h_{a,b}\}\) is <strong>strongly universal</strong> over \(\mathbb{Z}_p\).</p>
+    <p style="margin-top:0.5rem;"><strong>Key idea:</strong> For distinct \(x \neq x'\), the pair \((h_{a,b}(x), h_{a,b}(x'))\) is uniformly distributed over \(\mathbb{Z}_p \times \mathbb{Z}_p\) as \((a,b)\) ranges over \(\mathbb{Z}_p^2\). This is because the map \((a,b) \mapsto (ax+b, ax'+b)\) is a bijection on \(\mathbb{Z}_p^2\) (the corresponding matrix has determinant \(x' - x \neq 0 \pmod{p}\)).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Construction 2 &mdash; Universal Hash for Tables</div>
+    <p>To map to \(\{0, \ldots, m'-1\}\), compose with a second modular reduction:</p>
+    \[h_{a,b}(x) = ((ax + b) \bmod p) \bmod m'\]
+    <p>This is <strong>universal</strong> (Theorem 32) but generally <strong>not</strong> strongly universal, because the second \(\bmod m'\) can introduce correlations.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Construction 3 &mdash; Polynomial Hash (Theorem 31)</div>
+    <p>For higher independence, use degree-\((k-1)\) polynomials over \(\mathbb{Z}_p\):</p>
+    \[h_{a_0, a_1, \ldots, a_{k-1}}(x) = \left(\sum_{i=0}^{k-1} a_i x^i\right) \bmod p\]
+    <p>The family over all choices of \((a_0, \ldots, a_{k-1}) \in \mathbb{Z}_p^k\) is <strong>\(k\)-independent</strong>: for any \(k\) distinct inputs, the outputs are independently and uniformly distributed over \(\mathbb{Z}_p\).</p>
+    <p style="margin-top:0.5rem;">The proof uses the fact that a degree-\((k-1)\) polynomial over a field is uniquely determined by its values at \(k\) distinct points (Lagrange interpolation).</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="A degree-(k-1) polynomial over Z_p gives k-independent hashing, since it is determined by k points (Lagrange interpolation)." data-explanation-zh="Z_p \u4e0a\u7684 (k-1) \u6b21\u591a\u9879\u5f0f\u63d0\u4f9b k-\u72ec\u7acb\u54c8\u5e0c\uff0c\u56e0\u4e3a\u5b83\u7531 k \u4e2a\u70b9\u552f\u4e00\u786e\u5b9a\uff08\u62c9\u683c\u6717\u65e5\u63d2\u503c\uff09\u3002">
+    <div class="qc-question">Quick Check: A degree-\((k-1)\) polynomial hash over \(\mathbb{Z}_p\) gives:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(k\)-independent hashing</div>
+      <div class="qc-opt" data-idx="1">\((k-1)\)-independent hashing</div>
+      <div class="qc-opt" data-idx="2">\(2\)-independent hashing regardless of \(k\)</div>
+      <div class="qc-opt" data-idx="3">Perfect hashing</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== EXPECTED COLLISIONS ===== -->
+<section class="section" id="sec-collisions">
+  <h2 class="section-title">Expected Value of Collisions</h2>
+
+  <div class="def-box">
+    <div class="def-label">Setup &mdash; Indicator Variables for Collisions</div>
+    <p>Let \(S = \{x_1, \ldots, x_n\}\) be the stored elements and \(h\) a hash function from a universal family. For each pair \((i, j)\) with \(i < j\), define the indicator variable:</p>
+    \[I_{ij} = \mathbf{1}[h(x_i) = h(x_j)]\]
+    <p>The total number of collisions is \(C = \sum_{i<j} I_{ij}\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Expected Number of Collisions</div>
+    <p>By universality and linearity of expectation:</p>
+    \[\mathbb{E}[C] = \sum_{i<j} \Pr[h(x_i) = h(x_j)] \leq \binom{n}{2} \cdot \frac{1}{m'} = \frac{n(n-1)}{2m'}\]
+    <p>With \(m' = n\), this gives \(\mathbb{E}[C] \leq (n-1)/2 < n/2\). So collisions are linear in \(n\), but each bucket has \(O(1)\) elements in expectation.</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>From Collisions to Chain Length</h3>
+    <p>For a specific element \(x\), the expected chain length at slot \(h(x)\) is:</p>
+    \[\mathbb{E}[\text{chain length at } h(x)] = 1 + \sum_{y \in S \setminus \{x\}} \Pr[h(y) = h(x)] \leq 1 + \frac{n-1}{m'} = 1 + \alpha\]
+    <p>where \(\alpha = n/m'\) is the load factor. This is the key step in proving \(O(1 + \alpha)\) expected lookup time.</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="E[C] &le; C(n,2)/m' = C(20,2)/10 = 190/10 = 19." data-explanation-zh="E[C] &le; C(n,2)/m' = C(20,2)/10 = 190/10 = 19\u3002">
+    <div class="qc-question">Quick Check: With \(n = 20\) elements and table size \(m' = 10\), what is the upper bound on the expected number of collisions?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(10\)</div>
+      <div class="qc-opt" data-idx="1">\(20\)</div>
+      <div class="qc-opt" data-idx="2">\(19\)</div>
+      <div class="qc-opt" data-idx="3">\(40\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== LOAD FACTOR & BIRTHDAY PARADOX ===== -->
+<section class="section" id="sec-load-birthday">
+  <h2 class="section-title">Load Factor &amp; Birthday Paradox</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; Load Factor</div>
+    <p>The <strong>load factor</strong> of a hash table is \(\alpha = n/m'\), the ratio of stored elements to table slots. It controls performance:</p>
+    <ul>
+      <li>Separate chaining: \(O(1 + \alpha)\) per operation.</li>
+      <li>Open addressing: \(O(1/(1-\alpha))\) per operation (requires \(\alpha < 1\)).</li>
+      <li>Cuckoo hashing: requires \(\alpha < 1/2\) for expected \(O(1)\) insert.</li>
+    </ul>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Birthday Paradox &mdash; Hash Table Connection</div>
+    <p>When hashing \(n\) elements into \(m'\) slots uniformly at random, the probability that <strong>all</strong> elements land in distinct slots is:</p>
+    \[\prod_{i=0}^{n-1} \left(1 - \frac{i}{m'}\right) \leq \prod_{i=0}^{n-1} e^{-i/m'} = e^{-n(n-1)/(2m')}\]
+    <p>For this to be at most \(1/2\), we need \(n(n-1)/(2m') \geq \ln 2\), i.e., \(n \approx \sqrt{2 m' \ln 2} = \Theta(\sqrt{m'})\).</p>
+    <p style="margin-top:0.5rem;">So collisions become likely when \(n = \Omega(\sqrt{m'})\). With \(m' = O(n)\), we have \(n \gg \sqrt{m'}\), so collisions are <strong>inevitable</strong>.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example &mdash; Birthday Numbers</div>
+    <p>With \(m' = 365\) (days in a year), collisions become likely at \(n \approx \sqrt{2 \cdot 365 \cdot \ln 2} \approx 23\). This is the famous birthday paradox: in a room of 23 people, there is a \(> 50\%\) chance of a shared birthday.</p>
+    <p style="margin-top:0.5rem;">For a hash table with \(m' = 1000\) slots, collisions are likely at \(n \approx 37\) elements.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="At load factor &alpha; = 0.75 with ideal open addressing, E[probes] = 1/(1-0.75) = 1/0.25 = 4." data-explanation-zh="\u5728\u8d1f\u8f7d\u56e0\u5b50 &alpha; = 0.75 \u7684\u7406\u60f3\u5f00\u653e\u5730\u5740\u4e0b\uff0cE[probes] = 1/(1-0.75) = 1/0.25 = 4\u3002">
+    <div class="qc-question">Quick Check: At load factor \(\alpha = 0.75\), the expected probes for an open-addressing lookup is:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(2\)</div>
+      <div class="qc-opt" data-idx="1">\(4\)</div>
+      <div class="qc-opt" data-idx="2">\(8\)</div>
+      <div class="qc-opt" data-idx="3">\(16\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== BLOOM FILTER PROBABILITY ANALYSIS ===== -->
+<section class="section" id="sec-bloom-prob">
+  <h2 class="section-title">Bloom Filter Probability Analysis</h2>
+
+  <div class="def-box">
+    <div class="def-label">Setup</div>
+    <p>A Bloom filter has an array of \(m'\) bits and \(T\) independent hash functions \(h_1, \ldots, h_T\), each uniformly mapping to \(\{0, \ldots, m'-1\}\). After inserting \(n\) elements, each hash function has set \(n\) bits (with possible overlaps).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Step 1 &mdash; Probability a Specific Bit is 0</div>
+    <p>After one insertion, a specific bit remains 0 if none of the \(T\) hash functions map to it:</p>
+    \[\Pr[\text{bit } i = 0 \text{ after 1 insert}] = \left(1 - \frac{1}{m'}\right)^T\]
+    <p>After \(n\) independent insertions:</p>
+    \[\Pr[\text{bit } i = 0] = \left(1 - \frac{1}{m'}\right)^{nT} \approx e^{-nT/m'}\]
+    <p>using the approximation \((1 - 1/m')^{m'} \approx e^{-1}\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Step 2 &mdash; False Positive Probability</div>
+    <p>A false positive occurs when all \(T\) hash bits for a non-member \(z\) are set to 1. Each bit is independently 1 with probability \(\approx 1 - e^{-nT/m'}\):</p>
+    \[\text{FPR} \approx \left(1 - e^{-nT/m'}\right)^T\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Step 3 &mdash; Optimal \(T\)</div>
+    <p>Let \(f = e^{-nT/m'}\) (the fraction of 0-bits). Then FPR \(= (1 - f)^T\). Taking the logarithm:</p>
+    \[\ln(\text{FPR}) = T \ln(1 - f) = -\frac{m'}{n} f \ln f \cdot \frac{T \ln(1-f)}{-f \ln f \cdot m'/n}\]
+    <p>The function \(g(f) = f \ln(1/f)\) (which controls \(-f \ln f\)) reaches its maximum when we optimise over \(T\). Substituting \(T = -(m'/n) \ln f\) and differentiating with respect to \(f\):</p>
+    \[\frac{d}{df}\left[-(m'/n) \ln f \cdot \ln(1-f)\right] = 0\]
+    <p>By symmetry of the expression in \(f\) and \(1-f\), the optimum is at \(f = 1/2\), i.e., half the bits are set. This gives:</p>
+    \[T^* = \frac{m'}{n} \ln 2\]
+    <p>and the minimum FPR is:</p>
+    \[\text{FPR}^* = (1/2)^{T^*} = 2^{-(m'/n) \ln 2} \approx 0.6185^{m'/n}\]
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example &mdash; Numerical Calculation</div>
+    <p>With \(B = m'/n = 8\) bits per element:</p>
+    <ul>
+      <li>\(T^* = 8 \ln 2 \approx 5.55 \Rightarrow T = 6\)</li>
+      <li>\(f = e^{-6/8} = e^{-0.75} \approx 0.472\)</li>
+      <li>FPR \(\approx (1 - 0.472)^6 = (0.528)^6 \approx 0.0216 = 2.16\%\)</li>
+    </ul>
+    <p>With \(B = 10\) bits per element: \(T^* \approx 7\), FPR \(\approx 0.82\%\).</p>
+    <p>With \(B = 16\) bits per element: \(T^* \approx 11\), FPR \(\approx 0.046\%\).</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="T* = (m'/n) ln 2 = 10 &times; 0.693 &approx; 6.93, so T = 7." data-explanation-zh="T* = (m'/n) ln 2 = 10 &times; 0.693 &approx; 6.93\uff0c\u56e0\u6b64 T = 7\u3002">
+    <div class="qc-question">Quick Check: For a Bloom filter with \(m'/n = 10\) bits per element, the optimal \(T\) is approximately:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(7\)</div>
+      <div class="qc-opt" data-idx="1">\(10\)</div>
+      <div class="qc-opt" data-idx="2">\(5\)</div>
+      <div class="qc-opt" data-idx="3">\(14\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MATH QUIZ ===== -->
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=6" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div><!-- /math-content -->
+
+<script src="chapter6-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 7: Nearest Neighbours &amp; Dimensionality Reduction</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F50D;</span>
+    <h2>Chapter 7</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-nn" class="nav-link" data-section="sec-nn">NN Problem</a></li>
+    <li><a href="#sec-jl" class="nav-link" data-section="sec-jl">JL Lemma</a></li>
+    <li><a href="#sec-lsh" class="nav-link" data-section="sec-lsh">LSH Framework</a></li>
+    <li><a href="#sec-hamming" class="nav-link" data-section="sec-hamming">Hamming LSH</a></li>
+    <li><a href="#sec-euclidean" class="nav-link" data-section="sec-euclidean">Euclidean LSH</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Summary</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter7-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter7-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=7" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=7" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=7&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 7: Nearest Neighbours &amp; Dimensionality Reduction</h1>
+    <p class="hero-subtitle">High-dimensional nearest neighbour search: baseline approaches, approximate nearest neighbours, the Johnson&ndash;Lindenstrauss lemma for random projection, and locality-sensitive hashing for sub-linear query time.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50D;</span>
+        <span>NN Problem</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4C9;</span>
+        <span>JL Lemma</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AF;</span>
+        <span>LSH</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x26A1;</span>
+        <span>ANN Data Structure</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter7-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter7-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Metric spaces, norms, random Gaussian vectors, concentration of &chi;&sup2; variables, and union bounds</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NEAREST NEIGHBOUR PROBLEM ===== -->
+<section id="sec-nn" class="section" data-track="nn">
+  <h2 class="section-title">The Nearest Neighbour Problem</h2>
+
+  <div class="concept-box">
+    <h3>Problem Definition</h3>
+    <p>Given a dataset \(S\) of \(n\) points in a metric space \((X, \text{dist})\) with dimension \(d\), the <strong>Nearest Neighbour (NN)</strong> problem asks: given a query point \(x \in X\), find the point \(y \in S\) that minimises \(\text{dist}(x, y)\).</p>
+    <p style="margin-top:0.5rem;">This is one of the most fundamental problems in computational geometry, machine learning, and data mining.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition: Metric Space</h3>
+    <p>A <strong>metric space</strong> \((X, \text{dist})\) satisfies three axioms for all \(x, y, z \in X\):</p>
+    <ol>
+      <li><strong>Reflexivity:</strong> \(\text{dist}(x, y) = 0 \iff x = y\)</li>
+      <li><strong>Symmetry:</strong> \(\text{dist}(x, y) = \text{dist}(y, x)\)</li>
+      <li><strong>Triangle Inequality:</strong> \(\text{dist}(x, z) \leq \text{dist}(x, y) + \text{dist}(y, z)\)</li>
+    </ol>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Common Distance Functions on \(\mathbb{R}^d\)</h3>
+    <div style="overflow-x:auto;">
+      <table class="styled-table" style="width:100%; margin-top:0.5rem;">
+        <thead><tr><th>Distance</th><th>Formula</th><th>Also Known As</th></tr></thead>
+        <tbody>
+          <tr><td>Manhattan (\(\ell_1\))</td><td>\(\|x - y\|_1 = \sum_{i=1}^{d} |x_i - y_i|\)</td><td>Taxicab distance</td></tr>
+          <tr><td>Euclidean (\(\ell_2\))</td><td>\(\|x - y\|_2 = \sqrt{\sum_{i=1}^{d} (x_i - y_i)^2}\)</td><td>Straight-line distance</td></tr>
+          <tr><td>Hamming</td><td>\(\text{Ham}(x, y) = |\{i : x_i \neq y_i\}|\)</td><td>Bit-flip distance (for \(\{0,1\}^d\))</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Baseline Approaches</h3>
+    <div class="algo-block" style="margin-top:0.75rem;">
+      <h4>Approach 1: Linear Scan (Linked List)</h4>
+      <p>Store all \(n\) points in a list. For a query \(x\), scan all points and return the closest.</p>
+      <div class="algo-facts">
+        <span class="fact-pill blue">Space: \(O(nd)\)</span>
+        <span class="fact-pill blue">Query: \(O(nd)\)</span>
+        <span class="fact-pill green">Insert: \(O(d)\)</span>
+      </div>
+    </div>
+    <div class="algo-block" style="margin-top:1rem;">
+      <h4>Approach 2: Bit Array (for \(\{0,1\}^d\))</h4>
+      <p>Maintain a bit array \(A\) of size \(2^d\), where \(A[y] = 1\) iff \(y \in S\). For query \(x\), search by expanding Hamming balls of increasing radius.</p>
+      <div class="algo-facts">
+        <span class="fact-pill red">Space: \(O(2^d)\)</span>
+        <span class="fact-pill green">Insert: \(O(1)\)</span>
+        <span class="fact-pill blue">Query: \(O(2^d)\) worst case</span>
+      </div>
+    </div>
+    <p style="margin-top:1rem;">Neither approach scales when both \(n\) and \(d\) are large. This motivates <strong>approximate</strong> methods.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition: Approximate Nearest Neighbour (ANN)</h3>
+    <p>Given an approximation factor \(C > 1\), the <strong>\(C\)-ANN problem</strong> asks: given query \(x\), find \(y \in S\) such that</p>
+    \[\text{dist}(x, y) \leq C \cdot \min_{y' \in S} \text{dist}(x, y')\]
+    <p style="margin-top:0.5rem;">The <strong>Baby \(C\)-ANN</strong> variant assumes we know a target distance \(r\) and either: (a) returns a point within distance \(Cr\), or (b) certifies that no point is within distance \(r\).</p>
+  </div>
+</section>
+
+<!-- ===== JOHNSON-LINDENSTRAUSS LEMMA ===== -->
+<section id="sec-jl" class="section" data-track="jl">
+  <h2 class="section-title">Johnson&ndash;Lindenstrauss Lemma</h2>
+
+  <div class="concept-box">
+    <h3>The Curse of Dimensionality</h3>
+    <p>Many algorithms for NN have runtime exponential in \(d\). The JL Lemma provides a powerful tool: <strong>random projection</strong> can reduce dimension from \(d\) to \(k = O(\log n / \varepsilon^2)\) while preserving all pairwise distances within a \((1 \pm \varepsilon)\) factor.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Random Projection</h3>
+    <p>The projection map \(\Phi : \mathbb{R}^d \to \mathbb{R}^k\) is defined as:</p>
+    \[\Phi(x) = Mx\]
+    <p>where \(M\) is a \(k \times d\) random matrix with entries drawn i.i.d. from \(\mathcal{N}(0, 1/k)\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 36 (Distributional JL Lemma)</h3>
+    <p>Let \(M\) be a \(k \times d\) matrix with entries i.i.d. \(\mathcal{N}(0, 1/k)\). For any fixed vector \(u \in \mathbb{R}^d\), any \(\varepsilon \in (0, 1)\), and any \(\delta > 0\), if</p>
+    \[k = \Theta\!\left(\frac{\log(1/\delta)}{\varepsilon^2}\right)\]
+    <p>then:</p>
+    \[\Pr\!\left[(1 - \varepsilon)\|u\|^2 \leq \|Mu\|^2 \leq (1 + \varepsilon)\|u\|^2\right] \geq 1 - \delta\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm36">Show Proof Sketch</button>
+  <div class="proof-content" id="proof-thm36">
+    <p>Write \(Mu = (Z_1, Z_2, \ldots, Z_k)\) where each \(Z_i = \langle m_i, u \rangle\) and \(m_i\) is the \(i\)-th row of \(M\). Each \(Z_i \sim \mathcal{N}(0, \|u\|^2/k)\), so \(kZ_i^2/\|u\|^2 \sim \chi^2(1)\).</p>
+    <p style="margin-top:0.5rem;">Therefore \(\|Mu\|^2 = \sum_{i=1}^{k} Z_i^2\) and \(k\|Mu\|^2/\|u\|^2 \sim \chi^2(k)\). The expectation is \(\mathbb{E}[\|Mu\|^2] = \|u\|^2\). By sub-exponential concentration of \(\chi^2(k)\):</p>
+    \[\Pr\!\left[\left|\frac{\|Mu\|^2}{\|u\|^2} - 1\right| > \varepsilon\right] \leq 2\exp\!\left(-\frac{k\varepsilon^2}{8}\right)\]
+    <p>Setting this \(\leq \delta\) and solving gives \(k = O(\log(1/\delta)/\varepsilon^2)\). \(\square\)</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Corollary 36.1 (JL Lemma)</h3>
+    <p>For any set \(S\) of \(n\) points in \(\mathbb{R}^d\) and any \(\varepsilon \in (0, 1)\), there exists a map \(\Phi : \mathbb{R}^d \to \mathbb{R}^k\) with</p>
+    \[k = O\!\left(\frac{\log n}{\varepsilon^2}\right)\]
+    <p>such that for <strong>all pairs</strong> \(x, y \in S\):</p>
+    \[(1 - \varepsilon)\|x - y\|^2 \leq \|\Phi(x) - \Phi(y)\|^2 \leq (1 + \varepsilon)\|x - y\|^2\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-cor361">Show Proof</button>
+  <div class="proof-content" id="proof-cor361">
+    <p>There are \(\binom{n}{2}\) pairs. Apply the Distributional JL Lemma to each difference vector \(u = x - y\) with failure probability \(\delta = 1/n^3\). By the <strong>union bound</strong>:</p>
+    \[\Pr[\text{any pair fails}] \leq \binom{n}{2} \cdot \frac{1}{n^3} < \frac{1}{n}\]
+    <p>Setting \(k = \Theta(\log(n^3)/\varepsilon^2) = \Theta(\log n / \varepsilon^2)\) suffices. \(\square\)</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Lemma 36.1: ANN via JL</h3>
+    <p>Using random projection, we can solve the \((1+\varepsilon)\)-ANN problem with:</p>
+    <ul style="margin-top:0.5rem;">
+      <li>Space: \(O(n \log n / \varepsilon^2)\)</li>
+      <li>Query time: \(O(n \log n / \varepsilon^2)\)</li>
+    </ul>
+    <p style="margin-top:0.5rem;">This is still linear in \(n\) &mdash; we need LSH to achieve sub-linear query time.</p>
+  </div>
+
+  <!-- Interactive JL Demo -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: JL Dimensionality Reduction</h3>
+    <p>Generate random points in high dimensions and project to lower dimensions. Observe how pairwise distances are preserved within the \((1 \pm \varepsilon)\) envelope.</p>
+    <div class="sim-controls">
+      <label>Points \(n\) = <input type="range" id="sliderJLn" min="5" max="50" value="20" style="width:110px;"> <span id="valJLn">20</span></label>
+      <label style="margin-left:1rem;">Original dim \(d\) = <input type="range" id="sliderJLd" min="50" max="500" value="200" step="10" style="width:110px;"> <span id="valJLd">200</span></label>
+      <label style="margin-left:1rem;">\(\varepsilon\) = <input type="range" id="sliderJLeps" min="10" max="80" value="30" style="width:100px;"> <span id="valJLeps">0.30</span></label>
+    </div>
+    <div class="sim-controls" style="margin-top:0.5rem;">
+      <button id="btnRunJL" class="btn btn-primary">Project &amp; Compare</button>
+      <button id="btnResetJL" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="jlTargetK">-</div><div class="stat-label">Target \(k\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="jlPairs">-</div><div class="stat-label">Pairs Checked</div></div>
+      <div class="stat-card"><div class="stat-value" id="jlPreserved">-</div><div class="stat-label">Preserved</div></div>
+      <div class="stat-card"><div class="stat-value" id="jlMaxDistort">-</div><div class="stat-label">Max Distortion</div></div>
+    </div>
+    <div id="jlDistChart" style="margin-top:1.25rem; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem; min-height:120px; position:relative; overflow:hidden;"></div>
+  </div>
+</section>
+
+<!-- ===== LOCALITY-SENSITIVE HASHING ===== -->
+<section id="sec-lsh" class="section" data-track="lsh">
+  <h2 class="section-title">Locality-Sensitive Hashing (LSH)</h2>
+
+  <div class="concept-box">
+    <h3>Motivation</h3>
+    <p>The JL Lemma reduces dimension but still requires linear scan over all \(n\) points. <strong>LSH</strong> enables <strong>sub-linear query time</strong> by hashing points so that nearby points collide with high probability and far points collide with low probability.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition: LSH Family</h3>
+    <p>A family \(\mathcal{H}\) of hash functions \(h : X \to U\) is <strong>\((r, Cr, p, q)\)-sensitive</strong> for a distance function \(\text{dist}\) if for all \(x, y \in X\):</p>
+    <ul>
+      <li>If \(\text{dist}(x, y) \leq r\) then \(\Pr_{h \sim \mathcal{H}}[h(x) = h(y)] \geq p\)</li>
+      <li>If \(\text{dist}(x, y) \geq Cr\) then \(\Pr_{h \sim \mathcal{H}}[h(x) = h(y)] \leq q\)</li>
+    </ul>
+    <p style="margin-top:0.5rem;">We require \(p > q\) for the scheme to be useful.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition: Sensitivity Parameter \(\rho\)</h3>
+    <p>The key quality measure of an LSH family is:</p>
+    \[\rho = \frac{\log(1/p)}{\log(1/q)}\]
+    <p>We always have \(\rho < 1\) (since \(p > q\)). Smaller \(\rho\) means better separation between close and far points.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>\(\ell\)-fold Amplification</h3>
+    <p>Given an \((r, Cr, p, q)\)-sensitive family \(\mathcal{H}\), we can create a more powerful family by <strong>AND-composition</strong>: define \(g(x) = (h_1(x), h_2(x), \ldots, h_\ell(x))\) where each \(h_i\) is drawn independently from \(\mathcal{H}\). Then:</p>
+    <ul>
+      <li>Close points: collision prob \(\geq p^\ell\)</li>
+      <li>Far points: collision prob \(\leq q^\ell\)</li>
+    </ul>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Lemma 36.2 (\(\ell\)-fold LSH Amplification)</h3>
+    <p>The \(\ell\)-fold composition \(g = (h_1, \ldots, h_\ell)\) defines an \((r, Cr, p^\ell, q^\ell)\)-sensitive family. The sensitivity parameter remains:</p>
+    \[\rho_\ell = \frac{\log(1/p^\ell)}{\log(1/q^\ell)} = \frac{\ell \log(1/p)}{\ell \log(1/q)} = \rho\]
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 37: LSH Data Structure</h3>
+    <p>Given an \((r, Cr, p, q)\)-sensitive LSH family, we can build a data structure for Baby \(C\)-ANN with \(k\) hash tables, each using an \(\ell\)-fold LSH function composed with a regular hash function. Set \(\ell = \log_{1/p}(n)\) and \(k = n^{\rho}\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Corollary 37.1: LSH Complexity</h3>
+    <p>The LSH-based ANN data structure achieves:</p>
+    <ul>
+      <li><strong>Space:</strong> \(O(n^{1+\rho} \cdot d)\)</li>
+      <li><strong>Query time:</strong> \(O(n^{\rho} \cdot d)\)</li>
+    </ul>
+    <p style="margin-top:0.5rem;">Since \(\rho < 1\), the query time is <strong>sub-linear</strong> in \(n\)!</p>
+  </div>
+
+  <!-- Interactive LSH Bucket Collision Demo -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: LSH Bucket Collision Visualization</h3>
+    <p>See how random hyperplanes partition 2D space. Points close to the query (centre) are more likely to remain in the same hash bucket after multiple hashes (AND-amplification).</p>
+    <div class="sim-controls" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+      <label>Number of hashes \(k\) = <input type="range" id="sliderLshK" min="1" max="10" value="3" style="width:120px;"> <span id="valLshK">3</span></label>
+      <button id="btnLshHash" class="btn btn-secondary">Hash Once</button>
+      <button id="btnLshRunK" class="btn btn-primary">Run k Hashes</button>
+      <button id="btnLshReset" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:flex; gap:1.5rem; margin-top:1.25rem; flex-wrap:wrap; align-items:flex-start;">
+      <div>
+        <svg id="lshCanvas" width="400" height="400" style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);"></svg>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+          <div class="stat-card"><div class="stat-value" id="lshTotalPts">20</div><div class="stat-label">Total Points</div></div>
+          <div class="stat-card"><div class="stat-value" id="lshHashCount">0</div><div class="stat-label">Hashes Applied</div></div>
+          <div class="stat-card"><div class="stat-value" id="lshBucketNbrs">&mdash;</div><div class="stat-label">Bucket Neighbors</div></div>
+          <div class="stat-card"><div class="stat-value" id="lshFilteredOut">&mdash;</div><div class="stat-label">Filtered Out</div></div>
+        </div>
+        <div class="concept-box" style="margin-top:1rem; padding:1rem;">
+          <h4 style="font-size:0.85rem; margin-bottom:0.5rem;">Collision Probability</h4>
+          <div style="font-size:0.82rem; line-height:1.6;">
+            <div>Near (d &lt; 120px): <span id="lshProbNear" style="color:var(--green);">&mdash;</span></div>
+            <div>Far (d &ge; 120px): <span id="lshProbFar" style="color:var(--red);">&mdash;</span></div>
+          </div>
+        </div>
+        <div style="margin-top:0.75rem; font-size:0.8rem; color:var(--text-dim);">
+          <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:hsl(15,90%,60%); vertical-align:middle; margin-right:4px;"></span>Warm = close
+          <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:hsl(220,70%,55%); vertical-align:middle; margin-right:4px; margin-left:8px;"></span>Cool = far
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HAMMING LSH ===== -->
+<section id="sec-hamming" class="section" data-track="hamming">
+  <h2 class="section-title">LSH for Hamming Space</h2>
+
+  <div class="concept-box">
+    <h3>Bit Sampling LSH</h3>
+    <p>For the Hamming space \(\{0, 1\}^d\), the simplest LSH family uses <strong>random coordinate projection</strong>:</p>
+    \[h_i(x) = x_i \quad \text{(the } i\text{-th bit of } x\text{)}\]
+    <p>where \(i\) is chosen uniformly at random from \(\{1, 2, \ldots, d\}\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Collision Probabilities</h3>
+    <p>For \(x, y \in \{0,1\}^d\):</p>
+    \[\Pr[h_i(x) = h_i(y)] = 1 - \frac{\text{Ham}(x, y)}{d}\]
+    <p>Therefore, if \(\text{Ham}(x, y) \leq r\) then \(p \geq 1 - r/d\), and if \(\text{Ham}(x, y) \geq Cr\) then \(q \leq 1 - Cr/d\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Sensitivity Parameter for Hamming LSH</h3>
+    <p>The sensitivity parameter is:</p>
+    \[\rho = \frac{\log(1/p)}{\log(1/q)} = \frac{\log(1/(1 - r/d))}{\log(1/(1 - Cr/d))}\]
+    <p>For small \(r/d\), using \(\log(1/(1-x)) \approx x\):</p>
+    \[\rho \approx \frac{r/d}{Cr/d} = \frac{1}{C}\]
+    <p>So Hamming LSH achieves \(\rho \approx 1/C\).</p>
+  </div>
+</section>
+
+<!-- ===== EUCLIDEAN LSH (SimHash) ===== -->
+<section id="sec-euclidean" class="section" data-track="euclidean">
+  <h2 class="section-title">LSH for Euclidean Space (SimHash)</h2>
+
+  <div class="concept-box">
+    <h3>SimHash Construction</h3>
+    <p>For Euclidean space \(\mathbb{R}^d\), the <strong>SimHash</strong> family uses random hyperplane projection:</p>
+    \[h_g(x) = \text{sign}(\langle g, x \rangle)\]
+    <p>where \(g \sim \mathcal{N}(0, I_d)\) is a random Gaussian vector. The hash value is \(+1\) or \(-1\) depending on which side of the hyperplane \(g^{\perp}\) the point \(x\) falls.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Collision Probability</h3>
+    <p>For any \(x, y \in \mathbb{R}^d\), the collision probability of SimHash is:</p>
+    \[\Pr[h_g(x) = h_g(y)] = 1 - \frac{\alpha}{\pi}\]
+    <p>where \(\alpha = \arccos\!\left(\frac{\langle x, y \rangle}{\|x\| \cdot \|y\|}\right)\) is the angle between \(x\) and \(y\). Equivalently, for normalised vectors with \(\|x - y\| = r\):</p>
+    \[\alpha = \arccos\!\left(1 - \frac{r^2}{2}\right)\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>SimHash Sensitivity Parameter</h3>
+    <p>For the \((r, Cr)\) setting with close points at distance \(r\) and far points at distance \(Cr\):</p>
+    \[\rho = \frac{\log(1/p)}{\log(1/q)} = \frac{\log(1/(1 - \alpha_r/\pi))}{\log(1/(1 - \alpha_{Cr}/\pi))}\]
+    <p>where \(\alpha_r = \arccos(1 - r^2/2)\) and \(\alpha_{Cr} = \arccos(1 - C^2r^2/2)\).</p>
+    <p style="margin-top:0.5rem;">One can show that \(\rho \leq 1/C\) for SimHash, matching the Hamming LSH bound.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 38: Baby ANN \(\to\) General ANN</h3>
+    <p>If we have a data structure for Baby \(C\)-ANN with distance parameter \(r\), we can solve the general \(C\)-ANN problem via a <strong>doubling search</strong> over \(r\):</p>
+    <p style="margin-top:0.5rem;">Try \(r = r_0, 2r_0, 4r_0, \ldots\) until we find a point. This introduces an extra \(O(\log \Delta)\) factor where \(\Delta\) is the aspect ratio (ratio of max to min pairwise distance).</p>
+    <ul style="margin-top:0.5rem;">
+      <li><strong>Space:</strong> \(O(n^{1+\rho} \cdot d \cdot \log \Delta)\)</li>
+      <li><strong>Query time:</strong> \(O(n^{\rho} \cdot d \cdot \log \Delta)\)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title">Summary &amp; Comparison</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="styled-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Problem</th>
+          <th>Space</th>
+          <th>Query Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Linear Scan</td>
+          <td>Exact NN</td>
+          <td>\(O(nd)\)</td>
+          <td>\(O(nd)\)</td>
+        </tr>
+        <tr>
+          <td>Bit Array</td>
+          <td>Exact NN (Hamming)</td>
+          <td>\(O(2^d)\)</td>
+          <td>\(O(2^d)\)</td>
+        </tr>
+        <tr>
+          <td>JL Projection</td>
+          <td>\((1+\varepsilon)\)-ANN</td>
+          <td>\(O(n \log n / \varepsilon^2)\)</td>
+          <td>\(O(n \log n / \varepsilon^2)\)</td>
+        </tr>
+        <tr>
+          <td>Hamming LSH</td>
+          <td>\(C\)-ANN</td>
+          <td>\(O(n^{1+1/C} d)\)</td>
+          <td>\(O(n^{1/C} d)\)</td>
+        </tr>
+        <tr>
+          <td>SimHash (Euclidean)</td>
+          <td>\(C\)-ANN</td>
+          <td>\(O(n^{1+1/C} d)\)</td>
+          <td>\(O(n^{1/C} d)\)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Takeaways</h3>
+    <ul>
+      <li>The <strong>NN problem</strong> in high dimensions suffers from the curse of dimensionality: exact methods require time/space exponential in \(d\).</li>
+      <li>The <strong>JL Lemma</strong> shows that \(O(\log n / \varepsilon^2)\) dimensions suffice to preserve all pairwise distances &mdash; but query time is still \(O(n)\).</li>
+      <li><strong>LSH</strong> achieves sub-linear query time \(O(n^{\rho} d)\) with \(\rho < 1\), by hashing points so that nearby points are more likely to collide.</li>
+      <li>For Hamming and Euclidean spaces, \(\rho \approx 1/C\) where \(C\) is the approximation factor.</li>
+      <li>Baby ANN can be lifted to General ANN via doubling search at an extra \(O(\log \Delta)\) cost.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Work through these problems to deepen your understanding of nearest neighbours and dimensionality reduction.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Describe a baseline data structure for the NN problem that stores \(n\) points from \(\{0,1\}^d\) in a linked list. Analyse its space and query time.</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p>Store each of the \(n\) points as a node in a linked list, where each node contains a \(d\)-bit string.</p>
+      <ul>
+        <li><strong>Space:</strong> \(O(nd)\) &mdash; each of \(n\) points takes \(d\) bits.</li>
+        <li><strong>Insert:</strong> \(O(d)\) &mdash; append a new node with the \(d\)-bit string.</li>
+        <li><strong>Query:</strong> \(O(nd)\) &mdash; scan all \(n\) points, computing \(\text{Ham}(x, y)\) in \(O(d)\) time for each, and return the closest.</li>
+      </ul>
+      <p>\(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Describe a bit-array approach for NN in \(\{0,1\}^d\). What are the space and insert-time complexities? Why is query time \(O(2^d)\) in the worst case?</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p>Maintain an array \(A[0 \ldots 2^d - 1]\) indexed by all possible \(d\)-bit strings, where \(A[y] = 1\) iff \(y \in S\).</p>
+      <ul>
+        <li><strong>Space:</strong> \(O(2^d)\) bits.</li>
+        <li><strong>Insert:</strong> \(O(1)\) &mdash; just set \(A[y] = 1\).</li>
+        <li><strong>Query:</strong> For query \(x\), enumerate all \(y \in \{0,1\}^d\) at Hamming distance 0, then 1, then 2, etc., checking \(A[y]\). In the worst case (no nearby points), we must check all \(2^d\) entries: \(O(2^d)\) time.</li>
+      </ul>
+      <p>\(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Explain why Bloom filters <strong>cannot</strong> directly solve the ANN problem. What fundamental limitation do they have?</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p>A Bloom filter supports <strong>membership testing</strong>: given \(y\), it can (approximately) answer &ldquo;is \(y \in S\)?&rdquo; However, it <strong>cannot return an actual element</strong> of \(S\). For ANN, we need to return a specific point \(y \in S\) that is close to the query \(x\). The Bloom filter only answers yes/no for each candidate point, and:</p>
+      <ul>
+        <li>It cannot enumerate the elements of \(S\).</li>
+        <li>It has false positives (may say &ldquo;yes&rdquo; for \(y \notin S\)).</li>
+        <li>Even if we iterate over Hamming balls, false positives mean we might return a non-existent point.</li>
+      </ul>
+      <p>LSH hash tables, unlike Bloom filters, store actual data points in buckets, allowing retrieval. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Show how to reduce <strong>Baby \(C\)-ANN</strong> (with known distance threshold \(r\)) to <strong>General \(C\)-ANN</strong> using a doubling search. What is the overhead?</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p><strong>Doubling search:</strong> Let \(\Delta = \max/\min\) pairwise distance (the aspect ratio). Build Baby \(C\)-ANN data structures for each distance scale \(r = r_{\min}, 2r_{\min}, 4r_{\min}, \ldots, r_{\max}\). There are \(O(\log \Delta)\) scales.</p>
+      <p style="margin-top:0.5rem;">On a query \(x\):</p>
+      <ol>
+        <li>For each scale \(r\) (starting from smallest), query the Baby ANN structure.</li>
+        <li>If the structure returns a point \(y\) within distance \(Cr\), return \(y\).</li>
+        <li>If it certifies no point is within distance \(r\), try the next larger scale.</li>
+      </ol>
+      <p style="margin-top:0.5rem;"><strong>Correctness:</strong> If the true nearest neighbour is at distance \(r^*\), then for the scale \(r\) with \(r \leq r^* \leq 2r\), the Baby ANN must return a point within distance \(Cr \leq 2Cr^*\). With more care, one gets \(C\)-ANN.</p>
+      <p><strong>Overhead:</strong> Space and query time are multiplied by \(O(\log \Delta)\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>For SimHash on unit vectors, show that the collision probability is \(1 - \alpha/\pi\) where \(\alpha = \arccos(1 - r^2/2)\). Then show that \(\rho \leq 1/C\) for the \((r, Cr)\) setting.</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>Collision probability:</strong> Two unit vectors \(x, y\) with angle \(\alpha\) between them have \(h_g(x) = h_g(y)\) iff the random hyperplane \(g^{\perp}\) does not separate them. The probability that a random hyperplane separates two vectors at angle \(\alpha\) is \(\alpha/\pi\). So:</p>
+      \[\Pr[h_g(x) = h_g(y)] = 1 - \frac{\alpha}{\pi}\]
+      <p style="margin-top:0.5rem;">For unit vectors \(\|x\| = \|y\| = 1\) with \(\|x - y\| = r\):</p>
+      \[\|x - y\|^2 = 2 - 2\langle x, y \rangle = r^2 \implies \langle x, y \rangle = 1 - r^2/2\]
+      <p>So \(\alpha = \arccos(1 - r^2/2)\).</p>
+      <p style="margin-top:0.75rem;"><strong>Showing \(\rho \leq 1/C\):</strong> For close points (\(\text{dist} = r\)), \(p = 1 - \alpha_r/\pi\). For far points (\(\text{dist} = Cr\)), \(q = 1 - \alpha_{Cr}/\pi\). Since \(\alpha_{Cr} \geq C \cdot \alpha_r\) (by concavity of arccos in the relevant range), we get \(\rho = \log(1/p)/\log(1/q) \leq 1/C\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Define the <strong>Jaccard distance</strong> between two sets \(A, B \subseteq [n]\) as \(\text{dist}_J(A, B) = 1 - |A \cap B|/|A \cup B|\). Describe the <strong>MinHash</strong> LSH family for Jaccard distance and explain why it works.</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>Jaccard similarity:</strong> \(J(A, B) = |A \cap B| / |A \cup B|\), so \(\text{dist}_J(A, B) = 1 - J(A, B)\).</p>
+      <p style="margin-top:0.5rem;"><strong>MinHash family:</strong> Let \(\sigma\) be a uniformly random permutation of \([n]\). Define:</p>
+      \[h_\sigma(A) = \min_{a \in A} \sigma(a)\]
+      <p>The family \(\mathcal{H}\) consists of all \(n!\) such functions (one per permutation).</p>
+      <p style="margin-top:0.5rem;"><strong>Collision probability:</strong></p>
+      \[\Pr[h_\sigma(A) = h_\sigma(B)] = \frac{|A \cap B|}{|A \cup B|} = J(A, B)\]
+      <p>This holds because the minimum of a random permutation over \(A \cup B\) lands in \(A \cap B\) with probability \(|A \cap B|/|A \cup B|\).</p>
+      <p style="margin-top:0.5rem;">For \((r, Cr)\)-sensitivity: \(p = 1 - r\) (close sets), \(q = 1 - Cr\) (far sets). The sensitivity parameter is \(\rho = \log(1/(1-r))/\log(1/(1-Cr))\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p>Describe the <strong>kd-tree</strong> data structure for Euclidean NN. Explain how it partitions space and why its query time degrades in high dimensions.</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p><strong>kd-tree construction:</strong> A kd-tree is a binary space-partitioning tree that recursively divides \(\mathbb{R}^d\):</p>
+      <ol>
+        <li>At each level, choose a coordinate (cycling through dimensions 1 to \(d\)).</li>
+        <li>Split on the <strong>median</strong> value along that coordinate.</li>
+        <li>Points below the median go to the left subtree; above to the right.</li>
+      </ol>
+      <p style="margin-top:0.5rem;"><strong>Query algorithm:</strong> For query \(x\), traverse the tree to find the leaf cell containing \(x\). Then backtrack, pruning subtrees whose bounding boxes are farther than the current best distance.</p>
+      <p style="margin-top:0.5rem;"><strong>Complexity:</strong></p>
+      <ul>
+        <li><strong>Space:</strong> \(O(nd)\) &mdash; each point is stored once.</li>
+        <li><strong>Low dimensions (\(d\) small):</strong> Expected \(O(\log n)\) query time on well-distributed data.</li>
+        <li><strong>High dimensions:</strong> The pruning becomes ineffective because bounding boxes overlap heavily. Worst case degrades to \(O(n^{1 - 1/d} + k)\), which approaches \(O(n)\) as \(d\) grows.</li>
+      </ul>
+      <p>This is why kd-trees are not suitable for high-dimensional NN, motivating the JL and LSH approaches. \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=7" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=7&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter7-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

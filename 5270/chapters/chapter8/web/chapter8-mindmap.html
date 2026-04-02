@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Chapter 8</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../shared/mindmap.css">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter8-study.html">&larr; Study Guide</a>
+  <a href="chapter8-math.html">Math Foundations</a>
+  <a href="../../../index.html">&#x1F3E0; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title" data-label-en="Chapter 8 Mind Map" data-label-zh="&#x7B2C;&#x516B;&#x7AE0; &#x601D;&#x7EF4;&#x5BFC;&#x56FE;">Chapter 8 Mind Map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand All</button>
+    <button id="btnCollapseAll">Collapse All</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Problems</span>
+  <span><span class="dot" style="background:var(--green)"></span> Algorithms</span>
+  <span><span class="dot" style="background:var(--purple)"></span> Analysis</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Key Results</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../shared/mindmap.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+var data = {
+  label: "Chapter 8: Streaming & Sketching I",
+  label_zh: "\u7b2c\u516b\u7ae0\uff1a\u6d41\u5f0f\u7b97\u6cd5\u4e0e\u8349\u56fe I",
+  children: [
+    {
+      label: "Streaming Model",
+      label_zh: "\u6d41\u5f0f\u6a21\u578b",
+      color: "blue",
+      children: [
+        { label: "One-pass over stream \u03c3=\u27e8a\u2081,...,a\u2098\u27e9", label_zh: "\u5355\u6b21\u626b\u63cf\u6d41 \u03c3=\u27e8a\u2081,...,a\u2098\u27e9" },
+        { label: "Elements a\u1d62 \u2208 [n]", label_zh: "\u5143\u7d20 a\u1d62 \u2208 [n]" },
+        { label: "Goal: space s = o(min(m,n))", label_zh: "\u76ee\u6807\uff1a\u7a7a\u95f4 s = o(min(m,n))" },
+        { label: "Ideal: $s = O(\\log m + \\log n)$", label_zh: "\u7406\u60f3\uff1a$s = O(\\log m + \\log n)$" },
+        { label: "Frequency: f\u2c7c = count of element j", label_zh: "\u9891\u7387\uff1af\u2c7c = \u5143\u7d20 j \u7684\u8ba1\u6570" }
+      ]
+    },
+    {
+      label: "Frequency Estimation",
+      label_zh: "\u9891\u7387\u4f30\u8ba1",
+      color: "green",
+      href: "chapter8-study.html#sec-misra-gries",
+      children: [
+        {
+          label: "Misra-Gries (Alg 15)",
+          label_zh: "Misra-Gries\uff08\u7b97\u6cd515\uff09",
+          children: [
+            { label: "Deterministic", label_zh: "\u786e\u5b9a\u6027\u7684" },
+            { label: "\u2264 k = \u23081/\u03b5\u2309 counters", label_zh: "\u2264 k = \u23081/\u03b5\u2309 \u4e2a\u8ba1\u6570\u5668" },
+            { label: "f\u2c7c - \u03b5m \u2264 f\u0302\u2c7c \u2264 f\u2c7c", label_zh: "f\u2c7c - \u03b5m \u2264 f\u0302\u2c7c \u2264 f\u2c7c", color: "yellow" },
+            { label: "Space: $O(k(\\log m + \\log n))$", label_zh: "\u7a7a\u95f4\uff1a$O(k(\\log m + \\log n))$", color: "yellow" }
+          ]
+        },
+        {
+          label: "Heavy Hitters: H\u03b5",
+          label_zh: "\u91cd\u51fb\u8005\uff1aH\u03b5",
+          color: "blue",
+          children: [
+            { label: "f\u2c7c \u2265 \u03b5m", label_zh: "f\u2c7c \u2265 \u03b5m" },
+            { label: "H\u03b5 \u2286 \u0124 \u2286 H_{\u03b5/2}", label_zh: "H\u03b5 \u2286 \u0124 \u2286 H_{\u03b5/2}" },
+            { label: "2-pass: exact identification", label_zh: "2\u6b21\u626b\u63cf\uff1a\u7cbe\u786e\u8bc6\u522b" }
+          ]
+        }
+      ]
+    },
+    {
+      label: "Approximate Counting",
+      label_zh: "\u8fd1\u4f3c\u8ba1\u6570",
+      color: "green",
+      href: "chapter8-study.html#sec-morris",
+      children: [
+        {
+          label: "Morris Counter (Alg 16)",
+          label_zh: "Morris\u8ba1\u6570\u5668\uff08\u7b97\u6cd516\uff09",
+          children: [
+            { label: "Increment x with prob 1/2\u02e3", label_zh: "\u4ee5\u6982\u7387 1/2\u02e3 \u9012\u589e x" },
+            { label: "Output 2\u02e3 - 1", label_zh: "\u8f93\u51fa 2\u02e3 - 1" },
+            { label: "E[d\u0302] = d (unbiased)", label_zh: "E[d\u0302] = d\uff08\u65e0\u504f\uff09", color: "yellow" },
+            { label: "Var = d(d-1)/2", label_zh: "Var = d(d-1)/2", color: "purple" },
+            { label: "Space: $O(\\log\\log m)$", label_zh: "\u7a7a\u95f4\uff1a$O(\\log\\log m)$", color: "yellow" }
+          ]
+        },
+        {
+          label: "Careful Morris",
+          label_zh: "\u7cbe\u786e Morris",
+          children: [
+            { label: "C = (1+\u03b1)\u02e3, increment w.p. 1/(\u03b1C)", label_zh: "C = (1+\u03b1)\u02e3\uff0c\u4ee5\u6982\u7387 1/(\u03b1C) \u9012\u589e" },
+            { label: "Var = \u03b1/2 \u00b7 n(n+1) - n", label_zh: "Var = \u03b1/2 \u00b7 n(n+1) - n", color: "purple" },
+            { label: "Set \u03b1 = \u03b5\u00b2/2", label_zh: "\u8bbe \u03b1 = \u03b5\u00b2/2" }
+          ]
+        },
+        {
+          label: "Median-of-Means",
+          label_zh: "\u4e2d\u4f4d\u6570-\u5747\u503c\u6280\u672f",
+          color: "purple",
+          children: [
+            { label: "Average k copies: Var \u2192 Var/k", label_zh: "\u5e73\u5747 k \u4e2a\u526f\u672c\uff1aVar \u2192 Var/k" },
+            { label: "Chebyshev: $\\Pr[\\text{bad}] \\le 1/4$", label_zh: "\u5207\u6bd4\u96ea\u592b\uff1a$\\Pr[\\text{\u574f}] \\le 1/4$" },
+            { label: "Median of T groups", label_zh: "T \u7ec4\u7684\u4e2d\u4f4d\u6570" },
+            { label: "Chernoff: $\\Pr[\\text{fail}] \\le \\delta$", label_zh: "\u5207\u5c14\u8bfa\u592b\uff1a$\\Pr[\\text{\u5931\u8d25}] \\le \\delta$" },
+            { label: "Space: $O((\\log\\log m/\\varepsilon^2)\\log(1/\\delta))$", label_zh: "\u7a7a\u95f4\uff1a$O((\\log\\log m/\\varepsilon^2)\\log(1/\\delta))$", color: "yellow" }
+          ]
+        }
+      ]
+    },
+    {
+      label: "Distinct Elements (F\u2080)",
+      label_zh: "\u4e0d\u540c\u5143\u7d20 (F\u2080)",
+      color: "green",
+      href: "chapter8-study.html#sec-distinct",
+      children: [
+        {
+          label: "Tidemark / AMS (Alg 17)",
+          label_zh: "Tidemark / AMS\uff08\u7b97\u6cd517\uff09",
+          children: [
+            { label: "Track z = max trailing zeros of h(a\u1d62)", label_zh: "\u8ddf\u8e2a z = h(a\u1d62) \u7684\u6700\u5927\u5c3e\u968f\u96f6" },
+            { label: "Return \u221a2 \u00b7 2\u1dbb", label_zh: "\u8fd4\u56de \u221a2 \u00b7 2\u1dbb" },
+            { label: "Constant-factor estimate", label_zh: "\u5e38\u6570\u56e0\u5b50\u4f30\u8ba1", color: "yellow" },
+            { label: "Space: $O(\\log n)$", label_zh: "\u7a7a\u95f4\uff1a$O(\\log n)$", color: "yellow" },
+            { label: "Markov for upper bound", label_zh: "Markov\u7528\u4e8e\u4e0a\u754c", color: "purple" },
+            { label: "Chebyshev for lower bound", label_zh: "Chebyshev\u7528\u4e8e\u4e0b\u754c", color: "purple" }
+          ]
+        },
+        {
+          label: "BJKST (Alg 18)",
+          label_zh: "BJKST\uff08\u7b97\u6cd518\uff09",
+          href: "chapter8-study.html#sec-bjkst",
+          children: [
+            { label: "Two hashes: h (primary), g (secondary)", label_zh: "\u4e24\u4e2a\u54c8\u5e0c\uff1ah\uff08\u4e3b\uff09\u3001g\uff08\u8f85\uff09" },
+            { label: "Buffer B of size T = \u0398(1/\u03b5\u00b2)", label_zh: "\u7f13\u51b2\u533a B\uff0c\u5927\u5c0f T = \u0398(1/\u03b5\u00b2)" },
+            { label: "(1\u00b1\u03b5) estimate", label_zh: "(1\u00b1\u03b5) \u4f30\u8ba1", color: "yellow" },
+            { label: "g saves space per entry", label_zh: "g \u8282\u7701\u6bcf\u4e2a\u6761\u76ee\u7684\u7a7a\u95f4" }
+          ]
+        },
+        {
+          label: "Bottom-k Algorithm",
+          label_zh: "Bottom-k \u7b97\u6cd5",
+          children: [
+            { label: "Keep k smallest h-values", label_zh: "\u4fdd\u7559 k \u4e2a\u6700\u5c0f h \u503c" },
+            { label: "Return k / max(stored values)", label_zh: "\u8fd4\u56de k / max(\u5b58\u50a8\u503c)" }
+          ]
+        }
+      ]
+    },
+    {
+      label: "Key Techniques",
+      label_zh: "\u5173\u952e\u6280\u672f",
+      color: "purple",
+      children: [
+        {
+          label: "Median Trick",
+          label_zh: "\u4e2d\u4f4d\u6570\u6280\u5de7",
+          children: [
+            { label: "Constant prob \u2192 high prob", label_zh: "\u5e38\u6570\u6982\u7387 \u2192 \u9ad8\u6982\u7387" },
+            { label: "$O(\\log(1/\\delta))$ copies", label_zh: "$O(\\log(1/\\delta))$ \u4e2a\u526f\u672c" }
+          ]
+        },
+        {
+          label: "Mean Reduction",
+          label_zh: "\u5747\u503c\u964d\u65b9\u5dee",
+          children: [
+            { label: "Average k copies: Var/k", label_zh: "\u5e73\u5747 k \u4e2a\u526f\u672c\uff1aVar/k" },
+            { label: "Chebyshev for (1\u00b1\u03b5)", label_zh: "\u5207\u6bd4\u96ea\u592b\u7528\u4e8e (1\u00b1\u03b5)" }
+          ]
+        },
+        {
+          label: "Hash-Based Sketching",
+          label_zh: "\u57fa\u4e8e\u54c8\u5e0c\u7684\u8349\u56fe",
+          children: [
+            { label: "Pairwise independent $\\Rightarrow$ $O(\\log n)$ bits", label_zh: "\u4e24\u4e24\u72ec\u7acb $\\Rightarrow$ $O(\\log n)$ \u4f4d" },
+            { label: "Truly random \u2192 \u03a9(n log n) bits!", label_zh: "\u5b8c\u5168\u968f\u673a \u2192 \u03a9(n log n) \u4f4d\uff01" },
+            { label: "Trailing zeros as proxy for log\u2082 F\u2080", label_zh: "\u5c3e\u968f\u96f6\u4f5c\u4e3a log\u2082 F\u2080 \u7684\u4ee3\u7406" }
+          ]
+        }
+      ]
+    }
+  ]
+};
+renderMindmap("mindmapCanvas", data);
+</script>
+</body>
+</html>

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 5: Graph Algorithms</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4C8;</span>
+    <h2>Chapter 5</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-karger" class="nav-link" data-section="sec-karger">Karger&rsquo;s Min-Cut</a></li>
+    <li><a href="#sec-karger-stein" class="nav-link" data-section="sec-karger-stein">Karger-Stein</a></li>
+    <li><a href="#sec-counting" class="nav-link" data-section="sec-counting">Counting Min-Cuts</a></li>
+    <li><a href="#sec-mst" class="nav-link" data-section="sec-mst">Expected Linear MST</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Summary</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter5-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter5-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=5" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=5" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=5&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 7</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 5: Graph Algorithms</h1>
+    <p class="hero-subtitle">Randomised graph algorithms: Karger&rsquo;s min-cut via random contraction, the Karger-Stein speed-up, counting minimum cuts, and minimum spanning trees in expected linear time.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2702;</span>
+        <span>Karger&rsquo;s Min-Cut</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x26A1;</span>
+        <span>Karger-Stein</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F522;</span>
+        <span>Min-Cut Counting</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F332;</span>
+        <span>Expected Linear MST</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter5-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter5-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Graph contraction identities, telescoping products, MST properties, and recurrence solutions</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== KARGER'S MIN-CUT ===== -->
+<section id="sec-karger" class="section" data-track="karger">
+  <h2 class="section-title">Karger&rsquo;s Min-Cut Algorithm</h2>
+
+  <div class="concept-box">
+    <h3>The Min-Cut Problem</h3>
+    <p>Given a <strong>connected undirected multigraph</strong> \(G = (V, E)\) with \(|V| = n\) vertices and \(|E| = m\) edges, a <strong>cut</strong> is a partition of \(V\) into two non-empty sets \((S, \bar{S})\). The <strong>size</strong> of the cut is the number of edges crossing it:</p>
+    \[c(S, \bar{S}) = |\{e \in E : e \text{ has one endpoint in } S \text{ and one in } \bar{S}\}|\]
+    <p style="margin-top:0.5rem;">The <strong>minimum cut</strong> (min-cut) is a cut of smallest size. Let \(k\) denote the min-cut value.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 25.1</h3>
+    <p>The global min-cut can be computed by solving \(n - 1\) max-flow instances (one for each choice of sink, with a fixed source). Via the max-flow min-cut theorem, this gives the global minimum cut. Using the fastest max-flow algorithms, this takes \(O(mn \log(n^2/m))\) time.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Edge Contraction</h3>
+    <div class="theorem-box" style="margin-top:0.75rem;">
+      <h3>Definition 25.1 (Edge Contraction)</h3>
+      <p>Given a multigraph \(G = (V, E)\) and an edge \(e = \{u, v\}\), the <strong>contraction</strong> of \(e\) produces a new graph \(G / e\) by:</p>
+      <ol>
+        <li>Merging \(u\) and \(v\) into a single &ldquo;super-vertex&rdquo; \(uv\).</li>
+        <li>Every edge that was incident to \(u\) or \(v\) (other than \(e\) itself) becomes incident to \(uv\).</li>
+        <li>All self-loops on \(uv\) are removed.</li>
+      </ol>
+      <p style="margin-top:0.5rem;">Parallel (multi-) edges are <strong>retained</strong>. The contracted graph has \(|V| - 1\) vertices.</p>
+    </div>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 10: Karger&rsquo;s Random Contraction</h4>
+    <p><strong>Input:</strong> Connected multigraph \(G = (V, E)\)</p>
+    <ol>
+      <li>While \(|V| > 2\):</li>
+      <li>&emsp;Pick an edge \(e \in E\) uniformly at random.</li>
+      <li>&emsp;Contract \(e\): replace \(G\) by \(G / e\).</li>
+      <li>Return the cut defined by the two remaining super-vertices.</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised (Monte Carlo)</span>
+      <span class="fact-pill blue">\(O(n^2)\) time per run</span>
+      <span class="fact-pill red">May fail to find min-cut</span>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Intuition</h3>
+    <p>The algorithm only fails if it contracts an edge that crosses the min-cut. Since the min-cut has \(k\) edges out of \(|E|\) total edges, small cuts are <em>less likely</em> to be destroyed. The key insight: at every step, the graph has many edges (at least \(nk/2\) initially by the min-degree bound), so each individual min-cut edge has a small probability of being selected.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 26</h3>
+    <p>For any specific min-cut \(C\) in a multigraph \(G\) on \(n\) vertices, Karger&rsquo;s algorithm (Algorithm 10) returns \(C\) with probability at least:</p>
+    \[\Pr[\text{output} = C] \geq \frac{2}{n(n-1)} = \binom{n}{2}^{-1}\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm26">Show Proof</button>
+  <div class="proof-content" id="proof-thm26">
+    <p>Let \(C\) be a specific min-cut of size \(k\). The algorithm performs \(n - 2\) contractions. Let \(\mathcal{E}_i\) be the event that the \(i\)-th contraction does <strong>not</strong> contract an edge of \(C\). The algorithm returns \(C\) if and only if all \(\mathcal{E}_1, \mathcal{E}_2, \ldots, \mathcal{E}_{n-2}\) occur.</p>
+
+    <p style="margin-top:0.75rem;"><strong>Key bound on \(|E_i|\):</strong> After \(i - 1\) contractions, the graph \(G_i\) has \(n_i = n - (i - 1)\) vertices. Since contractions never decrease the min-cut value, the min-cut of \(G_i\) is still at least \(k\). Therefore every vertex in \(G_i\) has degree at least \(k\). By the handshaking lemma:</p>
+    \[2|E_i| = \sum_{v \in V_i} \deg(v) \geq n_i \cdot k = (n - i + 1) \cdot k\]
+    <p>So \(|E_i| \geq (n - i + 1)k / 2\).</p>
+
+    <p style="margin-top:0.75rem;"><strong>Conditional probability:</strong> Given that \(\mathcal{E}_1, \ldots, \mathcal{E}_{i-1}\) all occurred (so the \(k\) edges of \(C\) are still present), the probability of contracting a \(C\)-edge in step \(i\) is:</p>
+    \[\Pr[\overline{\mathcal{E}_i} \mid \mathcal{E}_1 \cap \cdots \cap \mathcal{E}_{i-1}] = \frac{k}{|E_i|} \leq \frac{k}{(n - i + 1)k/2} = \frac{2}{n - i + 1}\]
+    <p>Therefore:</p>
+    \[\Pr[\mathcal{E}_i \mid \mathcal{E}_1 \cap \cdots \cap \mathcal{E}_{i-1}] \geq 1 - \frac{2}{n - i + 1} = \frac{n - i - 1}{n - i + 1}\]
+
+    <p style="margin-top:0.75rem;"><strong>Telescoping product:</strong></p>
+    \[\Pr[\mathcal{E}_1 \cap \cdots \cap \mathcal{E}_{n-2}] = \prod_{i=1}^{n-2} \Pr[\mathcal{E}_i \mid \mathcal{E}_1 \cap \cdots \cap \mathcal{E}_{i-1}] \geq \prod_{i=1}^{n-2} \frac{n - i - 1}{n - i + 1}\]
+    <p>Writing this out:</p>
+    \[= \frac{n-2}{n} \cdot \frac{n-3}{n-1} \cdot \frac{n-4}{n-2} \cdot \frac{n-5}{n-3} \cdots \frac{2}{4} \cdot \frac{1}{3}\]
+    <p>This is a telescoping product. The numerator is \((n-2)!\) divided by \((n-2)(n-3) = (n-2)!\) from the top, and the denominator similarly telescopes. The result is:</p>
+    \[= \frac{2}{n(n-1)} = \binom{n}{2}^{-1} \quad \square\]
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 11: Best-of-\(T\) Repetition</h4>
+    <p><strong>Input:</strong> Connected multigraph \(G = (V, E)\), number of trials \(T\)</p>
+    <ol>
+      <li>Repeat \(T\) times: run Algorithm 10, record the cut found.</li>
+      <li>Return the smallest cut among all \(T\) trials.</li>
+    </ol>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 27</h3>
+    <p>Running Algorithm 10 for \(T = \binom{n}{2} \ln(1/\varepsilon)\) independent trials, the probability of <strong>not</strong> finding the min-cut is at most \(\varepsilon\). The total running time is:</p>
+    \[O\!\left(n^4 \log \frac{1}{\varepsilon}\right)\]
+    <p style="margin-top:0.5rem;">In particular, setting \(\varepsilon = 1/n\) gives \(O(n^4 \log n)\) time with high probability.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm27">Show Proof</button>
+  <div class="proof-content" id="proof-thm27">
+    <p>Each trial fails with probability at most \(1 - 2/(n(n-1))\). After \(T\) independent trials:</p>
+    \[\Pr[\text{all fail}] \leq \left(1 - \frac{2}{n(n-1)}\right)^T \leq e^{-2T/(n(n-1))}\]
+    <p>Setting \(T = \binom{n}{2} \ln(1/\varepsilon) = \frac{n(n-1)}{2} \ln(1/\varepsilon)\):</p>
+    \[\Pr[\text{all fail}] \leq e^{-\ln(1/\varepsilon)} = \varepsilon\]
+    <p>Each trial takes \(O(n^2)\) time, so total time is \(O(n^2 \cdot n^2 \ln(1/\varepsilon)) = O(n^4 \log(1/\varepsilon))\). \(\square\)</p>
+  </div>
+
+  <!-- Interactive Karger Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Karger&rsquo;s Min-Cut Simulation</h3>
+    <p>Generate a random graph and run Karger&rsquo;s contraction algorithm. Observe how the success rate compares to the theoretical bound \(2/(n(n-1))\).</p>
+    <div class="sim-controls">
+      <label>Vertices \(n\) = <input type="range" id="sliderKarger" min="5" max="30" value="10" style="width:130px;"> <span id="valKarger">10</span></label>
+      <button id="btnRunKarger" class="btn btn-primary">Generate &amp; Run</button>
+      <button id="btnRunKarger100" class="btn btn-secondary">Run 100</button>
+      <button id="btnResetKarger" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="kargerCut">-</div><div class="stat-label">Min-Cut Found</div></div>
+      <div class="stat-card"><div class="stat-value" id="kargerTrials">0</div><div class="stat-label">Trials</div></div>
+      <div class="stat-card"><div class="stat-value" id="kargerRate">-</div><div class="stat-label">Success Rate</div></div>
+      <div class="stat-card"><div class="stat-value" id="kargerEdges">-</div><div class="stat-label">Graph Edges</div></div>
+    </div>
+  </div>
+
+  <!-- Interactive: Karger Edge Contraction Step-by-Step -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Edge Contraction Step-by-Step</h3>
+    <p>Watch Karger&rsquo;s contraction in action on a small graph. Pick a random edge, merge its endpoints into a super-node, and observe the multigraph evolve. When only 2 super-nodes remain the cut is revealed.</p>
+    <div class="sim-controls">
+      <button id="btnContractEdge" class="btn btn-primary">Contract Random Edge</button>
+      <button id="btnNewContractGraph" class="btn btn-secondary">New Graph</button>
+      <button id="btnResetContract" class="btn btn-outline">Reset</button>
+    </div>
+    <svg id="svgKargerContract" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet"
+         style="width:100%; max-width:600px; height:auto; display:block; margin:1rem auto; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);"></svg>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="kcNodes">6</div><div class="stat-label">Nodes</div></div>
+      <div class="stat-card"><div class="stat-value" id="kcEdges">&ndash;</div><div class="stat-label">Edges</div></div>
+      <div class="stat-card"><div class="stat-value" id="kcContractions">0</div><div class="stat-label">Contractions</div></div>
+      <div class="stat-card"><div class="stat-value" id="kcCutValue">&ndash;</div><div class="stat-label">Cut Value</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== KARGER-STEIN ALGORITHM ===== -->
+<section id="sec-karger-stein" class="section" data-track="karger-stein">
+  <h2 class="section-title">Karger-Stein Algorithm</h2>
+
+  <div class="concept-box">
+    <h3>Motivation: Where Karger Loses Probability</h3>
+    <p>In Karger&rsquo;s algorithm, the early contractions are relatively safe &mdash; the probability of hitting a min-cut edge is small when the graph still has many vertices. The danger is in the <strong>last few steps</strong>: when only 3 vertices remain, the probability of destroying the min-cut in the next contraction is \(2/3\).</p>
+    <p style="margin-top:0.75rem;"><strong>Key idea:</strong> Contract down to \(\lceil n/\sqrt{2} \rceil + 1\) vertices (where survival probability is still \(\geq 1/2\)), then <strong>branch into two independent recursive calls</strong> and take the better result.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 12: Karger-Stein</h4>
+    <p><strong>Procedure</strong> \(\text{ModifiedKarger}(G, t)\):</p>
+    <ol>
+      <li>While \(|V(G)| > t\): pick a random edge, contract it.</li>
+      <li>Return the resulting graph.</li>
+    </ol>
+    <p style="margin-top:1rem;"><strong>Procedure</strong> \(\text{KargerStein}(G)\):</p>
+    <ol>
+      <li>If \(|V(G)| \leq 6\): find the min-cut by brute force and return it.</li>
+      <li>Set \(t = \lceil |V(G)| / \sqrt{2} \rceil + 1\).</li>
+      <li>\(G_1 \leftarrow \text{ModifiedKarger}(G, t)\).</li>
+      <li>\(G_2 \leftarrow \text{ModifiedKarger}(G, t)\) (independent random choices).</li>
+      <li>Return \(\min(\text{KargerStein}(G_1),\; \text{KargerStein}(G_2))\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised (Monte Carlo)</span>
+      <span class="fact-pill blue">\(O(n^2 \log n)\) time</span>
+      <span class="fact-pill red">\(\Omega(1/\log n)\) success prob</span>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Running Time Analysis</h3>
+    <p>The contraction from \(n\) vertices down to \(\approx n/\sqrt{2}\) takes \(O(n^2)\) time. The recurrence is:</p>
+    \[T(n) = 2 \cdot T\!\left(\frac{n}{\sqrt{2}}\right) + O(n^2)\]
+    <p style="margin-top:0.5rem;">Let \(n_j = n / (\sqrt{2})^j\). At depth \(j\) there are \(2^j\) subproblems, each of size \(n_j\), costing \(O(n_j^2)\) each. The total work at depth \(j\) is:</p>
+    \[2^j \cdot O\!\left(\frac{n^2}{2^j}\right) = O(n^2)\]
+    <p>The recursion depth is \(O(\log n)\) (until \(n_j \leq 6\)), so the total running time is:</p>
+    \[T(n) = O(n^2 \log n)\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Success Probability Analysis</h3>
+    <p>From the proof of Theorem 26, contracting from \(n\) vertices down to \(t = \lceil n/\sqrt{2} \rceil + 1\) vertices preserves a specific min-cut with probability at least:</p>
+    \[\prod_{i=1}^{n - t} \frac{n - i - 1}{n - i + 1} \geq \frac{t(t-1)}{n(n-1)} \geq \frac{1}{2}\]
+    <p style="margin-top:0.5rem;">Let \(p(n)\) be the probability that KargerStein finds the min-cut. The two branches are independent, so:</p>
+    \[p(n) \geq 1 - \left(1 - \frac{1}{2} \cdot p\!\left(\frac{n}{\sqrt{2}}\right)\right)^2\]
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Claim 27.1</h3>
+    <p>Define \(f(t)\) by the recurrence \(f(0) = 1\) and \(f(t) \geq 1 - (1 - f(t-1)/2)^2\). Then \(f(t) \geq \frac{1}{t + 2}\) for all \(t \geq 0\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-claim271">Show Proof (Induction)</button>
+  <div class="proof-content" id="proof-claim271">
+    <p><strong>Base case:</strong> \(f(0) = 1 \geq 1/2\). \(\checkmark\)</p>
+    <p style="margin-top:0.5rem;"><strong>Inductive step:</strong> Assume \(f(t-1) \geq 1/(t+1)\). Then:</p>
+    \[f(t) \geq 1 - \left(1 - \frac{f(t-1)}{2}\right)^2 \geq 1 - \left(1 - \frac{1}{2(t+1)}\right)^2\]
+    <p>Expanding:</p>
+    \[= 1 - 1 + \frac{1}{t+1} - \frac{1}{4(t+1)^2} = \frac{1}{t+1} - \frac{1}{4(t+1)^2}\]
+    \[= \frac{1}{t+1}\left(1 - \frac{1}{4(t+1)}\right) = \frac{4(t+1) - 1}{4(t+1)^2} = \frac{4t + 3}{4(t+1)^2}\]
+    <p>We need to show \(\frac{4t+3}{4(t+1)^2} \geq \frac{1}{t+2}\), i.e., \((4t+3)(t+2) \geq 4(t+1)^2\):</p>
+    \[(4t+3)(t+2) = 4t^2 + 11t + 6 \geq 4t^2 + 8t + 4 = 4(t+1)^2\]
+    <p>This holds since \(11t + 6 \geq 8t + 4\) for all \(t \geq 0\). \(\square\)</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 28</h3>
+    <p>The Karger-Stein algorithm (Algorithm 12) runs in \(O(n^2 \log n)\) time and finds any specific min-cut with probability \(\Omega(1/\log n)\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Corollary 28.1</h3>
+    <p>Running Karger-Stein \(T = O(\log n \cdot \log(1/\varepsilon))\) times and taking the best cut, we find the min-cut with probability \(\geq 1 - \varepsilon\) in total time:</p>
+    \[O\!\left(n^2 \log^2 n \cdot \log \frac{1}{\varepsilon}\right)\]
+    <p style="margin-top:0.5rem;">This is a significant improvement over the \(O(n^4 \log(1/\varepsilon))\) of repeated Karger.</p>
+  </div>
+</section>
+
+<!-- ===== COUNTING MINIMUM CUTS ===== -->
+<section id="sec-counting" class="section" data-track="counting">
+  <h2 class="section-title">Counting Minimum Cuts</h2>
+
+  <div class="concept-box">
+    <h3>A Structural Result from Algorithm Analysis</h3>
+    <p>A beautiful feature of Karger&rsquo;s algorithm: the analysis of its success probability yields a purely <strong>graph-theoretic</strong> result about the number of distinct minimum cuts. The algorithm never &ldquo;knew&rdquo; about this bound &mdash; it fell out of the probability calculation.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 29</h3>
+    <p>Any connected multigraph on \(n\) vertices has at most \(\binom{n}{2} = \frac{n(n-1)}{2}\) distinct minimum cuts.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm29">Show Proof</button>
+  <div class="proof-content" id="proof-thm29">
+    <p>Let \(M\) be the number of distinct minimum cuts. By Theorem 26, each specific min-cut \(C_j\) is returned by Karger&rsquo;s algorithm with probability \(\geq 1/\binom{n}{2}\). Since the events &ldquo;algorithm returns \(C_j\)&rdquo; for different \(j\) are mutually exclusive (the algorithm returns exactly one cut), we have:</p>
+    \[1 \geq \sum_{j=1}^{M} \Pr[\text{output} = C_j] \geq M \cdot \frac{1}{\binom{n}{2}}\]
+    <p>Therefore \(M \leq \binom{n}{2}\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Tightness: The Cycle Graph</h3>
+    <p>The bound \(\binom{n}{2}\) is <strong>tight</strong>. Consider the cycle graph \(C_n\) on \(n\) vertices. The min-cut has value \(k = 2\) (remove any two edges to disconnect). Each min-cut corresponds to choosing 2 of the \(n\) edges to remove, and there are exactly \(\binom{n}{2}\) ways to do this, each producing a distinct minimum cut.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Contrast: Total Number of Cuts</h3>
+    <p>A graph on \(n\) vertices has \(2^{n-1} - 1\) cuts in total (each non-trivial partition \((S, \bar{S})\) with \(S \neq \emptyset\) and \(\bar{S} \neq \emptyset\), counted up to symmetry). The fact that only \(O(n^2)\) of these can be minimum cuts is remarkable &mdash; it means minimum cuts are an extremely sparse subset of all possible cuts.</p>
+  </div>
+</section>
+
+<!-- ===== MST IN EXPECTED LINEAR TIME ===== -->
+<section id="sec-mst" class="section" data-track="mst">
+  <h2 class="section-title">MST in Expected Linear Time</h2>
+
+  <div class="concept-box">
+    <h3>The MST Problem</h3>
+    <p>Given a connected undirected graph \(G = (V, E)\) with edge weights \(w : E \to \mathbb{R}\), find a spanning tree \(T\) of minimum total weight \(w(T) = \sum_{e \in T} w(e)\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Known Deterministic Algorithms</h3>
+    <div style="overflow-x:auto;">
+      <table class="styled-table" style="width:100%; margin-top:0.5rem;">
+        <thead><tr><th>Algorithm</th><th>Time Complexity</th></tr></thead>
+        <tbody>
+          <tr><td>Kruskal</td><td>\(O(m \log n)\)</td></tr>
+          <tr><td>Prim (with Fibonacci heap)</td><td>\(O(m + n \log n)\)</td></tr>
+          <tr><td>Bor&#x16F;vka</td><td>\(O(m \log n)\)</td></tr>
+          <tr><td>Fredman&ndash;Tarjan</td><td>\(O(m \log^* n)\)</td></tr>
+          <tr><td>Chazelle</td><td>\(O(m \cdot \alpha(m, n))\)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.75rem;">None of these achieves \(O(m)\). The <strong>Karger&ndash;Klein&ndash;Tarjan (KKT)</strong> algorithm achieves <strong>expected \(O(m)\) time</strong> using randomisation.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Building Block 1: Cut Property &amp; Cycle Property</h3>
+    <div class="theorem-box" style="margin-top:0.75rem;">
+      <h3>Cut Property</h3>
+      <p>For any cut \((S, \bar{S})\), the <strong>lightest</strong> edge crossing the cut must be in every MST (assuming unique edge weights).</p>
+    </div>
+    <div class="theorem-box" style="margin-top:0.75rem;">
+      <h3>Cycle Property</h3>
+      <p>For any cycle \(C\) in \(G\), the <strong>heaviest</strong> edge on \(C\) is not in any MST (assuming unique edge weights).</p>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Building Block 2: \(F\)-Heaviness</h3>
+    <div class="theorem-box" style="margin-top:0.75rem;">
+      <h3>Definition 29.1 (\(F\)-Heavy and \(F\)-Light Edges)</h3>
+      <p>Let \(F\) be a forest on the vertex set \(V\). An edge \(e = \{u, v\} \in E\) is called <strong>\(F\)-heavy</strong> if \(u\) and \(v\) are connected in \(F\) and \(w(e)\) is strictly greater than the maximum weight edge on the path from \(u\) to \(v\) in \(F\). Otherwise, \(e\) is <strong>\(F\)-light</strong>.</p>
+    </div>
+    <p style="margin-top:0.75rem;">By the cycle property, \(F\)-heavy edges (with respect to any MST \(F\)) cannot be in the MST. So we only need to consider \(F\)-light edges.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Building Block 3: Bor&#x16F;vka Steps</h3>
+    <p>A single <strong>Bor&#x16F;vka step</strong> does the following: for each vertex (or component), select the lightest edge leaving the component, then contract all selected edges. This:</p>
+    <ul style="margin-top:0.5rem;">
+      <li>Reduces the number of vertices by at least a factor of 2.</li>
+      <li>Takes \(O(m)\) time.</li>
+      <li>After \(t\) Bor&#x16F;vka steps: at most \(n / 2^t\) vertices remain.</li>
+    </ul>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Building Block 4: Random Subsampling</h3>
+    <p>Include each edge of \(G\) independently with probability \(p\) to form a subgraph \(G' = (V, E')\). Then \(\mathbb{E}[|E'|] = pm\).</p>
+    <div class="theorem-box" style="margin-top:0.75rem;">
+      <h3>Lemma 29.1 (Random Subsampling Lemma)</h3>
+      <p>Let \(G = (V, E)\) be a graph with edge weights. Sample each edge independently with probability \(p\) to get \(G'\). Let \(F'\) be the MST of \(G'\). Then the expected number of \(F'\)-light edges in \(G\) is at most \(|V| / p\).</p>
+    </div>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-lemma291">Show Proof Sketch (Lemma 29.1)</button>
+  <div class="proof-content" id="proof-lemma291">
+    <p>Order all edges by weight: \(e_1, e_2, \ldots, e_m\). Process them in this order. Edge \(e_i\) is \(F'\)-light if and only if it connects two different components of \(F'\), i.e., adding \(e_i\) to \(F'\) would not create a cycle with a heavier edge already in \(F'\).</p>
+    <p style="margin-top:0.5rem;">Consider the moment we process edge \(e_i = \{u, v\}\). It is \(F'\)-light if either \(u\) and \(v\) are in different components of \(F'\), or \(e_i\) is lighter than the heaviest edge on the \(u\)&ndash;\(v\) path in \(F'\). By the structure of the random sampling:</p>
+    <p style="margin-top:0.5rem;">Each edge that would have &ldquo;blocked&rdquo; \(e_i\) (i.e., lighter edges connecting the same components) was included in \(G'\) independently with probability \(p\). The expected number of \(F'\)-light edges can be bounded by a charging argument: each light edge can be &ldquo;charged&rdquo; to a vertex, and each vertex is charged at most \(1/p\) times in expectation. Total: \(|V|/p\). \(\square\)</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 29.1 (MST Verification)</h3>
+    <p>Given a graph \(G = (V, E)\) and a spanning tree \(T\), we can determine all \(T\)-heavy edges in \(O(m + n)\) time. (Due to King, 1997.)</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 14: KKT Algorithm for MST</h4>
+    <p><strong>Input:</strong> Connected graph \(G = (V, E)\) with edge weights</p>
+    <ol>
+      <li><strong>Bor&#x16F;vka:</strong> Apply \(t\) Bor&#x16F;vka steps to reduce to \(\leq n/2^t\) vertices. Let \(G_1\) be the result.</li>
+      <li><strong>Subsample:</strong> Include each edge of \(G_1\) independently with probability \(p\) to get \(G'\).</li>
+      <li><strong>Recursive MST of sample:</strong> Recursively compute the MST \(F'\) of \(G'\).</li>
+      <li><strong>Identify light edges:</strong> Using \(O(m + n)\) MST verification, find all \(F'\)-light edges in \(G_1\). Let \(G_2\) be the subgraph of \(G_1\) consisting of these light edges.</li>
+      <li><strong>Recursive MST of light edges:</strong> Recursively compute the MST of \(G_2\).</li>
+      <li>Return the MST edges found (including edges from Bor&#x16F;vka steps).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised (Las Vegas)</span>
+      <span class="fact-pill blue">Expected \(O(m)\) time</span>
+      <span class="fact-pill red">Always correct</span>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Setting the Parameters</h3>
+    <p>Choose \(t = 3\) Bor&#x16F;vka steps and \(p = 1/2\). After Bor&#x16F;vka, we have \(n' \leq n/8\) vertices and still \(\leq m\) edges. The two recursive calls are:</p>
+    <ul style="margin-top:0.5rem;">
+      <li><strong>First call</strong> (on \(G'\)): expected \(m/2\) edges, \(n/8\) vertices.</li>
+      <li><strong>Second call</strong> (on \(G_2\)): by Lemma 29.1, expected \(\leq 2 \cdot n/8 = n/4\) edges, \(n/8\) vertices.</li>
+    </ul>
+    <p style="margin-top:0.5rem;">The expected-time recurrence is:</p>
+    \[T(m, n) \leq T(m/2,\, n/8) + T(n/4,\, n/8) + O(m + n)\]
+    <p>One can verify that \(T(m, n) = O(m + n)\) satisfies this recurrence.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 30</h3>
+    <p>The KKT algorithm computes the MST of a connected graph with \(n\) vertices and \(m\) edges in <strong>expected \(O(m)\) time</strong>.</p>
+    <p style="margin-top:0.5rem;">This is a <strong>Las Vegas</strong> algorithm: it always returns the correct MST; only the running time is random.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm30">Show Proof Sketch</button>
+  <div class="proof-content" id="proof-thm30">
+    <p>The correctness follows from the cut property: Bor&#x16F;vka steps add MST edges, and after removing \(F'\)-heavy edges (which cannot be in the MST by the cycle property), the MST of the remaining light-edge subgraph gives the remaining MST edges.</p>
+    <p style="margin-top:0.5rem;">For the running time, let \(T(m, n)\) be the expected time. With \(t = 3\) and \(p = 1/2\):</p>
+    \[T(m, n) \leq T(m/2, n/8) + T(n/4, n/8) + c(m + n)\]
+    <p>Guess \(T(m, n) \leq a(m + n)\) for some constant \(a\). Substituting:</p>
+    \[a(m + n) \leq a(m/2 + n/8) + a(n/4 + n/8) + c(m + n)\]
+    \[a(m + n) \leq a \cdot m/2 + a \cdot n/2 + c(m + n)\]
+    \[a(m/2 + n/2) \leq c(m + n)\]
+    <p>This holds for \(a \leq 2c\). Therefore \(T(m, n) = O(m + n) = O(m)\) since \(G\) is connected (\(m \geq n - 1\)). \(\square\)</p>
+  </div>
+
+  <!-- Interactive: Borůvka MST Round Visualization -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Bor&#x16F;vka MST Rounds</h3>
+    <p>Each round, every component selects its lightest outgoing edge (green). These edges then join the MST (blue / bold) and the components merge. Nodes are coloured by component.</p>
+    <div class="sim-controls">
+      <button id="btnBoruvkaNext" class="btn btn-primary">Next Round</button>
+      <button id="btnBoruvkaRunAll" class="btn btn-secondary">Run All</button>
+      <button id="btnBoruvkaNew" class="btn btn-outline">New Graph</button>
+      <button id="btnBoruvkaReset" class="btn btn-outline">Reset</button>
+    </div>
+    <svg id="svgBoruvka" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet"
+         style="width:100%; max-width:600px; height:auto; display:block; margin:1rem auto; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);"></svg>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="borRound">0</div><div class="stat-label">Round</div></div>
+      <div class="stat-card"><div class="stat-value" id="borComponents">&ndash;</div><div class="stat-label">Components</div></div>
+      <div class="stat-card"><div class="stat-value" id="borMSTWeight">0</div><div class="stat-label">MST Weight</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SUMMARY & COMPARISON ===== -->
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title">Summary &amp; Comparison</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="styled-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Algorithm</th>
+          <th>Problem</th>
+          <th>Time</th>
+          <th>Success Probability</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Karger (single run)</td>
+          <td>Min-Cut</td>
+          <td>\(O(n^2)\)</td>
+          <td>\(\geq \dfrac{2}{n(n-1)} = \Omega(1/n^2)\)</td>
+        </tr>
+        <tr>
+          <td>Karger (repeated)</td>
+          <td>Min-Cut</td>
+          <td>\(O(n^4 \log(1/\varepsilon))\)</td>
+          <td>\(\geq 1 - \varepsilon\)</td>
+        </tr>
+        <tr>
+          <td>Karger-Stein (single run)</td>
+          <td>Min-Cut</td>
+          <td>\(O(n^2 \log n)\)</td>
+          <td>\(\Omega(1/\log n)\)</td>
+        </tr>
+        <tr>
+          <td>Karger-Stein (repeated)</td>
+          <td>Min-Cut</td>
+          <td>\(O(n^2 \log^2 n \cdot \log(1/\varepsilon))\)</td>
+          <td>\(\geq 1 - \varepsilon\)</td>
+        </tr>
+        <tr>
+          <td>Deterministic (max-flow)</td>
+          <td>Min-Cut</td>
+          <td>\(O(mn \log(n^2/m))\)</td>
+          <td>1 (deterministic)</td>
+        </tr>
+        <tr>
+          <td>KKT</td>
+          <td>MST</td>
+          <td>\(O(m)\) expected</td>
+          <td>1 (Las Vegas)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Takeaways</h3>
+    <ul>
+      <li><strong>Karger&rsquo;s algorithm</strong> is beautifully simple: just keep contracting random edges. The analysis reveals the \(\binom{n}{2}^{-1}\) bound via a telescoping product.</li>
+      <li><strong>Karger-Stein</strong> improves the success probability from \(\Omega(1/n^2)\) to \(\Omega(1/\log n)\) by branching when the contraction becomes risky, reducing total time from \(O(n^4)\) to \(O(n^2 \log^2 n)\).</li>
+      <li>The <strong>counting result</strong> (at most \(\binom{n}{2}\) min-cuts) is a graph theory theorem that emerged purely from algorithm analysis.</li>
+      <li><strong>KKT</strong> achieves expected linear time for MST by combining Bor&#x16F;vka steps, random subsampling, and the subsampling lemma.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Work through these problems to solidify your understanding of randomised graph algorithms.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>How many distinct cuts does a graph on \(n\) vertices have? (A cut is a partition of \(V\) into two non-empty sets \((S, \bar{S})\), counted up to the symmetry \(S \leftrightarrow \bar{S}\).)</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p>Each cut \((S, \bar{S})\) corresponds to a non-empty proper subset \(S \subseteq V\). There are \(2^n - 2\) such subsets (excluding \(\emptyset\) and \(V\)). Since \((S, \bar{S})\) and \((\bar{S}, S)\) are the same cut, the number of distinct cuts is:</p>
+      \[\frac{2^n - 2}{2} = 2^{n-1} - 1\]
+      <p>\(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>State the running time recurrence and the success probability recurrence for the Karger-Stein algorithm. Verify the claimed solutions:</p>
+    <p><strong>(a)</strong> \(T(n) = O(n^2 \log n)\)</p>
+    <p><strong>(b)</strong> \(p(n) = \Omega(1/\log n)\)</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p><strong>(a)</strong> Running time: \(T(n) = 2T(n/\sqrt{2}) + O(n^2)\). At depth \(j\) there are \(2^j\) subproblems of size \(n/(\sqrt{2})^j\). Work at depth \(j\): \(2^j \cdot O(n^2/2^j) = O(n^2)\). Depth: \(O(\log_{\sqrt{2}} n) = O(\log n)\). Total: \(O(n^2 \log n)\).</p>
+      <p><strong>(b)</strong> Success probability: \(p(n) \geq 1 - (1 - p(n/\sqrt{2})/2)^2\). Setting \(\ell = \log_{\sqrt{2}}(n/6)\) (recursion depth), we get \(p(n) \geq 1/(\ell + 2) = \Omega(1/\log n)\) by Claim 27.1. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Consider modifying Karger-Stein so that instead of branching into 2 recursive calls, we make:</p>
+    <p><strong>(a)</strong> Only 1 recursive call (no branching).</p>
+    <p><strong>(b)</strong> 3 recursive calls.</p>
+    <p>What happens to the running time and success probability in each case?</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p><strong>(a)</strong> With 1 recursive call: \(T(n) = T(n/\sqrt{2}) + O(n^2) = O(n^2)\) (geometric series). The success probability satisfies \(p(n) \geq \frac{1}{2} \cdot p(n/\sqrt{2})\), so \(p(n) = \Omega(1/n^2)\) &mdash; no better than plain Karger. This is essentially the same as checking only every \(\sqrt{2}\) factor reduction, which doesn&rsquo;t help.</p>
+      <p><strong>(b)</strong> With 3 recursive calls: \(T(n) = 3T(n/\sqrt{2}) + O(n^2)\). At depth \(j\): \(3^j \cdot O(n^2/2^j)\). Since \(3/2 > 1\), this grows as \((3/2)^{\log n} = n^{\log_2 3} \approx n^{1.585}\). So \(T(n) = O(n^{2\log_2 3}) \approx O(n^{3.17})\). The success probability improves: \(p(n) \geq 1 - (1 - p(n/\sqrt{2})/2)^3\), which converges to a constant. So we get constant success probability but worse running time. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Karger&rsquo;s algorithm requires sampling an edge <strong>uniformly at random</strong> from the current multigraph. If the graph is stored as an adjacency list, sampling a uniform edge naively might take \(O(m)\) time. Describe how to sample a uniformly random edge in \(O(n)\) time.</p>
+    <p><em>Hint:</em> Use a two-step process: first sample a vertex, then an incident edge.</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p><strong>Two-step sampling:</strong></p>
+      <ol>
+        <li>Sample a vertex \(v\) with probability <strong>proportional to its degree</strong>: \(\Pr[v] = \deg(v) / (2|E|)\).</li>
+        <li>Sample a uniformly random neighbour \(u\) of \(v\).</li>
+      </ol>
+      <p style="margin-top:0.5rem;">The probability of selecting edge \(e = \{u, v\}\) is:</p>
+      \[\Pr[e] = \frac{\deg(u)}{2|E|} \cdot \frac{1}{\deg(u)} + \frac{\deg(v)}{2|E|} \cdot \frac{1}{\deg(v)} = \frac{1}{2|E|} + \frac{1}{2|E|} = \frac{1}{|E|}\]
+      <p>This is uniform! Step 1 requires a pre-computed prefix-sum array of degrees (can binary-search in \(O(\log n)\) time, or use an alias table for \(O(1)\)). Step 2 takes \(O(1)\) with adjacency-list random access. Overall: \(O(n)\) preprocessing per contraction step, \(O(1)\) per sample. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>A \(k\)<strong>-min-cut</strong> is a cut of size exactly \(k\) times the minimum cut value. Generalise Karger&rsquo;s analysis:</p>
+    <p><strong>(a)</strong> If we contract the graph down to \(2k\) vertices, what is the probability that a specific minimum cut survives?</p>
+    <p><strong>(b)</strong> How many cuts of size at most \(k\) times the min-cut value can a graph on \(n\) vertices have?</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>(a)</strong> Contract to \(4k\) vertices (to leave a safety margin). Following the same telescoping product argument as Theorem 26, but with a cut of size \(\alpha k\) (where \(\alpha \leq k\) times the min-cut), at step \(i\) the graph has \(n - i + 1\) vertices and at least \((n - i + 1)k/2\) edges. The probability of hitting a specific cut of size \(\alpha k\) is \(\alpha k / |E_i| \leq 2\alpha / (n - i + 1)\). The survival probability through contracting to \(t\) vertices is:</p>
+      \[\prod_{i=1}^{n-t} \left(1 - \frac{2\alpha}{n - i + 1}\right)\]
+      <p>For \(\alpha\)-approximate min-cuts: survival prob \(\geq \Omega(n^{-2\alpha})\).</p>
+      <p><strong>(b)</strong> By the same argument as Theorem 29, the number of cuts of size at most \(\alpha k\) is at most \(O(n^{2\alpha})\). In particular, the number of \(\alpha\)-approximate min-cuts is polynomial in \(n\) for any fixed \(\alpha\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Assign each edge of a connected graph \(G = (V, E)\) a uniformly random weight from \([0, 1]\), independently. Let \(T\) be the MST under these random weights. Show that computing \(T\) via Kruskal&rsquo;s algorithm is equivalent to Karger&rsquo;s contraction algorithm. Deduce the running time.</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>Equivalence:</strong> Kruskal&rsquo;s algorithm processes edges in increasing order of weight. With random weights from \([0,1]\), the edge ordering is a uniformly random permutation (with probability 1, all weights are distinct). At each step, Kruskal adds the lightest edge that connects two different components &mdash; equivalently, it contracts that edge.</p>
+      <p style="margin-top:0.5rem;">Now consider Karger&rsquo;s algorithm: at each step, it picks a uniformly random edge and contracts it. If we restrict to edges between different components (non-self-loops), picking a uniform random edge from the remaining inter-component edges is exactly the same as the next edge in a random permutation that connects two different components.</p>
+      <p style="margin-top:0.5rem;">Therefore, Kruskal with random weights simulates Karger&rsquo;s contraction: each &ldquo;contraction&rdquo; step picks a uniform random inter-component edge.</p>
+      <p style="margin-top:0.5rem;"><strong>Running time:</strong> Kruskal&rsquo;s algorithm sorts edges first, taking \(O(m \log m) = O(m \log n)\), then processes them with union-find in \(O(m \cdot \alpha(n))\). Total: \(O(m \log m)\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p>Consider a <strong>weighted</strong> version of Karger&rsquo;s algorithm: the graph has positive real edge weights, and the min-cut is the cut of minimum total weight. Instead of picking each edge with equal probability, we pick edge \(e\) with probability proportional to \(w(e)\). Show that the same \(\binom{n}{2}^{-1}\) success bound holds.</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p>Let \(k\) be the minimum cut weight and let \(C\) be a specific min-cut of weight \(k\). The key observations:</p>
+      <ol>
+        <li><strong>Min-degree bound:</strong> Every vertex has weighted degree at least \(k\) (otherwise the edges incident to that vertex would form a cut of weight \(< k\)). By the handshaking lemma: \(\sum_e w(e) \geq nk/2\).</li>
+        <li><strong>Probability of hitting \(C\):</strong> At step \(i\), the total edge weight is at least \((n-i+1)k/2\). The probability of sampling a \(C\)-edge is:
+        \[\frac{\sum_{e \in C} w(e)}{\sum_{e \in E_i} w(e)} = \frac{k}{\sum_{e \in E_i} w(e)} \leq \frac{k}{(n-i+1)k/2} = \frac{2}{n-i+1}\]</li>
+      </ol>
+      <p>This is exactly the same bound as in the unweighted case! The rest of the proof (telescoping product) goes through identically, yielding:</p>
+      \[\Pr[\text{output} = C] \geq \frac{2}{n(n-1)} = \binom{n}{2}^{-1}\]
+      <p>\(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=5" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=5&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter5-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>
