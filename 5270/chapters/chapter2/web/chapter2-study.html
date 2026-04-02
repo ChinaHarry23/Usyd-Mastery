@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 2: Concentration Bounds, and Tricks</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4CA;</span>
+    <h2>Chapter 2</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-why-concentration" class="nav-link" data-section="sec-why-concentration">Why Concentration?</a></li>
+    <li><a href="#sec-markov" class="nav-link" data-section="sec-markov">Markov's Inequality</a></li>
+    <li><a href="#sec-chebyshev" class="nav-link" data-section="sec-chebyshev">Chebyshev's Inequality</a></li>
+    <li><a href="#sec-union-bound" class="nav-link" data-section="sec-union-bound">Union Bound</a></li>
+    <li><a href="#sec-median" class="nav-link" data-section="sec-median">Randomised Median</a></li>
+    <li><a href="#sec-amplification" class="nav-link" data-section="sec-amplification">Probability Amplification</a></li>
+    <li><a href="#sec-chernoff" class="nav-link" data-section="sec-chernoff">Chernoff &amp; Hoeffding</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Bounds Summary</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=2" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=2" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=2&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 10</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 2: Concentration Bounds, and Tricks</h1>
+    <p class="hero-subtitle">Markov, Chebyshev, Chernoff &amp; Hoeffding bounds; the Union Bound; Randomised Median; and probability amplification techniques.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AF;</span>
+        <span>Concentration Inequalities</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50D;</span>
+        <span>Randomised Median</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4C8;</span>
+        <span>Probability Amplification</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x270D;</span>
+        <span>Tutorial &amp; Quiz</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter2-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter2-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">MGF, exponential bounds, series &amp; calculus behind the proofs</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHY CONCENTRATION ===== -->
+<section id="sec-why-concentration" class="section" data-track="why-concentration">
+  <h2 class="section-title">Why Concentration?</h2>
+  <div class="concept-box">
+    <p><strong>The Bus Analogy:</strong> You're waiting for a bus. Someone tells you it comes <em>on average</em> every 5 minutes. If you wait 20 minutes, what are the chances a bus arrives?</p>
+    <p style="margin-top:0.75rem;">Knowing only the expectation (average), we can use <strong>Markov's inequality</strong> to say the probability the bus takes more than 20 minutes is at most \(\frac{5}{20} = \frac{1}{4}\). So there's at least a 75% chance you get the bus!</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>The Big Picture</h3>
+    <p>In algorithm analysis, we often prove bounds on <em>expected</em> quantities: running time, output quality, resource usage. But expectations alone aren't enough &mdash; we need to know how <strong>concentrated</strong> a random variable is around its expectation.</p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="info-card">
+        <h4 style="color:var(--green);">Low Variance</h4>
+        <p>The random variable is tightly clustered around its expectation. Reliable!</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--red);">High Variance</h4>
+        <p>The random variable can be far from its expectation. Unpredictable!</p>
+      </div>
+    </div>
+    <p style="margin-top:1rem;"><strong>Concentration inequalities</strong> give us tools to quantify exactly how likely a random variable is to stray far from its expectation, with progressively stronger guarantees as we know more about it.</p>
+  </div>
+
+  <!-- Interactive: Tail Bound Comparison -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Tail Bound Comparison</h3>
+    <p>Adjust \(t\) to see how the Markov, Chebyshev, and Chernoff tail bounds compare for \(\Pr[X \geq t]\) where \(X \sim \text{Bin}(n, p)\).</p>
+    <div class="sim-controls">
+      <label>n = <input type="range" id="sliderN" min="10" max="200" value="100" style="width:120px;"> <span id="valN">100</span></label>
+      <label>p = <input type="range" id="sliderP" min="5" max="50" value="25" style="width:100px;"> <span id="valP">0.25</span></label>
+      <label>t = <input type="range" id="sliderT" min="1" max="200" value="50" style="width:150px;"> <span id="valT">50</span></label>
+    </div>
+    <div id="boundsDisplay" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="stat-card"><div class="stat-value" id="boundMarkov">-</div><div class="stat-label">Markov</div></div>
+      <div class="stat-card"><div class="stat-value" id="boundChebyshev">-</div><div class="stat-label">Chebyshev</div></div>
+      <div class="stat-card"><div class="stat-value" id="boundChernoff">-</div><div class="stat-label">Chernoff</div></div>
+      <div class="stat-card"><div class="stat-value" id="boundHoeffding">-</div><div class="stat-label">Hoeffding</div></div>
+    </div>
+    <p class="stat-label" style="margin-top:0.75rem; font-size:0.8rem;" id="boundsVerdict"></p>
+  </div>
+</section>
+
+<!-- ===== MARKOV'S INEQUALITY ===== -->
+<section id="sec-markov" class="section" data-track="markov">
+  <h2 class="section-title">Markov's Inequality</h2>
+  <div class="theorem-box">
+    <h3>Theorem (Markov's Inequality)</h3>
+    <p>Let \(X\) be a <strong>non-negative</strong> random variable with \(\mathbb{E}[X] < \infty\). For any \(t > 0\),</p>
+    \[\Pr[X \geq t] \leq \frac{\mathbb{E}[X]}{t}\]
+  </div>
+
+  <p style="margin-top:1rem;">Intuition: "You can't be 10 times your expectation more than 10% of the time."</p>
+
+  <button class="proof-toggle" data-target="proof-markov">Show Proof</button>
+  <div class="proof-content" id="proof-markov">
+    <p>For any \(t > 0\):</p>
+    \[\mathbb{E}[X] = \sum_{x} x \cdot \Pr[X = x] \geq \sum_{x \geq t} x \cdot \Pr[X = x] \geq t \cdot \sum_{x \geq t} \Pr[X = x] = t \cdot \Pr[X \geq t]\]
+    <p>Dividing both sides by \(t\) gives the result. &square;</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Application: Las Vegas &rarr; Monte Carlo</h3>
+    <p><strong>Lemma 4.2:</strong> If \(A\) is a Las Vegas algorithm with expected running time \(T\), then there exists a Monte Carlo algorithm \(A'\) with worst-case running time \(O(T)\) and failure probability \(\frac{1}{100}\).</p>
+    <div class="algo-block" style="margin-top:1rem;">
+      <h4>Algorithm \(A'\)</h4>
+      <ol>
+        <li>Run \(A\) on input \(x\) for at most \(100T\) steps</li>
+        <li><strong>if</strong> \(A\) terminated &rarr; <strong>return</strong> \(A\)'s output <span style="color:var(--green);">(always correct)</span></li>
+        <li><strong>else</strong> &rarr; <strong>return</strong> arbitrary output <span style="color:var(--red);">(likely wrong)</span></li>
+      </ol>
+    </div>
+    <p style="margin-top:0.75rem;">By Markov's inequality: \(\Pr[\text{runtime} \geq 100T] \leq \frac{T}{100T} = \frac{1}{100}\). Done!</p>
+  </div>
+</section>
+
+<!-- ===== CHEBYSHEV'S INEQUALITY ===== -->
+<section id="sec-chebyshev" class="section" data-track="chebyshev">
+  <h2 class="section-title">Chebyshev's Inequality</h2>
+  <div class="theorem-box">
+    <h3>Theorem (Chebyshev's Inequality)</h3>
+    <p>Let \(X\) be a random variable with \(\mathbb{E}[X^2] < \infty\). For any \(t > 0\),</p>
+    \[\Pr\!\big[|X - \mathbb{E}[X]| \geq t\big] \leq \frac{\operatorname{Var}[X]}{t^2}\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-chebyshev">Show Proof</button>
+  <div class="proof-content" id="proof-chebyshev">
+    <p>Apply Markov's inequality to the non-negative random variable \(Y = (X - \mathbb{E}[X])^2\):</p>
+    \[\Pr\!\big[|X - \mathbb{E}[X]| \geq t\big] = \Pr\!\big[Y \geq t^2\big] \leq \frac{\mathbb{E}[Y]}{t^2} = \frac{\operatorname{Var}[X]}{t^2} \quad \square\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Markov vs Chebyshev: Comparison</h3>
+    <div class="interactive-compare" style="margin-top:1rem;">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="tab-markov-props">Markov</button>
+        <button class="tab-btn" data-tab="tab-cheby-props">Chebyshev</button>
+      </div>
+      <div id="tab-markov-props" class="tab-content active">
+        <ul>
+          <li><strong>Requirements:</strong> \(X \geq 0\), know \(\mathbb{E}[X]\)</li>
+          <li><strong>Bound type:</strong> One-sided (upper tail only)</li>
+          <li><strong>Decay:</strong> \(1/t\) (linear)</li>
+          <li><strong>Advantage:</strong> Minimal assumptions</li>
+          <li><strong>Weakness:</strong> Often too loose</li>
+        </ul>
+      </div>
+      <div id="tab-cheby-props" class="tab-content">
+        <ul>
+          <li><strong>Requirements:</strong> Know \(\mathbb{E}[X]\) and \(\operatorname{Var}[X]\)</li>
+          <li><strong>Bound type:</strong> Two-sided (both tails)</li>
+          <li><strong>Decay:</strong> \(1/t^2\) (quadratic)</li>
+          <li><strong>Advantage:</strong> No non-negativity needed; stronger</li>
+          <li><strong>Weakness:</strong> Needs variance information</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== UNION BOUND ===== -->
+<section id="sec-union-bound" class="section" data-track="union-bound">
+  <h2 class="section-title">The Union Bound</h2>
+  <div class="theorem-box">
+    <h3>Lemma (Union Bound)</h3>
+    <p>For any (possibly dependent, possibly countably infinite) events \(E_1, E_2, \ldots\),</p>
+    \[\Pr\!\left[\bigcup_{k=1}^{\infty} E_k\right] \leq \sum_{k=1}^{\infty} \Pr[E_k]\]
+  </div>
+
+  <p style="margin-top:1rem;">The union bound is deceptively simple but incredibly powerful. It lets us bound the probability that <em>any</em> bad event occurs, <strong>without</strong> needing to reason about dependencies between events.</p>
+
+  <div class="concept-box" style="margin-top:1rem;">
+    <h3>Useful Corollary</h3>
+    <p>The probability that <strong>none</strong> of the bad events occurs is:</p>
+    \[\Pr\!\left[\bigcap_{k=1}^{\infty} \overline{E_k}\right] \geq 1 - \sum_{k=1}^{\infty} \Pr[E_k]\]
+    <p style="margin-top:0.5rem;">Strategy: bound each bad event separately, then add them up. If the total is small, you're in good shape!</p>
+  </div>
+</section>
+
+<!-- ===== RANDOMISED MEDIAN ===== -->
+<section id="sec-median" class="section" data-track="median">
+  <h2 class="section-title">Randomised Median</h2>
+  <div class="concept-box">
+    <p><strong>Problem:</strong> Given an unsorted array \(A\) of \(n\) distinct integers, find the median.</p>
+    <p style="margin-top:0.5rem;"><strong>Key idea:</strong> <em>Sampling as a guide.</em> Subsample a smaller array \(B\) of size \(m \ll n\), sort it, and use "approximate medians" of \(B\) to narrow down where the true median must be in \(A\).</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 3: Randomised Median (Worst-Case Linear Time)</h4>
+    <p><strong>Input:</strong> array \(A\) of \(n\) distinct integers</p>
+    <ol>
+      <li>Set \(\Delta = 4\sqrt{m}\)</li>
+      <li>Create array \(B\) containing \(m\) elements of \(A\) chosen i.i.d. uniformly at random (with replacement)</li>
+      <li>Sort \(B\) &mdash; time \(O(m \log m)\)</li>
+      <li>Let \(b^-\) and \(b^+\) be the \(\big(\frac{m}{2} - \Delta\big)\)-th and \(\big(\frac{m}{2} + \Delta\big)\)-th elements of \(B\)</li>
+      <li>Copy every \(x \in A\) with \(b^- \leq x \leq b^+\) into a new array \(C\) &mdash; time \(O(n)\)</li>
+      <li>Compute \(k\) = number of elements of \(A\) smaller than \(b^-\) &mdash; time \(O(n)\)</li>
+      <li>Compute \(\ell\) = number of elements of \(A\) larger than \(b^+\) &mdash; time \(O(n)\)</li>
+      <li><strong>if</strong> \(k > \frac{n}{2}\) or \(\ell > \frac{n}{2}\) <strong>then return</strong> FAIL</li>
+      <li><strong>else if</strong> \(|C| > \frac{16n}{\sqrt{m}} + 2\) <strong>then return</strong> FAIL</li>
+      <li><strong>else</strong> Sort \(C\) and <strong>return</strong> the \(\big(\frac{n+1}{2} - k\big)\)-th element of \(C\)</li>
+    </ol>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Choosing \(m\)</h3>
+    <p>We need \(O(m \log m)\) and \(O\!\left(\frac{n}{\sqrt{m}} \log \frac{n}{\sqrt{m}}\right)\) to both be \(O(n)\). Setting them equal: \(m = \frac{n}{\sqrt{m}}\), giving \(m = n^{2/3}\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Analysis: Three Bad Events</h3>
+    <p>The algorithm fails only if one of three events occurs:</p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="info-card">
+        <h4 style="color:var(--red);">\(E_1\)</h4>
+        <p>Too many elements smaller than \(b^-\): \(k > \frac{n}{2}\)</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--red);">\(E_2\)</h4>
+        <p>Too many elements larger than \(b^+\): \(\ell > \frac{n}{2}\)</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--yellow);">\(E_3\)</h4>
+        <p>\(C\) is too large: \(|C| > \frac{16n}{\sqrt{m}} + 2\)</p>
+      </div>
+    </div>
+    <p style="margin-top:1rem;">By the <strong>union bound</strong>:</p>
+    \[\Pr[\text{fail}] \leq \Pr[E_1] + \Pr[E_2] + \Pr[E_3]\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-median">Show Full Analysis</button>
+  <div class="proof-content" id="proof-median">
+    <h4>Bounding \(\Pr[E_1]\) (and \(\Pr[E_2]\) by symmetry)</h4>
+    <p>Let \(X = \sum_{i=1}^{m} X_i\) where \(X_i \sim \text{Bern}(p)\) with \(p = \frac{1}{2} - \frac{1}{2n}\). Then \(\mathbb{E}[X] = \frac{m}{2} - \frac{m}{2n}\) and \(\operatorname{Var}[X] < \frac{m}{4}\).</p>
+    <p>We need \(X \leq \frac{m}{2} - \Delta\), which means \(X\) deviates from its expectation by at least \(\Delta - \frac{m}{2n} \geq \frac{\Delta}{2} = 2\sqrt{m}\). By Chebyshev:</p>
+    \[\Pr[E_1] \leq \frac{m/4}{(2\sqrt{m})^2} = \frac{m/4}{4m} = \frac{1}{16}\]
+    <h4 style="margin-top:1rem;">Bounding \(\Pr[E_3]\)</h4>
+    <p>Using a similar Chebyshev argument on the rank of \(b^-\) and \(b^+\):</p>
+    \[\Pr[E_3] \leq \frac{1}{32} + \frac{1}{32} = \frac{1}{16}\]
+    <h4 style="margin-top:1rem;">Final Result</h4>
+    \[\Pr[\text{fail}] \leq \frac{1}{16} + \frac{1}{16} + \frac{1}{16} = \frac{3}{16} \approx 19\%\]
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 7</h3>
+    <p>Randomised Median (Algorithm 3) is a <strong>linear-time Monte Carlo algorithm</strong> with failure probability at most \(\frac{3}{16}\).</p>
+  </div>
+
+  <!-- Interactive Randomised Median Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Randomised Median Simulation</h3>
+    <p>Watch the algorithm step by step on an array of \(n = 10{,}001\) distinct integers. The true median is always <strong>5001</strong>.</p>
+    <div class="sim-controls">
+      <button id="btnStepMedian" class="btn btn-primary">Step Through</button>
+      <button id="btnRunMedian100" class="btn btn-secondary">Run 100 Trials</button>
+      <button id="btnResetMedian" class="btn btn-outline">Reset</button>
+    </div>
+
+    <!-- Step-by-step animation area -->
+    <div id="medianSteps" style="margin-top:1.25rem;"></div>
+
+    <!-- Stats -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="medianResult">-</div><div class="stat-label">Result</div></div>
+      <div class="stat-card"><div class="stat-value" id="medianTrials">0</div><div class="stat-label">Total Trials</div></div>
+      <div class="stat-card"><div class="stat-value" id="medianSucc">0</div><div class="stat-label">Successes</div></div>
+      <div class="stat-card"><div class="stat-value" id="medianFail">0</div><div class="stat-label">Failures</div></div>
+      <div class="stat-card"><div class="stat-value" id="medianRate">-</div><div class="stat-label">Success Rate</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROBABILITY AMPLIFICATION ===== -->
+<section id="sec-amplification" class="section" data-track="amplification">
+  <h2 class="section-title">Probability Amplification</h2>
+
+  <div class="concept-box">
+    <h3>The Key Question</h3>
+    <p>Our Randomised Median has failure probability \(\frac{3}{16} \approx 19\%\). Can we bring it down to \(1\%\)? To \(0.01\%\)? To \(\varepsilon\) for any \(\varepsilon > 0\)?</p>
+    <p style="margin-top:0.5rem;"><strong>Yes!</strong> And we don't need to re-derive anything. We can amplify success probability in a <em>black-box</em> way.</p>
+  </div>
+
+  <div class="interactive-compare" style="margin-top:2rem;">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="tab-amp-repeat">Amplification by Repetition</button>
+      <button class="tab-btn" data-tab="tab-amp-majority">Majority Vote</button>
+      <button class="tab-btn" data-tab="tab-amp-lv">MC &rarr; Las Vegas</button>
+    </div>
+
+    <!-- Repetition -->
+    <div id="tab-amp-repeat" class="tab-content active">
+      <h4>When the algorithm "tells you" it failed</h4>
+      <p>If the MC algorithm reports FAIL explicitly (like our Randomised Median), simply <strong>repeat with fresh random bits</strong>.</p>
+      <div class="algo-block" style="margin-top:1rem;">
+        <p>Run Algorithm 3 independently \(T\) times. Return the first non-FAIL output.</p>
+        <p>Probability all \(T\) runs fail: \(\left(\frac{3}{16}\right)^T\)</p>
+      </div>
+      <p style="margin-top:0.75rem;">Setting \(\left(\frac{3}{16}\right)^T \leq \varepsilon\) gives \(T = O(\log(1/\varepsilon))\).</p>
+      <div class="theorem-box" style="margin-top:1rem;">
+        <h3>Corollary 7.1</h3>
+        <p>For any \(\varepsilon \in (0,1]\), the repeated Randomised Median is a Monte Carlo algorithm with failure probability \(\leq \varepsilon\) and worst-case time \(O(n \log(1/\varepsilon))\).</p>
+      </div>
+    </div>
+
+    <!-- Majority Vote -->
+    <div id="tab-amp-majority" class="tab-content">
+      <h4>When you <em>can't</em> tell if the output is wrong</h4>
+      <p>Suppose each query to a data structure is correct with probability only 60%. We run \(T\) independent queries and take a <strong>majority vote</strong>.</p>
+      <div class="algo-block" style="margin-top:1rem;">
+        <h4>Algorithm 5: Majority Vote Amplification</h4>
+        <ol>
+          <li><strong>for</strong> \(t = 1, \ldots, T\): \(y_t \leftarrow Q(x)\)</li>
+          <li><strong>return</strong> \(\text{majority}(y_1, \ldots, y_T)\)</li>
+        </ol>
+      </div>
+      <p style="margin-top:0.75rem;">Let \(Y = \sum_{t=1}^{T} \mathbf{1}[y_t \text{ is correct}]\). Then \(\mathbb{E}[Y] \geq \frac{6}{10}T\). Wrong only if \(Y < \frac{T}{2}\), which means \(Y\) is more than \(\frac{T}{10}\) below its expectation.</p>
+      <p>By the <strong>Chernoff bound</strong>: \(\Pr\!\left[Y < \frac{T}{2}\right] \leq e^{-T/120}\), which decays <strong>exponentially</strong> in \(T\)!</p>
+      <p style="margin-top:0.5rem;">Setting \(T = O(\log(1/\varepsilon))\) achieves failure probability \(\leq \varepsilon\).</p>
+    </div>
+
+    <!-- MC → LV -->
+    <div id="tab-amp-lv" class="tab-content">
+      <h4>Monte Carlo &rarr; Las Vegas</h4>
+      <p>If the MC algorithm tells us when it fails (like Algorithm 3), we can convert it to a Las Vegas algorithm:</p>
+      <div class="algo-block" style="margin-top:1rem;">
+        <h4>Algorithm 4: Las Vegas via Indefinite Repetition</h4>
+        <ol>
+          <li><strong>repeat:</strong> run Algorithm 3 on \(A\) with fresh random bits; let \(y\) be output</li>
+          <li><strong>until</strong> \(y \neq \text{FAIL}\)</li>
+          <li><strong>return</strong> \(y\)</li>
+        </ol>
+      </div>
+      <p style="margin-top:0.75rem;">The number of iterations \(K\) is geometric with parameter \(p \geq \frac{13}{16}\). By the tail-sum formula:</p>
+      \[\mathbb{E}[K] \leq \sum_{k=1}^{\infty} \left(\frac{3}{16}\right)^{k-1} = \frac{16}{13} \leq 1.231\]
+      <p>Expected running time: \(1.231 \cdot O(n) = O(n)\). A Las Vegas algorithm with expected linear time!</p>
+    </div>
+  </div>
+
+  <!-- Interactive: Amplification Demo -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Amplification Demo</h3>
+    <p>Start with an algorithm that succeeds with probability 60%. See how the majority vote of \(T\) runs amplifies success.</p>
+    <div class="sim-controls">
+      <label>T (repetitions) = <input type="range" id="sliderAmpT" min="1" max="201" step="2" value="11" style="width:150px;"> <span id="valAmpT">11</span></label>
+      <button id="btnRunAmp" class="btn btn-primary">Run 1000 Trials</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="stat-card"><div class="stat-value" id="ampTheory">-</div><div class="stat-label">Chernoff Bound</div></div>
+      <div class="stat-card"><div class="stat-value" id="ampEmpirical">-</div><div class="stat-label">Observed Error</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CHERNOFF & HOEFFDING ===== -->
+<section id="sec-chernoff" class="section" data-track="chernoff">
+  <h2 class="section-title">Chernoff &amp; Hoeffding Bounds</h2>
+
+  <div class="theorem-box">
+    <h3>Theorem (Chernoff Bound)</h3>
+    <p>Let \(X_1, \ldots, X_n\) be <strong>independent</strong> r.v.s taking values in \([0,1]\), and \(P := \sum_{i=1}^{n} \mathbb{E}[X_i]\). For any \(\delta \in (0,1]\):</p>
+    \[\Pr\!\left[\sum_{i=1}^n X_i > (1+\delta)P\right] < \exp\!\left(-\frac{\delta^2 P}{3}\right)\]
+    \[\Pr\!\left[\sum_{i=1}^n X_i < (1-\delta)P\right] < \exp\!\left(-\frac{\delta^2 P}{2}\right)\]
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem (Hoeffding Bound)</h3>
+    <p>Let \(X_1, \ldots, X_n\) be <strong>independent</strong> r.v.s, \(X_i \in [a_i, b_i]\). For any \(t \geq 0\):</p>
+    \[\Pr\!\left[\sum_{i=1}^n X_i > \sum_{i=1}^n \mathbb{E}[X_i] + t\right] \leq \exp\!\left(-\frac{2t^2}{\sum_{i=1}^n (b_i - a_i)^2}\right)\]
+  </div>
+
+  <p style="margin-top:1rem;">For i.i.d. \(X_i \in [0,1]\) with mean \(\mu\), Hoeffding simplifies to:</p>
+  \[\Pr\!\left[\left|\frac{1}{n}\sum_{i=1}^n X_i - \mu\right| > \varepsilon\right] \leq 2\exp(-2\varepsilon^2 n)\]
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Chernoff vs Hoeffding: When to use which?</h3>
+    <ul style="margin-top:0.5rem;">
+      <li><strong>Chernoff (multiplicative):</strong> Better when \(\mu = P/n \ll 1\). The bound scales with \(P\).</li>
+      <li><strong>Hoeffding (additive):</strong> Better for "symmetric" settings where \(\mu\) is not too small. The bound is in terms of an additive deviation \(t\).</li>
+      <li>Both give <strong>exponential decay</strong>, far stronger than Chebyshev's polynomial decay.</li>
+      <li>Both require <strong>full independence</strong> (unlike Chebyshev, which only needs pairwise independence).</li>
+    </ul>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-chernoff">Show Proof Sketch (Chernoff)</button>
+  <div class="proof-content" id="proof-chernoff">
+    <p>The proof uses the <strong>moment-generating function (MGF) method</strong>:</p>
+    <ol>
+      <li>For any \(t > 0\): \(\Pr[X > (1+\gamma)\mu] = \Pr[e^{tX} > e^{t(1+\gamma)\mu}]\)</li>
+      <li>Apply Markov: \(\leq \frac{\mathbb{E}[e^{tX}]}{e^{t(1+\gamma)\mu}}\)</li>
+      <li>By independence: \(\mathbb{E}[e^{tX}] = \prod_{i=1}^n \mathbb{E}[e^{tX_i}]\)</li>
+      <li>Bound each factor using \(\ln(1+x) \leq x\)</li>
+      <li>Optimize over the free parameter \(t\) (set \(t = \ln(1+\gamma)\))</li>
+      <li>Use \((1+\gamma)\ln(1+\gamma) - \gamma \geq \gamma^2/3\) to simplify</li>
+    </ol>
+    <p>See the <a href="chapter2-math.html">Math Foundations</a> page for the full derivation. &square;</p>
+  </div>
+</section>
+
+<!-- ===== BOUNDS SUMMARY ===== -->
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title">Concentration Inequalities: Summary</h2>
+  <div style="overflow-x:auto;">
+    <table class="summary-table" style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.88rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);">
+          <th style="padding:0.75rem; text-align:left;">Bound</th>
+          <th style="padding:0.75rem; text-align:left;">Requirements</th>
+          <th style="padding:0.75rem; text-align:left;">Result</th>
+          <th style="padding:0.75rem; text-align:left;">Decay</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.75rem; font-weight:600; color:var(--green);">Markov</td>
+          <td style="padding:0.75rem;">\(X \geq 0\), know \(\mathbb{E}[X]\)</td>
+          <td style="padding:0.75rem;">\(\Pr[X \geq t] \leq \frac{\mathbb{E}[X]}{t}\)</td>
+          <td style="padding:0.75rem;">\(1/t\) (linear)</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.75rem; font-weight:600; color:var(--blue);">Chebyshev</td>
+          <td style="padding:0.75rem;">Know \(\mathbb{E}[X]\), \(\operatorname{Var}[X]\)</td>
+          <td style="padding:0.75rem;">\(\Pr[|X-\mathbb{E}[X]| \geq t] \leq \frac{\operatorname{Var}[X]}{t^2}\)</td>
+          <td style="padding:0.75rem;">\(1/t^2\) (quadratic)</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.75rem; font-weight:600; color:var(--yellow);">Chernoff</td>
+          <td style="padding:0.75rem;">Sum of indep. \(X_i \in [0,1]\)</td>
+          <td style="padding:0.75rem;">\(\Pr[|S-P| > \delta P] \leq 2e^{-\delta^2 P/3}\)</td>
+          <td style="padding:0.75rem;">\(e^{-\Theta(n)}\) (exponential)</td>
+        </tr>
+        <tr>
+          <td style="padding:0.75rem; font-weight:600; color:var(--purple);">Hoeffding</td>
+          <td style="padding:0.75rem;">Sum of indep. bounded r.v.s</td>
+          <td style="padding:0.75rem;">\(\Pr[|S-\mathbb{E}[S]| > t] \leq 2e^{-2t^2/\sum(b_i-a_i)^2}\)</td>
+          <td style="padding:0.75rem;">\(e^{-\Theta(n)}\) (exponential)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>The Independence Hierarchy</h3>
+    <ul>
+      <li><strong>Markov:</strong> No independence needed</li>
+      <li><strong>Chebyshev:</strong> Only pairwise independence needed</li>
+      <li><strong>Chernoff / Hoeffding:</strong> Full (mutual) independence needed</li>
+    </ul>
+    <p style="margin-top:0.5rem;">As the independence requirement increases, so does the strength of the bound!</p>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Tackle these problems to reinforce your understanding of concentration bounds and probability amplification.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Suppose \(E_1\) and \(E_2\) are two independent events, each happening with probability \(p\). What is the probability that at least one of them happens? Compare to what the union bound gives.</p>
+    <p>Generalise to \(k\) independent events \(E_1, \ldots, E_k\) each happening with probability \(p\).</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p><strong>Exact:</strong> \(\Pr[E_1 \cup E_2] = 1 - (1-p)^2 = 2p - p^2\)</p>
+      <p><strong>Union bound:</strong> \(\Pr[E_1 \cup E_2] \leq 2p\)</p>
+      <p>For \(k\) events: exact is \(1 - (1-p)^k\), union bound gives \(kp\). They are asymptotically the same when \(p\) is small (the higher-order terms are negligible).</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Prove Chebyshev's inequality using Markov's inequality.</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p>Apply Markov's inequality to \(Y = (X - \mathbb{E}[X])^2\):</p>
+      \[\Pr[|X - \mathbb{E}[X]| \geq t] = \Pr[Y \geq t^2] \leq \frac{\mathbb{E}[Y]}{t^2} = \frac{\operatorname{Var}[X]}{t^2} \quad \square\]
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Compute the expectation and variance of a \(\text{Poisson}(\lambda)\) random variable. (Recall: if \(X \sim \text{Poisson}(\lambda)\), then \(\Pr[X = k] = \frac{e^{-\lambda}\lambda^k}{k!}\) for \(k \geq 0\).)</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p><strong>Expectation:</strong></p>
+      \[\mathbb{E}[X] = \sum_{k=0}^{\infty} k \cdot \frac{e^{-\lambda}\lambda^k}{k!} = \lambda \cdot e^{-\lambda} \sum_{\ell=0}^{\infty} \frac{\lambda^\ell}{\ell!} = \lambda \cdot e^{-\lambda} \cdot e^{\lambda} = \lambda\]
+      <p><strong>Variance:</strong> Compute \(\mathbb{E}[X^2]\) similarly, then \(\operatorname{Var}[X] = \mathbb{E}[X^2] - (\mathbb{E}[X])^2 = \lambda\).</p>
+      <p>Both expectation and variance equal \(\lambda\).</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Let \(X \sim \text{Bin}(n, p)\). Compute its expectation and variance.</p>
+    <p><strong>(a)</strong> Bound \(\Pr[|X - \mathbb{E}[X]| > 2\sqrt{np}]\).</p>
+    <p><strong>(b)</strong> For \(p = \frac{1}{4}\), use Markov, Chebyshev, Chernoff, and Hoeffding to bound \(\Pr[X \geq n/2]\). Compare.</p>
+    <p><strong>(c)</strong> For \(p = \frac{1}{2n}\), bound \(\Pr[X \geq 1]\) using all four bounds. Compute the exact value and compare.</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p>\(\mathbb{E}[X] = np\), \(\operatorname{Var}[X] = np(1-p)\).</p>
+      <p><strong>(a)</strong> By Chebyshev: \(\Pr[|X - np| > 2\sqrt{np}] \leq \frac{np(1-p)}{4np} \leq \frac{1}{4}\).</p>
+      <p><strong>(b)</strong> With \(p = 1/4\), \(\mathbb{E}[X] = n/4\), \(\operatorname{Var}[X] = 3n/16\):</p>
+      <ul>
+        <li>Markov: \(\leq \frac{n/4}{n/2} = \frac{1}{2}\)</li>
+        <li>Chebyshev: \(\leq \frac{3n/16}{(n/4)^2} = \frac{3}{n}\)</li>
+        <li>Chernoff (\(\gamma=1\)): \(\leq e^{-n/12}\)</li>
+        <li>Hoeffding (\(t=n/4\)): \(\leq e^{-n/8}\)</li>
+      </ul>
+      <p>Markov is weakest (constant). Chebyshev is polynomial. Chernoff and Hoeffding are exponential (Hoeffding slightly better here).</p>
+      <p><strong>(c)</strong> With \(p = 1/(2n)\): Markov gives \(1/2\); Chebyshev gives a vacuous bound \(\approx 2\); Chernoff gives \(e^{-1/6} \approx 0.85\); Hoeffding gives \(\approx 1\). The exact value is \(\Pr[X \geq 1] = 1 - (1-1/(2n))^n \approx 1 - e^{-1/2} \approx 0.39\). Here Markov is actually the best bound!</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>Prove Theorem 8: Let \(A\) be a Monte Carlo algorithm with worst-case running time \(T(n)\) and constant failure probability \(p \in (0,1)\), where one can detect incorrect output in \(O(1)\) time. Then there exists a Las Vegas algorithm \(A'\) with expected running time \(O(T(n))\).</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p>Repeat: run \(A\), check output. If correct, return it; otherwise, run again with fresh random bits.</p>
+      <p>Each repetition takes \(T + O(1) = O(T)\). The number of repetitions \(K\) is geometric: \(\Pr[K \geq k] = p^{k-1}\).</p>
+      \[\mathbb{E}[\text{running time}] = O(T) \cdot \sum_{k=0}^{\infty} p^k = O(T) \cdot \frac{1}{1-p} = O\!\left(\frac{T}{1-p}\right) = O(T) \quad \square\]
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>Given two MC algorithms \(A\) and \(B\) for a decision problem \(P\):</p>
+    <ul>
+      <li>If \(P(x) = \text{yes}\): \(A\) outputs yes with prob \(\geq 1/2\); \(B\) outputs yes with prob 1.</li>
+      <li>If \(P(x) = \text{no}\): \(A\) outputs no with prob 1; \(B\) outputs no with prob \(\geq 1/2\).</li>
+    </ul>
+    <p>Design a Las Vegas algorithm \(C\) using \(A\) and \(B\). Analyse its expected running time.</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p>Run both \(A\) and \(B\) on \(x\):</p>
+      <ul>
+        <li>If \(A\) outputs "yes" &rarr; answer is "yes" (since \(A\) never says yes when the answer is no)</li>
+        <li>If \(B\) outputs "no" &rarr; answer is "no" (since \(B\) never says no when the answer is yes)</li>
+        <li>If \(A\) says "no" and \(B\) says "yes" &rarr; uncertain, repeat</li>
+      </ul>
+      <p>The probability of needing to repeat is at most \(1/2\) in either case. So expected running time is \(O(T(|x|)) \cdot \sum_{k=0}^{\infty} (1/2)^k = O(T(|x|))\).</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>Algorithm \(A\) outputs "good" or "bad" with: if \(x\) is good, \(\Pr[A(x) = \text{good}] \geq 9/10\); if \(x\) is bad, \(\Pr[A(x) = \text{good}] \leq 1/10\). Design \(A'\) achieving \(\Pr[\text{correct}] \geq 1-\delta\) for any \(\delta \in (0,1]\). Bound the resources used.</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p>Repeat \(k\) times and take a <strong>majority vote</strong>. Apply the Chernoff/Hoeffding bound to show the failure probability decays exponentially in \(k\). Setting \(k = O(\log(1/\delta))\) suffices. Resources: \(T' = O(kT) = O(T\log(1/\delta))\), random bits: \(r' = O(kr) = O(r\log(1/\delta))\).</p>
+    </div>
+  </div>
+
+  <!-- Problem 8 -->
+  <div class="problem-card">
+    <h3>Problem 8 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>Similar to Problem 7 but with <strong>one-sided error</strong>: if \(x\) is good, \(\Pr[A(x) = \text{good}] \geq 1/10\); if \(x\) is bad, \(\Pr[A(x) = \text{good}] = 0\). Design \(A'\) with \(\Pr[\text{good} | x \text{ good}] \geq 1-\delta\) and \(\Pr[\text{good} | x \text{ bad}] = 0\).</p>
+    <button class="solution-toggle" data-target="sol8">Show Solution</button>
+    <div class="proof-content" id="sol8">
+      <p>Repeat \(k\) times. Return "good" if <em>any</em> run returns "good" (this preserves zero false positive rate). The probability of never seeing "good" when \(x\) is truly good is at most \((9/10)^k\). Set \(k = \lceil\log_{10/9}(1/\delta)\rceil = O(\log(1/\delta))\).</p>
+    </div>
+  </div>
+
+  <!-- Problem 9 -->
+  <div class="problem-card">
+    <h3>Problem 9 <span class="problem-tag advanced">Advanced</span></h3>
+    <p>Prove the Chernoff bound: Given \(X_1, \ldots, X_n\) i.i.d. in \(\{0,1\}\) with \(\mathbb{E}[X_i] = p\), and \(X = \sum X_i\), show for \(\gamma \in (0,1]\):</p>
+    \[\Pr[X > (1+\gamma)\mathbb{E}[X]] \leq e^{-\gamma^2 \mathbb{E}[X]/3}\]
+    <p>Steps: (a) Rewrite using \(e^{tX}\). (b) Apply Markov + independence. (c) Compute the MGF. (d) Use \(\ln(1+x) \leq x\). (e) Optimize over \(t\).</p>
+    <button class="solution-toggle" data-target="sol9">Show Solution</button>
+    <div class="proof-content" id="sol9">
+      <p><strong>(a)</strong> \(\Pr[X > (1+\gamma)\mu] = \Pr[e^{tX} > e^{t(1+\gamma)\mu}]\) for any \(t > 0\).</p>
+      <p><strong>(b)</strong> By Markov + independence: \(\leq \frac{(\mathbb{E}[e^{tX_1}])^n}{e^{t(1+\gamma)np}}\).</p>
+      <p><strong>(c)</strong> \(\mathbb{E}[e^{tX_1}] = 1 + p(e^t - 1)\), giving \(\leq \frac{(1 + p(e^t-1))^n}{e^{t(1+\gamma)np}}\).</p>
+      <p><strong>(d)</strong> Using \(\ln(1+x) \leq x\): \(\leq e^{-np \cdot f(t)}\) where \(f(t) = (1+\gamma)t - (e^t - 1)\).</p>
+      <p><strong>(e)</strong> Maximizing \(f\): set \(f'(t) = (1+\gamma) - e^t = 0\), giving \(t = \ln(1+\gamma)\). Substituting and using \((1+\gamma)\ln(1+\gamma) - \gamma \geq \gamma^2/3\) completes the proof.</p>
+    </div>
+  </div>
+
+  <!-- Problem 10 -->
+  <div class="problem-card">
+    <h3>Problem 10 <span class="problem-tag advanced">Advanced</span></h3>
+    <p>Prove the other side of the Chernoff bound: \(\Pr[X < (1-\gamma)\mathbb{E}[X]] \leq e^{-\gamma^2 \mathbb{E}[X]/2}\) for \(\gamma \in (0,1]\). How can you generalise to \(X_i \in [0,1]\) (not necessarily identically distributed)?</p>
+    <button class="solution-toggle" data-target="sol10">Show Solution</button>
+    <div class="proof-content" id="sol10">
+      <p>The approach mirrors Problem 9 but uses \(e^{-tX}\) (a decreasing function) instead. The same MGF computation applies, optimising over \(t\) gives a slightly different constant, yielding the \(\gamma^2/2\) in the exponent. The generalisation to \(X_i \in [0,1]\) (not i.i.d.) follows because the MGF bound \(\mathbb{E}[e^{tX_i}] \leq 1 + \mathbb{E}[X_i](e^t - 1)\) still holds by convexity of the exponential function.</p>
+    </div>
+  </div>
+
+  <!-- Problem 11 -->
+  <div class="problem-card">
+    <h3>Problem 11 <span class="problem-tag advanced">Advanced</span></h3>
+    <p><strong>The Median Trick:</strong> Given an algorithm \(A\) that outputs a "good value" for input \(x\) (in some interval \([a_x, b_x]\)) with probability guarantees \(\Pr[A(x) < a_x] \leq \alpha\) and \(\Pr[A(x) > b_x] \leq \alpha\) for \(\alpha < 1/2\). Run \(A\) independently \(k\) times and return the median. Analyse the success probability and set \(k\) to achieve \(1-\delta\).</p>
+    <button class="solution-toggle" data-target="sol11">Show Solution</button>
+    <div class="proof-content" id="sol11">
+      <p><strong>(a)</strong> The median is less than \(a_x\) iff more than \(k/2\) outputs are below \(a_x\). Each is below \(a_x\) independently with probability \(\leq \alpha < 1/2\). By the Chernoff/Hoeffding bound, \(\Pr[\text{median} < a_x] \leq e^{-\Theta(k)}\). Similarly for exceeding \(b_x\). By union bound, the total failure probability is \(\leq 2e^{-\Theta(k)}\).</p>
+      <p><strong>(b)</strong> Set \(k \geq C \cdot \log(2/\delta)\) for a suitable constant \(C > 0\) (depending on \(\alpha\)) to achieve failure probability \(\leq \delta\).</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=2" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=2&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter2-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

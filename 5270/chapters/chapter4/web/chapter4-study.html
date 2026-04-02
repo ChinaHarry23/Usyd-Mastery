@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 4: Derandomisation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F3B2;</span>
+    <h2>Chapter 4</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-intro" class="nav-link" data-section="sec-intro">Derandomisation Question</a></li>
+    <li><a href="#sec-seed" class="nav-link" data-section="sec-seed">Small Random Seed</a></li>
+    <li><a href="#sec-pairwise" class="nav-link" data-section="sec-pairwise">Pairwise Independence</a></li>
+    <li><a href="#sec-conditional" class="nav-link" data-section="sec-conditional">Conditional Expectations</a></li>
+    <li><a href="#sec-prob-method" class="nav-link" data-section="sec-prob-method">Probabilistic Method</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter4-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter4-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=4" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=4" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=4&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 7</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 4: Derandomisation</h1>
+    <p class="hero-subtitle">Converting randomised algorithms into deterministic ones: small random seed, pairwise independence, and the method of conditional expectations.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2702;</span>
+        <span>Max-Cut Problem</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F517;</span>
+        <span>Pairwise Independence</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4CA;</span>
+        <span>Conditional Expectations</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x270D;</span>
+        <span>Tutorial &amp; Quiz</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter4-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter4-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Hash families, pairwise independence constructions, conditional expectation computations</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== THE DERANDOMISATION QUESTION ===== -->
+<section id="sec-intro" class="section" data-track="intro">
+  <h2 class="section-title">The Derandomisation Question</h2>
+
+  <div class="concept-box">
+    <h3>Motivation</h3>
+    <p>Given a <strong>randomised algorithm</strong> that works well <em>in expectation</em> (or with high probability), can we always convert it into a <strong>deterministic</strong> algorithm with comparable guarantees?</p>
+    <p style="margin-top:0.75rem;">This is a central question in complexity theory. In particular, it is widely conjectured that \(\mathsf{P} = \mathsf{BPP}\) &mdash; every problem solvable in randomised polynomial time can also be solved deterministically in polynomial time.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Running Example: Max-Cut</h3>
+    <p>Given an undirected graph \(G = (V, E)\) with \(|V| = n\) vertices and \(|E| = m\) edges, find a partition of \(V\) into \((A, B)\) that <strong>maximises</strong> the number of edges crossing the cut:</p>
+    \[c(A,B) = |\{(u,v) \in E : u \in A, v \in B\}|\]
+    <p style="margin-top:0.5rem;">Let \(\text{OPT}\) denote the optimal cut value.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 21.1 (Max-Cut is NP-Hard)</h3>
+    <p>Finding a partition \((A, B)\) that maximises \(c(A, B)\) is NP-Hard. Therefore, we seek <strong>approximation algorithms</strong>.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 6: Random Partition for Max-Cut</h4>
+    <p><strong>Input:</strong> Graph \(G = (V, E)\)</p>
+    <ol>
+      <li>For each vertex \(v \in V\), independently place \(v\) in \(A\) with probability \(1/2\), otherwise in \(B\).</li>
+      <li>Output \((A, B)\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">Uses \(n\) random bits</span>
+      <span class="fact-pill red">No worst-case guarantee per run</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 22</h3>
+    <p>The random partition (Algorithm 6) satisfies:</p>
+    \[\mathbb{E}[c(A,B)] \geq \frac{m}{2} \geq \frac{\text{OPT}}{2}\]
+    <p>Hence it is a (randomised) \(\frac{1}{2}\)-approximation algorithm for Max-Cut.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm22">Show Proof</button>
+  <div class="proof-content" id="proof-thm22">
+    <p>For each edge \(e = (u, v) \in E\), define the indicator variable:</p>
+    \[Y_e = \mathbf{1}[\text{exactly one of } u, v \text{ is in } A]\]
+    <p>Since \(u\) and \(v\) are placed independently, the probability that they end up on different sides is:</p>
+    \[\Pr[Y_e = 1] = \Pr[u \in A, v \in B] + \Pr[u \in B, v \in A] = \frac{1}{4} + \frac{1}{4} = \frac{1}{2}\]
+    <p>The cut value is \(c(A,B) = \sum_{e \in E} Y_e\). By <strong>linearity of expectation</strong>:</p>
+    \[\mathbb{E}[c(A,B)] = \sum_{e \in E} \mathbb{E}[Y_e] = \sum_{e \in E} \frac{1}{2} = \frac{m}{2}\]
+    <p>Since \(\text{OPT} \leq m\), we get \(\mathbb{E}[c(A,B)] \geq \frac{m}{2} \geq \frac{\text{OPT}}{2}\). \(\square\)</p>
+  </div>
+</section>
+
+<!-- ===== METHOD 1: SMALL RANDOM SEED ===== -->
+<section id="sec-seed" class="section" data-track="seed">
+  <h2 class="section-title">Method 1: Small Random Seed</h2>
+
+  <div class="concept-box">
+    <h3>Key Idea</h3>
+    <p>If a randomised algorithm uses only \(R\) random bits, we can <strong>enumerate all \(2^R\) possible random strings</strong> and pick the best outcome deterministically.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 7: Brute-Force over Random Seed</h4>
+    <p><strong>Input:</strong> Problem instance \(x\), randomised algorithm \(\mathcal{A}\) using \(R\) random bits, verifier \(\mathcal{V}\)</p>
+    <ol>
+      <li>For each \(r \in \{0,1\}^R\):</li>
+      <li>&emsp;Run \(\mathcal{A}(x; r)\) to obtain solution \(s_r\).</li>
+      <li>&emsp;Use \(\mathcal{V}\) to compute the quality of \(s_r\).</li>
+      <li>Output the best \(s_r\) found.</li>
+    </ol>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Three Requirements</h3>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="info-card">
+        <h4 style="color:var(--green);">1. Positive Probability</h4>
+        <p>There exists at least one random string \(r\) that yields a &ldquo;good&rdquo; solution (guaranteed if the expected quality is good).</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--accent);">2. Bounded Randomness</h4>
+        <p>The algorithm uses \(R\) random bits in total. The brute-force cost is \(2^R\).</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--yellow);">3. Efficient Verifier</h4>
+        <p>We can evaluate the quality of each candidate solution in time \(T_V\).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Running Time Analysis</h3>
+    <p>Total running time: \(2^R \cdot (T_{\mathcal{A}} + T_{\mathcal{V}})\)</p>
+    <p style="margin-top:0.75rem;"><strong>Key insight:</strong> If \(R = O(\log n)\), then \(2^R = \text{poly}(n)\) and the total time is polynomial!</p>
+    <p style="margin-top:0.75rem; color:var(--red);"><strong>Problem:</strong> Algorithm 6 (random partition) uses \(R = n\) random bits &mdash; one per vertex. Enumerating \(2^n\) strings is far too expensive.</p>
+    <p style="margin-top:0.75rem;"><strong>Goal:</strong> Reduce the number of random bits to \(O(\log n)\) while preserving the expected cut value of \(m/2\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 22.3</h3>
+    <p>If \(\mathbb{E}[X]\) exists (and is finite), then:</p>
+    \[\Pr[X \geq \mathbb{E}[X]] > 0\]
+    <p>In particular, there exists an outcome achieving at least the expected value.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-fact223">Show Proof</button>
+  <div class="proof-content" id="proof-fact223">
+    <p>Suppose for contradiction that \(\Pr[X \geq \mathbb{E}[X]] = 0\), i.e., \(\Pr[X < \mathbb{E}[X]] = 1\). Then:</p>
+    \[\mathbb{E}[X] = \sum_{\omega} X(\omega) \Pr[\omega] < \mathbb{E}[X] \cdot \sum_{\omega} \Pr[\omega] = \mathbb{E}[X]\]
+    <p>This is a contradiction. Therefore \(\Pr[X \geq \mathbb{E}[X]] > 0\). \(\square\)</p>
+  </div>
+</section>
+
+<!-- ===== PAIRWISE INDEPENDENCE ===== -->
+<section id="sec-pairwise" class="section" data-track="pairwise">
+  <h2 class="section-title">Pairwise Independence</h2>
+
+  <div class="concept-box">
+    <h3>Key Observation</h3>
+    <p>The proof of Theorem 22 only uses the fact that for each edge \((u,v)\), the random bits \(X_u\) and \(X_v\) are <strong>independent</strong>. It does <em>not</em> require full mutual independence of all \(n\) bits.</p>
+    <p style="margin-top:0.75rem;">Therefore, <strong>pairwise independence</strong> suffices! And pairwise independent bits can be generated using far fewer truly random bits.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition 22.1 (Strongly Universal Hash Family)</h3>
+    <p>A family \(\mathcal{H}\) of functions from \(\{0,\ldots,n-1\}\) to \(\{0,1\}\) is <strong>strongly universal</strong> if for all distinct \(x, y \in \{0,\ldots,n-1\}\) and all \(a, b \in \{0,1\}\):</p>
+    \[\Pr_{h \sim \mathcal{H}}[h(x) = a \text{ and } h(y) = b] = \frac{1}{4}\]
+    <p style="margin-top:0.5rem;">Equivalently, for a uniformly random \(h \in \mathcal{H}\), the values \(h(0), h(1), \ldots, h(n-1)\) are <strong>pairwise independent</strong> and each uniformly distributed over \(\{0,1\}\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 22.2 (Explicit Construction)</h3>
+    <p>There exists an explicit strongly universal hash family \(\mathcal{H}\) from \(\{0,\ldots,n-1\}\) to \(\{0,1\}\) with:</p>
+    \[|\mathcal{H}| = 2^{\lceil \log_2(n+1) \rceil}\]
+    <p>A random element \(h \in \mathcal{H}\) can be described using only \(\lceil \log_2(n+1) \rceil\) random bits.</p>
+    <p style="margin-top:0.5rem; font-size:0.9rem; color:var(--text-muted);">Construction: Pick \(k = \lceil \log_2(n+1) \rceil\). Represent each \(x \in \{0,\ldots,n-1\}\) as a binary vector in \(\mathbb{F}_2^k\). Define \(h_{a,b}(x) = \langle a, x \rangle \oplus b\) for random \(a \in \mathbb{F}_2^k\), \(b \in \mathbb{F}_2\). This uses \(k + 1\) bits total.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 8: Max-Cut with Pairwise Independent Bits</h4>
+    <p><strong>Input:</strong> Graph \(G = (V, E)\) with vertices \(\{0, \ldots, n-1\}\)</p>
+    <ol>
+      <li>Let \(R = \lceil \log_2(n+1) \rceil\).</li>
+      <li>Choose a uniformly random \(h \in \mathcal{H}\) (using \(R\) random bits).</li>
+      <li>Set \(A = \{v : h(v) = 0\}\), \(B = \{v : h(v) = 1\}\).</li>
+      <li>Output \((A, B)\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Only \(O(\log n)\) random bits</span>
+      <span class="fact-pill blue">Same \(\mathbb{E}[c(A,B)] = m/2\)</span>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Derandomisation via Brute Force</h3>
+    <p>Since Algorithm 8 uses only \(R = \lceil \log_2(n+1) \rceil\) random bits, we can enumerate all \(2^R = O(n)\) hash functions in the family. For each, compute the cut value (in \(O(m)\) time) and keep the best.</p>
+    <p style="margin-top:0.5rem;">Total running time: \(O(n) \cdot O(m + n) = O(n \cdot \max(m, n))\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 23</h3>
+    <p>There is a <strong>deterministic</strong> \(\frac{1}{2}\)-approximation algorithm for Max-Cut running in time \(O(n \cdot \max(m, n))\).</p>
+  </div>
+
+  <!-- Interactive Max-Cut Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Max-Cut Simulation</h3>
+    <p>Generate a random graph and compare the randomised partition, brute-force derandomised approach, and the true optimum.</p>
+    <div class="sim-controls">
+      <label>Vertices \(n\) = <input type="range" id="sliderCutN" min="5" max="20" value="8" style="width:130px;"> <span id="valCutN">8</span></label>
+      <label>Edge prob \(p\) = <input type="range" id="sliderCutP" min="10" max="100" value="50" style="width:130px;"> <span id="valCutP">0.50</span></label>
+      <button id="btnRunCut" class="btn btn-primary">Generate &amp; Run</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="cutM">-</div><div class="stat-label">Edges \(m\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="cutRandom">-</div><div class="stat-label">Random Cut</div></div>
+      <div class="stat-card"><div class="stat-value" id="cutDerand">-</div><div class="stat-label">Derandomised</div></div>
+      <div class="stat-card"><div class="stat-value" id="cutOPT">-</div><div class="stat-label">OPT</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== METHOD 2: CONDITIONAL EXPECTATIONS ===== -->
+<section id="sec-conditional" class="section" data-track="conditional">
+  <h2 class="section-title">Method 2: Conditional Expectations</h2>
+
+  <div class="concept-box">
+    <h3>Key Idea</h3>
+    <p>Instead of enumerating all random strings, replace each random choice <strong>one by one</strong> with the deterministic choice that keeps the conditional expectation at least as high.</p>
+    <p style="margin-top:0.75rem;">At each step \(i\), we have already fixed \(X_1, \ldots, X_i\). We choose \(X_{i+1}\) to maximise:</p>
+    \[\mathbb{E}[c(A,B) \mid X_1, \ldots, X_{i+1}]\]
+    <p style="margin-top:0.5rem;">This is always at least \(\mathbb{E}[c(A,B) \mid X_1, \ldots, X_i]\), since:</p>
+    \[\mathbb{E}[c(A,B) \mid X_1, \ldots, X_i] = \frac{1}{2}\mathbb{E}[c(A,B) \mid X_1, \ldots, X_i, X_{i+1}=0] + \frac{1}{2}\mathbb{E}[c(A,B) \mid X_1, \ldots, X_i, X_{i+1}=1]\]
+    <p>The maximum of two numbers is at least their average.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>The Chain of Inequalities</h3>
+    <p>Starting from the unconditional expectation and ending with the actual cut value:</p>
+    \[\frac{m}{2} = \mathbb{E}[c(A,B)] \leq \mathbb{E}[c(A,B) \mid X_1] \leq \mathbb{E}[c(A,B) \mid X_1, X_2] \leq \cdots \leq \mathbb{E}[c(A,B) \mid X_1, \ldots, X_n] = c(A,B)\]
+    <p style="margin-top:0.5rem;">The final value \(c(A,B)\) is deterministic and at least \(m/2\)!</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Computing the Greedy Choice</h3>
+    <p>When deciding vertex \(v_{i+1}\), we need to compare placing it in \(A\) vs \(B\). The key quantities are:</p>
+    <ul style="margin-top:0.5rem;">
+      <li>\(N_A(i+1)\): number of neighbours of \(v_{i+1}\) already assigned to \(A\)</li>
+      <li>\(N_B(i+1)\): number of neighbours of \(v_{i+1}\) already assigned to \(B\)</li>
+    </ul>
+    <p style="margin-top:0.75rem;">Placing \(v_{i+1}\) in \(A\) cuts \(N_B(i+1)\) edges (to \(B\)-neighbours) and kills \(N_A(i+1)\) potential cuts. Conversely for placing in \(B\).</p>
+    <p style="margin-top:0.5rem;"><strong>Greedy rule:</strong> Place \(v_{i+1}\) in whichever side cuts more already-assigned neighbours:</p>
+    <ul style="margin-top:0.5rem;">
+      <li>If \(N_A(i+1) \geq N_B(i+1)\): place in \(B\) (cuts \(N_A\) edges).</li>
+      <li>If \(N_B(i+1) > N_A(i+1)\): place in \(A\) (cuts \(N_B\) edges).</li>
+    </ul>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 9: Greedy Max-Cut (Conditional Expectations)</h4>
+    <p><strong>Input:</strong> Graph \(G = (V, E)\) with vertices \(v_1, \ldots, v_n\)</p>
+    <ol>
+      <li>Set \(A \leftarrow \emptyset\), \(B \leftarrow \emptyset\).</li>
+      <li>For \(i = 1, \ldots, n\):</li>
+      <li>&emsp;Let \(N_A = |\{j < i : (v_i, v_j) \in E, v_j \in A\}|\).</li>
+      <li>&emsp;Let \(N_B = |\{j < i : (v_i, v_j) \in E, v_j \in B\}|\).</li>
+      <li>&emsp;If \(N_B \geq N_A\): set \(A \leftarrow A \cup \{v_i\}\).</li>
+      <li>&emsp;Else: set \(B \leftarrow B \cup \{v_i\}\).</li>
+      <li>Output \((A, B)\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Deterministic</span>
+      <span class="fact-pill blue">\(O(nm)\) time</span>
+      <span class="fact-pill red">\(c(A,B) \geq m/2\)</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 24</h3>
+    <p>Algorithm 9 (Greedy Max-Cut) is a <strong>deterministic</strong> \(\frac{1}{2}\)-approximation algorithm for Max-Cut running in time \(O(nm)\).</p>
+  </div>
+
+  <!-- Interactive: Greedy Step-Through -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Greedy Max-Cut Step-Through</h3>
+    <p>Watch the conditional expectations algorithm assign vertices one by one. The algorithm places each vertex on the side that maximises the number of cut edges among already-placed neighbours.</p>
+    <div class="sim-controls">
+      <button id="btnStepCond" class="btn btn-primary">Step</button>
+      <button id="btnRunCond" class="btn btn-secondary">Run All</button>
+      <button id="btnResetCond" class="btn btn-outline">Reset</button>
+    </div>
+    <div id="condOutput" style="margin-top:1rem; padding:1rem; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); min-height:80px; font-family:var(--font-mono); font-size:0.85rem; line-height:1.8; white-space:pre-wrap; color:var(--text-muted);">Click "Generate &amp; Run" in the Max-Cut simulation above first, then use these buttons to step through Algorithm 9.</div>
+  </div>
+</section>
+
+<!-- ===== THE PROBABILISTIC METHOD ===== -->
+<section id="sec-prob-method" class="section" data-track="prob-method">
+  <h2 class="section-title">The Probabilistic Method</h2>
+
+  <div class="concept-box">
+    <h3>General Technique</h3>
+    <p>To prove that a combinatorial object with a certain property <strong>exists</strong>, show that a <strong>randomly chosen</strong> object has the desired property with <strong>positive probability</strong>.</p>
+    <p style="margin-top:0.75rem;">If \(\Pr[\text{good}] > 0\), then at least one good object must exist. This is a powerful non-constructive proof technique introduced by Paul Erd&#337;s.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Example: 2-Colouring of Complete Graph Edges</h3>
+    <p>Consider the complete graph \(K_n\) on \(n\) vertices. Colour each edge red or blue independently and uniformly at random. We ask: is there a colouring such that <strong>no complete subgraph on \(k\) vertices is monochromatic</strong>?</p>
+    <p style="margin-top:0.5rem;">A monochromatic \(K_k\) is a set of \(k\) vertices where all \(\binom{k}{2}\) edges have the same colour.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 25</h3>
+    <p>If \(\binom{n}{k} \cdot 2^{1 - \binom{k}{2}} < 1\), then there exists a 2-colouring of the edges of \(K_n\) with <strong>no monochromatic \(K_k\)</strong>.</p>
+    <p style="margin-top:0.5rem;">Equivalently, the Ramsey number satisfies \(R(k,k) > n\) whenever \(\binom{n}{k} \cdot 2^{1-\binom{k}{2}} < 1\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm25">Show Proof</button>
+  <div class="proof-content" id="proof-thm25">
+    <p>Colour each edge of \(K_n\) red or blue, each with probability \(1/2\), independently.</p>
+    <p>For a fixed set \(S\) of \(k\) vertices, the probability that all \(\binom{k}{2}\) edges in \(S\) have the <strong>same</strong> colour (all red or all blue) is:</p>
+    \[\Pr[\text{S is monochromatic}] = 2 \cdot \left(\frac{1}{2}\right)^{\binom{k}{2}} = 2^{1 - \binom{k}{2}}\]
+    <p>By a <strong>union bound</strong> over all \(\binom{n}{k}\) subsets of size \(k\):</p>
+    \[\Pr[\exists \text{ monochromatic } K_k] \leq \binom{n}{k} \cdot 2^{1 - \binom{k}{2}}\]
+    <p>If this is strictly less than 1, then:</p>
+    \[\Pr[\text{no monochromatic } K_k] > 0\]
+    <p>so a good colouring must exist. \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Relation to Derandomisation</h3>
+    <p>The probabilistic method proves <em>existence</em> but doesn't directly give a construction. Derandomisation techniques (small seed, conditional expectations) can sometimes convert such proofs into efficient algorithms.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 24.1 (Goemans&ndash;Williamson)</h3>
+    <p>There exists a \(0.878\)-approximation algorithm for Max-Cut based on semidefinite programming (SDP) relaxation. Under the Unique Games Conjecture, this is the best possible approximation ratio achievable in polynomial time.</p>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Work through these problems to reinforce your understanding of derandomisation techniques.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p><strong>(a)</strong> How many random bits do you need to generate a uniformly random integer in \(\{1, \ldots, n\}\)?</p>
+    <p><strong>(b)</strong> How many random bits do you need to generate a uniformly random subset of \(\{1, \ldots, n\}\)?</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p><strong>(a)</strong> To generate a uniformly random integer in \(\{1, \ldots, n\}\), we need \(\lceil \log_2 n \rceil\) random bits. These bits encode a binary number in \(\{0, \ldots, 2^{\lceil \log_2 n \rceil} - 1\}\). If \(n\) is not a power of 2, we may need to reject and resample (but the number of bits per attempt is \(\lceil \log_2 n \rceil\)).</p>
+      <p><strong>(b)</strong> A uniformly random subset of \(\{1, \ldots, n\}\) is determined by \(n\) independent fair coin flips (one per element: include if heads). So we need exactly \(n\) random bits. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Let \(X, Y \in \{0,1\}\) be independent, uniformly random bits. Define \(Z = X \oplus Y\) (XOR).</p>
+    <p><strong>(a)</strong> Show that \(Z\) is uniformly distributed over \(\{0,1\}\).</p>
+    <p><strong>(b)</strong> Show that \(X, Y, Z\) are pairwise independent.</p>
+    <p><strong>(c)</strong> Are \(X, Y, Z\) mutually independent? Justify.</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p><strong>(a)</strong> \(\Pr[Z = 0] = \Pr[X = Y] = \Pr[X=0]\Pr[Y=0] + \Pr[X=1]\Pr[Y=1] = 1/4 + 1/4 = 1/2\). Similarly \(\Pr[Z = 1] = 1/2\). So \(Z\) is uniform.</p>
+      <p><strong>(b)</strong> We check all pairs:</p>
+      <ul>
+        <li>\(X, Y\): independent by assumption.</li>
+        <li>\(X, Z\): For any \(a, c \in \{0,1\}\), \(\Pr[X=a, Z=c] = \Pr[X=a, Y=a \oplus c] = \Pr[X=a]\Pr[Y=a \oplus c] = 1/4\). So \(X\) and \(Z\) are independent.</li>
+        <li>\(Y, Z\): Symmetrically, \(\Pr[Y=b, Z=c] = 1/4\). So \(Y\) and \(Z\) are independent.</li>
+      </ul>
+      <p><strong>(c)</strong> No! They are <strong>not</strong> mutually independent. Knowing any two determines the third: \(Z = X \oplus Y\). For instance:</p>
+      \[\Pr[X=0, Y=0, Z=0] = \Pr[X=0, Y=0] = 1/4 \neq 1/8 = \Pr[X=0]\Pr[Y=0]\Pr[Z=0]\]
+      <p>This is a canonical example: pairwise independence does not imply mutual independence. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Show that every strongly universal hash family is also a universal hash family (i.e., for all \(x \neq y\): \(\Pr_{h}[h(x) = h(y)] \leq 1/|\text{range}|\)).</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p>Let \(\mathcal{H}\) be a strongly universal family of functions from \(U\) to \(\{0,1\}\). For distinct \(x, y \in U\):</p>
+      \[\Pr_h[h(x) = h(y)] = \Pr_h[h(x) = 0, h(y) = 0] + \Pr_h[h(x) = 1, h(y) = 1] = \frac{1}{4} + \frac{1}{4} = \frac{1}{2}\]
+      <p>Since the range has size 2, we get \(\Pr[h(x) = h(y)] = 1/2 = 1/|\text{range}|\), which is exactly the universal hashing condition.</p>
+      <p>More generally, for a strongly universal family into a range of size \(q\), summing over all \(q\) values of \(a\): \(\Pr[h(x) = h(y)] = \sum_{a} \Pr[h(x) = a, h(y) = a] = q \cdot \frac{1}{q^2} = \frac{1}{q}\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Consider Algorithm 6 (random partition for Max-Cut).</p>
+    <p><strong>(a)</strong> Describe how to modify the algorithm so that \(c(A,B) \geq m/2\) with probability at least \(0.99\).</p>
+    <p><strong>(b)</strong> What is the probability that a single run of Algorithm 6 produces a cut with \(c(A,B) \geq m/2\)?</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p><strong>(a)</strong> Run Algorithm 6 multiple times and keep the best cut. Since \(\mathbb{E}[c(A,B)] = m/2\), by Fact 22.3, each run has positive probability of achieving \(c(A,B) \geq m/2\). Let \(p = \Pr[c(A,B) \geq m/2]\). After \(t\) independent runs, the probability of <em>never</em> achieving \(\geq m/2\) is \((1-p)^t\). Setting \((1-p)^t \leq 0.01\) gives \(t \geq \lceil \ln(100)/\ln(1/(1-p)) \rceil\).</p>
+      <p>Since \(p \geq 1/(m+1)\) (at least one of the \(m+1\) possible cut values \(\{0, 1, \ldots, m\}\) is \(\geq m/2\), so the random partition hits it with some positive probability), repeating \(O(m)\) times suffices.</p>
+      <p><strong>(b)</strong> By a more careful counting argument, the probability is at least \(\frac{1}{m+2}\). For each edge, the indicator \(Y_e\) contributes to the sum \(c(A,B) = \sum Y_e\). Since the bits are fully independent, we can show via a second-moment argument or direct counting that the probability mass at or above the mean is at least \(1/(m+2)\). (In many cases the probability is much larger, close to \(1/2\).) \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p>Give an <strong>explicit</strong> construction of a pairwise independent hash family \(\mathcal{H}\) from \(\{0,1\}^k\) to \(\{0,1\}\) using XOR. Specifically:</p>
+    <p><strong>(a)</strong> Define \(h_{a,b}(x) = \langle a, x \rangle \oplus b = \left(\bigoplus_{i=1}^{k} a_i \cdot x_i\right) \oplus b\) for \(a \in \{0,1\}^k\), \(b \in \{0,1\}\). Show this family is strongly universal.</p>
+    <p><strong>(b)</strong> How large is \(|\mathcal{H}|\)? How many random bits are needed to specify \(h\)?</p>
+    <p><strong>(c)</strong> What is the evaluation time for \(h(x)\)?</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>(a)</strong> Fix distinct \(x, y \in \{0,1\}^k\) and target values \(\alpha, \beta \in \{0,1\}\). We need:</p>
+      \[\Pr_{a,b}[h_{a,b}(x) = \alpha \text{ and } h_{a,b}(y) = \beta] = \frac{1}{4}\]
+      <p>The conditions are \(\langle a, x \rangle \oplus b = \alpha\) and \(\langle a, y \rangle \oplus b = \beta\). Subtracting (over \(\mathbb{F}_2\)):</p>
+      \[\langle a, x \oplus y \rangle = \alpha \oplus \beta\]
+      <p>Since \(x \neq y\), the vector \(x \oplus y\) is nonzero. So exactly half of all \(a \in \{0,1\}^k\) satisfy this equation (the solutions form a coset of a codimension-1 subspace). Given any such \(a\), exactly one value of \(b\) satisfies \(\langle a, x \rangle \oplus b = \alpha\). So the number of valid \((a, b)\) pairs is \(2^{k-1} \cdot 1 = 2^{k-1}\) out of \(2^{k+1}\) total, giving probability \(1/4\). \(\checkmark\)</p>
+      <p><strong>(b)</strong> \(|\mathcal{H}| = 2^{k+1}\) (choices for \(a\) and \(b\)). We need \(k + 1\) random bits.</p>
+      <p><strong>(c)</strong> Evaluating \(h_{a,b}(x)\) requires computing the inner product \(\langle a, x \rangle\) over \(\mathbb{F}_2\), which is a bitwise AND followed by XOR (popcount mod 2). This takes \(O(k)\) time. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>Let \(G = (V, E)\) be a directed graph (tournament) with \(n\) vertices and \(m\) directed edges. An <strong>oriented triangle</strong> is a directed 3-cycle \(u \to v \to w \to u\).</p>
+    <p><strong>(a)</strong> Design a randomised algorithm that finds a colouring of vertices with 2 colours such that at least \(1/4\) of all triangles are <em>properly oriented</em> (i.e., all three edges cross the colour classes).</p>
+    <p><strong>(b)</strong> Derandomise your algorithm using either 3-wise independence or the method of conditional expectations.</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>(a)</strong> Assign each vertex to group \(A\) or \(B\) independently with probability \(1/2\). For a directed triangle \(u \to v \to w \to u\), the probability that all three edges cross the partition (i.e., exactly the right pattern of \(A\) and \(B\) assignments) requires specific alternation. There are \(2^3 = 8\) equally likely assignments of 3 vertices. Exactly 2 out of 8 give a proper crossing pattern for the directed triangle. So each triangle is properly oriented with probability \(1/4\).</p>
+      <p>By linearity of expectation, the expected number of properly oriented triangles is \(T/4\) where \(T\) is the total number of directed triangles.</p>
+      <p><strong>(b)</strong> Using <strong>conditional expectations</strong>: Process vertices \(v_1, \ldots, v_n\). For vertex \(v_i\), compute the conditional expected number of properly oriented triangles if \(v_i\) is placed in \(A\) vs \(B\), considering the vertices already placed and averaging over the remaining unplaced vertices. Choose whichever gives a higher conditional expectation.</p>
+      <p>Alternatively, using <strong>3-wise independence</strong>: The proof uses 3 vertex bits per triangle, so we only need 3-wise independence. Construct a 3-wise independent family using \(O(\log n)\) bits, then enumerate all seeds. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Prove that for any graph \(G\) on \(n\) vertices, the number of monochromatic triangles in any 2-colouring of its edges is at most \(n^3/24\). Then derandomise.</p>
+    <p><em>Hint:</em> Use the probabilistic method with a random 2-colouring of vertices (not edges), and relate it to the number of monochromatic triangles.</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p><strong>Probabilistic method:</strong> Consider the complete graph \(K_n\). Colour each vertex red or blue with probability \(1/2\) independently. For any triangle \(\{u,v,w\}\), the probability that all three vertices get the <strong>same</strong> colour is:</p>
+      \[\Pr[\text{monochromatic}] = 2 \cdot (1/2)^3 = 1/4\]
+      <p>The total number of triangles in \(K_n\) is \(\binom{n}{3}\). By linearity of expectation, the expected number of monochromatic triangles is:</p>
+      \[\mathbb{E}[\text{mono triangles}] = \binom{n}{3} \cdot \frac{1}{4} = \frac{n(n-1)(n-2)}{24} \leq \frac{n^3}{24}\]
+      <p>Since the expectation is at most \(n^3/24\), there exists a colouring achieving at most this many monochromatic triangles.</p>
+      <p><strong>Derandomisation:</strong> Use the method of conditional expectations. Process vertices one by one. For each vertex, choose the colour (red or blue) that minimises the conditional expected number of monochromatic triangles among already-coloured triples. Each step can be computed in \(O(n^2)\) time (checking all pairs involving the current vertex), giving a total time of \(O(n^3)\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 8 -->
+  <div class="problem-card">
+    <h3>Problem 8 <span class="problem-tag advanced">Advanced</span></h3>
+    <p>Let \(p\) be a prime and consider the hash family \(h_a(x) = \sum_{i=1}^{k} a_i \cdot x_i \mod p\) for \(a = (a_1, \ldots, a_k) \in \mathbb{F}_p^k\) and \(x = (x_1, \ldots, x_k) \in \mathbb{F}_p^k\).</p>
+    <p><strong>(a)</strong> Show this family is <strong>universal</strong>: for distinct \(x \neq y\), \(\Pr_a[h_a(x) = h_a(y)] = 1/p\).</p>
+    <p><strong>(b)</strong> Show this family is <strong>not</strong> strongly universal.</p>
+    <button class="solution-toggle" data-target="sol8">Show Solution</button>
+    <div class="proof-content" id="sol8">
+      <p><strong>(a)</strong> For distinct \(x, y \in \mathbb{F}_p^k\), we need \(\Pr_a[h_a(x) = h_a(y)] = 1/p\). We have:</p>
+      \[h_a(x) - h_a(y) = \sum_{i=1}^{k} a_i(x_i - y_i) = \langle a, x - y \rangle \pmod{p}\]
+      <p>Since \(x \neq y\), the vector \(x - y\) is nonzero in \(\mathbb{F}_p^k\). For a uniformly random \(a \in \mathbb{F}_p^k\), the inner product \(\langle a, x-y \rangle\) is uniformly distributed over \(\mathbb{F}_p\) (since at least one coordinate of \(x-y\) is nonzero, say coordinate \(j\), and \(a_j\) ranges over all of \(\mathbb{F}_p\)). So:</p>
+      \[\Pr_a[\langle a, x-y \rangle = 0] = \frac{1}{p}\]
+      <p><strong>(b)</strong> For strong universality, we need: for all distinct \(x, y\) and all \(\alpha, \beta \in \mathbb{F}_p\): \(\Pr_a[h_a(x) = \alpha, h_a(y) = \beta] = 1/p^2\).</p>
+      <p>Consider \(k = 1\), \(x = 1\), \(y = 2\). Then \(h_a(1) = a\) and \(h_a(2) = 2a\). The condition \(h_a(1) = \alpha\) forces \(a = \alpha\), which then forces \(h_a(2) = 2\alpha\). So \(\Pr[h_a(1) = \alpha, h_a(2) = \beta] = 0\) whenever \(\beta \neq 2\alpha\). This is not \(1/p^2\) for all \(\alpha, \beta\).</p>
+      <p>The issue is that this family has only \(k\) degrees of freedom (the entries of \(a\)), but strong universality for pairs requires \(k+1\) degrees of freedom (adding a constant term \(b\), as in \(h_{a,b}(x) = \langle a, x \rangle + b \mod p\)). \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=4" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=4&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter4-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

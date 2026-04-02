@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 11</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.back-bar a {
+  color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;
+}
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar {
+  font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed; top: 50px; left: 0; width: var(--sidebar-w);
+  height: calc(100vh - 50px); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem 0; z-index: 40;
+}
+.toc-sidebar .home-link {
+  display: block; padding: 0.5rem 1.5rem 0.75rem; font-size: 0.8rem;
+  color: var(--text-dim); text-decoration: none; transition: color var(--transition);
+}
+.toc-sidebar .home-link:hover { color: var(--accent); }
+.toc-sidebar .sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0 1.5rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
+}
+.toc-sidebar .sidebar-brand .brand-icon { font-size: 1.4rem; }
+.toc-sidebar .sidebar-brand h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block; padding: 0.45rem 1.5rem; color: var(--text-muted); text-decoration: none;
+  font-size: 0.82rem; border-left: 3px solid transparent; transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active {
+  color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); font-weight: 500;
+}
+.toc-group {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); padding: 0.75rem 1.5rem 0.35rem; margin-top: 0.5rem;
+}
+.toc-sidebar .back-to-study {
+  display: block; padding: 0.75rem 1.5rem; margin-top: 0.5rem;
+  border-top: 1px solid var(--border); font-size: 0.82rem;
+  color: var(--accent); text-decoration: none; font-weight: 500;
+}
+.toc-sidebar .back-to-study:hover { background: var(--accent-glow); }
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+.def-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.def-box .def-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); margin-bottom: 0.5rem; font-weight: 600;
+}
+.def-box.theorem-box { border-left-color: var(--purple); }
+.def-box.theorem-box .def-label { color: var(--purple); }
+.def-box.example-box { border-left-color: var(--green); }
+.def-box.example-box .def-label { color: var(--green); }
+.def-box.warning-box { border-left-color: var(--yellow); }
+.def-box.warning-box .def-label { color: var(--yellow); }
+
+.quick-check {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback {
+  margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+  font-size: 0.85rem; display: none;
+}
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+@media (max-width: 900px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="back-bar">
+  <div>
+    <a href="chapter11-study.html">&larr; Back to Chapter 11 Study Guide</a>
+    <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+    <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  </div>
+  <span class="page-title-bar">Math Foundations &mdash; Ch.11</span>
+</div>
+
+<!-- ===== TABLE OF CONTENTS SIDEBAR ===== -->
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#x1F3B2;</span>
+    <h2>Ch 11 Math</h2>
+  </div>
+  <div class="toc-group">Distance Measures</div>
+  <ul>
+    <li><a href="#sec-lp-norms" class="toc-link">Lp Norms</a></li>
+    <li><a href="#sec-tv-formal" class="toc-link">TV Distance Formalities</a></li>
+    <li><a href="#sec-chi-squared" class="toc-link">Chi-Squared Divergence</a></li>
+  </ul>
+  <div class="toc-group">Probability Tools</div>
+  <ul>
+    <li><a href="#sec-hoeffding" class="toc-link">Hoeffding's Inequality</a></li>
+    <li><a href="#sec-birthday" class="toc-link">Birthday Paradox</a></li>
+    <li><a href="#sec-multinomial" class="toc-link">Multinomial Distribution</a></li>
+  </ul>
+  <a href="chapter11-study.html" class="back-to-study">&larr; Chapter 11 Study Guide</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="math-content" id="mainContent">
+
+<!-- HERO -->
+<section class="section hero-section" id="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Chapter 11 Supplement</p>
+    <h1>Mathematical Foundations: Distribution Learning &amp; Testing</h1>
+    <p class="hero-subtitle">\(\ell_p\) norms, total variation distance, chi-squared divergence, Hoeffding&rsquo;s inequality, the birthday paradox, and multinomial distributions.</p>
+  </div>
+</section>
+
+<!-- ===== Lp NORMS ===== -->
+<section class="section" id="sec-lp-norms">
+  <h2 class="section-title">\(\ell_p\) Norms Review</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; \(\ell_p\) Norms</div>
+    <p>For a vector \(v \in \mathbb{R}^k\), the \(\ell_p\) norm (\(p \geq 1\)) is:</p>
+    \[\|v\|_p = \left(\sum_{i=1}^{k} |v_i|^p\right)^{1/p}\]
+    <p>Special cases:</p>
+    <ul>
+      <li>\(\|v\|_1 = \sum_i |v_i|\) (Manhattan distance)</li>
+      <li>\(\|v\|_2 = \sqrt{\sum_i v_i^2}\) (Euclidean distance)</li>
+      <li>\(\|v\|_\infty = \max_i |v_i|\) (Chebyshev distance)</li>
+    </ul>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Norm Inequalities</div>
+    <p>For any \(v \in \mathbb{R}^k\):</p>
+    \[\|v\|_\infty \leq \|v\|_2 \leq \|v\|_1 \leq \sqrt{k}\,\|v\|_2 \leq k\,\|v\|_\infty\]
+    <p>This chain explains why different norms give different sample complexities in distribution testing.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example &mdash; Norms of a Probability Difference</div>
+    <p>Let \(p = (1/2, 1/4, 1/4)\) and \(q = (1/3, 1/3, 1/3)\). The difference \(p - q = (1/6, -1/12, -1/12)\).</p>
+    <ul>
+      <li>\(\|p-q\|_1 = 1/6 + 1/12 + 1/12 = 1/3\)</li>
+      <li>\(d_{TV}(p,q) = \frac{1}{2}\|p-q\|_1 = 1/6\)</li>
+      <li>\(\|p-q\|_2 = \sqrt{1/36 + 1/144 + 1/144} = \sqrt{6/144} = \sqrt{1/24}\)</li>
+    </ul>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="d_TV = (1/2)||p-q||_1 = (1/2)(|1/2-0| + |0-1/2| + |1/4-1/4| + |1/4-1/4|) = (1/2)(1) = 1/2." data-explanation-zh="d_TV = (1/2)||p-q||_1 = (1/2)(|1/2-0| + |0-1/2| + |1/4-1/4| + |1/4-1/4|) = (1/2)(1) = 1/2。">
+    <div class="qc-question">Quick Check: If \(p = (1/2, 0, 1/4, 1/4)\) and \(q = (0, 1/2, 1/4, 1/4)\), what is \(d_{TV}(p,q)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(1\)</div>
+      <div class="qc-opt" data-idx="1">\(1/2\)</div>
+      <div class="qc-opt" data-idx="2">\(1/4\)</div>
+      <div class="qc-opt" data-idx="3">\(0\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== TV DISTANCE FORMALITIES ===== -->
+<section class="section" id="sec-tv-formal">
+  <h2 class="section-title">TV Distance: Formal Properties</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Theorem &mdash; TV Distance is a Metric</div>
+    <p>\(d_{TV}\) satisfies the three axioms of a metric:</p>
+    <ol>
+      <li><strong>Identity:</strong> \(d_{TV}(p,q) = 0 \iff p = q\)</li>
+      <li><strong>Symmetry:</strong> \(d_{TV}(p,q) = d_{TV}(q,p)\)</li>
+      <li><strong>Triangle inequality:</strong> \(d_{TV}(p,r) \leq d_{TV}(p,q) + d_{TV}(q,r)\)</li>
+    </ol>
+    <p>All follow from the properties of the \(\ell_1\) norm.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Coupling Characterisation</div>
+    <p>An important alternative characterisation:</p>
+    \[d_{TV}(p,q) = \min_{\gamma \in \Gamma(p,q)} \Pr_{(X,Y) \sim \gamma}[X \neq Y]\]
+    <p>where \(\Gamma(p,q)\) is the set of all joint distributions (couplings) with marginals \(p\) and \(q\). This means TV distance equals the minimum disagreement probability over all couplings.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example &mdash; Product Distributions</div>
+    <p>For \(n\) i.i.d. samples, \(d_{TV}(p^{\otimes n}, q^{\otimes n}) \leq n \cdot d_{TV}(p,q)\) by the triangle inequality applied to each coordinate. More precisely:</p>
+    \[d_{TV}(p^{\otimes n}, q^{\otimes n}) \leq 1 - (1 - d_{TV}(p,q))^n\]
+    <p>The TV distance between product distributions grows with \(n\), making distinguishing easier with more samples.</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="d_TV is bounded in [0,1]. It equals 1 when the distributions have disjoint supports." data-explanation-zh="d_TV\u9650\u5236\u5728[0,1]\u4e2d\u3002\u5f53\u5206\u5e03\u6709\u4e0d\u76f8\u4ea4\u7684\u652f\u6491\u65f6\u7b49\u4e8e1\u3002">
+    <div class="qc-question">Quick Check: What is the maximum possible value of \(d_{TV}(p,q)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\infty\)</div>
+      <div class="qc-opt" data-idx="1">\(2\)</div>
+      <div class="qc-opt" data-idx="2">\(1\)</div>
+      <div class="qc-opt" data-idx="3">\(k\) (domain size)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== CHI-SQUARED DIVERGENCE ===== -->
+<section class="section" id="sec-chi-squared">
+  <h2 class="section-title">Chi-Squared Divergence</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; Chi-Squared Divergence</div>
+    <p>For distributions \(p, q\) with \(q(x) > 0\) for all \(x\):</p>
+    \[\chi^2(p \| q) = \sum_{x \in \mathcal{X}} \frac{(p(x) - q(x))^2}{q(x)} = \sum_{x \in \mathcal{X}} \frac{p(x)^2}{q(x)} - 1\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Relation to TV Distance</div>
+    <p>The chi-squared divergence upper bounds the squared TV distance:</p>
+    \[d_{TV}(p,q)^2 \leq \frac{1}{4}\chi^2(p \| q)\]
+    <p>This follows from Cauchy-Schwarz: \(\left(\sum |p(x)-q(x)|\right)^2 \leq \left(\sum \frac{(p(x)-q(x))^2}{q(x)}\right)\left(\sum q(x)\right)\).</p>
+    <p style="margin-top:0.5rem;">Therefore: if \(\chi^2(p \| q) \leq 4\varepsilon^2\), then \(d_{TV}(p,q) \leq \varepsilon\).</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Application &mdash; Laplace Estimator</div>
+    <p>The Laplace estimator \(\hat{p}(i) = (n_i + 1)/(n + k)\) satisfies:</p>
+    \[\mathbb{E}[\chi^2(p \| \hat{p})] \leq \frac{k - 1}{n + 1}\]
+    <p>Combined with the inequality above and Markov: setting \(n = O(k/\varepsilon^2)\) gives \(d_{TV}(p, \hat{p}) \leq \varepsilon\) with constant probability.</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="chi^2(p||q) = (1/4 - 1/3)^2/(1/3) + (1/4 - 1/3)^2/(1/3) + (1/2 - 1/3)^2/(1/3) = (1/144)/(1/3) + (1/144)/(1/3) + (1/36)/(1/3) = 1/48 + 1/48 + 1/12 = 1/8." data-explanation-zh="chi^2(p||q) = (1/4 - 1/3)^2/(1/3) + (1/4 - 1/3)^2/(1/3) + (1/2 - 1/3)^2/(1/3) = 1/48 + 1/48 + 1/12 = 1/8。">
+    <div class="qc-question">Quick Check: If \(p = (1/4, 1/4, 1/2)\) and \(q = (1/3, 1/3, 1/3)\), what is \(\chi^2(p \| q)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(1/8\)</div>
+      <div class="qc-opt" data-idx="1">\(1/4\)</div>
+      <div class="qc-opt" data-idx="2">\(1/2\)</div>
+      <div class="qc-opt" data-idx="3">\(1/12\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== HOEFFDING'S INEQUALITY ===== -->
+<section class="section" id="sec-hoeffding">
+  <h2 class="section-title">Hoeffding&rsquo;s Inequality</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Theorem &mdash; Hoeffding&rsquo;s Inequality</div>
+    <p>Let \(X_1, \ldots, X_n\) be independent with \(X_i \in [a_i, b_i]\). Let \(\bar{X} = \frac{1}{n}\sum_i X_i\). Then:</p>
+    \[\Pr\!\left[|\bar{X} - \mathbb{E}[\bar{X}]| \geq t\right] \leq 2\exp\!\left(-\frac{2n^2 t^2}{\sum_{i=1}^n (b_i - a_i)^2}\right)\]
+    <p>For \(X_i \in [0, 1]\) (e.g., Bernoulli):</p>
+    \[\Pr[|\bar{X} - \mathbb{E}[\bar{X}]| \geq t] \leq 2e^{-2nt^2}\]
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Application &mdash; Learning a Coin</div>
+    <p>For a coin with bias \(\theta\), the empirical mean \(\hat{\theta} = \bar{X}\) from \(n\) flips has \(\mathbb{E}[\hat{\theta}] = \theta\). By Hoeffding:</p>
+    \[\Pr[|\hat{\theta} - \theta| > \varepsilon] \leq 2e^{-2n\varepsilon^2}\]
+    <p>Setting RHS \(\leq \delta\): \(n \geq \frac{1}{2\varepsilon^2}\ln\frac{2}{\delta}\).</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Hoeffding vs Chebyshev</div>
+    <p>Chebyshev gives \(\Pr[|\bar{X} - \mu| \geq t] \leq \text{Var}[\bar{X}]/t^2 = \sigma^2/(nt^2)\) &mdash; polynomial decay. Hoeffding gives <strong>exponential</strong> decay \(e^{-\Omega(nt^2)}\), which is much stronger for bounded random variables. The \(\log(1/\delta)\) dependence in sample complexity comes from Hoeffding&rsquo;s exponential tail.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="n >= (1/(2*0.1^2)) * ln(2/0.05) = 50 * ln(40) = 50 * 3.69 = 184.4, so roughly 185." data-explanation-zh="n >= (1/(2*0.01)) * ln(40) = 50 * 3.69 = 184.4，\u7ea6185\u3002">
+    <div class="qc-question">Quick Check: To estimate a coin bias to \(\pm 0.1\) with failure probability \(\leq 0.05\), Hoeffding requires approximately how many flips?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(50\)</div>
+      <div class="qc-opt" data-idx="1">\(\approx 185\)</div>
+      <div class="qc-opt" data-idx="2">\(1000\)</div>
+      <div class="qc-opt" data-idx="3">\(500\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== BIRTHDAY PARADOX ===== -->
+<section class="section" id="sec-birthday">
+  <h2 class="section-title">Birthday Paradox</h2>
+
+  <div class="def-box">
+    <div class="def-label">The Classic Birthday Problem</div>
+    <p>In a room of \(n\) people, each with a birthday chosen uniformly from \(k\) days, the probability of at least one shared birthday (collision) is:</p>
+    \[\Pr[\text{collision}] = 1 - \prod_{i=1}^{n-1}\left(1 - \frac{i}{k}\right) \approx 1 - e^{-n(n-1)/(2k)}\]
+    <p>When \(n = \Theta(\sqrt{k})\), this probability becomes a non-trivial constant.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Expected Number of Collisions</div>
+    <p>The number of collisions (pairs with the same value) among \(n\) uniform samples from \([k]\) is:</p>
+    \[\mathbb{E}[Z] = \binom{n}{2} \cdot \frac{1}{k} = \frac{n(n-1)}{2k}\]
+    <p>More generally, for any distribution \(p\):</p>
+    \[\mathbb{E}[Z] = \binom{n}{2} \sum_x p(x)^2 = \binom{n}{2} \|p\|_2^2\]
+    <p>Non-uniform distributions have \(\|p\|_2^2 > 1/k\), leading to <strong>more collisions</strong>. This is the basis of the collision-based uniformity tester.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example &mdash; Birthday Numbers</div>
+    <p>For \(k = 365\) (days in a year):</p>
+    <ul>
+      <li>\(n = 23\): \(\Pr[\text{collision}] \approx 50.7\%\)</li>
+      <li>\(n = 50\): \(\Pr[\text{collision}] \approx 97\%\)</li>
+      <li>\(n = \sqrt{365} \approx 19\): expected collisions \(\approx 19 \cdot 18 / (2 \cdot 365) \approx 0.47\)</li>
+    </ul>
+    <p>The threshold \(\sqrt{k}\) marks the transition from &ldquo;collisions unlikely&rdquo; to &ldquo;collisions likely.&rdquo;</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="E[Z] = n(n-1)/(2k) = 100*99/(2*1000) = 9900/2000 = 4.95, so approximately 5." data-explanation-zh="E[Z] = n(n-1)/(2k) = 100*99/(2*1000) = 4.95，\u7ea6\u4e3a5\u3002">
+    <div class="qc-question">Quick Check: With \(n = 100\) samples from a uniform distribution on \(k = 1000\), the expected number of collisions is approximately:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(0.1\)</div>
+      <div class="qc-opt" data-idx="1">\(1\)</div>
+      <div class="qc-opt" data-idx="2">\(5\)</div>
+      <div class="qc-opt" data-idx="3">\(50\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MULTINOMIAL DISTRIBUTION ===== -->
+<section class="section" id="sec-multinomial">
+  <h2 class="section-title">Multinomial Distribution</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; Multinomial Distribution</div>
+    <p>Drawing \(n\) i.i.d. samples from a distribution \(p = (p_1, \ldots, p_k)\), the vector of counts \((n_1, \ldots, n_k)\) follows the <strong>multinomial distribution</strong>:</p>
+    \[\Pr[n_1 = c_1, \ldots, n_k = c_k] = \frac{n!}{c_1! \cdots c_k!} \prod_{i=1}^k p_i^{c_i}\]
+    <p>where \(\sum_i c_i = n\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Key Properties</div>
+    <ul>
+      <li>Each marginal: \(n_i \sim \text{Binomial}(n, p_i)\) with \(\mathbb{E}[n_i] = np_i\), \(\text{Var}[n_i] = np_i(1-p_i)\).</li>
+      <li>Covariance: \(\text{Cov}[n_i, n_j] = -np_ip_j\) for \(i \neq j\) (negative correlation).</li>
+      <li>The empirical distribution \(\hat{p}(i) = n_i/n\) is the MLE and is unbiased: \(\mathbb{E}[\hat{p}(i)] = p_i\).</li>
+    </ul>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Variance of TV Distance Estimator</div>
+    <p>The natural estimator \(d_{TV}(p, \hat{p}) = \frac{1}{2}\sum_i |p_i - n_i/n|\) is biased upward (Jensen&rsquo;s inequality). The variance of \(\hat{p}(i) = n_i/n\) is:</p>
+    \[\text{Var}[\hat{p}(i)] = \frac{p_i(1-p_i)}{n} \leq \frac{p_i}{n}\]
+    <p>Summing over all \(i\): the total variance is \(\sum_i p_i(1-p_i)/n \leq 1/n\), which drives the \(O(k/\varepsilon^2)\) learning bound.</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="Var[n_i] = np_i(1-p_i) = 100 * 0.3 * 0.7 = 21." data-explanation-zh="Var[n_i] = np_i(1-p_i) = 100 * 0.3 * 0.7 = 21\u3002">
+    <div class="qc-question">Quick Check: If \(n = 100\) samples from \(p\) with \(p_i = 0.3\), what is \(\text{Var}[n_i]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(21\)</div>
+      <div class="qc-opt" data-idx="1">\(30\)</div>
+      <div class="qc-opt" data-idx="2">\(9\)</div>
+      <div class="qc-opt" data-idx="3">\(70\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MATH QUIZ ===== -->
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=11" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div><!-- /math-content -->
+
+<script src="chapter11-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 11: Learning and Testing Probability Distributions</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F3B2;</span>
+    <h2>Chapter 11</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-setup" class="nav-link" data-section="sec-setup">Setup</a></li>
+    <li><a href="#sec-tv-distance" class="nav-link" data-section="sec-tv-distance">TV Distance</a></li>
+    <li><a href="#sec-dpi" class="nav-link" data-section="sec-dpi">Data Processing Ineq.</a></li>
+    <li><a href="#sec-pearson-neyman" class="nav-link" data-section="sec-pearson-neyman">Pearson-Neyman</a></li>
+    <li><a href="#sec-learning-coin" class="nav-link" data-section="sec-learning-coin">Learning a Coin</a></li>
+    <li><a href="#sec-learning-dist" class="nav-link" data-section="sec-learning-dist">Learning Distributions</a></li>
+    <li><a href="#sec-uniformity" class="nav-link" data-section="sec-uniformity">Uniformity Testing</a></li>
+    <li><a href="#sec-identity" class="nav-link" data-section="sec-identity">Identity Testing</a></li>
+    <li><a href="#sec-optimal" class="nav-link" data-section="sec-optimal">Optimal Testing</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Summary</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter11-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter11-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=11" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=11" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=11&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 12</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 11: Learning and Testing Probability Distributions</h1>
+    <p class="hero-subtitle">How many samples do you need to learn an unknown distribution, or test whether it has a certain property? Total variation distance, the Pearson-Neyman lemma, collision-based uniformity testing, and optimal sample complexities.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AF;</span>
+        <span>TV Distance</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F52C;</span>
+        <span>Pearson-Neyman</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3B2;</span>
+        <span>Uniformity Testing</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4CA;</span>
+        <span>Sample Complexity</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter11-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter11-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Total variation, birthday paradox, chi-squared divergence, Hoeffding and Chebyshev bounds</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SETUP ===== -->
+<section id="sec-setup" class="section" data-track="setup">
+  <h2 class="section-title">Problem Setup</h2>
+
+  <div class="concept-box">
+    <h3>The Distribution Learning/Testing Framework</h3>
+    <p>We receive \(n\) i.i.d. samples \(x_1, x_2, \ldots, x_n \sim p\) drawn from an <strong>unknown</strong> distribution \(p\) over a discrete domain \(\mathcal{X}\) of size \(k = |\mathcal{X}|\).</p>
+    <p style="margin-top:0.75rem;">The central question: <strong>how many samples \(n = n(k, \varepsilon, \delta)\) do we need</strong> to learn or test properties of \(p\)?</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Two Fundamental Tasks</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.75rem;">
+      <div class="info-card">
+        <h4>Learning (Estimation)</h4>
+        <p>Output a distribution \(\hat{p}\) such that \(d_{TV}(p, \hat{p}) \leq \varepsilon\) with probability \(\geq 1 - \delta\).</p>
+      </div>
+      <div class="info-card">
+        <h4>Testing (Hypothesis Testing)</h4>
+        <p>Given a reference distribution \(q\), decide whether \(p = q\) vs \(d_{TV}(p, q) \geq \varepsilon\) with probability \(\geq 1 - \delta\).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Why does this matter?</strong> Distribution testing arises in A/B testing, anomaly detection, verifying random number generators, analysing genomic data, and auditing fairness of algorithms. The key surprise: testing is <em>much cheaper</em> than learning!
+  </div>
+</section>
+
+<!-- ===== TOTAL VARIATION DISTANCE ===== -->
+<section id="sec-tv-distance" class="section" data-track="tv-distance">
+  <h2 class="section-title">Total Variation Distance</h2>
+
+  <div class="theorem-box">
+    <h3>Definition: Total Variation Distance</h3>
+    <p>For distributions \(p, q\) over \(\mathcal{X}\):</p>
+    \[d_{TV}(p, q) = \sup_{S \subseteq \mathcal{X}} \big(p(S) - q(S)\big) = \frac{1}{2} \|p - q\|_1 = \frac{1}{2} \sum_{x \in \mathcal{X}} |p(x) - q(x)|\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Properties of \(d_{TV}\)</h3>
+    <ul>
+      <li><strong>Metric:</strong> \(d_{TV}(p,q) = 0 \iff p = q\), symmetric, satisfies the triangle inequality.</li>
+      <li><strong>Bounded:</strong> \(0 \leq d_{TV}(p,q) \leq 1\). Equals 1 iff \(p\) and \(q\) have disjoint supports.</li>
+      <li><strong>Operational meaning:</strong> the maximum difference in probability that \(p\) and \(q\) assign to any event \(S\).</li>
+      <li><strong>Coupling interpretation:</strong> \(d_{TV}(p,q) = \min_{\text{couplings}} \Pr[X \neq Y]\) where \(X \sim p, Y \sim q\).</li>
+    </ul>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Scheff&eacute;&rsquo;s Lemma</h3>
+    <p>The supremum in \(d_{TV}\) is achieved by the <strong>Scheff&eacute; set</strong>:</p>
+    \[S^* = \{x \in \mathcal{X} : p(x) > q(x)\}\]
+    <p>and we have:</p>
+    \[d_{TV}(p,q) = p(S^*) - q(S^*) = \frac{1}{2}\sum_{x \in \mathcal{X}} |p(x) - q(x)|\]
+  </div>
+
+  <!-- TV Distance Interactive Visualizer -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Total Variation Distance Visualizer</h3>
+    <p>Compare two distributions over \(k=8\) elements. Distribution \(p\) (blue) is fixed. <strong>Drag the orange bars</strong> to change \(q\) — bars auto-normalize to sum to 1.</p>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin:0.75rem 0;">
+      <button class="btn btn-secondary tvPreset" data-preset="uniform">q = Uniform</button>
+      <button class="btn btn-secondary tvPreset" data-preset="peaked">q = Peaked</button>
+      <button class="btn btn-secondary tvPreset" data-preset="opposite">q = Opposite</button>
+      <button class="btn btn-secondary tvPreset" data-preset="random">q = Random</button>
+    </div>
+    <div id="tvChartArea" style="position:relative; height:220px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); margin:1rem 0; padding:10px 10px 28px 10px; user-select:none; -webkit-user-select:none;"></div>
+    <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:center; font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(96,165,250,0.7);border-radius:2px;vertical-align:middle;margin-right:4px;"></span> \(p\) (fixed)</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(251,146,60,0.7);border-radius:2px;vertical-align:middle;margin-right:4px;"></span> \(q\) (draggable)</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(248,113,113,0.35);border-radius:2px;vertical-align:middle;margin-right:4px;"></span> \(|p-q|\) area</span>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:0.75rem;">
+      <div class="stat-card"><div class="stat-value" id="tvDistVal" style="color:var(--accent);">0.000</div><div class="stat-label">\(d_{TV}(p,q)\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="tvScheffeSize">0</div><div class="stat-label">\(|S^*|\) Scheff&eacute; set</div></div>
+      <div class="stat-card"><div class="stat-value" id="tvAdvantage">0.000</div><div class="stat-label">Distinguisher adv. \(\frac{d_{TV}}{2}\)</div></div>
+    </div>
+    <div style="margin-top:0.75rem; font-size:0.82rem; color:var(--text-muted);">
+      <strong>Scheff&eacute; set</strong> \(S^* = \{x : q(x) > p(x)\}\): <span id="tvScheffeSet" style="color:var(--yellow);">—</span>
+    </div>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-scheffe">Show Proof of Scheff&eacute;&rsquo;s Lemma</button>
+  <div class="proof-content" id="proof-scheffe">
+    <p>For any \(S \subseteq \mathcal{X}\):</p>
+    \[p(S) - q(S) = \sum_{x \in S} (p(x) - q(x)) \leq \sum_{x \in S} (p(x) - q(x))^+ \leq \sum_{x \in \mathcal{X}} (p(x) - q(x))^+\]
+    <p>where \(a^+ = \max(a, 0)\). The last sum equals \(\sum_{x \in S^*}(p(x) - q(x))\), which is achieved by choosing \(S = S^*\).</p>
+    <p style="margin-top:0.5rem;">Now note that \(\sum_x p(x) = \sum_x q(x) = 1\), so \(\sum_x (p(x) - q(x)) = 0\). Therefore the positive parts sum to the same as the absolute values of the negative parts:</p>
+    \[\sum_{x: p(x) > q(x)} (p(x) - q(x)) = \sum_{x: q(x) > p(x)} (q(x) - p(x)) = \frac{1}{2}\sum_x |p(x) - q(x)|\]
+    <p>This gives \(d_{TV}(p,q) = \frac{1}{2}\|p - q\|_1\). \(\square\)</p>
+  </div>
+</section>
+
+<!-- ===== DATA PROCESSING INEQUALITY ===== -->
+<section id="sec-dpi" class="section" data-track="dpi">
+  <h2 class="section-title">Data Processing Inequality</h2>
+
+  <div class="theorem-box">
+    <h3>Theorem (Data Processing Inequality for \(d_{TV}\))</h3>
+    <p>For any (possibly randomised) function \(f\) and distributions \(p, q\):</p>
+    \[d_{TV}(f(p), f(q)) \leq d_{TV}(p, q)\]
+    <p>In words: <strong>post-processing cannot increase total variation distance</strong>.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-dpi">Show Proof</button>
+  <div class="proof-content" id="proof-dpi">
+    <p>For any event \(T\) in the range of \(f\), define \(S = f^{-1}(T) = \{x : f(x) \in T\}\). Then:</p>
+    \[f(p)(T) - f(q)(T) = p(S) - q(S) \leq d_{TV}(p, q)\]
+    <p>Taking the supremum over all \(T\) gives \(d_{TV}(f(p), f(q)) \leq d_{TV}(p,q)\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Intuition &amp; Importance</h3>
+    <p>If two distributions are &ldquo;close&rdquo; (small TV distance), then <em>no algorithm</em> (any post-processing of samples) can tell them apart easily. This is fundamental to proving lower bounds on sample complexity: if you can&rsquo;t distinguish \(p\) from \(q\) with few samples, no further computation helps.</p>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Warning:</strong> The Data Processing Inequality does <strong>not</strong> hold for \(\ell_2\) or \(\ell_\infty\) distances! Only \(\ell_1\) (and thus \(d_{TV}\)) has this property. See Tutorial Problem 3 for a counterexample.
+  </div>
+</section>
+
+<!-- ===== PEARSON-NEYMAN LEMMA ===== -->
+<section id="sec-pearson-neyman" class="section" data-track="pearson-neyman">
+  <h2 class="section-title">Pearson-Neyman Lemma</h2>
+
+  <div class="concept-box">
+    <h3>Hypothesis Testing Framework</h3>
+    <p>Given a single sample \(x\), decide between:</p>
+    <ul>
+      <li><strong>\(H_0\) (null):</strong> \(x \sim p\)</li>
+      <li><strong>\(H_1\) (alternative):</strong> \(x \sim q\)</li>
+    </ul>
+    <p>Any test \(\phi : \mathcal{X} \to \{0, 1\}\) (reject \(H_0\) if \(\phi(x) = 1\)) has two error types:</p>
+    <ul>
+      <li><strong>Type I (false positive):</strong> \(\alpha = \Pr_{x \sim p}[\phi(x) = 1]\) &mdash; reject \(H_0\) when \(H_0\) is true.</li>
+      <li><strong>Type II (false negative):</strong> \(\beta = \Pr_{x \sim q}[\phi(x) = 0]\) &mdash; accept \(H_0\) when \(H_1\) is true.</li>
+    </ul>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Pearson-Neyman Lemma</h3>
+    <p>For any test \(\phi\):</p>
+    \[\alpha + \beta \geq 1 - d_{TV}(p, q)\]
+    <p>Equivalently, the <strong>total success probability</strong> \((1 - \alpha) + (1 - \beta) \leq 1 + d_{TV}(p,q)\). The optimal test uses the <strong>Scheff&eacute; set</strong>:</p>
+    \[\phi^*(x) = \begin{cases} 1 & \text{if } q(x) > p(x) \\ 0 & \text{otherwise} \end{cases}\]
+    <p>This test achieves \(\alpha + \beta = 1 - d_{TV}(p,q)\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-pn">Show Proof</button>
+  <div class="proof-content" id="proof-pn">
+    <p>Let \(S = \{x : \phi(x) = 1\}\) be the rejection region. Then:</p>
+    \[\alpha + \beta = p(S) + q(\overline{S}) = p(S) + 1 - q(S) = 1 + (p(S) - q(S)) \geq 1 - d_{TV}(p,q)\]
+    <p>The last inequality holds because \(p(S) - q(S) \geq -d_{TV}(p,q)\) by definition. Equality is achieved when \(S = S^* = \{x : q(x) > p(x)\}\), giving:</p>
+    \[\alpha^* + \beta^* = 1 + (p(S^*) - q(S^*)) = 1 - d_{TV}(p,q)\]
+    <p>since \(q(S^*) - p(S^*) = d_{TV}(p,q)\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Alice-Bob Game Interpretation</h3>
+    <p>Alice draws \(x\) from either \(p\) or \(q\) (each with probability \(1/2\)). Bob must guess which distribution. His optimal strategy:</p>
+    <ul>
+      <li>Guess \(q\) if \(q(x) > p(x)\), otherwise guess \(p\).</li>
+      <li>Bob&rsquo;s winning probability: \(\frac{1}{2} + \frac{d_{TV}(p,q)}{2}\).</li>
+    </ul>
+    <p>When \(d_{TV}(p,q) = 0\): Bob can do no better than random guessing (\(1/2\)). When \(d_{TV}(p,q) = 1\): Bob can always tell them apart (probability 1).</p>
+  </div>
+</section>
+
+<!-- ===== LEARNING A COIN ===== -->
+<section id="sec-learning-coin" class="section" data-track="learning-coin">
+  <h2 class="section-title">Learning a Coin (\(k = 2\))</h2>
+
+  <div class="concept-box">
+    <h3>Setup</h3>
+    <p>A coin has unknown bias \(\theta \in [0, 1]\). We observe \(n\) flips \(x_1, \ldots, x_n \sim \text{Bernoulli}(\theta)\). Goal: estimate \(\theta\) to within \(\pm \varepsilon\) with probability \(\geq 1 - \delta\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem: Sample Complexity for Coin Learning</h3>
+    <p>The empirical mean \(\hat{\theta} = \frac{1}{n}\sum_{i=1}^n x_i\) satisfies:</p>
+    \[\Pr\!\left[|\hat{\theta} - \theta| > \varepsilon\right] \leq 2\exp(-2n\varepsilon^2)\]
+    <p>by Hoeffding&rsquo;s inequality. Setting the RHS \(\leq \delta\):</p>
+    \[n = O\!\left(\frac{1}{\varepsilon^2} \cdot \log\frac{1}{\delta}\right)\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-coin">Show Proof</button>
+  <div class="proof-content" id="proof-coin">
+    <p>By Hoeffding: \(\Pr[|\hat{\theta} - \theta| > \varepsilon] \leq 2e^{-2n\varepsilon^2}\). Setting \(2e^{-2n\varepsilon^2} \leq \delta\):</p>
+    \[n \geq \frac{1}{2\varepsilon^2}\ln\frac{2}{\delta} = O\!\left(\frac{\log(1/\delta)}{\varepsilon^2}\right) \quad \square\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Corollary 50.1: Known Lower Bound on Bias</h3>
+    <p>If we know \(p \leq q\) (i.e., bias is bounded below by some known \(q\)), the sample complexity improves:</p>
+    \[n = O\!\left(\frac{q}{\varepsilon^2} \cdot \log\frac{1}{\delta}\right)\]
+    <p>This is because the variance of the Bernoulli is \(\theta(1-\theta) \leq q\), allowing tighter Chebyshev-based analysis.</p>
+  </div>
+</section>
+
+<!-- ===== LEARNING DISTRIBUTIONS ===== -->
+<section id="sec-learning-dist" class="section" data-track="learning-dist">
+  <h2 class="section-title">Learning Distributions</h2>
+
+  <div class="concept-box">
+    <h3>The Task</h3>
+    <p>Given i.i.d. samples from unknown \(p\) over \(\mathcal{X}\) with \(|\mathcal{X}| = k\), output \(\hat{p}\) such that \(d_{TV}(p, \hat{p}) \leq \varepsilon\) with probability \(\geq 1 - \delta\).</p>
+    <p style="margin-top:0.5rem;">The natural estimator: the <strong>empirical distribution</strong> \(\hat{p}(x) = n_x / n\) where \(n_x = |\{i : x_i = x\}|\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Optimal Sample Complexity for Learning</h3>
+    \[n = O\!\left(\frac{k + \log(1/\delta)}{\varepsilon^2}\right)\]
+    <p>This is <strong>tight</strong> up to constants. The empirical distribution achieves this.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Suboptimal Approaches</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.75rem;">
+      <div class="info-card">
+        <h4>Approach 1: Union Bound</h4>
+        <p>Learn each \(p(x)\) to within \(\varepsilon / k\), then union bound over all \(x\). Gives:</p>
+        <p>\(n = O\!\left(\frac{k^2}{\varepsilon^2} \cdot \log\frac{k}{\delta}\right)\)</p>
+        <p style="color:var(--red); font-weight:600; margin-top:0.5rem;">Suboptimal: extra factor of \(k\)!</p>
+      </div>
+      <div class="info-card">
+        <h4>Approach 2: Multiplicative</h4>
+        <p>Learn each \(p(x)\) to within multiplicative \((1 \pm \varepsilon)\). Gives:</p>
+        <p>\(n = O\!\left(\frac{k}{\varepsilon^3} \cdot \log\frac{k}{\delta}\right)\)</p>
+        <p style="color:var(--red); font-weight:600; margin-top:0.5rem;">Suboptimal: extra \(1/\varepsilon\) factor!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Key insight:</strong> The optimal bound \(O(k/\varepsilon^2)\) shows that the sample complexity scales <strong>linearly</strong> with the domain size for learning. As we&rsquo;ll see, testing only requires \(O(\sqrt{k}/\varepsilon^2)\) &mdash; a quadratic improvement!
+  </div>
+</section>
+
+<!-- ===== UNIFORMITY TESTING ===== -->
+<section id="sec-uniformity" class="section" data-track="uniformity">
+  <h2 class="section-title">Uniformity Testing</h2>
+
+  <div class="concept-box">
+    <h3>The Problem</h3>
+    <p>Given samples from \(p\), decide:</p>
+    <ul>
+      <li><strong>\(H_0\):</strong> \(p = u_k\) (uniform over \(k\) elements)</li>
+      <li><strong>\(H_1\):</strong> \(d_{TV}(p, u_k) \geq \varepsilon\)</li>
+    </ul>
+    <p>with success probability \(\geq 1 - \delta\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem: Optimal Uniformity Testing</h3>
+    <p>The sample complexity of uniformity testing is:</p>
+    \[n = \Theta\!\left(\frac{\sqrt{k}}{\varepsilon^2}\right)\]
+    <p>This is <strong>sublinear</strong> in \(k\)! We need far fewer samples than the domain size.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Birthday Paradox Connection</h3>
+    <p>Why \(\sqrt{k}\)? If \(p = u_k\), the expected number of <strong>collisions</strong> (pairs of identical samples) in \(n\) samples is:</p>
+    \[\mathbb{E}[\text{collisions}] = \binom{n}{2} \cdot \frac{1}{k} \approx \frac{n^2}{2k}\]
+    <p>When \(n = \Theta(\sqrt{k})\), we see \(\Theta(1)\) collisions under uniformity. If \(p \neq u_k\), the collision rate changes detectably &mdash; heavier elements contribute more collisions.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 23: Collision-Based Uniformity Tester</h4>
+    <p><strong>Input:</strong> \(n\) i.i.d. samples from \(p\), parameters \(\varepsilon, k\)</p>
+    <ol>
+      <li>Draw \(n = \Theta(\sqrt{k}/\varepsilon^2)\) i.i.d. samples from \(p\).</li>
+      <li>Compute \(Z = \) number of collisions = \(|\{(i,j) : i < j, x_i = x_j\}|\).</li>
+      <li>Set threshold \(\tau = \binom{n}{2} \cdot \frac{1 + 2\varepsilon^2}{k}\).</li>
+      <li>If \(Z > \tau\): <strong>reject</strong> \(H_0\) (not uniform). Otherwise: <strong>accept</strong>.</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">\(O(\sqrt{k}/\varepsilon^2)\) samples</span>
+      <span class="fact-pill red">Collision-based</span>
+    </div>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Why Collisions Work</h3>
+    <p>The expected number of collisions is related to \(\|p\|_2^2 = \sum_x p(x)^2\):</p>
+    \[\mathbb{E}[Z] = \binom{n}{2} \sum_{x} p(x)^2 = \binom{n}{2} \|p\|_2^2\]
+    <ul>
+      <li>Under \(H_0\): \(\|u_k\|_2^2 = 1/k\), so \(\mathbb{E}[Z] = \binom{n}{2}/k\).</li>
+      <li>Under \(H_1\): By convexity, if \(d_{TV}(p, u_k) \geq \varepsilon\), then \(\|p\|_2^2 \geq \frac{1 + 4\varepsilon^2}{k}\) (approximately).</li>
+    </ul>
+    <p>The gap in \(\mathbb{E}[Z]\) between \(H_0\) and \(H_1\) is detectable with \(n = \Theta(\sqrt{k}/\varepsilon^2)\) samples.</p>
+  </div>
+
+  <!-- Uniformity Testing Simulator -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Uniformity Testing Simulator</h3>
+    <p>Generate samples from a distribution over \(k\) elements and run the collision-based tester. Compare uniform vs non-uniform distributions.</p>
+    <div class="sim-controls">
+      <div style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center;">
+        <label style="font-size:0.85rem;">Domain size \(k\):
+          <select id="simK" style="padding:0.3rem 0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-card); color:var(--text);">
+            <option value="10">10</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+        </label>
+        <label style="font-size:0.85rem;">Samples \(n\):
+          <input id="simN" type="number" min="1" max="10000" value="50" style="width:80px; padding:0.3rem 0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-card); color:var(--text);">
+        </label>
+        <label style="font-size:0.85rem;">\(\varepsilon\):
+          <input id="simEps" type="number" min="0.01" max="1" step="0.01" value="0.3" style="width:80px; padding:0.3rem 0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-card); color:var(--text);">
+        </label>
+      </div>
+      <div style="margin-top:0.75rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
+        <button id="btnTestUniform" class="btn btn-primary">Test Uniform</button>
+        <button id="btnTestSkewed" class="btn btn-secondary">Test Skewed</button>
+        <button id="btnTestMany" class="btn btn-secondary">Run 100 Trials</button>
+        <button id="btnTestReset" class="btn btn-outline">Reset</button>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="simCollisions">0</div><div class="stat-label">Collisions \(Z\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="simThreshold">0</div><div class="stat-label">Threshold \(\tau\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="simDecision">-</div><div class="stat-label">Decision</div></div>
+      <div class="stat-card"><div class="stat-value" id="simAccuracy">-</div><div class="stat-label">Accuracy (100 trials)</div></div>
+    </div>
+    <div id="simHistogram" style="margin-top:1rem; min-height:60px; font-size:0.8rem; color:var(--text-muted);"></div>
+  </div>
+</section>
+
+<!-- ===== IDENTITY TESTING ===== -->
+<section id="sec-identity" class="section" data-track="identity">
+  <h2 class="section-title">Identity Testing</h2>
+
+  <div class="concept-box">
+    <h3>The Problem</h3>
+    <p>Given a <strong>known</strong> reference distribution \(q\) and samples from unknown \(p\), decide:</p>
+    <ul>
+      <li><strong>\(H_0\):</strong> \(p = q\)</li>
+      <li><strong>\(H_1\):</strong> \(d_{TV}(p, q) \geq \varepsilon\)</li>
+    </ul>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Reduction to Uniformity Testing</h3>
+    <p>Identity testing against any known \(q\) <strong>reduces</strong> to uniformity testing! The idea: &ldquo;flatten&rdquo; \(q\) into the uniform distribution by grouping elements.</p>
+    <p style="margin-top:0.5rem;">Specifically, testing identity to \(q\) over domain of size \(k\) with TV distance \(\varepsilon\) can be solved using a uniformity tester with:</p>
+    \[n(4k, \varepsilon/4, \delta) \text{ samples}\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>How the Reduction Works</h3>
+    <ol>
+      <li>Partition \(\mathcal{X}\) into groups so that \(q\) assigns roughly equal mass to each group.</li>
+      <li>Within each group, split elements further to create a domain of size \(\leq 4k\) where \(q\) becomes nearly uniform.</li>
+      <li>If \(p = q\), the induced distribution is nearly uniform. If \(d_{TV}(p,q) \geq \varepsilon\), the induced distribution is \(\varepsilon/4\)-far from uniform.</li>
+    </ol>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Result:</strong> Identity testing has sample complexity \(n = O(\sqrt{k}/\varepsilon^2)\), the same as uniformity testing (up to constants).
+  </div>
+</section>
+
+<!-- ===== OPTIMAL TESTING ===== -->
+<section id="sec-optimal" class="section" data-track="optimal">
+  <h2 class="section-title">Optimal Testing</h2>
+
+  <div class="theorem-box">
+    <h3>Theorem: Optimal Identity/Uniformity Testing</h3>
+    <p>The optimal sample complexity for identity testing (and uniformity testing) with failure probability \(\delta\) is:</p>
+    \[n = O\!\left(\frac{\sqrt{k} \cdot \log(1/\delta) + \log(1/\delta)}{\varepsilon^2}\right)\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Learning vs Testing: The Quadratic Gap</h3>
+    <div style="overflow-x:auto; margin-top:0.75rem;">
+      <table class="styled-table" style="width:100%;">
+        <thead><tr><th>Task</th><th>Sample Complexity</th><th>Scaling in \(k\)</th></tr></thead>
+        <tbody>
+          <tr><td>Learning</td><td>\(O(k/\varepsilon^2)\)</td><td>Linear</td></tr>
+          <tr><td>Uniformity Testing</td><td>\(O(\sqrt{k}/\varepsilon^2)\)</td><td>Sublinear</td></tr>
+          <tr><td>Identity Testing</td><td>\(O(\sqrt{k}/\varepsilon^2)\)</td><td>Sublinear</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.75rem;">Testing is <strong>quadratically cheaper</strong> than learning. You do not need to learn the full distribution to decide if it has a given property &mdash; a much coarser sketch suffices.</p>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title">Summary &amp; Key Results</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="styled-table" style="width:100%;">
+      <thead>
+        <tr><th>Concept</th><th>Key Formula</th><th>Significance</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>TV Distance</td>
+          <td>\(d_{TV}(p,q) = \frac{1}{2}\|p-q\|_1\)</td>
+          <td>Standard metric for distribution closeness</td>
+        </tr>
+        <tr>
+          <td>Data Processing Ineq.</td>
+          <td>\(d_{TV}(f(p), f(q)) \leq d_{TV}(p,q)\)</td>
+          <td>Post-processing cannot help distinguish</td>
+        </tr>
+        <tr>
+          <td>Pearson-Neyman</td>
+          <td>\(\alpha + \beta \geq 1 - d_{TV}(p,q)\)</td>
+          <td>Optimal test uses Scheff&eacute; set</td>
+        </tr>
+        <tr>
+          <td>Learning a Coin</td>
+          <td>\(n = O(\varepsilon^{-2}\log(1/\delta))\)</td>
+          <td>Hoeffding-based</td>
+        </tr>
+        <tr>
+          <td>Learning Distributions</td>
+          <td>\(n = O((k + \log(1/\delta))/\varepsilon^2)\)</td>
+          <td>Linear in \(k\), tight</td>
+        </tr>
+        <tr>
+          <td>Uniformity Testing</td>
+          <td>\(n = O(\sqrt{k}/\varepsilon^2)\)</td>
+          <td>Sublinear! Birthday paradox</td>
+        </tr>
+        <tr>
+          <td>Identity Testing</td>
+          <td>Reduces to uniformity</td>
+          <td>\(n = O(\sqrt{k}/\varepsilon^2)\)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Takeaways</h3>
+    <ul>
+      <li><strong>Total variation distance</strong> is the right metric for distribution testing: it satisfies the data processing inequality.</li>
+      <li><strong>Pearson-Neyman</strong> gives the optimal single-sample test and connects TV distance to hypothesis testing error.</li>
+      <li><strong>Learning</strong> requires \(\Theta(k/\varepsilon^2)\) samples &mdash; linear in domain size.</li>
+      <li><strong>Testing</strong> requires only \(\Theta(\sqrt{k}/\varepsilon^2)\) &mdash; a quadratic saving via the birthday paradox / collision counting.</li>
+      <li>The <strong>collision-based tester</strong> (Algorithm 23) counts same-element pairs and compares to a threshold, exploiting the \(\ell_2^2\) connection.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Work through these problems to solidify your understanding of distribution learning and testing.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>(<strong>Pearson-Neyman as Alice-Bob Game</strong>) Alice picks \(b \sim \text{Uniform}\{0,1\}\). If \(b=0\) she draws \(x \sim p\); if \(b=1\) she draws \(x \sim q\). She sends \(x\) to Bob, who must guess \(b\). Show that Bob&rsquo;s optimal winning probability is:</p>
+    \[\Pr[\text{Bob wins}] = \frac{1}{2} + \frac{d_{TV}(p,q)}{2}\]
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p>Bob&rsquo;s strategy is a function \(\phi(x) \in \{0, 1\}\). His winning probability is:</p>
+      \[\Pr[\text{win}] = \frac{1}{2}\Pr_{x \sim p}[\phi(x) = 0] + \frac{1}{2}\Pr_{x \sim q}[\phi(x) = 1]\]
+      \[= \frac{1}{2}(1 - \alpha) + \frac{1}{2}(1 - \beta) = 1 - \frac{\alpha + \beta}{2}\]
+      <p>By Pearson-Neyman, \(\alpha + \beta \geq 1 - d_{TV}(p,q)\), with equality for the optimal test. So:</p>
+      \[\Pr[\text{win}] \leq 1 - \frac{1 - d_{TV}(p,q)}{2} = \frac{1}{2} + \frac{d_{TV}(p,q)}{2}\]
+      <p>The optimal strategy is: guess \(b = 1\) (i.e., \(q\)) when \(q(x) > p(x)\), else guess \(b = 0\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>(<strong>Corollary 50.1 via Hoeffding</strong>) Let \(p\) be a distribution on \(\{0,1\}\) with \(p(1) = \theta\). Show that the empirical mean \(\hat{\theta}\) from \(n\) samples satisfies \(\Pr[|\hat{\theta} - \theta| > \varepsilon] \leq \delta\) provided \(n = O(\varepsilon^{-2}\log(1/\delta))\).</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p>Each sample \(x_i \in [0,1]\) is i.i.d. with mean \(\theta\). By Hoeffding&rsquo;s inequality for bounded random variables:</p>
+      \[\Pr\!\left[|\hat{\theta} - \theta| > \varepsilon\right] \leq 2\exp(-2n\varepsilon^2)\]
+      <p>Setting \(2\exp(-2n\varepsilon^2) \leq \delta\) and solving: \(n \geq \frac{1}{2\varepsilon^2}\ln\frac{2}{\delta}\). This is \(O(\varepsilon^{-2}\log(1/\delta))\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>(<strong>\(\ell_2\) and \(\ell_\infty\) violate DPI</strong>) Show that the Data Processing Inequality does <strong>not</strong> hold for \(\ell_2\) or \(\ell_\infty\) distances. Give an explicit counterexample.</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p>Let \(\mathcal{X} = \{1, 2, 3, 4\}\). Define:</p>
+      <ul>
+        <li>\(p = (1/4, 1/4, 1/4, 1/4)\) (uniform)</li>
+        <li>\(q = (1/2, 1/2, 0, 0)\) (uniform on first two elements)</li>
+      </ul>
+      <p>Then \(\|p - q\|_2 = \sqrt{2 \cdot (1/4)^2 + 2 \cdot (1/4)^2} = \sqrt{1/4} = 1/2\).</p>
+      <p style="margin-top:0.5rem;">Now define \(f\) by: \(f(1) = f(2) = a\), \(f(3) = f(4) = b\). Then:</p>
+      <ul>
+        <li>\(f(p) = (1/2, 1/2)\) on \(\{a, b\}\)</li>
+        <li>\(f(q) = (1, 0)\) on \(\{a, b\}\)</li>
+      </ul>
+      <p>\(\|f(p) - f(q)\|_2 = \sqrt{(1/2)^2 + (1/2)^2} = 1/\sqrt{2} \approx 0.707 > 1/2 = \|p - q\|_2\).</p>
+      <p style="margin-top:0.5rem;">So \(\ell_2\) distance <em>increased</em> under post-processing! A similar argument works for \(\ell_\infty\): \(\|p - q\|_\infty = 1/4\) but \(\|f(p) - f(q)\|_\infty = 1/2\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>(<strong>Prove Scheff&eacute;&rsquo;s Lemma</strong>) Show that for distributions \(p, q\) over \(\mathcal{X}\), the set \(S^* = \{x : p(x) > q(x)\}\) achieves the supremum in \(d_{TV}\), and that \(d_{TV}(p,q) = \frac{1}{2}\|p - q\|_1\).</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p>Define \(S^* = \{x : p(x) > q(x)\}\). For any \(S \subseteq \mathcal{X}\):</p>
+      \[p(S) - q(S) = \sum_{x \in S}(p(x) - q(x)) = \sum_{x \in S \cap S^*}(p(x) - q(x)) + \sum_{x \in S \setminus S^*}(p(x) - q(x))\]
+      <p>The second sum is \(\leq 0\) since \(p(x) \leq q(x)\) for \(x \notin S^*\). So:</p>
+      \[p(S) - q(S) \leq \sum_{x \in S^*}(p(x) - q(x)) = p(S^*) - q(S^*)\]
+      <p>Thus \(S^*\) maximises \(p(S) - q(S)\) and \(d_{TV}(p,q) = p(S^*) - q(S^*)\).</p>
+      <p style="margin-top:0.5rem;">Since \(\sum_x p(x) = \sum_x q(x) = 1\), the positive differences sum to the same as the negative:</p>
+      \[p(S^*) - q(S^*) = q(\overline{S^*}) - p(\overline{S^*}) = \frac{1}{2}\sum_x |p(x) - q(x)| = \frac{1}{2}\|p - q\|_1 \quad \square\]
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>(<strong>Two suboptimal learning bounds</strong>) Derive the two suboptimal sample complexities for learning a distribution over \(\mathcal{X}\) with \(|\mathcal{X}| = k\):</p>
+    <p><strong>(a)</strong> \(n = O(k^2/\varepsilon^2 \cdot \log(k/\delta))\) via the union bound approach.</p>
+    <p><strong>(b)</strong> \(n = O(k/\varepsilon^3 \cdot \log(k/\delta))\) via the multiplicative approach.</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>(a) Union bound approach:</strong> We want \(|\hat{p}(x) - p(x)| \leq \varepsilon/k\) for all \(x\). By Hoeffding for each \(x\): need \(n = O((k/\varepsilon)^2 \cdot \log(1/\delta'))\). Union bounding over \(k\) elements with \(\delta' = \delta/k\): \(n = O(k^2/\varepsilon^2 \cdot \log(k/\delta))\).</p>
+      <p style="margin-top:0.5rem;">Then \(d_{TV}(p, \hat{p}) = \frac{1}{2}\sum_x |p(x) - \hat{p}(x)| \leq \frac{1}{2} \cdot k \cdot \varepsilon/k = \varepsilon/2\). Rescaling gives the bound.</p>
+      <p style="margin-top:0.75rem;"><strong>(b) Multiplicative approach:</strong> Partition \(\mathcal{X}\) into &ldquo;heavy&rdquo; elements (\(p(x) \geq \varepsilon/k\)) and &ldquo;light&rdquo; elements. For heavy elements, learn each to multiplicative \((1 \pm \varepsilon)\): need \(n = O(\log(k/\delta)/(p(x)\varepsilon^2))\). Since \(p(x) \geq \varepsilon/k\), this is \(O(k/(\varepsilon^3) \cdot \log(k/\delta))\). Light elements contribute at most \(\varepsilon\) to TV distance in total. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>(<strong>Independent-pairs tester</strong>) Consider a tester that draws two independent samples of size \(n\) and counts the number of collisions <em>between</em> them (not within each sample). Show that this gives sample complexity \(O(k/\varepsilon^4)\) &mdash; <strong>worse</strong> than the collision tester by a quadratic factor!</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p>Draw \(x_1, \ldots, x_n\) and \(y_1, \ldots, y_n\) independently from \(p\). The number of cross-collisions is:</p>
+      \[Z = |\{(i,j) : x_i = y_j\}| = \sum_{x \in \mathcal{X}} n_x \cdot m_x\]
+      <p>where \(n_x, m_x\) are counts in each sample. We have \(\mathbb{E}[Z] = n^2 \|p\|_2^2\).</p>
+      <p style="margin-top:0.5rem;">Under \(H_0\): \(\mathbb{E}[Z] = n^2/k\). Under \(H_1\): \(\mathbb{E}[Z] \geq n^2(1 + \Omega(\varepsilon^2))/k\).</p>
+      <p style="margin-top:0.5rem;">The variance of \(Z\) is \(\Theta(n^3 \|p\|_2^2/k)\) due to shared indices, which is larger than the within-sample collision tester. To distinguish the means at the variance scale, we need \(n^2 \varepsilon^2/k \gg n^{3/2}/\sqrt{k}\), giving \(n = \Omega(k/\varepsilon^4)\). This is quadratically worse in \(\varepsilon\) compared to the \(O(\sqrt{k}/\varepsilon^2)\) collision tester. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p>(<strong>Programming exercise</strong>) Implement the following and test on real data:</p>
+    <p><strong>(a)</strong> A function computing \(d_{TV}(p,q)\) for two discrete distributions.</p>
+    <p><strong>(b)</strong> The empirical distribution estimator from samples.</p>
+    <p><strong>(c)</strong> The collision-based uniformity tester (Algorithm 23).</p>
+    <p><strong>(d)</strong> Test your uniformity tester on lottery (Lotto) draw data: are the numbers uniformly distributed?</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p><strong>(a)</strong> <code>tv_distance(p, q) = 0.5 * sum(|p[i] - q[i]|)</code></p>
+      <p><strong>(b)</strong> Count occurrences: <code>p_hat[x] = count(x) / n</code></p>
+      <p><strong>(c)</strong> Count collisions \(Z = \sum_x \binom{n_x}{2}\), compare to threshold \(\tau = \binom{n}{2}(1 + 2\varepsilon^2)/k\).</p>
+      <p><strong>(d)</strong> For Lotto data with \(k\) possible numbers, compute \(Z\) from the draw history and compare to the threshold. If \(Z \leq \tau\), the data is consistent with uniformity. Real lotto draws should pass the test (they use physical random mechanisms). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 8 -->
+  <div class="problem-card">
+    <h3>Problem 8 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p>(<strong>Laplace estimator</strong>) Consider the Laplace-smoothed estimator:</p>
+    \[\hat{p}(i) = \frac{n_i + 1}{n + k}\]
+    <p>where \(n_i\) is the number of times element \(i\) appears in \(n\) samples, and \(k = |\mathcal{X}|\).</p>
+    <p><strong>(a)</strong> Show that \(\mathbb{E}[\chi^2(p \| \hat{p})] \leq \frac{k-1}{n+1}\), where \(\chi^2(p \| \hat{p}) = \sum_i \frac{(p(i) - \hat{p}(i))^2}{\hat{p}(i)}\).</p>
+    <p><strong>(b)</strong> Use this to derive the optimal learning bound \(n = O(k/\varepsilon^2)\) via Markov&rsquo;s inequality and the relation between \(\chi^2\) and TV distance.</p>
+    <button class="solution-toggle" data-target="sol8">Show Solution</button>
+    <div class="proof-content" id="sol8">
+      <p><strong>(a)</strong> Each \(n_i \sim \text{Binomial}(n, p(i))\). We have \(\mathbb{E}[n_i] = np(i)\) and \(\text{Var}[n_i] = np(i)(1-p(i))\).</p>
+      <p>The Laplace estimator shifts each count by 1: \(\hat{p}(i) = (n_i+1)/(n+k)\). Then:</p>
+      \[\mathbb{E}[\hat{p}(i)] = \frac{np(i) + 1}{n+k}\]
+      <p>The chi-squared divergence can be bounded using the bias-variance decomposition. After careful calculation:</p>
+      \[\mathbb{E}[\chi^2(p\|\hat{p})] \leq \frac{k-1}{n+1}\]
+      <p style="margin-top:0.5rem;"><strong>(b)</strong> By the inequality \(d_{TV}(p, \hat{p})^2 \leq \frac{1}{4}\chi^2(p \| \hat{p})\), we get:</p>
+      \[\mathbb{E}[d_{TV}(p, \hat{p})^2] \leq \frac{k-1}{4(n+1)}\]
+      <p>By Markov: \(\Pr[d_{TV}(p, \hat{p}) > \varepsilon] = \Pr[d_{TV}^2 > \varepsilon^2] \leq \frac{k-1}{4(n+1)\varepsilon^2}\). Setting this \(\leq \delta\):</p>
+      \[n = O\!\left(\frac{k}{\varepsilon^2 \delta}\right)\]
+      <p>For constant \(\delta\), this is \(O(k/\varepsilon^2)\) &mdash; optimal! Boosting to arbitrary \(\delta\) via the median trick gives \(O((k + \log(1/\delta))/\varepsilon^2)\). \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=11" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=11&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter11-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

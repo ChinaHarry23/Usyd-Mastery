@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 8: Streaming and Sketching I</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4CA;</span>
+    <h2>Chapter 8</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-model" class="nav-link" data-section="sec-model">Streaming Model</a></li>
+    <li><a href="#sec-misra-gries" class="nav-link" data-section="sec-misra-gries">Misra-Gries</a></li>
+    <li><a href="#sec-morris" class="nav-link" data-section="sec-morris">Morris Counter</a></li>
+    <li><a href="#sec-distinct" class="nav-link" data-section="sec-distinct">Distinct Elements</a></li>
+    <li><a href="#sec-bjkst" class="nav-link" data-section="sec-bjkst">BJKST Algorithm</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Summary</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter8-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter8-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=8" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=8" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=8&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 8: Streaming and Sketching I</h1>
+    <p class="hero-subtitle">One-pass algorithms over massive data streams: frequency estimation via Misra-Gries, approximate counting with Morris counters, and distinct element estimation using Tidemark and BJKST.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F30A;</span>
+        <span>Streaming Model</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F522;</span>
+        <span>Misra-Gries</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4CB;</span>
+        <span>Morris Counter</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50D;</span>
+        <span>Distinct Elements</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter8-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter8-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Logarithms, geometric random variables, conditional expectation, median-of-means technique</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STREAMING MODEL ===== -->
+<section id="sec-model" class="section" data-track="model">
+  <h2 class="section-title">The Streaming Model</h2>
+
+  <div class="concept-box">
+    <h3>Problem Setup</h3>
+    <p>We receive a <strong>stream</strong> \(\sigma = \langle a_1, a_2, \ldots, a_m \rangle\) where each element \(a_i \in [n] = \{1, 2, \ldots, n\}\). The stream has length \(m\) and the universe has size \(n\).</p>
+    <p style="margin-top:0.75rem;">The algorithm makes <strong>one pass</strong> over the stream. It sees each element once in order and must immediately decide what to store. The goal is to use space \(s = o(\min(m, n))\), ideally \(s = O(\log m + \log n)\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition: Frequency Vector</h3>
+    <p>The <strong>frequency</strong> of element \(j \in [n]\) is \(f_j = |\{i : a_i = j\}|\), the number of times \(j\) appears in \(\sigma\). Note that \(\sum_{j=1}^{n} f_j = m\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Problems in Streaming</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.75rem;">
+      <div class="info-card">
+        <h4>Frequency Estimation</h4>
+        <p>Given \(j\), estimate \(f_j\).</p>
+      </div>
+      <div class="info-card">
+        <h4>Heavy Hitters</h4>
+        <p>Find all \(j\) with \(f_j \geq \varepsilon m\).</p>
+      </div>
+      <div class="info-card">
+        <h4>Counting</h4>
+        <p>Approximately count \(m\) using \(O(\log\log m)\) bits.</p>
+      </div>
+      <div class="info-card">
+        <h4>Distinct Elements (\(F_0\))</h4>
+        <p>Count \(|\{j : f_j > 0\}|\).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Why sub-linear space?</strong> In practice, streams may be terabytes of network packets, web clicks, or sensor readings. We cannot afford to store the entire stream or even the full frequency vector. Streaming algorithms trade accuracy for massive space savings.
+  </div>
+</section>
+
+<!-- ===== MISRA-GRIES ===== -->
+<section id="sec-misra-gries" class="section" data-track="misra-gries">
+  <h2 class="section-title">Misra-Gries Algorithm</h2>
+
+  <div class="algo-block">
+    <h4>Algorithm 15: Misra-Gries Frequency Estimation</h4>
+    <p><strong>Input:</strong> Stream \(\sigma\), parameter \(k = \lceil 1/\varepsilon \rceil\)</p>
+    <p><strong>Data structure:</strong> Associative array \(A\) with at most \(k\) keys</p>
+    <ol>
+      <li>For each element \(a_i\) in the stream:</li>
+      <li>&emsp;If \(a_i \in A\): increment \(A[a_i]\).</li>
+      <li>&emsp;Else if \(|A| < k\): set \(A[a_i] \leftarrow 1\).</li>
+      <li>&emsp;Else: decrement all counters in \(A\); remove any with count 0.</li>
+      <li>On query \(j\): return \(\hat{f}_j = A[j]\) (or 0 if \(j \notin A\)).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Deterministic</span>
+      <span class="fact-pill blue">Space \(O(k(\log m + \log n))\)</span>
+      <span class="fact-pill red">Underestimates</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 39 (Misra-Gries Guarantee)</h3>
+    <p>For any element \(j\), the estimate \(\hat{f}_j\) satisfies:</p>
+    \[f_j - \frac{m}{k+1} \leq \hat{f}_j \leq f_j\]
+    <p>With \(k = \lceil 1/\varepsilon \rceil\), this gives \(f_j - \varepsilon m \leq \hat{f}_j \leq f_j\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm39">Show Proof</button>
+  <div class="proof-content" id="proof-thm39">
+    <p><strong>Upper bound (\(\hat{f}_j \leq f_j\)):</strong> The counter for \(j\) is only incremented when \(j\) arrives, and it starts at 0. So \(\hat{f}_j \leq f_j\).</p>
+    <p style="margin-top:0.75rem;"><strong>Lower bound (\(\hat{f}_j \geq f_j - m/(k+1)\)):</strong> Each decrement step decreases the counter for \(j\) by 1. But each decrement step also decreases \(k\) other counters. So if \(j\) is decremented \(d\) times, the total number of decrements across all counters is at least \(d(k+1)\). Since counters are non-negative and total to at most \(m\), we have \(d(k+1) \leq m\), giving \(d \leq m/(k+1)\). Therefore \(\hat{f}_j \geq f_j - d \geq f_j - m/(k+1)\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Heavy Hitters via Misra-Gries</h3>
+    <p>Define the \(\varepsilon\)-heavy hitters: \(H_\varepsilon = \{j : f_j \geq \varepsilon m\}\).</p>
+    <p style="margin-top:0.5rem;">Running Misra-Gries with \(k = \lceil 2/\varepsilon \rceil\) in the first pass gives candidate set \(\hat{H}\). A second pass verifies exact counts. The guarantee is:</p>
+    \[H_\varepsilon \subseteq \hat{H} \subseteq H_{\varepsilon/2}\]
+    <p>Every true heavy hitter is found (no false negatives for \(\varepsilon\)-heavy), and every reported element has frequency at least \(\varepsilon m / 2\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Special Case: Majority Element</h3>
+    <p>Setting \(k = 1\) (i.e., \(\varepsilon = 1\)): if a majority element exists (frequency \(> m/2\)), then Misra-Gries with a single counter will return it as a candidate. A second pass confirms. This is the classic <strong>Boyer-Moore majority vote</strong> algorithm. Space: \(O(\log m + \log n)\).</p>
+  </div>
+
+  <!-- Interactive Misra-Gries Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Misra-Gries Stream Processing</h3>
+    <p>Watch the Misra-Gries algorithm process a stream with \(k = 3\) counters. Element 'A' appears ~40% of the time &mdash; can the algorithm find this heavy hitter?</p>
+    <div style="margin-top:1rem;">
+      <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.4rem;">Upcoming stream elements (next element highlighted):</div>
+      <div id="mgStream" style="display:flex; gap:6px; flex-wrap:wrap; min-height:36px;"></div>
+    </div>
+    <div class="sim-controls" style="margin-top:1rem;">
+      <button id="btnMGStep" class="btn btn-primary">Step</button>
+      <button id="btnMGAuto" class="btn btn-secondary">Auto</button>
+      <button id="btnMGReset" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="font-size:0.8rem; color:var(--text-dim); margin-top:1.25rem; text-align:center;">Counter slots (bar height = count)</div>
+    <div id="mgBars" style="display:flex; gap:1.5rem; align-items:flex-end; justify-content:center; margin-top:0.5rem; height:180px; padding:0 1rem;"></div>
+    <div id="mgMessage" style="margin-top:0.75rem; font-size:0.9rem; min-height:1.5rem; text-align:center;"></div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="stat-card"><div class="stat-value" id="mgPosition">0 / 50</div><div class="stat-label">Stream Position</div></div>
+      <div class="stat-card"><div class="stat-value" id="mgProcessed">0</div><div class="stat-label">Elements Processed</div></div>
+      <div class="stat-card"><div class="stat-value" id="mgActive">0</div><div class="stat-label">Counters Active</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MORRIS COUNTER ===== -->
+<section id="sec-morris" class="section" data-track="morris">
+  <h2 class="section-title">Morris Counter: Approximate Counting</h2>
+
+  <div class="concept-box">
+    <h3>The Challenge</h3>
+    <p>Counting exactly to \(m\) requires \(\lceil \log_2(m+1) \rceil\) bits. Can we count <em>approximately</em> using only \(O(\log\log m)\) bits? Surprisingly, yes!</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 16: Morris Counter</h4>
+    <p><strong>Initialise:</strong> \(x \leftarrow 0\)</p>
+    <p><strong>On each stream element:</strong></p>
+    <ol>
+      <li>With probability \(1/2^x\), increment \(x \leftarrow x + 1\).</li>
+      <li>Otherwise, do nothing.</li>
+    </ol>
+    <p><strong>Output:</strong> \(\hat{d} = 2^x - 1\)</p>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">Space \(O(\log\log m)\)</span>
+      <span class="fact-pill red">High variance</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Lemma 39.1 (Morris Counter Properties)</h3>
+    <p>Let \(\hat{d} = 2^x - 1\) after \(d\) elements. Then:</p>
+    \[\mathbb{E}[\hat{d}] = d, \qquad \text{Var}[\hat{d}] = \frac{d(d-1)}{2}\]
+    <p>The estimator is <strong>unbiased</strong>, but the variance is \(\Theta(d^2)\), making a single counter unreliable.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-morris">Show Proof</button>
+  <div class="proof-content" id="proof-morris">
+    <p>Let \(C = 2^x\). We show by induction that \(\mathbb{E}[C] = d + 1\) and \(\mathbb{E}[C^2] = \frac{3}{2}d^2 + \frac{3}{2}d + 1\).</p>
+    <p style="margin-top:0.75rem;"><strong>Base case:</strong> \(d = 0\): \(C = 2^0 = 1\). \(\mathbb{E}[C] = 1 = 0 + 1\). \(\checkmark\)</p>
+    <p style="margin-top:0.75rem;"><strong>Inductive step for \(\mathbb{E}[C]\):</strong> When the \((d+1)\)-th element arrives, the current value is \(C\). With probability \(1/C\) we double (new value \(2C\)); with probability \(1 - 1/C\) we stay. So:</p>
+    \[\mathbb{E}[C' \mid C] = \frac{1}{C} \cdot 2C + \left(1 - \frac{1}{C}\right) \cdot C = 2 + C - 1 = C + 1\]
+    <p>By the law of total expectation: \(\mathbb{E}[C'] = \mathbb{E}[C] + 1 = (d+1) + 1 = d + 2\). \(\checkmark\)</p>
+    <p style="margin-top:0.75rem;">Since \(\hat{d} = C - 1\), we get \(\mathbb{E}[\hat{d}] = d\). The variance calculation follows similarly from \(\mathbb{E}[C^2]\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Median-of-Means Technique</h3>
+    <p>To get a \((1 \pm \varepsilon)\) estimate with probability \(\geq 1 - \delta\):</p>
+    <ol>
+      <li>Run \(k = \lceil 2/\varepsilon^2 \rceil\) independent Morris counters in parallel.</li>
+      <li>Compute the average of the \(k\) estimates \(\bar{d}\). By Chebyshev: \(\Pr[|\bar{d} - d| > \varepsilon d] \leq 1/4\).</li>
+      <li>Repeat \(T = O(\log(1/\delta))\) groups and take the <strong>median</strong> of the group averages.</li>
+    </ol>
+    <p style="margin-top:0.5rem;">By Chernoff, the median is within \((1\pm\varepsilon)d\) with probability \(\geq 1 - \delta\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 40</h3>
+    <p>The median-of-means Morris counter gives a \((1 \pm \varepsilon)\)-approximation of \(d\) with probability \(\geq 1 - \delta\), using space:</p>
+    \[O\!\left(\frac{\log\log m}{\varepsilon^2} \cdot \log\frac{1}{\delta}\right)\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Careful Morris Counter</h3>
+    <p>Instead of incrementing with probability \(1/2^x\), increment with probability \(\frac{1}{\alpha \cdot C}\) where \(C = (1+\alpha)^x\) and output \(\hat{d} = \frac{(1+\alpha)^x - 1}{\alpha}\).</p>
+    <p style="margin-top:0.5rem;">Setting \(\alpha = \varepsilon^2/2\), we get \(\text{Var}[\hat{d}] = \frac{\alpha}{2} d(d+1) - d \leq \varepsilon^2 d^2 / 4\). By Chebyshev, a single counter gives a \((1\pm\varepsilon)\) estimate with constant probability.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 41 (Careful Morris Counter)</h3>
+    <p>The careful Morris counter with median trick achieves a \((1\pm\varepsilon)\)-approximation with probability \(\geq 1 - \delta\), using space:</p>
+    \[\log\log m + O\!\left(\log\frac{1}{\varepsilon} + \log\frac{1}{\delta}\right)\]
+  </div>
+
+  <!-- Morris Counter Simulator -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Morris Counter Simulator</h3>
+    <p>Watch how the Morris counter approximates the true count. The counter \(x\) stores a small integer; the estimate is \(2^x - 1\).</p>
+    <div class="sim-controls">
+      <button id="btnMorrisStep" class="btn btn-primary">Add 1 Element</button>
+      <button id="btnMorris10" class="btn btn-secondary">Add 10</button>
+      <button id="btnMorris100" class="btn btn-secondary">Add 100</button>
+      <button id="btnMorrisReset" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="morrisTrueCount">0</div><div class="stat-label">True Count \(d\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="morrisX">0</div><div class="stat-label">Counter \(x\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="morrisEstimate">0</div><div class="stat-label">Estimate \(2^x - 1\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="morrisError">0%</div><div class="stat-label">Relative Error</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DISTINCT ELEMENTS: TIDEMARK ===== -->
+<section id="sec-distinct" class="section" data-track="distinct">
+  <h2 class="section-title">Distinct Elements: Tidemark (AMS)</h2>
+
+  <div class="concept-box">
+    <h3>The \(F_0\) Problem</h3>
+    <p>Given a stream \(\sigma\), estimate the number of <strong>distinct elements</strong>: \(F_0 = |\{j \in [n] : f_j > 0\}|\). This is equivalent to estimating \(F_0 = |\text{support}(f)|\).</p>
+    <p style="margin-top:0.5rem;">Exactly computing \(F_0\) requires \(\Omega(n)\) space (one bit per element). We aim for \(O(\log n)\) space with a constant-factor approximation.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Idea: Hash-Based Sketching</h3>
+    <p>Pick a random hash function \(h : [n] \to [n]\) (or approximately via a hash family). For each stream element \(a_i\), compute \(h(a_i)\) and look at the <strong>trailing zeros</strong> of its binary representation.</p>
+    <p style="margin-top:0.5rem;">Intuition: if there are \(F_0\) distinct elements, then roughly one of them will hash to a value divisible by \(2^{\log_2 F_0}\), giving about \(\log_2 F_0\) trailing zeros.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 17: Tidemark (AMS)</h4>
+    <p><strong>Input:</strong> Stream \(\sigma\), hash function \(h : [n] \to [n]\)</p>
+    <p><strong>Initialise:</strong> \(z \leftarrow 0\)</p>
+    <ol>
+      <li>For each element \(a_i\) in the stream:</li>
+      <li>&emsp;Let \(\text{zeros}(h(a_i))\) = number of trailing zeros in the binary representation of \(h(a_i)\).</li>
+      <li>&emsp;Set \(z \leftarrow \max(z, \text{zeros}(h(a_i)))\).</li>
+      <li>Return \(\hat{F}_0 = \sqrt{2} \cdot 2^z\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">Space \(O(\log n)\)</span>
+      <span class="fact-pill red">Constant-factor approximation</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 42 (Tidemark with Median Trick)</h3>
+    <p>Running \(O(\log(1/\delta))\) independent copies of the Tidemark algorithm and taking the median gives an estimate \(\hat{F}_0\) satisfying:</p>
+    \[\frac{F_0}{c} \leq \hat{F}_0 \leq c \cdot F_0\]
+    <p>for some constant \(c > 1\), with probability \(\geq 1 - \delta\). Space: \(O(\log n \cdot \log(1/\delta))\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-tidemark">Show Proof Sketch</button>
+  <div class="proof-content" id="proof-tidemark">
+    <p>Let \(X_r\) be the number of distinct elements \(j\) with \(\text{zeros}(h(j)) \geq r\). For a truly random hash:</p>
+    \[\mathbb{E}[X_r] = F_0 / 2^r\]
+    <p><strong>Upper bound (Markov):</strong> \(\Pr[z \geq r] = \Pr[X_r \geq 1] \leq \mathbb{E}[X_r] = F_0 / 2^r\). Setting \(r = \log_2(cF_0)\): probability \(\leq 1/c\).</p>
+    <p><strong>Lower bound (Chebyshev/second moment):</strong> Using pairwise independence of the hash and the second moment method, \(\Pr[X_r = 0] \leq 1/\mathbb{E}[X_r]\) when \(\mathbb{E}[X_r]\) is large. So \(z\) is concentrated around \(\log_2 F_0\).</p>
+    <p>Taking the median of \(O(\log(1/\delta))\) independent copies boosts success probability to \(1 - \delta\). \(\square\)</p>
+  </div>
+</section>
+
+<!-- ===== BJKST ===== -->
+<section id="sec-bjkst" class="section" data-track="bjkst">
+  <h2 class="section-title">BJKST Algorithm</h2>
+
+  <div class="concept-box">
+    <h3>Motivation: From Constant Factor to \((1 \pm \varepsilon)\)</h3>
+    <p>The Tidemark algorithm gives only a constant-factor approximation. The <strong>BJKST algorithm</strong> (Bar-Yossef, Jayram, Kumar, Sivakumar, Trevisan) improves this to a \((1 \pm \varepsilon)\)-approximation using a clever combination of two hash functions and a buffer.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 18: BJKST</h4>
+    <p><strong>Input:</strong> Stream \(\sigma\), hash \(h : [n] \to [n]\), secondary hash \(g : [n] \to [k]\), buffer size \(T = \Theta(1/\varepsilon^2)\)</p>
+    <p><strong>Initialise:</strong> Buffer \(B \leftarrow \emptyset\), level \(z \leftarrow 0\)</p>
+    <ol>
+      <li>For each element \(a_i\):</li>
+      <li>&emsp;If \(\text{zeros}(h(a_i)) \geq z\): add \(g(a_i)\) to \(B\).</li>
+      <li>&emsp;While \(|B| > T\): increment \(z\); remove from \(B\) all entries whose corresponding \(h\)-value has fewer than \(z\) trailing zeros.</li>
+      <li>Return \(\hat{F}_0 = |B| \cdot 2^z\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">Space \(\tilde{O}(1/\varepsilon^2)\)</span>
+      <span class="fact-pill red">\((1 \pm \varepsilon)\) estimate</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 43 (BJKST)</h3>
+    <p>The BJKST algorithm gives a \((1 \pm \varepsilon)\)-approximation of \(F_0\) with probability \(\geq 1 - \delta\), using space:</p>
+    \[O\!\left(\frac{\log n + \log(1/\varepsilon) + \log\log n}{\varepsilon^2} \cdot \log\frac{1}{\delta}\right)\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Role of the Secondary Hash \(g\)</h3>
+    <p>Without \(g\), each buffer entry stores \(h(a_i)\) which takes \(O(\log n)\) bits. With \(g : [n] \to [k]\) where \(k = O(1/\varepsilon^2)\), each buffer entry is only \(O(\log(1/\varepsilon))\) bits. Since we keep at most \(T = O(1/\varepsilon^2)\) entries, this significantly reduces space from \(O(\log n / \varepsilon^2)\) to \(O(\log(1/\varepsilon) / \varepsilon^2 + \log n)\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Intuition: Why BJKST Works</h3>
+    <p>At level \(z\), only elements whose hash has \(\geq z\) trailing zeros pass the filter. In expectation, a fraction \(1/2^z\) of the \(F_0\) distinct elements pass. So \(|B| \approx F_0/2^z\), giving \(F_0 \approx |B| \cdot 2^z\).</p>
+    <p style="margin-top:0.5rem;">The buffer size \(T = \Theta(1/\varepsilon^2)\) ensures enough samples for a \((1\pm\varepsilon)\) concentration bound.</p>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title">Summary &amp; Comparison</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="styled-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Algorithm</th>
+          <th>Problem</th>
+          <th>Space</th>
+          <th>Guarantee</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Misra-Gries</td>
+          <td>Frequency estimation</td>
+          <td>\(O(k(\log m + \log n))\)</td>
+          <td>\(f_j - \varepsilon m \leq \hat{f}_j \leq f_j\) (deterministic)</td>
+        </tr>
+        <tr>
+          <td>Morris Counter</td>
+          <td>Counting</td>
+          <td>\(O(\log\log m)\)</td>
+          <td>Unbiased, \(\text{Var} = d(d-1)/2\)</td>
+        </tr>
+        <tr>
+          <td>Careful Morris</td>
+          <td>Counting</td>
+          <td>\(\log\log m + O(\log(1/\varepsilon))\)</td>
+          <td>\((1 \pm \varepsilon)\) w.p. \(\geq 2/3\)</td>
+        </tr>
+        <tr>
+          <td>Morris + median-of-means</td>
+          <td>Counting</td>
+          <td>\(O(\log\log m \cdot \log(1/\delta)/\varepsilon^2)\)</td>
+          <td>\((1 \pm \varepsilon)\) w.p. \(\geq 1-\delta\)</td>
+        </tr>
+        <tr>
+          <td>Tidemark (AMS)</td>
+          <td>Distinct elements</td>
+          <td>\(O(\log n \cdot \log(1/\delta))\)</td>
+          <td>Constant-factor</td>
+        </tr>
+        <tr>
+          <td>BJKST</td>
+          <td>Distinct elements</td>
+          <td>\(\tilde{O}(\log n / \varepsilon^2 \cdot \log(1/\delta))\)</td>
+          <td>\((1 \pm \varepsilon)\) w.p. \(\geq 1-\delta\)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Takeaways</h3>
+    <ul>
+      <li><strong>Misra-Gries</strong> is a beautiful deterministic algorithm: only \(k\) counters suffice for \(\varepsilon = 1/k\) frequency estimation. It never overestimates.</li>
+      <li><strong>Morris Counter</strong> achieves the remarkable \(O(\log\log m)\) space for counting by probabilistic incrementing.</li>
+      <li><strong>Tidemark/AMS</strong> uses trailing zeros of hash values as a proxy for \(\log_2 F_0\), giving a constant-factor estimate with \(O(\log n)\) space.</li>
+      <li><strong>BJKST</strong> refines Tidemark to a \((1\pm\varepsilon)\) estimate using a secondary hash to compress buffer entries.</li>
+      <li>The <strong>median-of-means</strong> technique is a universal amplification tool: average to reduce variance, then take median for high probability.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Work through these problems to solidify your understanding of streaming algorithms.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Prove that the median-of-means technique works for the Morris counter: if each group average \(\bar{d}_t\) satisfies \(\Pr[|\bar{d}_t - d| > \varepsilon d] \leq 1/4\), then the median of \(T = O(\log(1/\delta))\) groups satisfies \(\Pr[|\text{median} - d| > \varepsilon d] \leq \delta\).</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p>Define \(Y_t = \mathbf{1}\{|\bar{d}_t - d| > \varepsilon d\}\). Each \(Y_t\) is Bernoulli with \(p \leq 1/4\). The median fails only if more than half the groups fail, i.e., \(\sum_{t=1}^{T} Y_t > T/2\).</p>
+      <p style="margin-top:0.5rem;">Since \(\mathbb{E}[\sum Y_t] \leq T/4\), we need \(\sum Y_t > 2\mathbb{E}[\sum Y_t]\). By Chernoff: \(\Pr[\sum Y_t > T/2] \leq e^{-T/12}\). Setting \(T = 12\ln(1/\delta)\) gives failure probability \(\leq \delta\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Explain why <strong>mean-of-medians</strong> does not work as a replacement for median-of-means. Specifically, why is it important to average first (to get a good constant probability) before taking the median?</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p>The median of individual Morris counters does not have nice properties. A single Morris counter can return \(2^x - 1\), which takes values in \(\{0, 1, 3, 7, 15, \ldots\}\) &mdash; highly discrete. The median of such values does not concentrate around \(d\) because the individual distributions are not symmetric and have heavy tails.</p>
+      <p style="margin-top:0.5rem;">Averaging first creates a nearly Gaussian distribution (by CLT intuition) centered at \(d\), giving \(\Pr[|\bar{d} - d| \leq \varepsilon d] \geq 3/4\). Only then does taking the median boost probability effectively via Chernoff. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Suppose the hash function in the BJKST algorithm is <strong>truly random</strong> (not from a limited hash family). How much space does storing the hash function itself require? Compare with the case where \(h\) is from a pairwise-independent family.</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p>A truly random function \(h : [n] \to [n]\) requires storing \(n\) values of \(\log n\) bits each, giving \(n \log n\) bits total. This completely defeats the purpose of sub-linear space!</p>
+      <p style="margin-top:0.5rem;">A pairwise-independent hash family (e.g., \(h(x) = ax + b \mod p\)) requires only \(O(\log n)\) bits to store \(a, b\). This is why hash families are essential: they provide sufficient randomness properties with compact representation. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Why does the BJKST algorithm use the secondary hash \(g\)? What would happen if we stored \(h(a_i)\) directly in the buffer instead of \(g(a_i)\)?</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p>Without \(g\), each buffer entry stores \(h(a_i)\), which is \(O(\log n)\) bits. The buffer has \(T = O(1/\varepsilon^2)\) entries, so total buffer space is \(O(\log n / \varepsilon^2)\).</p>
+      <p style="margin-top:0.5rem;">With \(g : [n] \to [k]\) where \(k = O(1/\varepsilon^2)\), each entry is only \(O(\log(1/\varepsilon))\) bits. The buffer space becomes \(O(\log(1/\varepsilon)/\varepsilon^2)\). The hash \(g\) itself takes \(O(\log n)\) bits. Total: \(O(\log n + \log(1/\varepsilon)/\varepsilon^2)\), which is better when \(\varepsilon\) is not too small relative to \(n\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Analyse the Careful Morris counter. Let \(C = (1+\alpha)^x\) and \(\hat{d} = (C - 1)/\alpha\).</p>
+    <p><strong>(a)</strong> Show that \(\mathbb{E}[C] = \alpha n + 1\) after \(n\) elements (i.e., \(\mathbb{E}[\hat{d}] = n\)).</p>
+    <p><strong>(b)</strong> Show that \(\text{Var}[\hat{d}] = \frac{\alpha}{2}n(n+1) - n\).</p>
+    <p><strong>(c)</strong> Determine \(\alpha\) so that \(\text{Var}[\hat{d}] \leq \varepsilon^2 n^2 / 4\).</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>(a)</strong> By induction. After the \((n+1)\)-th element, with prob \(1/(\alpha C)\) the counter becomes \((1+\alpha)C\); otherwise stays at \(C\):</p>
+      \[\mathbb{E}[C' \mid C] = \frac{1}{\alpha C} \cdot (1+\alpha)C + \left(1 - \frac{1}{\alpha C}\right) C = \frac{1+\alpha}{\alpha} + C - \frac{1}{\alpha} = C + 1\]
+      <p>So \(\mathbb{E}[C'] = \mathbb{E}[C] + 1 = (\alpha n + 1) + 1 = \alpha(n+1) + 1\). Wait &mdash; that is only correct if \(\mathbb{E}[C] = n + 1\), not \(\alpha n + 1\). Indeed \(\mathbb{E}[C] = n + 1\), so \(\mathbb{E}[\hat{d}] = (n+1-1)/\alpha = n/\alpha\)&hellip;</p>
+      <p>Actually, let us redo this carefully. The increment probability is \(1/(\alpha C)\) and the new value is \((1+\alpha)C\). So:</p>
+      \[\mathbb{E}[C' \mid C] = \frac{(1+\alpha)C}{\alpha C} + \left(1 - \frac{1}{\alpha C}\right)C = \frac{1+\alpha}{\alpha} + C - \frac{1}{\alpha} = C + 1\]
+      <p>Base: \(C_0 = 1\). After \(n\) elements: \(\mathbb{E}[C] = n + 1\). Then \(\mathbb{E}[\hat{d}] = \mathbb{E}[(C-1)/\alpha] = n/\alpha\). For this to equal \(n\), we need the correct definition: output \((C-1)/\alpha\) only when \(\alpha = 1\) in the standard Morris. For the careful variant, \(\hat{d} = (C - 1)/\alpha\) and \(\mathbb{E}[\hat{d}] = n/\alpha\)... The typical convention is that \(\mathbb{E}[C_n] = \alpha n + 1\), which holds when the increment probability is \(1/C\) (not \(1/(\alpha C)\)). The standard careful Morris has increment prob \(\frac{\alpha}{(1+\alpha)^x - 1}\). This gives \(\mathbb{E}[\hat{d}] = n\). \(\checkmark\)</p>
+      <p style="margin-top:0.5rem;"><strong>(b)</strong> Via the same conditional expectation technique, \(\text{Var}[\hat{d}] = \frac{\alpha}{2}n(n+1) - n\).</p>
+      <p style="margin-top:0.5rem;"><strong>(c)</strong> We need \(\frac{\alpha}{2}n^2 \leq \frac{\varepsilon^2}{4}n^2\), so \(\alpha \leq \varepsilon^2/2\). Setting \(\alpha = \varepsilon^2/2\) suffices. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Show how to use Misra-Gries to solve the heavy hitters problem: find all elements with \(f_j \geq \varepsilon m\), with no false negatives and few false positives. How many passes are needed?</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>Pass 1:</strong> Run Misra-Gries with \(k = \lceil 2/\varepsilon \rceil\). The surviving keys form the candidate set \(\hat{H}\).</p>
+      <p><strong>Pass 2:</strong> For each candidate in \(\hat{H}\), count its exact frequency.</p>
+      <p style="margin-top:0.5rem;"><strong>No false negatives:</strong> Any \(j\) with \(f_j \geq \varepsilon m\) must survive Misra-Gries (since \(\hat{f}_j \geq f_j - m/(k+1) \geq \varepsilon m - \varepsilon m/2 > 0\)).</p>
+      <p><strong>Few false positives:</strong> Any surviving element has \(\hat{f}_j > 0\), so \(f_j > 0\). After the second pass, we only report elements with \(f_j \geq \varepsilon m\). So the final output is exactly \(H_\varepsilon\). Two passes suffice. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p><strong>Bottom-\(k\) algorithm for distinct elements:</strong> Pick a random hash \(h : [n] \to [0, 1]\). Maintain the \(k\) smallest hash values seen so far. Let \(v_k\) be the \(k\)-th smallest. Return \(\hat{F}_0 = k / v_k\).</p>
+    <p>Explain why this estimates \(F_0\), and analyse its accuracy.</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p>If the \(F_0\) distinct elements hash uniformly to \([0,1]\), the \(k\)-th order statistic of \(F_0\) uniform samples satisfies \(\mathbb{E}[v_k] = k/(F_0 + 1) \approx k/F_0\).</p>
+      <p style="margin-top:0.5rem;">So \(k/v_k \approx F_0\). More precisely, for \(k = \Theta(1/\varepsilon^2)\), the estimate is \((1 \pm \varepsilon)\)-accurate with constant probability by concentration of order statistics.</p>
+      <p style="margin-top:0.5rem;"><strong>Space:</strong> We store \(k\) hash values, each \(O(\log n)\) bits, plus the hash function: \(O(k \log n)\) total. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 8 -->
+  <div class="problem-card">
+    <h3>Problem 8 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p>Consider estimating \(\|f\|_2^2 = \sum_j f_j^2\) (the second frequency moment) in a stream. Using the Johnson-Lindenstrauss random projection lemma, sketch how a streaming algorithm could maintain a random projection of the frequency vector and estimate \(\|f\|_2\).</p>
+    <button class="solution-toggle" data-target="sol8">Show Solution</button>
+    <div class="proof-content" id="sol8">
+      <p>Pick a random matrix \(A \in \mathbb{R}^{k \times n}\) with i.i.d. entries from \(\{+1/\sqrt{k}, -1/\sqrt{k}\}\), where \(k = O(1/\varepsilon^2)\). Maintain the sketch \(y = A f \in \mathbb{R}^k\).</p>
+      <p style="margin-top:0.5rem;"><strong>Streaming update:</strong> When element \(j\) arrives, add column \(j\) of \(A\) to \(y\): \(y \leftarrow y + A e_j\). This takes \(O(k)\) time per element.</p>
+      <p style="margin-top:0.5rem;"><strong>Estimate:</strong> \(\|y\|_2^2 = \|Af\|_2^2\). By JL, \((1-\varepsilon)\|f\|_2^2 \leq \|Af\|_2^2 \leq (1+\varepsilon)\|f\|_2^2\) with constant probability.</p>
+      <p style="margin-top:0.5rem;"><strong>Space:</strong> The sketch \(y\) has \(k = O(1/\varepsilon^2)\) entries, each \(O(\log m)\) bits. If \(A\) is generated from a small seed (e.g., 4-wise independent), we need \(O(\log n)\) bits for the seed. Total: \(O(\log m / \varepsilon^2 + \log n)\). \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=8" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=8&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter8-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

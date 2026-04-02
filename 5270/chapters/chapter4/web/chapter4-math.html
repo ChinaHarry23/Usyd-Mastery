@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 4</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.back-bar a {
+  color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;
+}
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar {
+  font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed; top: 50px; left: 0; width: var(--sidebar-w);
+  height: calc(100vh - 50px); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem 0; z-index: 40;
+}
+.toc-sidebar .home-link {
+  display: block; padding: 0.5rem 1.5rem 0.75rem; font-size: 0.8rem;
+  color: var(--text-dim); text-decoration: none; transition: color var(--transition);
+}
+.toc-sidebar .home-link:hover { color: var(--accent); }
+.toc-sidebar .sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0 1.5rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
+}
+.toc-sidebar .sidebar-brand .brand-icon { font-size: 1.4rem; }
+.toc-sidebar .sidebar-brand h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block; padding: 0.45rem 1.5rem; color: var(--text-muted); text-decoration: none;
+  font-size: 0.82rem; border-left: 3px solid transparent; transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active {
+  color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); font-weight: 500;
+}
+.toc-group {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); padding: 0.75rem 1.5rem 0.35rem; margin-top: 0.5rem;
+}
+.toc-sidebar .back-to-study {
+  display: block; padding: 0.75rem 1.5rem; margin-top: 0.5rem;
+  border-top: 1px solid var(--border); font-size: 0.82rem;
+  color: var(--accent); text-decoration: none; font-weight: 500;
+}
+.toc-sidebar .back-to-study:hover { background: var(--accent-glow); }
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+.symbol-grid {
+  display: grid; grid-template-columns: auto 1fr 1fr; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 1.5rem 0; font-size: 0.9rem;
+}
+.sym-header {
+  background: var(--bg-card); padding: 0.6rem 1rem; font-weight: 600;
+  color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.04em; border-bottom: 1px solid var(--border);
+}
+.sym-cell {
+  padding: 0.65rem 1rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+}
+.sym-cell:nth-child(3n+1) { background: var(--bg-card); justify-content: center; font-size: 1.1rem; }
+.sym-cell:nth-child(3n+2) { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+
+.def-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.def-box .def-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); margin-bottom: 0.5rem; font-weight: 600;
+}
+.def-box.theorem-box { border-left-color: var(--purple); }
+.def-box.theorem-box .def-label { color: var(--purple); }
+.def-box.example-box { border-left-color: var(--green); }
+.def-box.example-box .def-label { color: var(--green); }
+.def-box.warning-box { border-left-color: var(--yellow); }
+.def-box.warning-box .def-label { color: var(--yellow); }
+
+.quick-check {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback {
+  margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+  font-size: 0.85rem; display: none;
+}
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+@media (max-width: 900px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="back-bar">
+  <div>
+    <a href="chapter4-study.html">&larr; Back to Chapter 4 Study Guide</a>
+    <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+    <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  </div>
+  <span class="page-title-bar">Math Foundations &mdash; Ch.4</span>
+</div>
+
+<!-- ===== TABLE OF CONTENTS SIDEBAR ===== -->
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#x1F3AF;</span>
+    <h2>Ch 4 Math</h2>
+  </div>
+  <div class="toc-group">Foundations</div>
+  <ul>
+    <li><a href="#sec-graphs" class="toc-link">Graph Theory Basics</a></li>
+    <li><a href="#sec-randomness" class="toc-link">Randomness Complexity</a></li>
+  </ul>
+  <div class="toc-group">Independence &amp; Hashing</div>
+  <ul>
+    <li><a href="#sec-pairwise-math" class="toc-link">Pairwise Independence</a></li>
+    <li><a href="#sec-hash" class="toc-link">Hash Families</a></li>
+  </ul>
+  <div class="toc-group">Derandomisation Techniques</div>
+  <ul>
+    <li><a href="#sec-cond-exp" class="toc-link">Conditional Expectation</a></li>
+    <li><a href="#sec-prob-method-math" class="toc-link">The Probabilistic Method</a></li>
+  </ul>
+  <div class="toc-group">Optimisation</div>
+  <ul>
+    <li><a href="#sec-approx" class="toc-link">Approximation Algorithms</a></li>
+  </ul>
+  <a href="chapter4-study.html" class="back-to-study">&larr; Chapter 4 Study Guide</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="math-content" id="mainContent">
+
+<!-- HERO -->
+<section class="section hero-section" id="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 — Chapter 4 Supplement</p>
+    <h1>Mathematical Foundations: Derandomisation</h1>
+    <p class="hero-subtitle">Graph theory, pairwise independence, universal hashing, conditional expectation, the probabilistic method, and approximation guarantees.</p>
+  </div>
+</section>
+
+<!-- ===== GRAPH THEORY BASICS ===== -->
+<section class="section" id="sec-graphs">
+  <h2 class="section-title">Graph Theory Basics</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Undirected Graph</div>
+    <p>An <strong>undirected graph</strong> is a pair \(G = (V, E)\) where \(V\) is a finite set of <strong>vertices</strong> and \(E \subseteq \binom{V}{2}\) is a set of <strong>edges</strong>, each an unordered pair \(\{u, v\}\) with \(u \neq v\).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Cut</div>
+    <p>A <strong>cut</strong> in a graph \(G = (V, E)\) is a partition of the vertex set into two non-empty subsets \((A, B)\) with \(A \cup B = V\) and \(A \cap B = \emptyset\). The <strong>cut edges</strong> are:</p>
+    \[c(A, B) = \bigl|\bigl\{\{u, v\} \in E : u \in A,\; v \in B\bigr\}\bigr|\]
+    <p>The <strong>Max-Cut</strong> problem asks to find a partition \((A, B)\) maximising \(c(A, B)\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Complete Graph \(K_n\)</div>
+    <p>The <strong>complete graph</strong> \(K_n\) on \(n\) vertices has every possible edge. The number of edges is:</p>
+    \[|E(K_n)| = \binom{n}{2} = \frac{n(n-1)}{2}\]
+  </div>
+
+  <h3>Triangles &amp; Orientations</h3>
+  <div class="concept-box">
+    <p>A <strong>triangle</strong> in \(G\) is a set of three vertices \(\{u, v, w\}\) such that all three edges \(\{u,v\}, \{v,w\}, \{u,w\}\) are present. The number of triangles in \(K_n\) is \(\binom{n}{3}\).</p>
+    <p>An <strong>orientation</strong> of an undirected graph assigns a direction to each edge, producing a directed graph. Each undirected graph on \(m\) edges has \(2^m\) possible orientations.</p>
+  </div>
+
+  <h3>NP-Hardness</h3>
+  <div class="def-box warning-box">
+    <div class="def-label">Intuition — NP-Hard Problems</div>
+    <p>A problem is <strong>NP-hard</strong> if no known polynomial-time algorithm solves it exactly. Unless \(\mathsf{P} = \mathsf{NP}\), there is no efficient exact algorithm. Max-Cut is NP-hard, which motivates approximation algorithms and derandomisation.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="K_n has C(n,2) = n(n−1)/2 edges. For n = 6: 6·5/2 = 15." data-explanation-zh="K_n 有 C(n,2) = n(n−1)/2 条边。当 n = 6 时：6·5/2 = 15。">
+    <div class="qc-question">Quick Check: How many edges does \(K_6\) have?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(12\)</div>
+      <div class="qc-opt" data-idx="1">\(15\)</div>
+      <div class="qc-opt" data-idx="2">\(30\)</div>
+      <div class="qc-opt" data-idx="3">\(36\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== RANDOMNESS COMPLEXITY ===== -->
+<section class="section" id="sec-randomness">
+  <h2 class="section-title">Randomness Complexity</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Random Bits</div>
+    <p>The <strong>randomness complexity</strong> \(R\) of a randomised algorithm is the number of truly random bits it requires. If the algorithm uses \(R\) random bits, there are \(2^R\) possible random seeds.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Key Insight — Brute-Force Derandomisation</div>
+    <p>Any randomised algorithm using \(R\) random bits can be derandomised by enumerating all \(2^R\) seeds. The resulting deterministic algorithm has running time:</p>
+    \[\text{Time}_{\text{derand}} = 2^R \cdot \text{Time}_{\text{per seed}}\]
+    <p>If we can <strong>reduce</strong> \(R\) while preserving the probabilistic guarantee, we reduce the brute-force cost exponentially.</p>
+  </div>
+
+  <div class="concept-box">
+    <h3>Tradeoff: Randomness vs Efficiency</h3>
+    <p>Small \(R\) leads to efficient derandomisation. The goal is to replace \(R = n\) truly random bits with \(R' \ll n\) bits of limited randomness (e.g., pairwise independent) while preserving the expected performance.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Sampling from a Finite Domain</div>
+    <p>To sample uniformly from a domain of size \(k\), we need exactly:</p>
+    \[\lceil \log_2 k \rceil \text{ random bits}\]
+    <p>For \(n\) independent samples from \(\{0, 1\}\), we need \(n\) random bits. But if we only need pairwise independence, we can use far fewer.</p>
+  </div>
+</section>
+
+<!-- ===== PAIRWISE INDEPENDENCE ===== -->
+<section class="section" id="sec-pairwise-math">
+  <h2 class="section-title">Pairwise Independence</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Full Independence</div>
+    <p>Random variables \(X_1, \ldots, X_n\) are <strong>fully (mutually) independent</strong> if for every subset \(S \subseteq [n]\) and every choice of values \(a_i\):</p>
+    \[\Pr\!\left[\bigcap_{i \in S} (X_i = a_i)\right] = \prod_{i \in S} \Pr[X_i = a_i]\]
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Pairwise Independence</div>
+    <p>Random variables \(X_1, \ldots, X_n\) are <strong>pairwise independent</strong> if for all \(i \neq j\) and all values \(a, b\):</p>
+    \[\Pr[X_i = a \;\text{and}\; X_j = b] = \Pr[X_i = a] \cdot \Pr[X_j = b]\]
+    <p>Pairwise independence is strictly weaker than full independence.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Why Pairwise Independence Suffices</div>
+    <p><strong>Linearity of expectation</strong> requires <em>no independence at all</em>:</p>
+    \[\mathbb{E}\!\left[\sum_i X_i\right] = \sum_i \mathbb{E}[X_i] \quad \text{(always true)}\]
+    <p>But <strong>variance of sums</strong> requires pairwise independence to decompose nicely:</p>
+    \[\operatorname{Var}\!\left[\sum_i X_i\right] = \sum_i \operatorname{Var}[X_i] + 2\!\sum_{i < j}\!\operatorname{Cov}[X_i, X_j]\]
+    <p>Under pairwise independence, all covariance terms vanish, giving \(\operatorname{Var}[\sum X_i] = \sum \operatorname{Var}[X_i]\). This is all we need for Chebyshev-based analysis.</p>
+  </div>
+
+  <h3>XOR Construction</h3>
+  <div class="concept-box">
+    <p>Let \(X, Y\) be independent uniform bits in \(\{0, 1\}\). Define \(Z = X \oplus Y\). Then:</p>
+    <ul>
+      <li>\(Z\) is uniform: \(\Pr[Z = 0] = \Pr[Z = 1] = 1/2\)</li>
+      <li>\((X, Y)\) are independent (by construction)</li>
+      <li>\((X, Z)\) are independent: \(\Pr[X = a, Z = c] = \Pr[X = a, Y = a \oplus c] = 1/4\)</li>
+      <li>\((Y, Z)\) are independent (by symmetry)</li>
+    </ul>
+    <p>So \(X, Y, Z\) are <strong>pairwise independent</strong>. Three pairwise independent uniform bits from only two truly random bits!</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-xor-not-full">
+      <span class="toggle-icon">&#9654;</span> Proof that \(X, Y, Z = X \oplus Y\) are NOT fully independent
+    </button>
+    <div class="proof-content" id="proof-xor-not-full">
+      <p>Full independence requires \(\Pr[X = a, Y = b, Z = c] = \Pr[X = a]\Pr[Y = b]\Pr[Z = c] = 1/8\) for all \(a, b, c\).</p>
+      <p>But \(Z = X \oplus Y\), so \(\Pr[X = 0, Y = 0, Z = 1] = 0 \neq 1/8\). The triple is deterministically constrained: given any two, the third is fixed. \(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="No. Z is completely determined by X and Y (Z = X ⊕ Y), so knowing X and Y reveals Z. The three variables are pairwise independent but not fully independent." data-explanation-zh="不是。Z 完全由 X 和 Y 决定（Z = X ⊕ Y），所以知道 X 和 Y 就确定了 Z。三个变量是两两独立的，但不是完全独立的。">
+    <div class="qc-question">Quick Check: Are \(X, Y, Z = X \oplus Y\) fully independent?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Yes — every pair is independent, so the triple is too</div>
+      <div class="qc-opt" data-idx="1">No — knowing \(X\) and \(Y\) determines \(Z\)</div>
+      <div class="qc-opt" data-idx="2">Only if \(X, Y\) are uniform</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== HASH FAMILIES ===== -->
+<section class="section" id="sec-hash">
+  <h2 class="section-title">Hash Families</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Universal Hash Family</div>
+    <p>A family \(\mathcal{H}\) of functions \(h : X \to Y\) is <strong>universal</strong> (or 2-universal) if for all distinct \(x, x' \in X\):</p>
+    \[\Pr_{h \sim \mathcal{H}}[h(x) = h(x')] \leq \frac{1}{|Y|}\]
+    <p>where \(h\) is chosen uniformly at random from \(\mathcal{H}\).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Strongly Universal Hash Family</div>
+    <p>A family \(\mathcal{H}\) of functions \(h : X \to Y\) is <strong>strongly universal</strong> (or 2-independent) if for all distinct \(x, x' \in X\) and all \(y, y' \in Y\):</p>
+    \[\Pr_{h \sim \mathcal{H}}[h(x) = y \;\text{and}\; h(x') = y'] = \frac{1}{|Y|^2}\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Strongly Universal ⟹ Universal</div>
+    <p>If \(\mathcal{H}\) is strongly universal, then it is universal.</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-strong-implies-univ">
+      <span class="toggle-icon">&#9654;</span> Proof via marginalisation
+    </button>
+    <div class="proof-content" id="proof-strong-implies-univ">
+      <p>For distinct \(x, x'\), marginalise over all possible values of \(h(x')\):</p>
+      \[\Pr[h(x) = h(x')] = \sum_{y \in Y} \Pr[h(x) = y \;\text{and}\; h(x') = y] = \sum_{y \in Y} \frac{1}{|Y|^2} = \frac{|Y|}{|Y|^2} = \frac{1}{|Y|}\]
+      <p>This meets the universal hash family bound with equality. \(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <h3>XOR-Based Construction</h3>
+  <div class="concept-box">
+    <p>Let \(x \in \{0,1\}^n\) be an input bit-string. For a subset \(S \subseteq [n]\), define:</p>
+    \[h_S(x) = \bigoplus_{i \in S} x_i \quad \in \{0, 1\}\]
+    <p>The family \(\mathcal{H} = \{h_S : S \subseteq [n]\}\) has \(|\mathcal{H}| = 2^n\). For the practical version, we use subsets of size at most \(k = \lceil \log_2(n+1) \rceil\), giving \(|\mathcal{H}| = 2^k\) and requiring only \(k\) random bits to specify a hash function.</p>
+  </div>
+
+  <h3>Inner Product mod \(p\)</h3>
+  <div class="concept-box">
+    <p>Let \(p\) be prime and \(x, a \in \mathbb{Z}_p^k\). Define:</p>
+    \[h_a(x) = \sum_{i=1}^{k} a_i \cdot x_i \mod p\]
+    <p>The family \(\mathcal{H} = \{h_a : a \in \mathbb{Z}_p^k\}\) is <strong>universal</strong>: for distinct \(x, x'\), we have \(\Pr_a[h_a(x) = h_a(x')] = 1/p = 1/|Y|\).</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Warning — Not Strongly Universal</div>
+    <p>The inner-product family \(h_a(x) = \sum a_i x_i \bmod p\) is universal but <strong>not</strong> strongly universal. The single output value is uniform, but two distinct inputs do not produce jointly uniform outputs under this family (one linear equation in \(k\) unknowns leaves \(k-1\) degrees of freedom, but two equations leave \(k-2\)). To get strongly universal hashing, use the affine form \(h_{a,b}(x) = a \cdot x + b \bmod p\) with two independent parameters.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="No. The inner-product family h_a(x) = Σ a_i·x_i mod p is universal but not strongly universal. For strong universality you need the affine form h_{a,b}(x) = a·x + b mod p." data-explanation-zh="不是。内积族 h_a(x) = Σ a_i·x_i mod p 是通用的但不是强通用的。要实现强通用性，需要仿射形式 h_{a,b}(x) = a·x + b mod p。">
+    <div class="qc-question">Quick Check: Is \(h_a(x) = \sum a_i x_i \bmod p\) strongly universal?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Yes — each output is uniform, so pairs are jointly uniform</div>
+      <div class="qc-opt" data-idx="1">No — universal but not strongly universal</div>
+      <div class="qc-opt" data-idx="2">Only when \(p = 2\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== CONDITIONAL EXPECTATION ===== -->
+<section class="section" id="sec-cond-exp">
+  <h2 class="section-title">Conditional Expectation</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Law of Total Expectation</div>
+    <p>If \(A_1, A_2, \ldots, A_k\) partition the sample space, then:</p>
+    \[\mathbb{E}[X] = \sum_{i=1}^{k} \Pr[A_i] \cdot \mathbb{E}[X \mid A_i]\]
+  </div>
+
+  <div class="concept-box">
+    <h3>Binary Split</h3>
+    <p>For a random bit \(B \in \{0, 1\}\) with \(\Pr[B = 1] = p\):</p>
+    \[\mathbb{E}[X] = p \cdot \mathbb{E}[X \mid B = 1] + (1 - p) \cdot \mathbb{E}[X \mid B = 0]\]
+    <p>This is a <strong>weighted average</strong> of the two conditional expectations.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Average ≤ Max Principle</div>
+    <p>For any two real numbers \(x, y\) and any \(p \in (0, 1)\):</p>
+    \[p \cdot x + (1-p) \cdot y \leq \max(x, y)\]
+    <p>Consequence: since \(\mathbb{E}[X]\) is a weighted average of \(\mathbb{E}[X \mid B=0]\) and \(\mathbb{E}[X \mid B=1]\), at least one of the conditional expectations is \(\geq \mathbb{E}[X]\).</p>
+  </div>
+
+  <h3>Chain of Conditional Expectations</h3>
+  <div class="concept-box">
+    <p>Suppose a randomised algorithm uses random bits \(B_1, B_2, \ldots, B_R\) and we want to maximise \(\mathbb{E}[f(B_1, \ldots, B_R)]\). The <strong>method of conditional expectations</strong> fixes bits one at a time:</p>
+    <ol>
+      <li>Compute \(\mathbb{E}[f \mid B_1 = 0]\) and \(\mathbb{E}[f \mid B_1 = 1]\).</li>
+      <li>Set \(b_1 = \arg\max\) of the two conditional expectations.</li>
+      <li>Compute \(\mathbb{E}[f \mid B_1 = b_1, B_2 = 0]\) and \(\mathbb{E}[f \mid B_1 = b_1, B_2 = 1]\).</li>
+      <li>Set \(b_2 = \arg\max\) and continue.</li>
+    </ol>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Why It Works</div>
+    <p>At each step we pick the better option, so the conditional expectation <strong>never decreases</strong>:</p>
+    \[\mathbb{E}[f] \leq \mathbb{E}[f \mid B_1 = b_1] \leq \mathbb{E}[f \mid B_1 = b_1, B_2 = b_2] \leq \cdots \leq f(b_1, \ldots, b_R)\]
+    <p>The final deterministic output is at least as good as the original expected value. This converts any randomised algorithm into a deterministic one with <strong>guaranteed</strong> performance \(\geq \mathbb{E}[f]\).</p>
+  </div>
+</section>
+
+<!-- ===== THE PROBABILISTIC METHOD ===== -->
+<section class="section" id="sec-prob-method-math">
+  <h2 class="section-title">The Probabilistic Method</h2>
+
+  <div class="def-box">
+    <div class="def-label">Core Idea</div>
+    <p>If \(\Pr[\text{good outcome}] > 0\), then a good outcome <strong>exists</strong>. We don't need to find it constructively — the existence proof suffices.</p>
+    \[\Pr[\text{good}] > 0 \implies \exists \text{ a good object}\]
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Fact 22.3 — Existence Above the Mean</div>
+    <p>For any random variable \(X\):</p>
+    \[\Pr[X \geq \mathbb{E}[X]] > 0\]
+    <p>That is, there must exist an outcome where \(X\) achieves at least its expected value.</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-above-mean">
+      <span class="toggle-icon">&#9654;</span> Proof of Fact 22.3
+    </button>
+    <div class="proof-content" id="proof-above-mean">
+      <p>Suppose for contradiction that \(\Pr[X \geq \mathbb{E}[X]] = 0\). Then \(X < \mathbb{E}[X]\) with probability 1, which implies:</p>
+      \[\mathbb{E}[X] < \mathbb{E}[X]\]
+      <p>a contradiction. Therefore \(\Pr[X \geq \mathbb{E}[X]] > 0\). \(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <h3>Union Bound Application</h3>
+  <div class="concept-box">
+    <p>To show a "globally good" outcome exists, identify bad events \(B_1, \ldots, B_m\) and show:</p>
+    \[\Pr\!\left[\bigcup_{i=1}^{m} B_i\right] \leq \sum_{i=1}^{m} \Pr[B_i] < 1\]
+    <p>Then \(\Pr[\text{all good}] = 1 - \Pr[\bigcup B_i] > 0\), so a good outcome exists.</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Advanced — Lovász Local Lemma</div>
+    <p>The <strong>Lovász Local Lemma</strong> (LLL) extends the probabilistic method to settings where bad events are not independent but have limited dependencies. It shows that if each bad event has low probability and depends on few others, then the probability that <em>none</em> of the bad events occur is positive. This is a powerful tool but is beyond the scope of this chapter.</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="Yes. By Fact 22.3, Pr[X ≥ E[X]] > 0. If E[X] = 5, there must exist an outcome where X ≥ 5." data-explanation-zh="是的。根据事实 22.3，Pr[X ≥ E[X]] > 0。如果 E[X] = 5，则必然存在一个结果使得 X ≥ 5。">
+    <div class="qc-question">Quick Check: If \(\mathbb{E}[X] = 5\), must there exist an outcome where \(X \geq 5\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Yes — \(\Pr[X \geq \mathbb{E}[X]] > 0\) always holds</div>
+      <div class="qc-opt" data-idx="1">No — the expectation is just an average</div>
+      <div class="qc-opt" data-idx="2">Only if \(X\) is integer-valued</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== APPROXIMATION ALGORITHMS ===== -->
+<section class="section" id="sec-approx">
+  <h2 class="section-title">Approximation Algorithms</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(\alpha\)-Approximation</div>
+    <p>For a maximisation problem, a polynomial-time algorithm is an <strong>\(\alpha\)-approximation</strong> (with \(0 < \alpha \leq 1\)) if for every instance it outputs a solution of value \(\geq \alpha \cdot \text{OPT}\), where \(\text{OPT}\) is the optimal value.</p>
+  </div>
+
+  <h3>Max-Cut: The Easy \(1/2\)-Approximation</h3>
+  <div class="concept-box">
+    <p>Assign each vertex to side \(A\) or \(B\) uniformly at random. Each edge \(\{u, v\}\) is cut with probability \(1/2\) (since \(u\) and \(v\) are on different sides with probability \(1/2\)). By linearity of expectation:</p>
+    \[\mathbb{E}[\text{cut edges}] = \frac{|E|}{2} \geq \frac{\text{OPT}}{2}\]
+    <p>since \(\text{OPT} \leq |E|\). This gives a randomised \(1/2\)-approximation, which can be derandomised via the method of conditional expectations.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Goemans–Williamson (1995)</div>
+    <p>The <strong>Goemans–Williamson</strong> algorithm achieves an approximation ratio of:</p>
+    \[\alpha_{\text{GW}} = \min_{0 \leq \theta \leq \pi} \frac{2}{\pi} \cdot \frac{\theta}{1 - \cos\theta} \approx 0.878\]
+    <p>It works by relaxing Max-Cut to a <strong>semidefinite program</strong> (SDP), solving the SDP optimally, then rounding the solution using a random hyperplane.</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-gw-idea">
+      <span class="toggle-icon">&#9654;</span> Key idea of the GW rounding
+    </button>
+    <div class="proof-content" id="proof-gw-idea">
+      <p>The SDP relaxation assigns a unit vector \(\mathbf{v}_i \in \mathbb{R}^n\) to each vertex \(i\). The relaxed objective is:</p>
+      \[\frac{1}{2}\sum_{\{i,j\} \in E}(1 - \mathbf{v}_i \cdot \mathbf{v}_j)\]
+      <p>A random hyperplane through the origin partitions vertices by which side of the hyperplane their vector lies on. The probability edge \(\{i,j\}\) is cut equals \(\arccos(\mathbf{v}_i \cdot \mathbf{v}_j)/\pi\). The ratio \(\frac{\arccos(c)/\pi}{(1-c)/2}\) is minimised at \(\alpha_{\text{GW}} \approx 0.878\). \(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <h3>Hardness of Approximation</h3>
+  <div class="def-box warning-box">
+    <div class="def-label">Unique Games Conjecture</div>
+    <p>The <strong>Unique Games Conjecture</strong> (Khot, 2002) implies that no polynomial-time algorithm can achieve an approximation ratio better than \(\alpha_{\text{GW}} \approx 0.878\) for Max-Cut, unless \(\mathsf{P} = \mathsf{NP}\). Under a weaker assumption (just \(\mathsf{P} \neq \mathsf{NP}\)), it is known that no ratio better than \(16/17 \approx 0.941\) is achievable.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Algorithm</div><div class="sym-header">Ratio</div><div class="sym-header">Technique</div>
+    <div class="sym-cell">Random assignment</div><div class="sym-cell">\(1/2\)</div><div class="sym-cell">Linearity of expectation</div>
+    <div class="sym-cell">Greedy / Cond. Exp.</div><div class="sym-cell">\(1/2\)</div><div class="sym-cell">Derandomised random assignment</div>
+    <div class="sym-cell">Goemans–Williamson</div><div class="sym-cell">\(\approx 0.878\)</div><div class="sym-cell">SDP relaxation + hyperplane rounding</div>
+    <div class="sym-cell">UGC hardness</div><div class="sym-cell">\(\approx 0.878\)</div><div class="sym-cell">Cannot beat GW (assuming UGC)</div>
+    <div class="sym-cell">P ≠ NP hardness</div><div class="sym-cell">\(16/17 \approx 0.941\)</div><div class="sym-cell">Cannot beat 16/17 (assuming P ≠ NP)</div>
+  </div>
+</section>
+
+<!-- ===== MATH QUIZ ===== -->
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=4" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div><!-- /math-content -->
+
+<script src="chapter4-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

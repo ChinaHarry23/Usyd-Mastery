@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 12: Learning from Experts</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F3AF;</span>
+    <h2>Chapter 12</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-setting" class="nav-link" data-section="sec-setting">Setting</a></li>
+    <li><a href="#sec-badnews" class="nav-link" data-section="sec-badnews">Bad News</a></li>
+    <li><a href="#sec-consistent" class="nav-link" data-section="sec-consistent">Consistent Expert</a></li>
+    <li><a href="#sec-halving" class="nav-link" data-section="sec-halving">Halving Algorithm</a></li>
+    <li><a href="#sec-basic-mwu" class="nav-link" data-section="sec-basic-mwu">Basic MWU</a></li>
+    <li><a href="#sec-mwu-beta" class="nav-link" data-section="sec-mwu-beta">MWU with &beta;</a></li>
+    <li><a href="#sec-randomised" class="nav-link" data-section="sec-randomised">Randomised MWU</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Summary</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter12-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter12-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=12" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=12" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=12&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 10</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 12: Learning from Experts</h1>
+    <p class="hero-subtitle" data-i18n="hero_subtitle">Online prediction with expert advice: from the consistent expert algorithm and halving to the powerful Multiplicative Weights Update framework and its randomised variant.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AF;</span>
+        <span data-i18n="hero_card_setting">Expert Setting</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2696;</span>
+        <span data-i18n="hero_card_halving">Halving Algorithm</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2699;</span>
+        <span data-i18n="hero_card_mwu">MWU Framework</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3B2;</span>
+        <span data-i18n="hero_card_random">Randomised MWU</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter12-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter12-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;" data-i18n="hero_math_note">Potential functions, logarithmic bounds, randomised rounding, trade-off analysis</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SETTING ===== -->
+<section id="sec-setting" class="section" data-track="setting">
+  <h2 class="section-title" data-i18n="sec_setting_title">The Expert Advice Setting</h2>
+
+  <div class="concept-box">
+    <h3 data-i18n="setting_setup_title">Problem Setup</h3>
+    <p data-i18n="setting_setup_p1">Over \(T\) time steps, we have \(n\) experts \(A_1, \ldots, A_n\). At each step \(t\):</p>
+    <ol>
+      <li data-i18n="setting_step1">Receive advice \(v_{i,t} \in \{0, 1\}\) from each expert \(A_i\).</li>
+      <li data-i18n="setting_step2">Make a prediction \(u_t \in \{0, 1\}\).</li>
+      <li data-i18n="setting_step3">Observe the truth \(\bar{u}_t\) and pay cost \(c_t = \mathbf{1}[u_t \neq \bar{u}_t]\).</li>
+    </ol>
+    <p style="margin-top:0.75rem;" data-i18n="setting_total_cost">Our total cost over \(T\) rounds is \(C(T) = \sum_{t=1}^{T} c_t\). Expert \(A_i\) has total cost \(C_i(T) = \sum_{t=1}^{T} \mathbf{1}[v_{i,t} \neq \bar{u}_t]\). The best expert cost is \(C^*(T) = \min_i C_i(T)\).</p>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong data-i18n="setting_callout_title">No assumptions!</strong>
+    <span data-i18n="setting_callout_text">We make no statistical assumptions on the truth sequence \(\bar{u}_1, \ldots, \bar{u}_T\) or the expert predictions. The truth can even be chosen adversarially. Our goal: make \(C(T)\) close to \(C^*(T)\), the best expert in hindsight.</span>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="setting_regret_title">Regret</h3>
+    <p data-i18n="setting_regret_text">The <strong>regret</strong> of the algorithm is the difference \(C(T) - C^*(T)\). A good algorithm has regret growing slowly with \(T\) (e.g., logarithmically), meaning we eventually perform almost as well as the best expert.</p>
+  </div>
+</section>
+
+<!-- ===== BAD NEWS ===== -->
+<section id="sec-badnews" class="section" data-track="badnews">
+  <h2 class="section-title" data-i18n="sec_badnews_title">Bad News: Lower Bounds</h2>
+
+  <div class="concept-box">
+    <h3 data-i18n="badnews_det_title">Deterministic Algorithms</h3>
+    <p data-i18n="badnews_det_text">A deterministic algorithm is doomed: an adversary who sees our prediction before choosing the truth can always set \(\bar{u}_t = 1 - u_t\), forcing \(C(T) = T\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="badnews_rand_title">Randomised Algorithms (without experts)</h3>
+    <p data-i18n="badnews_rand_text">Even if we randomise, without expert advice the best we can achieve is \(\mathbb{E}[C(T)] \geq T/2\). We are essentially guessing a fair coin.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Fact 56.3 <span data-i18n="badnews_fact_label">(Factor 2 is necessary)</span></h3>
+    <p data-i18n="badnews_fact_text">For deterministic algorithms with 2 experts, one always predicting 0 and the other always predicting 1, any deterministic prediction algorithm has:</p>
+    \[C(T) \geq 2 \cdot C^*(T)\]
+    <p data-i18n="badnews_fact_explain">The adversary sets \(\bar{u}_t = 1 - u_t\). One expert is always correct while the other is always wrong, so \(C^*(T) \leq T/2\) while \(C(T) = T\).</p>
+  </div>
+</section>
+
+<!-- ===== CONSISTENT EXPERT ===== -->
+<section id="sec-consistent" class="section" data-track="consistent">
+  <h2 class="section-title" data-i18n="sec_consistent_title">Consistent Expert Algorithm</h2>
+
+  <div class="algo-block">
+    <h4>Algorithm 22: Consistent Expert</h4>
+    <p><strong>Assumption:</strong> <span data-i18n="alg22_assumption">There exists a perfect expert with \(C^*(T) = 0\).</span></p>
+    <p><strong>Initialise:</strong> <span data-i18n="alg22_init">\(S_1 = \{A_1, \ldots, A_n\}\) (all experts are "alive")</span></p>
+    <ol>
+      <li data-i18n="alg22_step1">At time \(t\), pick any expert \(A_i \in S_t\) and predict \(u_t = v_{i,t}\).</li>
+      <li data-i18n="alg22_step2">Observe \(\bar{u}_t\). Remove from \(S_t\) all experts who were wrong: \(S_{t+1} = \{A_i \in S_t : v_{i,t} = \bar{u}_t\}\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Deterministic</span>
+      <span class="fact-pill blue">Requires \(C^*(T) = 0\)</span>
+      <span class="fact-pill red">\(C(T) \leq n - 1\)</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="thm_consistent_title">Theorem (Consistent Expert Bound)</h3>
+    <p data-i18n="thm_consistent_text">If \(C^*(T) = 0\), the Consistent Expert algorithm makes at most \(n - 1\) mistakes:</p>
+    \[C(T) \leq n - 1\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-consistent">Show Proof</button>
+  <div class="proof-content" id="proof-consistent">
+    <p data-i18n="proof_consistent_text"><strong>Potential function:</strong> \(\Phi_t = |S_t|\). Initially \(\Phi_1 = n\). The perfect expert is never eliminated, so \(\Phi_t \geq 1\) always. Each time we make a mistake, our chosen expert was wrong, so it (and possibly others) get removed: \(\Phi_{t+1} \leq \Phi_t - 1\). Since \(\Phi\) starts at \(n\) and cannot drop below 1, we make at most \(n - 1\) mistakes. \(\square\)</p>
+  </div>
+</section>
+
+<!-- ===== HALVING ALGORITHM ===== -->
+<section id="sec-halving" class="section" data-track="halving">
+  <h2 class="section-title" data-i18n="sec_halving_title">Halving Algorithm</h2>
+
+  <div class="algo-block">
+    <h4>Algorithm 23: Halving</h4>
+    <p><strong>Assumption:</strong> <span data-i18n="alg23_assumption">There exists a perfect expert with \(C^*(T) = 0\).</span></p>
+    <p><strong>Initialise:</strong> <span data-i18n="alg23_init">\(S_1 = \{A_1, \ldots, A_n\}\)</span></p>
+    <ol>
+      <li data-i18n="alg23_step1">At time \(t\), take a <strong>majority vote</strong> among experts in \(S_t\): predict \(u_t\) as the value predicted by more than half of \(S_t\).</li>
+      <li data-i18n="alg23_step2">Observe \(\bar{u}_t\). Eliminate all wrong experts: \(S_{t+1} = \{A_i \in S_t : v_{i,t} = \bar{u}_t\}\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Deterministic</span>
+      <span class="fact-pill blue">Requires \(C^*(T) = 0\)</span>
+      <span class="fact-pill red">\(C(T) \leq \lfloor\log_2 n\rfloor\)</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="thm_halving_title">Theorem (Halving Bound)</h3>
+    <p data-i18n="thm_halving_text">If \(C^*(T) = 0\), the Halving algorithm makes at most \(\lfloor\log_2 n\rfloor\) mistakes:</p>
+    \[C(T) \leq \lfloor\log_2 n\rfloor\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-halving">Show Proof</button>
+  <div class="proof-content" id="proof-halving">
+    <p data-i18n="proof_halving_text"><strong>Potential function:</strong> \(\Phi_t = |S_t|\). Initially \(\Phi_1 = n\), and \(\Phi_t \geq 1\) always (the perfect expert survives). When we make a mistake, the majority was wrong, so <em>more than half</em> of \(S_t\) get eliminated. Therefore \(\Phi_{t+1} \leq \Phi_t / 2\). After \(k\) mistakes: \(\Phi \leq n/2^k\). Since \(\Phi \geq 1\): \(n/2^k \geq 1 \Rightarrow k \leq \log_2 n\). \(\square\)</p>
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong data-i18n="halving_key_insight_title">Key Insight:</strong>
+    <span data-i18n="halving_key_insight_text">Majority vote ensures that each mistake eliminates at least half the surviving experts. This gives an exponential improvement from \(O(n)\) to \(O(\log n)\) mistakes.</span>
+  </div>
+
+  <!-- Halving Algorithm Survivor Set Simulator -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Halving Algorithm Survivor Set</h3>
+    <p>Watch how the halving algorithm eliminates experts each round. Expert <strong>#7</strong> (the hidden perfect expert) always matches the truth. Each mistake halves the survivor set.</p>
+    <div id="halvingGrid" style="display:grid; grid-template-columns:repeat(8,1fr); gap:6px; margin:1.25rem 0;"></div>
+    <div style="margin:1rem 0; padding:0.75rem 1rem; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:0.85rem;">
+      <div id="halvingRoundInfo" style="color:var(--text-muted);">Press <strong>Next Round</strong> to begin.</div>
+    </div>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin:1rem 0;">
+      <button id="btnHalvingStep" class="btn btn-primary">Next Round</button>
+      <button id="btnHalvingAuto" class="btn btn-secondary">Auto Play</button>
+      <button id="btnHalvingReset" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:0.75rem; margin-top:1rem;">
+      <div class="stat-card"><div class="stat-value" id="halvingRound">0</div><div class="stat-label">Round</div></div>
+      <div class="stat-card"><div class="stat-value" id="halvingSurvivors">16</div><div class="stat-label">Survivors \(|S_t|\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="halvingMistakes">0</div><div class="stat-label">Algorithm Mistakes</div></div>
+      <div class="stat-card"><div class="stat-value" id="halvingBound">4</div><div class="stat-label">Bound \(\lfloor\log_2 16\rfloor\)</div></div>
+    </div>
+    <div style="margin-top:1.25rem;">
+      <h4 style="font-size:0.9rem; margin-bottom:0.5rem;">\(|S_t|\) Over Time (halves on each mistake)</h4>
+      <div id="halvingChart" style="height:120px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px; position:relative; overflow:hidden;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BASIC MWU ===== -->
+<section id="sec-basic-mwu" class="section" data-track="basic-mwu">
+  <h2 class="section-title" data-i18n="sec_basic_mwu_title">Basic Multiplicative Weights Update</h2>
+
+  <div class="concept-box">
+    <h3 data-i18n="mwu_motivation_title">Motivation</h3>
+    <p data-i18n="mwu_motivation_text">The Halving algorithm requires a perfect expert (\(C^* = 0\)). What if no expert is perfect? We need to be more forgiving: instead of eliminating wrong experts, we <strong>down-weight</strong> them.</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 24: Basic MWU</h4>
+    <p><strong>Initialise:</strong> <span data-i18n="alg24_init">\(w_{i,1} = 1\) for all \(i \in [n]\). Total weight \(W_1 = n\).</span></p>
+    <ol>
+      <li data-i18n="alg24_step1">At time \(t\), predict \(u_t\) by <strong>weighted majority</strong>: predict the value with total weight \(> W_t/2\).</li>
+      <li data-i18n="alg24_step2">Observe \(\bar{u}_t\). For each expert \(A_i\) that was wrong (\(v_{i,t} \neq \bar{u}_t\)), set \(w_{i,t+1} = w_{i,t} / 2\). Otherwise \(w_{i,t+1} = w_{i,t}\).</li>
+      <li data-i18n="alg24_step3">Update \(W_{t+1} = \sum_i w_{i,t+1}\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Deterministic</span>
+      <span class="fact-pill blue">No assumption on \(C^*\)</span>
+      <span class="fact-pill red">\(C(T) \leq 2.41(C^* + \log_2 n)\)</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="thm_basic_mwu_title">Theorem (Basic MWU Bound)</h3>
+    <p data-i18n="thm_basic_mwu_text">The Basic MWU algorithm satisfies:</p>
+    \[C(T) \leq 2.41\bigl(C^*(T) + \log_2 n\bigr)\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-basic-mwu">Show Proof</button>
+  <div class="proof-content" id="proof-basic-mwu">
+    <p><strong>Potential function:</strong> \(\Phi_t = W_t = \sum_i w_{i,t}\).</p>
+    <p style="margin-top:0.5rem;"><strong>Upper bound on \(\Phi\):</strong> Initially \(W_1 = n\). When we make a mistake, the weighted majority was wrong, so the wrong experts have total weight \(> W_t/2\). Their weights halve, reducing \(W_t\) by more than \(W_t/4\). So:</p>
+    \[W_{t+1} \leq W_t - \frac{W_t}{4} = \frac{3}{4} W_t\]
+    <p>After \(C(T)\) mistakes: \(W_{T+1} \leq n \cdot (3/4)^{C(T)}\).</p>
+    <p style="margin-top:0.5rem;"><strong>Lower bound on \(\Phi\):</strong> The best expert \(i^*\) has weight \(w_{i^*,T+1} = (1/2)^{C^*}\), and \(W_{T+1} \geq w_{i^*,T+1}\). So:</p>
+    \[(1/2)^{C^*} \leq n \cdot (3/4)^{C(T)}\]
+    <p>Taking logarithms: \(-C^* \leq \log_2 n + C(T) \log_2(3/4)\), which gives:</p>
+    \[C(T) \leq \frac{C^* + \log_2 n}{\log_2(4/3)} \leq 2.41(C^* + \log_2 n)\]
+    <p>\(\square\)</p>
+  </div>
+</section>
+
+<!-- ===== MWU WITH PARAMETER BETA ===== -->
+<section id="sec-mwu-beta" class="section" data-track="mwu-beta">
+  <h2 class="section-title" data-i18n="sec_mwu_beta_title">MWU with Parameter \(\beta\)</h2>
+
+  <div class="algo-block">
+    <h4>Algorithm 25: MWU(\(\beta\))</h4>
+    <p><strong>Parameter:</strong> \(\beta \in (0, 1)\)</p>
+    <p><strong>Initialise:</strong> <span data-i18n="alg25_init">\(w_{i,1} = 1\) for all \(i\).</span></p>
+    <ol>
+      <li data-i18n="alg25_step1">Predict by weighted majority: \(u_t =\) value with total weight \(> W_t/2\).</li>
+      <li data-i18n="alg25_step2">Penalise wrong experts: \(w_{i,t+1} = \beta \cdot w_{i,t}\) if \(v_{i,t} \neq \bar{u}_t\), else \(w_{i,t+1} = w_{i,t}\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Deterministic</span>
+      <span class="fact-pill blue">Tunable \(\beta\)</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="thm_mwu_beta_title">Theorem (MWU(\(\beta\)) Bound)</h3>
+    <p data-i18n="thm_mwu_beta_text">For any \(\beta \in (0, 1)\), the MWU(\(\beta\)) algorithm satisfies:</p>
+    \[C(T) \leq \frac{C^* \cdot \log(1/\beta) + \log n}{\log\!\big(\frac{2}{1+\beta}\big)}\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-mwu-beta">Show Proof</button>
+  <div class="proof-content" id="proof-mwu-beta">
+    <p><strong>Upper bound:</strong> When we make a mistake, the wrong side has weight \(> W_t/2\). Their weights get multiplied by \(\beta\). So:</p>
+    \[W_{t+1} \leq \frac{1 + \beta}{2} W_t\]
+    <p>After \(C(T)\) mistakes: \(W_{T+1} \leq n \cdot \left(\frac{1+\beta}{2}\right)^{C(T)}\).</p>
+    <p style="margin-top:0.5rem;"><strong>Lower bound:</strong> Best expert: \(w_{i^*} = \beta^{C^*}\), so \(W_{T+1} \geq \beta^{C^*}\). Combining:</p>
+    \[\beta^{C^*} \leq n \cdot \left(\frac{1+\beta}{2}\right)^{C(T)}\]
+    <p>Taking logarithms and rearranging gives the bound. \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="beta_tradeoff_title">Trade-off in \(\beta\)</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.75rem;">
+      <div class="info-card">
+        <h4 data-i18n="beta_small_title">\(\beta \to 0\) (aggressive penalty)</h4>
+        <p data-i18n="beta_small_text">Additive term (\(\log n\)) gets smaller, but the multiplicative factor on \(C^*\) grows. Better when \(C^*\) is small.</p>
+      </div>
+      <div class="info-card">
+        <h4 data-i18n="beta_large_title">\(\beta \to 1\) (gentle penalty)</h4>
+        <p data-i18n="beta_large_text">Multiplicative factor on \(C^*\) approaches 1, but the additive term grows. Better when \(C^*\) is large.</p>
+      </div>
+    </div>
+    <p style="margin-top:0.75rem;" data-i18n="beta_recover_text">Setting \(\beta = 1/2\) recovers the Basic MWU bound: \(C(T) \leq 2.41(C^* + \log_2 n)\).</p>
+  </div>
+</section>
+
+<!-- ===== RANDOMISED MWU ===== -->
+<section id="sec-randomised" class="section" data-track="randomised">
+  <h2 class="section-title" data-i18n="sec_randomised_title">Randomised MWU</h2>
+
+  <div class="concept-box">
+    <h3 data-i18n="rand_motivation_title">Why Randomise?</h3>
+    <p data-i18n="rand_motivation_text">Deterministic MWU has a factor of 2 overhead (Fact 56.3). By randomising our prediction, we can remove this factor entirely!</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Algorithm 26: Randomised MWU(\(\beta\))</h4>
+    <p><strong>Parameter:</strong> \(\beta \in (0, 1)\)</p>
+    <p><strong>Initialise:</strong> <span data-i18n="alg26_init">\(w_{i,1} = 1\) for all \(i\).</span></p>
+    <ol>
+      <li data-i18n="alg26_step1">At time \(t\), <strong>sample</strong> an expert \(A_j\) with probability \(w_{j,t} / W_t\) and predict \(u_t = v_{j,t}\).</li>
+      <li data-i18n="alg26_step2">Penalise wrong experts: \(w_{i,t+1} = \beta \cdot w_{i,t}\) if \(v_{i,t} \neq \bar{u}_t\), else \(w_{i,t+1} = w_{i,t}\).</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Randomised</span>
+      <span class="fact-pill blue">No factor of 2!</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="thm_rand_mwu_title">Theorem (Randomised MWU Bound)</h3>
+    <p data-i18n="thm_rand_mwu_text">The Randomised MWU(\(\beta\)) algorithm satisfies:</p>
+    \[\mathbb{E}[C(T)] \leq \frac{C^* \cdot \ln(1/\beta) + \ln n}{1 - \beta}\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-rand-mwu">Show Proof</button>
+  <div class="proof-content" id="proof-rand-mwu">
+    <p><strong>Key observation:</strong> At time \(t\), \(\Pr[\text{mistake}] = \Pr[v_{j,t} \neq \bar{u}_t] = F_t / W_t\) where \(F_t\) is the total weight of wrong experts.</p>
+    <p style="margin-top:0.5rem;">The weight update gives \(W_{t+1} = W_t - (1-\beta)F_t\), so \(F_t = (W_t - W_{t+1})/(1-\beta)\).</p>
+    <p style="margin-top:0.5rem;"><strong>Expected cost:</strong></p>
+    \[\mathbb{E}[C(T)] = \sum_{t=1}^{T} \frac{F_t}{W_t} = \frac{1}{1-\beta}\sum_{t=1}^{T} \frac{W_t - W_{t+1}}{W_t} \leq \frac{1}{1-\beta}\sum_{t=1}^{T} \ln\frac{W_t}{W_{t+1}} = \frac{\ln(W_1/W_{T+1})}{1-\beta}\]
+    <p>(using \(1 - x \leq -\ln x\) for \(x = W_{t+1}/W_t\))</p>
+    <p style="margin-top:0.5rem;">Since \(W_1 = n\) and \(W_{T+1} \geq \beta^{C^*}\):</p>
+    \[\mathbb{E}[C(T)] \leq \frac{\ln n - C^* \ln\beta}{1 - \beta} = \frac{C^* \ln(1/\beta) + \ln n}{1 - \beta} \qquad \square\]
+  </div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong data-i18n="rand_vs_det_title">Randomised vs Deterministic:</strong>
+    <span data-i18n="rand_vs_det_text">The randomised bound \(\frac{C^* \ln(1/\beta) + \ln n}{1-\beta}\) is better than the deterministic \(\frac{C^* \log(1/\beta) + \log n}{\log(2/(1+\beta))}\) by roughly a factor of 2. This matters in practice!</span>
+  </div>
+
+  <!-- MWU Simulator -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3 data-i18n="sim_title">Interactive: MWU Weight Evolution</h3>
+    <p data-i18n="sim_desc">Watch how expert weights change over time. Configure the number of experts, the penalty parameter \(\beta\), and observe weight dynamics against an adversarial sequence.</p>
+    <div class="sim-controls">
+      <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:flex-end;">
+        <div>
+          <label style="font-size:0.82rem; color:var(--text-muted);">Experts \(n\)</label>
+          <select id="simNumExperts" style="display:block; padding:0.4rem 0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-card); color:var(--text); margin-top:0.25rem;">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.82rem; color:var(--text-muted);">\(\beta\)</label>
+          <select id="simBeta" style="display:block; padding:0.4rem 0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-card); color:var(--text); margin-top:0.25rem;">
+            <option value="0.25">0.25</option>
+            <option value="0.5" selected>0.5</option>
+            <option value="0.75">0.75</option>
+            <option value="0.9">0.9</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.82rem; color:var(--text-muted);">Mode</label>
+          <select id="simMode" style="display:block; padding:0.4rem 0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-card); color:var(--text); margin-top:0.25rem;">
+            <option value="adversarial">Adversarial</option>
+            <option value="random">Random truth</option>
+            <option value="one-good">One good expert</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button id="btnSimStep" class="btn btn-primary">Step</button>
+        <button id="btnSim10" class="btn btn-secondary">+10 Steps</button>
+        <button id="btnSim50" class="btn btn-secondary">+50 Steps</button>
+        <button id="btnSimReset" class="btn btn-outline">Reset</button>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:0.75rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="simRound">0</div><div class="stat-label">Round \(t\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="simOurCost">0</div><div class="stat-label">Our \(C(T)\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="simBestCost">0</div><div class="stat-label">\(C^*(T)\)</div></div>
+      <div class="stat-card"><div class="stat-value" id="simRegret">0</div><div class="stat-label">Regret</div></div>
+    </div>
+    <div style="margin-top:1rem;">
+      <h4 style="font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="sim_weights_title">Expert Weights</h4>
+      <div id="simWeightBars" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
+    </div>
+    <div style="margin-top:1rem;">
+      <h4 style="font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="sim_history_title">Mistake History</h4>
+      <div id="simHistory" style="font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); max-height:150px; overflow-y:auto; background:var(--bg-card); padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border);"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title" data-i18n="sec_summary_title">Summary &amp; Comparison</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="styled-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Algorithm</th>
+          <th>Assumption</th>
+          <th>Bound</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Consistent Expert (Alg 22)</td>
+          <td>\(C^* = 0\)</td>
+          <td>\(C(T) \leq n - 1\)</td>
+          <td>Deterministic</td>
+        </tr>
+        <tr>
+          <td>Halving (Alg 23)</td>
+          <td>\(C^* = 0\)</td>
+          <td>\(C(T) \leq \log_2 n\)</td>
+          <td>Deterministic</td>
+        </tr>
+        <tr>
+          <td>Basic MWU (Alg 24)</td>
+          <td>None</td>
+          <td>\(C(T) \leq 2.41(C^* + \log_2 n)\)</td>
+          <td>Deterministic</td>
+        </tr>
+        <tr>
+          <td>MWU(\(\beta\)) (Alg 25)</td>
+          <td>None</td>
+          <td>\(\displaystyle\frac{C^*\log(1/\beta)+\log n}{\log(2/(1+\beta))}\)</td>
+          <td>Deterministic</td>
+        </tr>
+        <tr>
+          <td>Rand. MWU(\(\beta\)) (Alg 26)</td>
+          <td>None</td>
+          <td>\(\displaystyle\frac{C^*\ln(1/\beta)+\ln n}{1-\beta}\)</td>
+          <td>Randomised</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3 data-i18n="takeaways_title">Key Takeaways</h3>
+    <ul>
+      <li data-i18n="takeaway1"><strong>Consistent Expert</strong> is the simplest: eliminate wrong experts. Bound of \(n-1\) is linear.</li>
+      <li data-i18n="takeaway2"><strong>Halving</strong> uses majority vote to cut the survivor set in half each mistake, achieving \(O(\log n)\).</li>
+      <li data-i18n="takeaway3"><strong>MWU</strong> generalises to \(C^* > 0\) by down-weighting instead of eliminating. The potential argument is the core technique.</li>
+      <li data-i18n="takeaway4"><strong>Tuning \(\beta\)</strong> trades off between the multiplicative factor on \(C^*\) and the additive \(\log n\) term.</li>
+      <li data-i18n="takeaway5"><strong>Randomisation</strong> removes the factor of 2, giving a strictly better bound in expectation.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title" data-i18n="sec_tutorial_title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;" data-i18n="tutorial_intro">Work through these problems to solidify your understanding of the expert advice framework.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p data-i18n="prob1_text">Plot the MWU(\(\beta\)) bound \(\frac{C^*\log(1/\beta)+\log n}{\log(2/(1+\beta))}\) as a function of \(\beta\) for \(n = 100\) and \(C^* \in \{0, 10, 50, 100\}\). What value of \(\beta\) minimises the bound for each \(C^*\)?</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p data-i18n="sol1_text">For \(C^* = 0\): the bound is \(\frac{\log n}{\log(2/(1+\beta))}\), which is minimised as \(\beta \to 0\) (giving \(\log_2 n \approx 6.64\)). For large \(C^*\), the bound is dominated by the \(C^* \log(1/\beta)\) term. Setting \(\beta\) close to 1 makes the multiplicative factor \(\frac{\log(1/\beta)}{\log(2/(1+\beta))} \to 1\), but the additive term diverges. The optimal \(\beta\) depends on the ratio \(C^*/\log n\). In general, \(\beta \approx 1 - \sqrt{\log n / C^*}\) is near-optimal for large \(C^*\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p data-i18n="prob2_text">Given \(n\) experts and a known upper bound \(C^*\), determine the optimal setting of \(\beta\) for the deterministic MWU(\(\beta\)) algorithm. Show that with the right choice of \(\beta\), the bound becomes \(C^* + O(\sqrt{C^* \log n})\).</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p data-i18n="sol2_text">The randomised bound is \(\frac{C^*\ln(1/\beta)+\ln n}{1-\beta}\). Setting \(\beta = 1 - \varepsilon\) with small \(\varepsilon\): \(\ln(1/\beta) = -\ln(1-\varepsilon) \approx \varepsilon + \varepsilon^2/2 \approx \varepsilon\). So the bound is approximately \(\frac{C^*\varepsilon + \ln n}{\varepsilon} = C^* + \frac{\ln n}{\varepsilon}\). To minimise, set \(\varepsilon = \sqrt{\ln n / C^*}\), giving \(C^* + 2\sqrt{C^* \ln n}\). For the deterministic case, a similar analysis with \(\beta = 1-\varepsilon\) gives \(2C^* + O(\sqrt{C^* \log n})\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p data-i18n="prob3_text">Prove Fact 56.3: with 2 experts, one always predicting 0 and the other always predicting 1, any deterministic algorithm has \(C(T) \geq 2 \cdot C^*(T)\).</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p data-i18n="sol3_text">The adversary sets \(\bar{u}_t = 1 - u_t\) (always the opposite of our prediction). Then \(C(T) = T\). At each step, exactly one of the two experts is correct (the one who predicted \(\bar{u}_t\)). So expert 1 makes \(T - C_1(T)\) correct predictions and \(C_1(T)\) mistakes, while expert 2 makes \(C_2(T) = T - C_1(T)\) mistakes. Since \(C_1(T) + C_2(T) = T\), the better expert has \(C^* = \min(C_1, C_2) \leq T/2\). Therefore \(C(T) = T \geq 2 \cdot T/2 \geq 2 \cdot C^*\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p data-i18n="prob4_text">Prove a modified MWU bound: by setting \(\beta = 1 - \varepsilon\) with \(\varepsilon = \sqrt{\log n / C^*}\), show that \(C(T) \leq 2C^* + O(\sqrt{C^* \log n} + \log n)\).</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p>Set \(\beta = 1 - \varepsilon\) with \(\varepsilon = \sqrt{\log n / C^*}\). In the deterministic MWU(\(\beta\)) bound:</p>
+      \[C(T) \leq \frac{C^* \log(1/\beta) + \log n}{\log(2/(1+\beta))}\]
+      <p style="margin-top:0.5rem;">For small \(\varepsilon\): \(\log(1/\beta) = -\log(1-\varepsilon) \approx \varepsilon/\ln 2\), and \(\log(2/(1+\beta)) = \log(2/(2-\varepsilon)) \approx \varepsilon/(2\ln 2)\). So:</p>
+      \[C(T) \lesssim \frac{C^* \cdot \varepsilon/\ln 2 + \log n}{\varepsilon/(2\ln 2)} = 2C^* + \frac{2\log n \cdot \ln 2}{\varepsilon}\]
+      <p>Substituting \(\varepsilon = \sqrt{\log n / C^*}\): \(\frac{2\log n \cdot \ln 2}{\varepsilon} = 2\ln 2 \cdot \sqrt{C^* \log n}\). Therefore:</p>
+      \[C(T) \leq 2C^* + O(\sqrt{C^* \log n})\]
+      <p>Adding the lower-order terms gives the full bound \(2C^* + O(\sqrt{C^* \log n} + \log n)\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p data-i18n="prob5_text"><strong>Chunked MWU:</strong> Consider a modified MWU where at time \(t\), we only penalise expert \(A_i\) (multiply by \(\beta\)) if \(w_{i,t} \geq W_t / (3n)\) (weight is at least \(1/3\) of the average). For a time interval \([t_1, t_2]\), show that \(C(t_1, t_2) \leq O(C^*(t_1, t_2) + \log n)\).</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p>When we make a mistake at time \(t\), the wrong side has total weight \(> W_t/2\). Among the wrong experts with \(w_{i,t} \geq W_t/(3n)\), their total weight is significant. After penalising them by \(\beta\):</p>
+      \[W_{t+1} \leq \frac{5 + \beta}{6} W_t\]
+      <p style="margin-top:0.5rem;">For the lower bound, any expert that is alive at time \(t_1\) has weight at least:</p>
+      \[w_{i,t_1} \geq \frac{\beta \cdot W_{t_1}}{3n}\]
+      <p>Combining the upper and lower bounds on the total weight, taking logarithms, and rearranging gives \(C(t_1, t_2) = O(C^*(t_1, t_2) + \log n)\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p data-i18n="prob6_text"><strong>Known mistake bounds:</strong> Suppose we know that expert \(k\) makes at most \(k\) mistakes. We assign initial weight \(w_{k,1} = \beta^k\) to expert \(k\). Show that the total weight satisfies \(W \geq \beta(1 - \beta^n)/(1 - \beta)\), and derive a tighter bound.</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p>With initial weights \(w_{k,1} = \beta^k\), the total initial weight is:</p>
+      \[W_1 = \sum_{k=1}^{n} \beta^k = \frac{\beta(1 - \beta^n)}{1 - \beta}\]
+      <p style="margin-top:0.5rem;">After \(T\) rounds, expert \(k\) (making at most \(k\) mistakes) has weight \(w_{k,T+1} = \beta^k \cdot \beta^{C_k} \geq \beta^k \cdot \beta^k = \beta^{2k}\). Therefore:</p>
+      \[W_{T+1} \geq \beta^{2k} \text{ for any } k\]
+      <p>Using the same potential argument: \(\beta^{2k} \leq W_1 \cdot \left(\frac{1+\beta}{2}\right)^{C(T)}\) for the deterministic case. Taking logarithms:</p>
+      \[C(T) \leq \frac{2k\log(1/\beta) + \log W_1}{\log(2/(1+\beta))}\]
+      <p>This gives a bound that depends on the specific expert \(k\) we are competing against, potentially yielding much tighter bounds when \(k\) is small. \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=12" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=12&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter12-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

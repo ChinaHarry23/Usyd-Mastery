@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+/* Page-specific overrides */
+.back-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.back-bar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: opacity 0.2s;
+}
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  width: var(--sidebar-w);
+  height: calc(100vh - 50px);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 1.25rem 0;
+  z-index: 40;
+}
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block;
+  padding: 0.45rem 1.5rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  border-left: 3px solid transparent;
+  transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-glow);
+  font-weight: 500;
+}
+.toc-group {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  padding: 0.75rem 1.5rem 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+/* Symbol table */
+.symbol-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+}
+.sym-header {
+  background: var(--bg-card);
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+}
+.sym-cell {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+}
+.sym-cell:nth-child(3n+1) { background: var(--bg-card); justify-content: center; font-size: 1.1rem; }
+.sym-cell:nth-child(3n+2) { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+
+/* Definition box */
+.def-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem;
+  margin: 1.25rem 0;
+}
+.def-box .def-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.def-box.theorem-box { border-left-color: var(--purple); }
+.def-box.theorem-box .def-label { color: var(--purple); }
+.def-box.example-box { border-left-color: var(--green); }
+.def-box.example-box .def-label { color: var(--green); }
+.def-box.warning-box { border-left-color: var(--yellow); }
+.def-box.warning-box .def-label { color: var(--yellow); }
+
+/* Quick-check inline quiz */
+.quick-check {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin: 1.25rem 0;
+}
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  display: none;
+}
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+@media (max-width: 900px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="back-bar">
+  <a href="chapter1-study.html">&larr; Back to Chapter 1 Study Guide</a>
+  <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+  <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  <span class="page-title-bar">Math Foundations</span>
+</div>
+
+<!-- ===== TABLE OF CONTENTS SIDEBAR ===== -->
+<nav class="toc-sidebar">
+  <div class="toc-group">Notation</div>
+  <ul>
+    <li><a href="#sec-sets" class="toc-link">Sets &amp; Number Systems</a></li>
+    <li><a href="#sec-notation" class="toc-link">Summation &amp; Products</a></li>
+    <li><a href="#sec-bigo" class="toc-link">Big-O Notation</a></li>
+    <li><a href="#sec-log" class="toc-link">Logarithms</a></li>
+  </ul>
+  <div class="toc-group">Probability</div>
+  <ul>
+    <li><a href="#sec-prob-basics" class="toc-link">Probability Basics</a></li>
+    <li><a href="#sec-rv" class="toc-link">Random Variables</a></li>
+    <li><a href="#sec-expectation" class="toc-link">Expectation</a></li>
+    <li><a href="#sec-linearity" class="toc-link">Linearity of Expectation</a></li>
+    <li><a href="#sec-variance" class="toc-link">Variance</a></li>
+    <li><a href="#sec-indicator" class="toc-link">Indicator Variables</a></li>
+    <li><a href="#sec-independence" class="toc-link">Independence</a></li>
+  </ul>
+  <div class="toc-group">Distributions</div>
+  <ul>
+    <li><a href="#sec-bernoulli" class="toc-link">Bernoulli &amp; Binomial</a></li>
+    <li><a href="#sec-geometric" class="toc-link">Geometric Distribution</a></li>
+  </ul>
+  <div class="toc-group">Tools</div>
+  <ul>
+    <li><a href="#sec-tailsum" class="toc-link">Tail-Sum Formula</a></li>
+    <li><a href="#sec-harmonic" class="toc-link">Harmonic Numbers</a></li>
+    <li><a href="#sec-jensen" class="toc-link">Jensen's Inequality</a></li>
+    <li><a href="#sec-permutations" class="toc-link">Permutations</a></li>
+    <li><a href="#sec-recurrence" class="toc-link">Recurrences &amp; ODEs</a></li>
+  </ul>
+  </nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="math-content" id="mainContent">
+
+<!-- HERO -->
+<section class="section hero-section" id="sec-hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 — Chapter 1 Supplement</p>
+    <h1>Mathematical Foundations</h1>
+    <p class="hero-subtitle">Every symbol, notation, and concept used in Chapter 1 — explained from scratch with examples and inline checks.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--                        NOTATION                               -->
+<!-- ============================================================ -->
+
+<!-- SETS -->
+<section class="section" id="sec-sets">
+  <h2 class="section-title">Sets &amp; Number Systems</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Set</div>
+    <p>A <strong>set</strong> is an unordered collection of distinct objects. We write \(x \in S\) to mean "\(x\) is an element of \(S\)" and \(x \notin S\) for the opposite.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">LaTeX</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(\{1, 2, 3\}\)</div><div class="sym-cell">\{1,2,3\}</div><div class="sym-cell">A set containing elements 1, 2, 3</div>
+    <div class="sym-cell">\(\in\)</div><div class="sym-cell">\in</div><div class="sym-cell">"is an element of" — e.g. \(3 \in \{1,2,3\}\)</div>
+    <div class="sym-cell">\(\notin\)</div><div class="sym-cell">\notin</div><div class="sym-cell">"is not an element of"</div>
+    <div class="sym-cell">\(\subseteq\)</div><div class="sym-cell">\subseteq</div><div class="sym-cell">"is a subset of" — every element of the left is in the right</div>
+    <div class="sym-cell">\(\emptyset\)</div><div class="sym-cell">\emptyset</div><div class="sym-cell">The empty set (contains nothing)</div>
+    <div class="sym-cell">\(|S|\)</div><div class="sym-cell">|S|</div><div class="sym-cell">Cardinality — the number of elements in \(S\)</div>
+    <div class="sym-cell">\(\{0,1\}^*\)</div><div class="sym-cell">\{0,1\}^*</div><div class="sym-cell">All finite-length binary strings (used for random bits)</div>
+  </div>
+
+  <h3>Standard Number Systems</h3>
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">LaTeX</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(\mathbb{N}\)</div><div class="sym-cell">\mathbb{N}</div><div class="sym-cell">Natural numbers \(\{0, 1, 2, 3, \ldots\}\)</div>
+    <div class="sym-cell">\(\mathbb{Z}\)</div><div class="sym-cell">\mathbb{Z}</div><div class="sym-cell">Integers \(\{\ldots, -2, -1, 0, 1, 2, \ldots\}\)</div>
+    <div class="sym-cell">\(\mathbb{R}\)</div><div class="sym-cell">\mathbb{R}</div><div class="sym-cell">Real numbers (the entire number line)</div>
+    <div class="sym-cell">\([0,1]\)</div><div class="sym-cell">[0,1]</div><div class="sym-cell">Closed interval: all reals \(x\) with \(0 \leq x \leq 1\)</div>
+    <div class="sym-cell">\((0,1)\)</div><div class="sym-cell">(0,1)</div><div class="sym-cell">Open interval: all reals \(x\) with \(0 < x < 1\)</div>
+  </div>
+</section>
+
+<!-- SUMMATION & PRODUCTS -->
+<section class="section" id="sec-notation">
+  <h2 class="section-title">Summation &amp; Products</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Summation</div>
+    <p>The <strong>sigma notation</strong> \(\displaystyle\sum_{i=a}^{b} f(i)\) means "add up \(f(i)\) for each integer \(i\) from \(a\) to \(b\)":</p>
+    <p>\[\sum_{i=1}^{n} f(i) = f(1) + f(2) + f(3) + \cdots + f(n)\]</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example</div>
+    <p>\(\displaystyle\sum_{i=1}^{4} i^2 = 1^2 + 2^2 + 3^2 + 4^2 = 1 + 4 + 9 + 16 = 30\)</p>
+  </div>
+
+  <h3>Key Summation Facts Used in Chapter 1</h3>
+  <div class="symbol-grid">
+    <div class="sym-header">Formula</div><div class="sym-header">Name</div><div class="sym-header">Value / Bound</div>
+    <div class="sym-cell">\(\sum_{i=1}^n 1\)</div><div class="sym-cell">Count</div><div class="sym-cell">\(= n\)</div>
+    <div class="sym-cell">\(\sum_{i=1}^n i\)</div><div class="sym-cell">Arithmetic</div><div class="sym-cell">\(= \frac{n(n+1)}{2}\)</div>
+    <div class="sym-cell">\(\sum_{i=1}^n \frac{1}{i}\)</div><div class="sym-cell">Harmonic (\(H_n\))</div><div class="sym-cell">\(\approx \ln n + 0.577\ldots\)</div>
+    <div class="sym-cell">\(\sum_{k=0}^{\infty} x^k\)</div><div class="sym-cell">Geometric</div><div class="sym-cell">\(= \frac{1}{1-x}\) for \(|x|<1\)</div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Double Summation</div>
+    <p>When we have two indices, we iterate over both. The QuickSort analysis uses:</p>
+    <p>\[\sum_{i=1}^{n-1}\sum_{j=i+1}^{n} f(i,j)\]</p>
+    <p>This means: for each \(i\) from 1 to \(n{-}1\), for each \(j\) from \(i{+}1\) to \(n\), add \(f(i,j)\). It sums over all pairs \((i,j)\) with \(i < j\).</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="Expand: sum = 1/2 + 1/3 + 1/4. Common denominator 12: 6/12 + 4/12 + 3/12 = 13/12." data-explanation-zh="展开：和 = 1/2 + 1/3 + 1/4。通分为12：6/12 + 4/12 + 3/12 = 13/12。">
+    <div class="qc-question">Quick Check: What is \(\displaystyle\sum_{k=1}^{3} \frac{1}{k+1}\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(1\)</div>
+      <div class="qc-opt" data-idx="1">\(\frac{13}{12}\)</div>
+      <div class="qc-opt" data-idx="2">\(\frac{11}{12}\)</div>
+      <div class="qc-opt" data-idx="3">\(\frac{3}{2}\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- BIG-O -->
+<section class="section" id="sec-bigo">
+  <h2 class="section-title">Big-O Notation (Asymptotic Analysis)</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(O(\cdot)\), \(\Omega(\cdot)\), \(\Theta(\cdot)\)</div>
+    <p>These describe how a function grows as its input \(n \to \infty\):</p>
+    <ul>
+      <li>\(f(n) = O(g(n))\): \(f\) grows <strong>at most</strong> as fast as \(g\). There exist \(c > 0, n_0\) such that \(f(n) \leq c\,g(n)\) for all \(n \geq n_0\).</li>
+      <li>\(f(n) = \Omega(g(n))\): \(f\) grows <strong>at least</strong> as fast as \(g\).</li>
+      <li>\(f(n) = \Theta(g(n))\): \(f\) grows at <strong>exactly</strong> the same rate as \(g\) (both \(O\) and \(\Omega\)).</li>
+    </ul>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Examples from Chapter 1</div>
+    <ul>
+      <li>\(3n^2 + 5n = O(n^2)\) — the dominant term is \(n^2\)</li>
+      <li>QuickSort worst-case: \(O(n^2)\), expected: \(O(n \log n)\)</li>
+      <li>Any deterministic even-number finder: \(\Omega(n)\) worst-case</li>
+    </ul>
+  </div>
+
+  <h3>Common Growth Rates (slowest to fastest)</h3>
+  <div class="symbol-grid">
+    <div class="sym-header">Notation</div><div class="sym-header">Name</div><div class="sym-header">Example (\(n=1000\))</div>
+    <div class="sym-cell">\(O(1)\)</div><div class="sym-cell">Constant</div><div class="sym-cell">1</div>
+    <div class="sym-cell">\(O(\log n)\)</div><div class="sym-cell">Logarithmic</div><div class="sym-cell">\(\approx 10\)</div>
+    <div class="sym-cell">\(O(n)\)</div><div class="sym-cell">Linear</div><div class="sym-cell">1,000</div>
+    <div class="sym-cell">\(O(n \log n)\)</div><div class="sym-cell">Linearithmic</div><div class="sym-cell">\(\approx 10{,}000\)</div>
+    <div class="sym-cell">\(O(n^2)\)</div><div class="sym-cell">Quadratic</div><div class="sym-cell">1,000,000</div>
+  </div>
+</section>
+
+<!-- LOGARITHMS -->
+<section class="section" id="sec-log">
+  <h2 class="section-title">Logarithms</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>\(\log_b(x) = y\) means \(b^y = x\). In this course:</p>
+    <ul>
+      <li>\(\ln x = \log_e x\) — natural logarithm (base \(e \approx 2.718\))</li>
+      <li>\(\log x\) — in CS typically means \(\log_2 x\); in analysis often \(\ln x\). The chapter uses both.</li>
+    </ul>
+    <p>Since all logarithms differ by a constant factor, \(O(\log n) = O(\ln n) = O(\log_2 n)\).</p>
+  </div>
+
+  <h3>Key Properties</h3>
+  <div class="symbol-grid">
+    <div class="sym-header">Rule</div><div class="sym-header">Formula</div><div class="sym-header">Example</div>
+    <div class="sym-cell">Product</div><div class="sym-cell">\(\ln(ab) = \ln a + \ln b\)</div><div class="sym-cell">\(\ln 6 = \ln 2 + \ln 3\)</div>
+    <div class="sym-cell">Quotient</div><div class="sym-cell">\(\ln(a/b) = \ln a - \ln b\)</div><div class="sym-cell">\(\ln(1/2) = -\ln 2\)</div>
+    <div class="sym-cell">Power</div><div class="sym-cell">\(\ln(a^k) = k \ln a\)</div><div class="sym-cell">\(\ln(n^2) = 2\ln n\)</div>
+    <div class="sym-cell">Derivative</div><div class="sym-cell">\(\frac{d}{dx}\ln x = \frac{1}{x}\)</div><div class="sym-cell">Used in QuickSort ODE proof</div>
+    <div class="sym-cell">Integral</div><div class="sym-cell">\(\int \frac{1}{x}dx = \ln x + C\)</div><div class="sym-cell">Used to solve \(F'(x)/x^2\)</div>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="ln(e^3) = 3 · ln(e) = 3 · 1 = 3. Using the power rule of logarithms." data-explanation-zh="ln(e³) = 3 · ln(e) = 3 · 1 = 3。利用对数的幂法则。">
+    <div class="qc-question">Quick Check: What is \(\ln(e^3)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(e^3\)</div>
+      <div class="qc-opt" data-idx="1">\(3e\)</div>
+      <div class="qc-opt" data-idx="2">\(3\)</div>
+      <div class="qc-opt" data-idx="3">\(1/3\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--                       PROBABILITY                             -->
+<!-- ============================================================ -->
+
+<!-- PROBABILITY BASICS -->
+<section class="section" id="sec-prob-basics">
+  <h2 class="section-title">Probability Basics</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Probability</div>
+    <p>A <strong>probability</strong> \(\Pr[E]\) (or \(\mathbb{P}[E]\)) is a number between 0 and 1 that describes how likely an event \(E\) is to occur:</p>
+    <ul>
+      <li>\(\Pr[E] = 0\) means the event never happens</li>
+      <li>\(\Pr[E] = 1\) means the event always happens</li>
+      <li>\(\Pr[\text{not } E] = 1 - \Pr[E]\) — the complement rule</li>
+    </ul>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">LaTeX</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(\Pr[E]\)</div><div class="sym-cell">\Pr[E]</div><div class="sym-cell">Probability of event \(E\)</div>
+    <div class="sym-cell">\(\Pr[A \mid B]\)</div><div class="sym-cell">\Pr[A \mid B]</div><div class="sym-cell">Probability of \(A\) given \(B\) has occurred</div>
+    <div class="sym-cell">\(\Pr[A \cap B]\)</div><div class="sym-cell">\Pr[A \cap B]</div><div class="sym-cell">Probability both \(A\) and \(B\) occur</div>
+    <div class="sym-cell">\(\Pr[A \cup B]\)</div><div class="sym-cell">\Pr[A \cup B]</div><div class="sym-cell">Probability at least one of \(A\), \(B\) occurs</div>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Chapter 1 usage</div>
+    <p>In the card deck problem: \(\Pr[X_i = X_{i+1}] = \frac{12}{51}\). This reads: "the probability that card \(i\) has the same suit as card \(i{+}1\) is \(12/51\)."</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="If Pr[rain] = 0.3, then Pr[no rain] = 1 - 0.3 = 0.7. This is the complement rule." data-explanation-zh="若 Pr[下雨] = 0.3，则 Pr[不下雨] = 1 - 0.3 = 0.7。这是补集法则。">
+    <div class="qc-question">Quick Check: If \(\Pr[\text{rain}] = 0.3\), what is \(\Pr[\text{no rain}]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(0.7\)</div>
+      <div class="qc-opt" data-idx="1">\(0.3\)</div>
+      <div class="qc-opt" data-idx="2">\(1.3\)</div>
+      <div class="qc-opt" data-idx="3">\(0\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- RANDOM VARIABLES -->
+<section class="section" id="sec-rv">
+  <h2 class="section-title">Random Variables</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>A <strong>random variable</strong> (r.v.) \(X\) is a numerical outcome of a random experiment. It maps each outcome of the experiment to a number.</p>
+    <ul>
+      <li><strong>Discrete:</strong> takes values in a countable set (e.g., \(\mathbb{N}\), \(\{0,1\}\)). Described by a <em>probability mass function</em> (PMF): \(p(k) = \Pr[X = k]\).</li>
+      <li><strong>Continuous:</strong> takes values in \(\mathbb{R}\) or an interval. Described by a <em>probability density function</em> (PDF) \(f(x)\) where \(\Pr[a \leq X \leq b] = \int_a^b f(x)\,dx\).</li>
+    </ul>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example</div>
+    <p>In the card deck problem, \(Y_i \in \{0, 1\}\) is a discrete random variable: it equals 1 if cards \(i\) and \(i{+}1\) have the same suit, and 0 otherwise.</p>
+  </div>
+</section>
+
+<!-- EXPECTATION -->
+<section class="section" id="sec-expectation">
+  <h2 class="section-title">Expectation (Expected Value)</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(\mathbb{E}[X]\)</div>
+    <p>The <strong>expected value</strong> (or <strong>mean</strong>) of a discrete random variable \(X\) is the weighted average of its possible values:</p>
+    <p>\[\mathbb{E}[X] = \sum_{x} x \cdot \Pr[X = x]\]</p>
+    <p>Think of it as the "long-run average" if you repeat the experiment many times.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">LaTeX</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(\mathbb{E}[X]\)</div><div class="sym-cell">\mathbb{E}[X]</div><div class="sym-cell">Expected value of \(X\)</div>
+    <div class="sym-cell">\(\mathbb{E}_R[\cdot]\)</div><div class="sym-cell">\mathbb{E}_R[\cdot]</div><div class="sym-cell">Expectation over the randomness in \(R\)</div>
+    <div class="sym-cell">\(\mathbb{E}[X^2]\)</div><div class="sym-cell">\mathbb{E}[X^2]</div><div class="sym-cell">Expected value of \(X\) squared (not \(\mathbb{E}[X]^2\)!)</div>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Fair Die</div>
+    <p>\(\mathbb{E}[X] = \sum_{k=1}^{6} k \cdot \frac{1}{6} = \frac{1+2+3+4+5+6}{6} = 3.5\)</p>
+    <p>You can never roll 3.5, but if you roll many times, the average converges to 3.5.</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Watch Out</div>
+    <p>Not every random variable has a well-defined expectation! The lecture notes give the example \(\Pr[X = k] = \frac{1}{C(1+k^2)}\) on \(\mathbb{Z}\), which has no expectation because the sum diverges.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="E[X] = 0·(1/4) + 1·(1/2) + 2·(1/4) = 0 + 1/2 + 1/2 = 1." data-explanation-zh="E[X] = 0·(1/4) + 1·(1/2) + 2·(1/4) = 0 + 1/2 + 1/2 = 1。">
+    <div class="qc-question">Quick Check: If \(\Pr[X=0]=1/4\), \(\Pr[X=1]=1/2\), \(\Pr[X=2]=1/4\), what is \(\mathbb{E}[X]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(0.5\)</div>
+      <div class="qc-opt" data-idx="1">\(1\)</div>
+      <div class="qc-opt" data-idx="2">\(1.5\)</div>
+      <div class="qc-opt" data-idx="3">\(0.75\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- LINEARITY OF EXPECTATION -->
+<section class="section" id="sec-linearity">
+  <h2 class="section-title">Linearity of Expectation</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Theorem — The Most Important Tool</div>
+    <p>For <strong>any</strong> random variables \(X\) and \(Y\) (independent or not!) and constants \(a, b \in \mathbb{R}\):</p>
+    <p>\[\mathbb{E}[aX + bY] = a\,\mathbb{E}[X] + b\,\mathbb{E}[Y]\]</p>
+    <p>This extends to any finite sum:</p>
+    <p>\[\mathbb{E}\!\left[\sum_{i=1}^n X_i\right] = \sum_{i=1}^n \mathbb{E}[X_i]\]</p>
+  </div>
+
+  <div class="callout">
+    <strong>Why is this so powerful?</strong> It lets us break a complicated random quantity into simple pieces. We don't need to know how the pieces relate to each other — even if they are dependent! Every major proof in Chapter 1 uses this.
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Card Deck</div>
+    <p>Total pairs \(Y = Y_1 + Y_2 + \cdots + Y_{51}\). The \(Y_i\) are <em>not</em> independent (if card 5 is a spade, that affects what card 6 can be). But linearity doesn't care:</p>
+    <p>\[\mathbb{E}[Y] = \sum_{i=1}^{51} \mathbb{E}[Y_i] = 51 \cdot \frac{12}{51} = 12\]</p>
+  </div>
+</section>
+
+<!-- VARIANCE -->
+<section class="section" id="sec-variance">
+  <h2 class="section-title">Variance</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(\text{Var}[X]\)</div>
+    <p>The <strong>variance</strong> measures how "spread out" a random variable is around its mean:</p>
+    <p>\[\text{Var}[X] = \mathbb{E}\!\left[(X - \mathbb{E}[X])^2\right]\]</p>
+    <p><strong>Shortcut formula</strong> (very useful):</p>
+    <p>\[\boxed{\text{Var}[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2}\]</p>
+  </div>
+
+  <h3>Properties of Variance</h3>
+  <div class="symbol-grid">
+    <div class="sym-header">Property</div><div class="sym-header">Formula</div><div class="sym-header">Note</div>
+    <div class="sym-cell">Non-negative</div><div class="sym-cell">\(\text{Var}[X] \geq 0\)</div><div class="sym-cell">Always!</div>
+    <div class="sym-cell">Scaling</div><div class="sym-cell">\(\text{Var}[aX] = a^2\,\text{Var}[X]\)</div><div class="sym-cell">Squared constant</div>
+    <div class="sym-cell">Shift</div><div class="sym-cell">\(\text{Var}[X + c] = \text{Var}[X]\)</div><div class="sym-cell">Adding a constant doesn't change spread</div>
+    <div class="sym-cell">Sum (indep.)</div><div class="sym-cell">\(\text{Var}\!\left[\sum_i X_i\right] = \sum_i \text{Var}[X_i]\)</div><div class="sym-cell">Requires pairwise independence!</div>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Key Difference from Expectation</div>
+    <p>Linearity of expectation works <em>without independence</em>. Variance of a sum equals the sum of variances <em>only</em> when the variables are (pairwise) independent. This distinction matters!</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="Var[X] = E[X²] - E[X]². E[X] = 0·(1/2)+1·(1/2) = 1/2. E[X²] = 0²·(1/2)+1²·(1/2) = 1/2. Var = 1/2 - 1/4 = 1/4." data-explanation-zh="Var[X] = E[X²] - E[X]²。E[X] = 0·(1/2)+1·(1/2) = 1/2。E[X²] = 0²·(1/2)+1²·(1/2) = 1/2。Var = 1/2 - 1/4 = 1/4。">
+    <div class="qc-question">Quick Check: If \(X \in \{0,1\}\) with \(\Pr[X=1] = 1/2\), what is \(\text{Var}[X]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(1/2\)</div>
+      <div class="qc-opt" data-idx="1">\(1\)</div>
+      <div class="qc-opt" data-idx="2">\(1/4\)</div>
+      <div class="qc-opt" data-idx="3">\(0\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- INDICATOR VARIABLES -->
+<section class="section" id="sec-indicator">
+  <h2 class="section-title">Indicator Random Variables</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(\mathbf{1}_E\)</div>
+    <p>For an event \(E\), the <strong>indicator</strong> random variable is:</p>
+    <p>\[\mathbf{1}_E = \begin{cases} 1 & \text{if } E \text{ occurs} \\ 0 & \text{otherwise}\end{cases}\]</p>
+    <p>Crucially: \(\mathbb{E}[\mathbf{1}_E] = 1 \cdot \Pr[E] + 0 \cdot \Pr[\text{not }E] = \Pr[E]\).</p>
+  </div>
+
+  <div class="callout">
+    <strong>The Recipe (used in almost every problem):</strong>
+    <ol>
+      <li>Decompose a count \(X\) as a sum of indicators: \(X = \sum_i \mathbf{1}_{E_i}\)</li>
+      <li>Compute each \(\mathbb{E}[\mathbf{1}_{E_i}] = \Pr[E_i]\) (usually easy for a single event)</li>
+      <li>Apply linearity: \(\mathbb{E}[X] = \sum_i \Pr[E_i]\)</li>
+    </ol>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Examples in Chapter 1</div>
+    <ul>
+      <li><strong>Card pairs:</strong> \(Y_i = \mathbf{1}\{X_i = X_{i+1}\}\) — is pair \(i\) same-suit?</li>
+      <li><strong>Fixed points:</strong> \(X_i = \mathbf{1}\{\pi(i) = i\}\) — is \(i\) a fixed point?</li>
+      <li><strong>QuickSort comparisons:</strong> \(X_{ij} = \mathbf{1}\{a_i \text{ and } a_j \text{ compared}\}\)</li>
+      <li><strong>Binary runs:</strong> \(Y_i = \mathbf{1}\{X_i = X_{i+1} = X_{i+2} = 1\}\)</li>
+      <li><strong>Cat edges:</strong> \(X_e = \mathbf{1}\{\text{edge } e \text{ has cat}\}\)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- INDEPENDENCE -->
+<section class="section" id="sec-independence">
+  <h2 class="section-title">Independence</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>Two events \(A\) and \(B\) are <strong>independent</strong> if:</p>
+    <p>\[\Pr[A \cap B] = \Pr[A] \cdot \Pr[B]\]</p>
+    <p>Random variables \(X\) and \(Y\) are <strong>independent</strong> if for all values \(x, y\):</p>
+    <p>\[\Pr[X = x \text{ and } Y = y] = \Pr[X = x] \cdot \Pr[Y = y]\]</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Mutual Independence</h3>
+      <p>\(X_1, \ldots, X_n\) are <strong>mutually independent</strong> if for every subset \(S\):</p>
+      <p>\[\Pr\!\left[\bigcap_{i \in S} \{X_i = x_i\}\right] = \prod_{i \in S} \Pr[X_i = x_i]\]</p>
+    </div>
+    <div class="col-card">
+      <h3>Pairwise Independence</h3>
+      <p>\(X_1, \ldots, X_n\) are <strong>pairwise independent</strong> if every pair \(X_i, X_j\) (\(i \neq j\)) is independent.</p>
+      <p>This is <em>weaker</em> than mutual independence but still enough for variance of sums!</p>
+    </div>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">When it Matters</div>
+    <ul>
+      <li><strong>Linearity of expectation:</strong> No independence needed.</li>
+      <li><strong>Variance of sums:</strong> Needs pairwise independence.</li>
+      <li><strong>Multiplying probabilities:</strong> \(\Pr[A \cap B] = \Pr[A]\Pr[B]\) only if independent.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--                      DISTRIBUTIONS                            -->
+<!-- ============================================================ -->
+
+<!-- BERNOULLI & BINOMIAL -->
+<section class="section" id="sec-bernoulli">
+  <h2 class="section-title">Bernoulli &amp; Binomial Distributions</h2>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Bernoulli(\(p\))</h3>
+      <div class="badge badge-green">Single trial</div>
+      <p>\(X \in \{0, 1\}\), \(\Pr[X = 1] = p\), \(\Pr[X = 0] = 1-p\).</p>
+      <ul>
+        <li>\(\mathbb{E}[X] = p\)</li>
+        <li>\(\text{Var}[X] = p(1-p)\)</li>
+        <li>Since \(X^2 = X\), we get \(\mathbb{E}[X^2] = p\)</li>
+        <li>Max variance: \(1/4\) at \(p = 1/2\)</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Binomial(\(n, p\))</h3>
+      <div class="badge badge-blue">\(n\) independent trials</div>
+      <p>\(X = \sum_{i=1}^n X_i\) where each \(X_i \sim \text{Bernoulli}(p)\), i.i.d.</p>
+      <p>\(\Pr[X = k] = \binom{n}{k} p^k (1-p)^{n-k}\)</p>
+      <ul>
+        <li>\(\mathbb{E}[X] = np\) (by linearity!)</li>
+        <li>\(\text{Var}[X] = np(1-p)\) (by independence)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">i.i.d. Explained</div>
+    <p><strong>i.i.d.</strong> stands for <strong>independent and identically distributed</strong>. It means each \(X_i\) has the same distribution, and knowing the value of one tells you nothing about the others.</p>
+  </div>
+</section>
+
+<!-- GEOMETRIC -->
+<section class="section" id="sec-geometric">
+  <h2 class="section-title">Geometric Distribution</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Geometric(\(q\))</div>
+    <p>The number of independent trials needed until the <strong>first success</strong>, where each trial succeeds with probability \(q\).</p>
+    <p>\[\Pr[X = k] = (1-q)^{k-1} \cdot q, \quad k = 1, 2, 3, \ldots\]</p>
+    <p>\[\mathbb{E}[X] = \frac{1}{q}\]</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Von Neumann Trick</div>
+    <p>In the biased-to-fair coin problem, each attempt succeeds with probability \(q = 2p(1-p)\). The number of attempts until success is Geometric(\(q\)), so the expected number of attempts is \(\frac{1}{2p(1-p)}\).</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-geo-mean">
+      <span class="toggle-icon">&#9654;</span> Why is \(\mathbb{E}[\text{Geometric}(q)] = 1/q\)?
+    </button>
+    <div class="proof-content" id="proof-geo-mean">
+      <p>We need: \(\displaystyle\sum_{k=1}^{\infty} k \cdot q(1-q)^{k-1} = \frac{1}{q}\), i.e., \(\displaystyle\sum_{k=0}^{\infty}(k+1)(1-q)^k = \frac{1}{q^2}\).</p>
+      <p>Recall the geometric series: \(f(x) = \displaystyle\sum_{k=0}^{\infty} x^k = \frac{1}{1-x}\) for \(|x| < 1\).</p>
+      <p>Differentiate: \(f'(x) = \displaystyle\sum_{k=1}^{\infty} k\,x^{k-1} = \sum_{k=0}^{\infty}(k+1)x^k = \frac{1}{(1-x)^2}\).</p>
+      <p>Set \(x = 1-q\): \(\displaystyle\sum_{k=0}^{\infty}(k+1)(1-q)^k = \frac{1}{q^2}\). Multiply by \(q\) to get \(\frac{1}{q}\). \(\blacksquare\)</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="Geometric distribution with q = 1/6. Expected attempts = 1/q = 1/(1/6) = 6." data-explanation-zh="几何分布，q = 1/6。期望尝试次数 = 1/q = 1/(1/6) = 6。">
+    <div class="qc-question">Quick Check: How many times do you expect to roll a fair die before getting a 6?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(3\)</div>
+      <div class="qc-opt" data-idx="1">\(6\)</div>
+      <div class="qc-opt" data-idx="2">\(36\)</div>
+      <div class="qc-opt" data-idx="3">\(5\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--                         TOOLS                                 -->
+<!-- ============================================================ -->
+
+<!-- TAIL-SUM -->
+<section class="section" id="sec-tailsum">
+  <h2 class="section-title">Tail-Sum Formula</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Theorem</div>
+    <p>If \(X\) takes values in \(\mathbb{N} = \{0, 1, 2, \ldots\}\) and \(\mathbb{E}[X]\) is finite:</p>
+    <p>\[\mathbb{E}[X] = \sum_{n=1}^{\infty} \Pr[X \geq n]\]</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Memory Trick</div>
+    <p>The sum starts at \(n = 1\), <em>not</em> \(n = 0\). Check: if \(X = 0\) always, then \(\mathbb{E}[X] = 0\). But \(\Pr[X \geq 0] = 1 \neq 0\), so we must skip \(n = 0\).</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Why it's useful</div>
+    <p>Sometimes computing \(\Pr[X \geq n]\) is easier than computing \(\Pr[X = n]\). This formula lets you switch between the two approaches for computing expectation.</p>
+  </div>
+</section>
+
+<!-- HARMONIC NUMBERS -->
+<section class="section" id="sec-harmonic">
+  <h2 class="section-title">Harmonic Numbers</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(H_n\)</div>
+    <p>The \(n\)-th <strong>Harmonic number</strong> is:</p>
+    <p>\[H_n = \sum_{k=1}^{n} \frac{1}{k} = 1 + \frac{1}{2} + \frac{1}{3} + \cdots + \frac{1}{n}\]</p>
+  </div>
+
+  <h3>Key Bounds</h3>
+  <div class="def-box">
+    <div class="def-label">Fact</div>
+    <p>\[\ln n \leq H_n \leq \ln n + 1\]</p>
+    <p>More precisely, \(H_n = \ln n + \gamma + O(1/n)\) where \(\gamma \approx 0.5772\) is the Euler-Mascheroni constant. So \(H_n = \Theta(\log n)\).</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Where they appear in Chapter 1</div>
+    <ul>
+      <li><strong>QuickSort comparisons:</strong> \(C(n) = 2\sum_{i=1}^{n-1}(H_{n-i+1} - 1) \leq 2n\ln n\)</li>
+      <li><strong>Prefix-maxima:</strong> \(\mathbb{E}[\text{pf}(B)] = H_n = O(\log n)\)</li>
+    </ul>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="H_4 = 1 + 1/2 + 1/3 + 1/4 = 12/12 + 6/12 + 4/12 + 3/12 = 25/12." data-explanation-zh="H_4 = 1 + 1/2 + 1/3 + 1/4 = 12/12 + 6/12 + 4/12 + 3/12 = 25/12。">
+    <div class="qc-question">Quick Check: What is \(H_4 = 1 + \frac{1}{2} + \frac{1}{3} + \frac{1}{4}\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\frac{10}{4}\)</div>
+      <div class="qc-opt" data-idx="1">\(2\)</div>
+      <div class="qc-opt" data-idx="2">\(\frac{25}{12}\)</div>
+      <div class="qc-opt" data-idx="3">\(\frac{12}{7}\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- JENSEN'S INEQUALITY -->
+<section class="section" id="sec-jensen">
+  <h2 class="section-title">Jensen's Inequality</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Convex Function</div>
+    <p>A function \(f: \mathbb{R} \to \mathbb{R}\) is <strong>convex</strong> if for all \(x, y\) and \(\lambda \in [0,1]\):</p>
+    <p>\[f(\lambda x + (1-\lambda)y) \leq \lambda f(x) + (1-\lambda) f(y)\]</p>
+    <p>Visually: the function curves <em>upward</em>. Examples: \(x^2\), \(e^x\), \(|x|\). A function is <strong>concave</strong> if \(-f\) is convex (curves downward): e.g., \(\ln x\), \(\sqrt{x}\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Jensen's Inequality</div>
+    <p>If \(f\) is convex: \(\quad f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]\)</p>
+    <p>If \(f\) is concave: \(\quad f(\mathbb{E}[X]) \geq \mathbb{E}[f(X)]\)</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Sanity Check</div>
+    <p>Take \(f(x) = x^2\) (convex). Jensen says \(\mathbb{E}[X]^2 \leq \mathbb{E}[X^2]\). But \(\text{Var}[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2 \geq 0\), which is exactly this! Consistent.</p>
+  </div>
+</section>
+
+<!-- PERMUTATIONS -->
+<section class="section" id="sec-permutations">
+  <h2 class="section-title">Permutations &amp; Fixed Points</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Permutation</div>
+    <p>A <strong>permutation</strong> of \(\{1, 2, \ldots, n\}\) is a rearrangement: a bijection \(\pi: \{1,\ldots,n\} \to \{1,\ldots,n\}\). There are \(n!\) permutations of \(n\) elements.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Fixed Point</div>
+    <p>An integer \(i\) is a <strong>fixed point</strong> of permutation \(\pi\) if \(\pi(i) = i\) — the element stays in its original position.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">LaTeX</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(\pi\)</div><div class="sym-cell">\pi</div><div class="sym-cell">A permutation function</div>
+    <div class="sym-cell">\(n!\)</div><div class="sym-cell">n!</div><div class="sym-cell">Factorial: \(n! = n \cdot (n-1) \cdots 2 \cdot 1\)</div>
+    <div class="sym-cell">\(\binom{n}{k}\)</div><div class="sym-cell">\binom{n}{k}</div><div class="sym-cell">Binomial coefficient: \(\frac{n!}{k!(n-k)!}\), "n choose k"</div>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Remarkable Result</div>
+    <p>The expected number of fixed points of a <em>uniformly random</em> permutation is exactly 1, regardless of \(n\). And the variance is also 1!</p>
+  </div>
+</section>
+
+<!-- RECURRENCES & ODEs -->
+<section class="section" id="sec-recurrence">
+  <h2 class="section-title">Recurrences &amp; Differential Equations</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Recurrence Relation</div>
+    <p>A <strong>recurrence relation</strong> defines \(T(n)\) in terms of smaller values. Example from QuickSort:</p>
+    <p>\[T(n) = cn + \frac{2}{n}\sum_{k=0}^{n-1} T(k)\]</p>
+    <p>To solve it, we can convert to a <strong>differential equation</strong>.</p>
+  </div>
+
+  <h3>The ODE Approach (used in QuickSort proof)</h3>
+
+  <div class="def-box">
+    <div class="def-label">Key Idea</div>
+    <p>Replace the discrete recurrence with a continuous version using Fact: for non-decreasing \(f\):</p>
+    <p>\[\int_0^n f(x)\,dx \leq \sum_{k=0}^{n} f(k) \leq \int_1^{n+1} f(x)\,dx\]</p>
+    <p>The continuous version \(T(x) = cx + \frac{2}{x}\int_0^x T(u)\,du\) leads to the ODE \(F'(x) = cx + \frac{2}{x}F(x)\), which is solvable in closed form.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">LaTeX</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(\int_a^b\)</div><div class="sym-cell">\int_a^b</div><div class="sym-cell">Definite integral from \(a\) to \(b\)</div>
+    <div class="sym-cell">\(F'(x)\)</div><div class="sym-cell">F'(x)</div><div class="sym-cell">Derivative of \(F\) with respect to \(x\)</div>
+    <div class="sym-cell">\(\frac{d}{dx}\)</div><div class="sym-cell">\frac{d}{dx}</div><div class="sym-cell">Differentiation operator</div>
+    <div class="sym-cell">\(\oplus\)</div><div class="sym-cell">\oplus</div><div class="sym-cell">XOR (exclusive or): sum modulo 2</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!--                        MATH QUIZ                              -->
+<!-- ============================================================ -->
+
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=1" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div><!-- /math-content -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: "\\[", right: "\\]", display: true},
+          {left: "\\(", right: "\\)", display: false}
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="chapter1-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

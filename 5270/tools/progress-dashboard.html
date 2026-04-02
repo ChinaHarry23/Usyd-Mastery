@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress Dashboard — COMPX270</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117; --bg-card: #181b24; --bg-sidebar: #13151d; --border: #2a2e3a;
+  --text: #e4e6ed; --text-muted: #9299ac; --text-dim: #6b7280;
+  --accent: #6c8cff; --accent-glow: rgba(108,140,255,0.08);
+  --green: #34d399; --green-bg: rgba(52,211,153,0.08);
+  --red: #f87171; --red-bg: rgba(248,113,113,0.08);
+  --yellow: #fbbf24; --yellow-bg: rgba(251,191,36,0.08);
+  --purple: #a78bfa; --orange: #fb923c; --cyan: #22d3ee;
+  --font: 'Inter', -apple-system, sans-serif;
+  --radius: 12px; --radius-sm: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.top-bar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 1rem; padding: 0.65rem 1.5rem;
+  background: rgba(15,17,23,0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.top-bar a { color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: color 0.2s; }
+.top-bar a:hover { color: #93b4ff; }
+.top-bar .title { font-size: 1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+.top-bar .spacer { flex: 1; }
+#langToggle {
+  background: var(--bg-card); border: 1px solid var(--accent); color: var(--accent);
+  font-size: 0.82rem; font-weight: 600; padding: 0.35rem 0.9rem; border-radius: 16px;
+  cursor: pointer; font-family: var(--font); transition: all 0.2s;
+}
+#langToggle:hover { background: var(--accent); color: #fff; }
+
+.dashboard { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem; text-align: center; transition: border-color 0.3s;
+}
+.stat-card:hover { border-color: var(--accent); }
+.stat-card .icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+.stat-card .value { font-size: 2rem; font-weight: 800; line-height: 1.2; }
+.stat-card .label { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.section-title { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 1rem; display: flex; align-items: center; gap: 0.5rem; }
+.section-title .sec-icon { font-size: 1.2rem; }
+
+.ring-container { display: flex; justify-content: center; margin: 1rem 0; }
+.ring-svg { width: 160px; height: 160px; }
+.ring-bg { fill: none; stroke: var(--border); stroke-width: 12; }
+.ring-fill { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.ring-text { font-family: var(--font); font-weight: 800; fill: var(--text); }
+.ring-label { font-family: var(--font); font-size: 12px; fill: var(--text-dim); }
+
+.chapters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.ch-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem; transition: border-color 0.3s; cursor: pointer; text-decoration: none; color: inherit;
+}
+.ch-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.ch-card .ch-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+.ch-card .ch-num { font-size: 0.7rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+.ch-card .ch-pct { font-size: 1.2rem; font-weight: 800; }
+.ch-card .ch-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; line-height: 1.3; }
+
+.mini-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem; }
+.mini-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+.detail-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim); padding: 0.15rem 0; }
+.detail-row .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.4rem; vertical-align: middle; }
+
+.quiz-history { margin-top: 2rem; }
+.quiz-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.quiz-table th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--border); color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.quiz-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+.quiz-table tr:hover td { background: rgba(108,140,255,0.03); }
+.score-badge { padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 600; font-size: 0.78rem; }
+.score-good { background: var(--green-bg); color: var(--green); }
+.score-ok { background: var(--yellow-bg); color: var(--yellow); }
+.score-bad { background: var(--red-bg); color: var(--red); }
+
+.actions { display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap; }
+.action-btn {
+  padding: 0.6rem 1.5rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
+  border: 1px solid var(--border); background: var(--bg-card); color: var(--text-muted);
+  cursor: pointer; font-family: var(--font); transition: all 0.2s;
+}
+.action-btn:hover { border-color: var(--accent); color: var(--accent); }
+.action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+@media (max-width: 600px) {
+  .overview-grid { grid-template-columns: repeat(2, 1fr); }
+  .chapters-grid { grid-template-columns: 1fr; }
+}
+
+.flash-schedule {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem; margin-bottom: 1.5rem;
+}
+.flash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.flash-stat {
+  background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0.75rem 0.9rem; text-align: center;
+}
+.flash-stat .v { font-size: 1.35rem; font-weight: 800; color: var(--accent); }
+.flash-stat .v.warn { color: var(--yellow); }
+.flash-stat .v.danger { color: var(--red); }
+.flash-stat .k { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+.flash-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.5rem; }
+.flash-table th { text-align: left; padding: 0.45rem 0.5rem; color: var(--text-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+.flash-table td { padding: 0.5rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.flash-table tr:hover td { background: rgba(108,140,255,0.03); }
+.flash-ch-pill { display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 6px; margin: 0.1rem 0.2rem 0 0; background: rgba(108,140,255,0.12); color: var(--accent); }
+.flash-hint { font-size: 0.78rem; color: var(--text-dim); line-height: 1.45; margin-top: 0.75rem; }
+.flash-schedule a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.flash-schedule a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="../index.html">&#x1F3E0; Home</a>
+  <a href="knowledge-graph.html">&#x1F578; Knowledge Graph</a>
+  <a href="quiz-hub.html">&#x1F4DD; Quiz Hub</a>
+  <a href="flashcards.html">&#x1F4E6; Flashcards</a>
+  <span class="title">&#x1F4CA; Progress Dashboard</span>
+  <span class="spacer"></span>
+  <button id="langToggle">中文</button>
+</div>
+
+<div class="dashboard">
+
+  <!-- Overall Ring + Stats -->
+  <div class="overview-grid" id="overviewGrid">
+    <div class="stat-card" style="grid-row: span 2;">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 160 160">
+          <circle class="ring-bg" cx="80" cy="80" r="65"/>
+          <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="65"
+            stroke="var(--accent)" stroke-dasharray="408.4" stroke-dashoffset="408.4"
+            transform="rotate(-90 80 80)"/>
+          <text class="ring-text" x="80" y="76" text-anchor="middle" font-size="28" id="ringPct">0%</text>
+          <text class="ring-label" x="80" y="96" text-anchor="middle" id="ringLabel">Overall</text>
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">&#x1F4D6;</div>
+      <div class="value" id="statSections" style="color:var(--accent);">0</div>
+      <div class="label" id="lbl-sections">Sections Visited</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">&#x2705;</div>
+      <div class="value" id="statQuizzes" style="color:var(--green);">0</div>
+      <div class="label" id="lbl-quizzes">Quiz Attempts</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">&#x1F3AF;</div>
+      <div class="value" id="statAvgScore" style="color:var(--yellow);">—</div>
+      <div class="label" id="lbl-avg">Avg Quiz Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">&#x26A1;</div>
+      <div class="value" id="statQuickChecks" style="color:var(--purple);">0</div>
+      <div class="label" id="lbl-qc">Quick Checks Done</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">&#x1F9E9;</div>
+      <div class="value" id="statTutorials" style="color:var(--cyan);">0</div>
+      <div class="label" id="lbl-tutorials">Tutorial Self-Checks</div>
+    </div>
+  </div>
+  <p id="weightHint" style="font-size:0.78rem; color:var(--text-dim); text-align:center; margin:-0.5rem 0 1.25rem; line-height:1.45; max-width:720px; margin-left:auto; margin-right:auto;">Overall score: 20% sections read + 25% math quick checks + 25% chapter quiz best + 30% tutorial self-checks (after each solution; each chapter capped at 100%).</p>
+
+  <!-- Flashcard review schedule (SRS) -->
+  <div class="section-title"><span class="sec-icon">&#x1F4E6;</span> <span id="title-flash">Flashcard review schedule</span></div>
+  <div class="flash-schedule" id="flashSchedule">
+    <div class="flash-stats" id="flashStats"></div>
+    <div style="overflow-x:auto;">
+      <table class="flash-table" id="flashTable">
+        <thead><tr>
+          <th id="th-fl-date">When</th>
+          <th id="th-fl-n">Cards</th>
+          <th id="th-fl-ch">Chapters (preview)</th>
+        </tr></thead>
+        <tbody id="flashBody"></tbody>
+      </table>
+    </div>
+    <p class="flash-hint" id="flashHint">Ratings (Again / Hard / Good / Easy) set the next review time using a spaced-repetition curve. Open Flashcards to study due and new cards.</p>
+  </div>
+
+  <!-- Chapter Progress -->
+  <div class="section-title"><span class="sec-icon">&#x1F4DA;</span> <span id="title-chapters">Chapter Progress</span></div>
+  <div class="chapters-grid" id="chaptersGrid"></div>
+
+  <!-- Quiz History -->
+  <div class="section-title" style="margin-top:2.5rem;"><span class="sec-icon">&#x1F4CB;</span> <span id="title-history">Quiz History</span></div>
+  <div style="overflow-x:auto;">
+    <table class="quiz-table">
+      <thead>
+        <tr>
+          <th id="th-date">Date</th>
+          <th id="th-scope">Scope</th>
+          <th id="th-questions">Questions</th>
+          <th id="th-score">Score</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody">
+        <tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:2rem;" id="no-history">No quiz attempts yet. Try the <a href="quiz-hub.html" style="color:var(--accent);">Quiz Hub</a>!</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Flashcard session history -->
+  <div class="section-title" style="margin-top:2.5rem;"><span class="sec-icon">&#x1F4E6;</span> <span id="title-fc-history">Flashcard sessions</span></div>
+  <div style="overflow-x:auto;">
+    <table class="quiz-table">
+      <thead>
+        <tr>
+          <th id="th-fch-date">Date</th>
+          <th id="th-fch-scope">Scope</th>
+          <th id="th-fch-cards">Cards rated</th>
+          <th id="th-fch-done">Completed</th>
+        </tr>
+      </thead>
+      <tbody id="fcHistoryBody">
+        <tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:2rem;" id="no-fc-history">No flashcard sessions yet.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="action-btn" onclick="location.href='quiz-hub.html'" id="btn-start-quiz">&#x1F4DD; Start a Quiz</button>
+    <button class="action-btn" onclick="location.href='flashcards.html'" id="btn-open-fc">&#x1F4E6; Open Flashcards</button>
+    <button class="action-btn danger" id="btn-reset">&#x1F5D1; Reset All Progress</button>
+  </div>
+
+</div>
+
+<script src="../data/flashcard-data.js"></script>
+<script>
+(function() {
+"use strict";
+
+var LANG_KEY = "compx270_lang";
+var PROGRESS_KEY = "compx270_progress";
+var FC_KEY = "compx270_flashcards";
+var FC_DECK_VERSION = typeof FLASHCARD_DECK_VERSION !== "undefined" ? FLASHCARD_DECK_VERSION : "sg1";
+var lang = localStorage.getItem(LANG_KEY) || "en";
+var btn = document.getElementById("langToggle");
+
+var CHNAMES = {
+  1: "Randomness, Probability & Algorithms",
+  2: "Concentration Bounds & Tricks",
+  3: "Balls in Bins",
+  4: "Derandomisation",
+  5: "Graph Algorithms",
+  6: "Hashing and Friends",
+  7: "Nearest Neighbours & Dim. Reduction",
+  8: "Streaming & Sketching I",
+  9: "Streaming & Sketching II",
+  10: "LP & Randomised Rounding",
+  11: "Learning & Testing Distributions",
+  12: "Learning from Experts"
+};
+var CHNAMES_ZH = {
+  1: "\u968f\u673a\u6027\u3001\u6982\u7387\u4e0e\u7b97\u6cd5",
+  2: "\u96c6\u4e2d\u4e0d\u7b49\u5f0f\u4e0e\u6280\u5de7",
+  3: "\u7403\u5165\u7bb1\u6a21\u578b",
+  4: "\u53bb\u968f\u673a\u5316",
+  5: "\u56fe\u7b97\u6cd5",
+  6: "\u54c8\u5e0c\u4e0e\u76f8\u5173\u6280\u672f",
+  7: "\u6700\u8fd1\u90bb\u4e0e\u964d\u7ef4",
+  8: "\u6d41\u7b97\u6cd5\u4e0e\u8349\u56fe I",
+  9: "\u6d41\u7b97\u6cd5\u4e0e\u8349\u56fe II",
+  10: "\u7ebf\u6027\u89c4\u5212\u4e0e\u968f\u673a\u820d\u5165",
+  11: "\u5206\u5e03\u5b66\u4e60\u4e0e\u68c0\u9a8c",
+  12: "\u5411\u4e13\u5bb6\u5b66\u4e60"
+};
+
+var CHCOLORS = {
+  1:"#6c8cff", 2:"#34d399", 3:"#fbbf24", 4:"#a78bfa", 5:"#f87171", 6:"#f472b6",
+  7:"#38bdf8", 8:"#fb923c", 9:"#14b8a6", 10:"#e879f9", 11:"#22d3ee", 12:"#f97316"
+};
+
+/* Counted from chapterN-study.html: sections with data-track= (includes hero) */
+var TOTAL_SECTIONS = { 1:8, 2:10, 3:7, 4:7, 5:7, 6:9, 7:8, 8:8, 9:9, 10:8, 11:12, 12:10 };
+/* Counted from chapterN-math.html: div.quick-check */
+var TOTAL_QC = { 1:7, 2:7, 3:5, 4:4, 5:4, 6:6, 7:5, 8:6, 9:6, 10:3, 11:6, 12:6 };
+/* Counted from chapterN-study.html: .solution-toggle */
+var TOTAL_TUTORIAL = { 1:10, 2:11, 3:10, 4:8, 5:7, 6:7, 7:7, 8:8, 9:7, 10:7, 11:8, 12:6 };
+
+function countTutorialUnderstood(p, ck) {
+  var t = p[ck] && p[ck].tutorials;
+  if (!t || typeof t !== "object") return 0;
+  var n = 0;
+  for (var k in t) {
+    if (Object.prototype.hasOwnProperty.call(t, k) && t[k] === true) n++;
+  }
+  return n;
+}
+
+/** 0–1: 20% sections + 25% quick checks + 25% quiz best + 30% tutorials (missing quiz = 0 for that slice). */
+function weightedChapterPct(sv, st, qcd, qct, quizBestPct, tuDone, tuTotal) {
+  var secR = st > 0 ? Math.min(1, sv / st) : 0;
+  var qcR = qct > 0 ? Math.min(1, qcd / qct) : 0;
+  var qzR = quizBestPct != null && quizBestPct >= 0 ? Math.min(1, quizBestPct / 100) : 0;
+  var tutR = tuTotal > 0 ? Math.min(1, tuDone / tuTotal) : 0;
+  return 0.2 * secR + 0.25 * qcR + 0.25 * qzR + 0.3 * tutR;
+}
+
+var T_ZH = {
+  "lbl-sections": "\u5df2\u8bbf\u95ee\u7ae0\u8282", "lbl-quizzes": "\u6d4b\u9a8c\u6b21\u6570",
+  "lbl-avg": "\u5e73\u5747\u6d4b\u9a8c\u5206\u6570", "lbl-qc": "\u5feb\u901f\u68c0\u67e5\u5b8c\u6210",
+  "lbl-tutorials": "\u6559\u7a0b\u9898\u81ea\u8bc4\uff08\u7406\u89e3\u89e3\u7b54\uff09",
+  "title-chapters": "\u7ae0\u8282\u8fdb\u5ea6", "title-history": "\u6d4b\u9a8c\u5386\u53f2",
+  "th-date": "\u65e5\u671f", "th-scope": "\u8303\u56f4", "th-questions": "\u9898\u6570", "th-score": "\u5f97\u5206",
+  "no-history": "\u8fd8\u6ca1\u6709\u6d4b\u9a8c\u8bb0\u5f55\u3002\u8bd5\u8bd5<a href=\"quiz-hub.html\" style=\"color:var(--accent);\">\u6d4b\u9a8c\u4e2d\u5fc3</a>\uff01",
+  "btn-start-quiz": "&#x1F4DD; \u5f00\u59cb\u6d4b\u9a8c", "btn-reset": "&#x1F5D1; \u91cd\u7f6e\u6240\u6709\u8fdb\u5ea6",
+  "sections": "\u7ae0\u8282", "quizScore": "\u6d4b\u9a8c", "quickChecks": "\u5feb\u901f\u68c0\u67e5",
+  "tutorials": "\u6559\u7a0b\u9898",
+  "weightHint": "\u603b\u5206\uff1a\u7ae0\u8282\u9605\u8bfb 20% + \u6570\u5b66\u5feb\u901f\u68c0\u67e5 25% + \u7ae0\u8282\u6d4b\u9a8c\u6700\u9ad8\u5206 25% + \u6559\u7a0b\u9898\u81ea\u8bc4 30%\uff08\u6bcf\u9053\u9898\u67e5\u770b\u89e3\u7b54\u540e\u786e\u8ba4\uff1b\u6bcf\u7ae0\u4e0a\u9650 100%\uff09\u3002",
+  "title-flash": "\u95ea\u5361\u590d\u4e60\u5b89\u6392",
+  "th-fl-date": "\u65f6\u95f4",
+  "th-fl-n": "\u5361\u7247\u6570",
+  "th-fl-ch": "\u7ae0\u8282\uff08\u9884\u89c8\uff09",
+  "flashHint": "\u81ea\u8bc4\uff08\u91cd\u6765/\u5403\u529b/\u4e00\u822c/\u7b80\u5355\uff09\u4f1a\u6309\u95f4\u9694\u91cd\u590d\u66f2\u7ebf\u6392\u671f\u3002\u6253\u5f00\u95ea\u5361\u9875\u5b66\u4e60\u5df2\u5230\u671f\u4e0e\u65b0\u5361\u3002",
+  "flash-due-now": "\u5df2\u5230\u671f",
+  "flash-later-today": "\u4eca\u65e5\u5185\u5f85\u5230",
+  "flash-new": "\u672a\u5b66\u8fc7\uff08\u65b0\u5361\uff09",
+  "flash-upcoming": "\u672a\u6765 14 \u5929",
+  "flash-when-now": "\u73b0\u5728",
+  "flash-empty": "\u6682\u65e0\u6392\u671f\u6570\u636e\u3002\u5728\u95ea\u5361\u9875\u5b66\u4e60\u540e\u6b64\u5904\u4f1a\u663e\u793a\u4e0b\u6b21\u590d\u4e60\u65f6\u95f4\u3002",
+  "btn-open-fc": "\uD83D\uDCE6 \u6253\u5f00\u95ea\u5361",
+  "title-fc-history": "\u95ea\u5361\u5b66\u4e60\u8bb0\u5f55",
+  "th-fch-date": "\u65e5\u671f",
+  "th-fch-scope": "\u8303\u56f4",
+  "th-fch-cards": "\u5df2\u8bc4\u5206\u5361\u7247",
+  "th-fch-done": "\u5b8c\u6210",
+  "no-fc-history": "\u6682\u65e0\u95ea\u5361\u8bb0\u5f55\u3002\u4ece\u7ae0\u8282\u5b66\u4e60\u6307\u5357\u6216\u95ea\u5361\u9875\u5f00\u59cb\u5373\u53ef\u3002"
+};
+
+function applyLang() {
+  if (btn) btn.textContent = lang === "en" ? "\u4e2d\u6587" : "EN";
+  Object.keys(T_ZH).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (!el.dataset.en) el.dataset.en = el.innerHTML;
+    el.innerHTML = lang === "zh" ? T_ZH[id] : el.dataset.en;
+  });
+}
+
+if (btn) {
+  btn.addEventListener("click", function() {
+    lang = lang === "en" ? "zh" : "en";
+    localStorage.setItem(LANG_KEY, lang);
+    render();
+  });
+}
+
+function getProgress() {
+  try {
+    var raw = localStorage.getItem(PROGRESS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function saveProgress(p) {
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+}
+
+function getStartOfDay(ts) {
+  var d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function getEndOfDay(ts) {
+  var d = new Date(ts);
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
+function loadFlashcardStorage() {
+  try {
+    var raw = localStorage.getItem(FC_KEY);
+    if (!raw) return { v: 1, cards: {} };
+    var o = JSON.parse(raw);
+    if (!o || typeof o.cards !== "object") return { v: 1, cards: {} };
+    if (o.deckVersion !== FC_DECK_VERSION) return { v: 1, cards: {} };
+    return o;
+  } catch (e) {
+    return { v: 1, cards: {} };
+  }
+}
+
+function formatFlashDate(ts) {
+  var d = new Date(ts);
+  try {
+    return d.toLocaleDateString(lang === "zh" ? "zh-CN" : undefined, { weekday: "short", month: "short", day: "numeric" });
+  } catch (e) {
+    return (d.getMonth() + 1) + "/" + d.getDate();
+  }
+}
+
+function topChaptersFromMap(byCh, max) {
+  var arr = [];
+  for (var ch in byCh) {
+    if (Object.prototype.hasOwnProperty.call(byCh, ch)) arr.push({ ch: parseInt(ch, 10), n: byCh[ch] });
+  }
+  arr.sort(function(a, b) { return b.n - a.n; });
+  return arr.slice(0, max);
+}
+
+function renderFlashcardSchedule() {
+  var statsEl = document.getElementById("flashStats");
+  var tbody = document.getElementById("flashBody");
+  if (!statsEl || !tbody) return;
+
+  var L = {
+    due: lang === "zh" ? T_ZH["flash-due-now"] : "Due now",
+    later: lang === "zh" ? T_ZH["flash-later-today"] : "Due later today",
+    newc: lang === "zh" ? T_ZH["flash-new"] : "New (never studied)",
+    up: lang === "zh" ? T_ZH["flash-upcoming"] : "Scheduled (next 14 days)",
+    whenNow: lang === "zh" ? T_ZH["flash-when-now"] : "Now",
+    allCh: lang === "zh" ? "\u5168\u90e8\u7ae0\u8282" : "Mixed",
+    todayRest: lang === "zh" ? "\u4eca\u65e5\u4f59\u4e0b\u65f6\u95f4" : "Later today",
+    dash: "\u2014"
+  };
+
+  if (!window.ALL_FLASHCARD_DATA || !ALL_FLASHCARD_DATA.length) {
+    statsEl.innerHTML = "";
+    tbody.innerHTML = "<tr><td colspan=\"3\" style=\"color:var(--text-dim);padding:0.75rem;\">" + (lang === "zh" ? T_ZH["flash-empty"] : "Load study-guide flashcard data to see stats.") + "</td></tr>";
+    return;
+  }
+
+  var cards = loadFlashcardStorage().cards || {};
+  var now = Date.now();
+  var sod = getStartOfDay(now);
+  var eod = getEndOfDay(now);
+
+  var overdue = 0, laterToday = 0, newCount = 0;
+  var overdueByCh = {};
+  var futureBuckets = {};
+
+  for (var i = 0; i < ALL_FLASHCARD_DATA.length; i++) {
+    var ch = ALL_FLASHCARD_DATA[i].ch;
+    var st = cards[String(i)];
+    if (!st) {
+      newCount++;
+      continue;
+    }
+    var nd = st.nextDue;
+    if (nd == null) continue;
+    if (nd <= now) {
+      overdue++;
+      overdueByCh[ch] = (overdueByCh[ch] || 0) + 1;
+    } else if (nd <= eod) laterToday++;
+    else {
+      var dayStart = getStartOfDay(nd);
+      if (!futureBuckets[dayStart]) futureBuckets[dayStart] = { n: 0, byCh: {} };
+      futureBuckets[dayStart].n++;
+      futureBuckets[dayStart].byCh[ch] = (futureBuckets[dayStart].byCh[ch] || 0) + 1;
+    }
+  }
+
+  var futureSum = 0;
+  for (var t = sod + 86400000; t < sod + 15 * 86400000; t += 86400000) {
+    if (futureBuckets[t]) futureSum += futureBuckets[t].n;
+  }
+
+  statsEl.innerHTML =
+    '<div class="flash-stat"><div class="v' + (overdue > 0 ? " danger" : "") + '">' + overdue + '</div><div class="k">' + L.due + '</div></div>' +
+    '<div class="flash-stat"><div class="v' + (laterToday > 0 ? " warn" : "") + '">' + laterToday + '</div><div class="k">' + L.later + '</div></div>' +
+    '<div class="flash-stat"><div class="v">' + newCount + '</div><div class="k">' + L.newc + '</div></div>' +
+    '<div class="flash-stat"><div class="v">' + futureSum + '</div><div class="k">' + L.up + '</div></div>';
+
+  tbody.innerHTML = "";
+  var any = overdue > 0 || laterToday > 0 || futureSum > 0;
+  if (!any && newCount === 0) {
+    tbody.innerHTML = "<tr><td colspan=\"3\" style=\"color:var(--text-dim);padding:0.75rem;\">" + (lang === "zh" ? T_ZH["flash-empty"] : "No scheduling yet. Study flashcards to build a review curve.") + "</td></tr>";
+    return;
+  }
+  if (!any && newCount > 0) {
+    tbody.innerHTML = "<tr><td colspan=\"3\" style=\"color:var(--text-dim);padding:0.75rem;\">" + (lang === "zh" ? "\u4ec5\u6709\u65b0\u5361\u672a\u5b66\u3002\u8bf7\u6253\u5f00\u95ea\u5361\u5f00\u59cb\u5b66\u4e60\u3002" : "Only new cards (never studied). Open Flashcards to start learning.") + "</td></tr>";
+    return;
+  }
+
+  if (overdue > 0) {
+    var topO = topChaptersFromMap(overdueByCh, 8);
+    var pillsO = topO.map(function(p) {
+      return '<span class="flash-ch-pill">Ch ' + p.ch + ": " + p.n + "</span>";
+    }).join("");
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td><strong>" + L.whenNow + "</strong></td><td>" + overdue + "</td><td>" + pillsO + "</td>";
+    tbody.appendChild(tr);
+  }
+
+  if (laterToday > 0) {
+    var tr2 = document.createElement("tr");
+    tr2.innerHTML = "<td>" + L.todayRest + "</td><td>" + laterToday + "</td><td>" + L.dash + "</td>";
+    tbody.appendChild(tr2);
+  }
+
+  for (var day = 1; day <= 14; day++) {
+    var cursor = sod + day * 86400000;
+    var b = futureBuckets[cursor];
+    if (!b || !b.n) continue;
+    var topF = topChaptersFromMap(b.byCh, 6);
+    var pillsF = topF.map(function(p) {
+      return '<span class="flash-ch-pill">Ch ' + p.ch + ": " + p.n + "</span>";
+    }).join("");
+    var tr3 = document.createElement("tr");
+    tr3.innerHTML = "<td>" + formatFlashDate(cursor) + "</td><td>" + b.n + "</td><td>" + pillsF + "</td>";
+    tbody.appendChild(tr3);
+  }
+}
+
+/** Backfill quizBest from quiz history (Quiz Hub used to only append history). */
+function syncQuizBestFromHistory(p) {
+  if (!p.quizHistory || !p.quizHistory.length) return false;
+  var dirty = false;
+  p.quizHistory.forEach(function(h) {
+    if (h.chBreakdown && typeof h.chBreakdown === "object") {
+      Object.keys(h.chBreakdown).forEach(function(ch) {
+        var pct = h.chBreakdown[ch];
+        var ck = "ch" + ch;
+        if (!p[ck]) p[ck] = {};
+        if (p[ck].quizBest == null || pct > p[ck].quizBest) {
+          p[ck].quizBest = pct;
+          dirty = true;
+        }
+      });
+    } else if (h.scope && /^Quiz Hub: Ch\d+$/.test(h.scope)) {
+      var m = h.scope.match(/^Quiz Hub: Ch(\d+)$/);
+      if (m) {
+        var ch = m[1];
+        var ck = "ch" + ch;
+        if (!p[ck]) p[ck] = {};
+        if (p[ck].quizBest == null || h.pct > p[ck].quizBest) {
+          p[ck].quizBest = h.pct;
+          dirty = true;
+        }
+      }
+    }
+  });
+  return dirty;
+}
+
+function render() {
+  var p = getProgress();
+  if (syncQuizBestFromHistory(p)) saveProgress(p);
+
+  var totalSectionsVisited = 0, totalSectionsAll = 0;
+  var totalQCDone = 0, totalQCAll = 0;
+  var totalTutDone = 0, totalTutAll = 0;
+  var quizAttempts = p.quizHistory ? p.quizHistory.length : 0;
+  var avgScore = 0;
+
+  if (p.quizHistory && p.quizHistory.length > 0) {
+    var sum = 0;
+    p.quizHistory.forEach(function(h) { sum += h.pct; });
+    avgScore = Math.round(sum / p.quizHistory.length);
+  }
+
+  for (var ch = 1; ch <= 12; ch++) {
+    var chKey = "ch" + ch;
+    var chData = p[chKey] || {};
+    var secVisited = chData.sections ? Object.keys(chData.sections).length : 0;
+    var secTotal = TOTAL_SECTIONS[ch] || 8;
+    totalSectionsVisited += secVisited;
+    totalSectionsAll += secTotal;
+    var qcDone = chData.quickChecks || 0;
+    var qcTotal = TOTAL_QC[ch] || 5;
+    totalQCDone += qcDone;
+    totalQCAll += qcTotal;
+    var tutDone = countTutorialUnderstood(p, chKey);
+    var tutTotal = TOTAL_TUTORIAL[ch] || 0;
+    totalTutDone += tutDone;
+    totalTutAll += tutTotal;
+  }
+
+  var secRatio = totalSectionsAll > 0 ? Math.min(1, totalSectionsVisited / totalSectionsAll) : 0;
+  var qcRatio = totalQCAll > 0 ? Math.min(1, totalQCDone / totalQCAll) : 0;
+  var quizAvgAcrossCh = 0;
+  for (var q = 1; q <= 12; q++) {
+    var qb = (p["ch" + q] || {}).quizBest;
+    if (qb != null && qb >= 0) quizAvgAcrossCh += qb / 100;
+  }
+  quizAvgAcrossCh /= 12;
+  var tutAvgAcrossCh = 0;
+  for (var t = 1; t <= 12; t++) {
+    var tt = TOTAL_TUTORIAL[t] || 0;
+    var td = countTutorialUnderstood(p, "ch" + t);
+    tutAvgAcrossCh += tt > 0 ? td / tt : 0;
+  }
+  tutAvgAcrossCh /= 12;
+  var overallPct = Math.round(100 * (0.2 * secRatio + 0.25 * qcRatio + 0.25 * quizAvgAcrossCh + 0.3 * tutAvgAcrossCh));
+
+  document.getElementById("ringPct").textContent = overallPct + "%";
+  document.getElementById("ringLabel").textContent = lang === "zh" ? "\u603b\u4f53\u8fdb\u5ea6" : "Overall";
+  var circumference = 2 * Math.PI * 65;
+  var offset = circumference - (overallPct / 100) * circumference;
+  document.getElementById("ringFill").style.strokeDashoffset = offset;
+  document.getElementById("ringFill").setAttribute("stroke", overallPct >= 80 ? "var(--green)" : overallPct >= 40 ? "var(--accent)" : "var(--yellow)");
+
+  document.getElementById("statSections").textContent = totalSectionsVisited + " / " + totalSectionsAll;
+  document.getElementById("statQuizzes").textContent = quizAttempts;
+  document.getElementById("statAvgScore").textContent = quizAttempts > 0 ? avgScore + "%" : "\u2014";
+  document.getElementById("statQuickChecks").textContent = totalQCDone + " / " + totalQCAll;
+  document.getElementById("statTutorials").textContent = totalTutDone + " / " + totalTutAll;
+
+  var grid = document.getElementById("chaptersGrid");
+  grid.innerHTML = "";
+  for (var c = 1; c <= 12; c++) {
+    var ck = "ch" + c;
+    var cd = p[ck] || {};
+    var sv = cd.sections ? Object.keys(cd.sections).length : 0;
+    var st = TOTAL_SECTIONS[c] || 8;
+    var qcd = cd.quickChecks || 0;
+    var qct = TOTAL_QC[c] || 5;
+    var qs = cd.quizBest != null ? cd.quizBest : null;
+    var tutDone = countTutorialUnderstood(p, ck);
+    var tutTotal = TOTAL_TUTORIAL[c] || 0;
+    var pct = Math.round(100 * weightedChapterPct(sv, st, qcd, qct, qs, tutDone, tutTotal));
+    pct = Math.min(100, Math.max(0, pct));
+    var col = CHCOLORS[c];
+    var name = lang === "zh" ? CHNAMES_ZH[c] : CHNAMES[c];
+
+    var card = document.createElement("a");
+    card.className = "ch-card";
+    card.href = "../chapters/chapter" + c + "/web/chapter" + c + "-study.html";
+
+    var html = '<div class="ch-header"><span class="ch-num">Ch ' + c + '</span><span class="ch-pct" style="color:' + col + ';">' + pct + '%</span></div>';
+    html += '<div class="ch-title">' + name + '</div>';
+    html += '<div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:' + Math.min(100, pct) + '%; background:' + col + ';"></div></div>';
+    html += '<div class="detail-row"><span><span class="dot" style="background:' + col + ';"></span>' + (lang === "zh" ? T_ZH.sections : "Sections") + '</span><span>' + sv + ' / ' + st + '</span></div>';
+    html += '<div class="detail-row"><span><span class="dot" style="background:var(--purple);"></span>' + (lang === "zh" ? T_ZH.quickChecks : "Quick Checks") + '</span><span>' + qcd + ' / ' + qct + '</span></div>';
+    html += '<div class="detail-row"><span><span class="dot" style="background:var(--cyan);"></span>' + (lang === "zh" ? T_ZH.tutorials : "Tutorials") + '</span><span>' + tutDone + ' / ' + tutTotal + '</span></div>';
+    html += '<div class="detail-row"><span><span class="dot" style="background:var(--green);"></span>' + (lang === "zh" ? T_ZH.quizScore : "Quiz Best") + '</span><span>' + (qs !== null ? qs + "%" : "\u2014") + '</span></div>';
+
+    card.innerHTML = html;
+    grid.appendChild(card);
+  }
+
+  var tbody = document.getElementById("historyBody");
+  if (p.quizHistory && p.quizHistory.length > 0) {
+    tbody.innerHTML = "";
+    p.quizHistory.slice().reverse().forEach(function(h) {
+      var tr = document.createElement("tr");
+      var cls = h.pct >= 80 ? "score-good" : h.pct >= 50 ? "score-ok" : "score-bad";
+      tr.innerHTML = '<td>' + h.date + '</td><td>' + h.scope + '</td><td>' + h.total + '</td><td><span class="score-badge ' + cls + '">' + h.pct + '%</span> (' + h.correct + '/' + h.total + ')</td>';
+      tbody.appendChild(tr);
+    });
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:2rem;" id="no-history">No quiz attempts yet. Try the <a href="quiz-hub.html" style="color:var(--accent);">Quiz Hub</a>!</td></tr>';
+  }
+
+  var fcBody = document.getElementById("fcHistoryBody");
+  if (fcBody) {
+    if (p.flashcardHistory && p.flashcardHistory.length > 0) {
+      fcBody.innerHTML = "";
+      p.flashcardHistory.slice().reverse().forEach(function(h) {
+        var tr = document.createElement("tr");
+        var cr = h.cardsRated != null ? h.cardsRated : 0;
+        var ds = h.deckSize != null ? h.deckSize : 0;
+        var doneLabel = h.completed ? (lang === "zh" ? "\u662f" : "Yes") : (lang === "zh" ? "\u5426" : "No");
+        tr.innerHTML = "<td>" + h.date + "</td><td>" + h.scope + "</td><td>" + cr + " / " + ds + "</td><td>" + doneLabel + "</td>";
+        fcBody.appendChild(tr);
+      });
+    } else {
+      fcBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:2rem;" id="no-fc-history">No flashcard sessions yet.</td></tr>';
+    }
+  }
+
+  renderFlashcardSchedule();
+  applyLang();
+}
+
+var btnReset = document.getElementById("btn-reset");
+if (btnReset) {
+  btnReset.addEventListener("click", function() {
+    if (!confirm(lang === "zh" ? "\u786e\u5b9a\u8981\u91cd\u7f6e\u6240\u6709\u8fdb\u5ea6\u548c\u95ea\u5361\u590d\u4e60\u8bb0\u5f55\u5417\uff1f" : "Reset all progress and flashcard scheduling? This cannot be undone.")) return;
+    try {
+      localStorage.removeItem(PROGRESS_KEY);
+      localStorage.removeItem(FC_KEY);
+    } catch (e) {}
+    render();
+  });
+}
+
+render();
+})();
+</script>
+</body>
+</html>

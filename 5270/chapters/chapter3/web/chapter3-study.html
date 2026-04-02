@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 3: Balls in Bins</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F3B1;</span>
+    <h2>Chapter 3</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-intro" class="nav-link" data-section="sec-intro">Balls in Bins Framework</a></li>
+    <li><a href="#sec-birthday" class="nav-link" data-section="sec-birthday">Birthday Paradox</a></li>
+    <li><a href="#sec-coupon" class="nav-link" data-section="sec-coupon">Coupon Collector</a></li>
+    <li><a href="#sec-load" class="nav-link" data-section="sec-load">Load Balancing</a></li>
+    <li><a href="#sec-two-choices" class="nav-link" data-section="sec-two-choices">Power of Two Choices</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter3-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter3-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=3" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=3" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=3&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 7</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 3: Balls in Bins</h1>
+    <p class="hero-subtitle">Birthday Paradox, Coupon Collector, Load Balancing, and the Power of Two Choices</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F382;</span>
+        <span>Collisions &amp; Birthday</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AB;</span>
+        <span>Coupon Collector</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2696;</span>
+        <span>Load Balancing</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x270D;</span>
+        <span>Tutorial &amp; Quiz</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter3-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter3-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Stirling's approximation, harmonic numbers, Poisson distribution, binomial coefficient bounds</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INTRODUCTION ===== -->
+<section id="sec-intro" class="section" data-track="intro">
+  <h2 class="section-title">The Balls-in-Bins Framework</h2>
+  <div class="concept-box">
+    <p><strong>Setup:</strong> We have \(m\) balls and \(n\) bins. Each ball is thrown independently and uniformly at random into one of the \(n\) bins.</p>
+    <p style="margin-top:0.75rem;">Despite its simplicity, this model captures a surprising range of real-world problems: hashing, task scheduling, resource allocation, distribution testing, and more.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Three Things We Care About</h3>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="info-card">
+        <h4 style="color:var(--red);">1. Collisions</h4>
+        <p>How many pairs of balls share the same bin? Leads to the <strong>Birthday Paradox</strong>.</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--green);">2. Coverage</h4>
+        <p>How many balls until every bin has at least one? The <strong>Coupon Collector</strong> problem.</p>
+      </div>
+      <div class="info-card">
+        <h4 style="color:var(--accent);">3. Maximum Load</h4>
+        <p>What is the maximum number of balls in any bin? <strong>Load Balancing</strong> and the <strong>Power of Two Choices</strong>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BIRTHDAY PARADOX ===== -->
+<section id="sec-birthday" class="section" data-track="birthday">
+  <h2 class="section-title">Collisions &amp; the Birthday Paradox</h2>
+
+  <div class="theorem-box">
+    <h3>Theorem 15 (Birthday Paradox)</h3>
+    <p>If you gather <strong>23 people</strong> in a room, then with probability at least <strong>50%</strong> there will be two people sharing a birthday.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 16 (Exact Collision Probability)</h3>
+    <p>The probability \(p_{m,n}\) of at least one collision when throwing \(m\) balls into \(n\) bins is:</p>
+    \[p_{m,n} = 1 - \frac{n!}{n^m (n-m)!} = 1 - \frac{m!}{n^m}\binom{n}{m}\]
+    <p style="margin-top:0.5rem;">For \(m = 23\) and \(n = 366\): \(p_{23,366} \approx 0.506 \geq 1/2\). &check;</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Expected Number of Collisions</h3>
+    <p>For each pair of balls \((i,j)\), define the indicator \(\mathbf{1}[X_i = X_j]\) where \(X_i\) is the bin of ball \(i\). Since balls are thrown independently and uniformly:</p>
+    \[\Pr[X_i = X_j] = \frac{1}{n}\]
+    <p>By <strong>linearity of expectation</strong>:</p>
+    \[c(m,n) = \mathbb{E}[C] = \sum_{(i,j) \text{ pair}} \Pr[X_i = X_j] = \binom{m}{2} \cdot \frac{1}{n}\]
+    <p style="margin-top:0.5rem;">The expected number of collisions grows roughly as \(\frac{m^2}{2n}\). This becomes constant when \(m = \Theta(\sqrt{n})\), which is exactly when we should expect collisions to appear!</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Variance: The "Magic Cancellation"</h3>
+    <p>Even though the indicator variables \(\mathbf{1}[X_i = X_j]\) are <em>not</em> independent across pairs, the variance calculation yields a surprisingly clean result:</p>
+
+    <button class="proof-toggle" data-target="proof-variance">Show Variance Proof</button>
+    <div class="proof-content" id="proof-variance">
+      <p>We compute \(\mathbb{E}[C^2]\) by expanding the double sum over pairs \((i,j)\) and \((k,\ell)\). There are three cases:</p>
+      <p><strong>Case 1: Same pair</strong> \((i,j) = (k,\ell)\). Then \(\mathbf{1}[X_i = X_j]^2 = \mathbf{1}[X_i = X_j]\), so the contribution is \(\frac{1}{n}\). There are \(\binom{m}{2}\) such terms.</p>
+      <p><strong>Case 2: Disjoint pairs</strong> \(\{i,j\} \cap \{k,\ell\} = \emptyset\). The indicators are <em>independent</em>, so the contribution is \(\frac{1}{n^2}\). There are \(\binom{m}{2}\binom{m-2}{2}\) such terms.</p>
+      <p><strong>Case 3: Overlapping pairs</strong> (share exactly one element). Then \(\mathbf{1}[X_i = X_j]\mathbf{1}[X_k = X_\ell] = \mathbf{1}[X_i = X_j = X_k]\), and by uniformity:</p>
+      \[\mathbb{E}[\mathbf{1}[X_i = X_j = X_k]] = \sum_{b=1}^{n} \Pr[X_i = b, X_j = b, X_k = b] = \frac{n}{n^3} = \frac{1}{n^2}\]
+      <p>There are \(6\binom{m}{3}\) such terms. Sanity check: \(\binom{m}{2} + \binom{m}{2}\binom{m-2}{2} + 6\binom{m}{3} = \binom{m}{2}^2\). &check;</p>
+      <p>Combining:</p>
+      \[\mathbb{E}[C^2] = \binom{m}{2}\frac{1}{n} + \binom{m}{2}\binom{m-2}{2}\frac{1}{n^2} + 6\binom{m}{3}\frac{1}{n^2} = \binom{m}{2}\frac{1}{n}\!\left(1 - \frac{1}{n}\right) + \binom{m}{2}^2 \frac{1}{n^2}\]
+      <p>Therefore:</p>
+      \[\operatorname{Var}[C] = \mathbb{E}[C^2] - \mathbb{E}[C]^2 = \binom{m}{2}\frac{1}{n}\!\left(1 - \frac{1}{n}\right)\]
+      <p>This is exactly what we'd get if the indicators were independent! The key is that the overlapping case contributes \(\frac{1}{n^2}\), the same as the disjoint case, thanks to the uniformity of bin assignments. &square;</p>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 17 (Collision Threshold)</h3>
+    <p>The probability of at least one collision when throwing \(m\) balls independently and uniformly into \(n\) bins is:</p>
+    <ul>
+      <li><strong>Less than 1/2</strong> when \(m \leq \sqrt{n}\) &ensp; (by Markov: \(\Pr[C \geq 1] \leq \mathbb{E}[C] \leq m^2/(2n)\))</li>
+      <li><strong>At least 1/2</strong> when \(m \geq \sqrt{3n}\) &ensp; (by Chebyshev: \(\Pr[C = 0] \leq \operatorname{Var}[C]/\mathbb{E}[C]^2 \leq 1/\mathbb{E}[C] \leq 1/2\))</li>
+    </ul>
+    <p style="margin-top:0.5rem;">Therefore the collision threshold is \(m = \Theta(\sqrt{n})\).</p>
+  </div>
+
+  <!-- Interactive Birthday Paradox Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Birthday Paradox Simulation</h3>
+    <p>Choose the number of people and run experiments to observe when birthday collisions occur.</p>
+    <div class="sim-controls">
+      <label>People = <input type="range" id="sliderBday" min="2" max="100" value="23" style="width:150px;"> <span id="valBday">23</span></label>
+      <button id="btnRunBday" class="btn btn-primary">Run Trial</button>
+      <button id="btnRunBday1000" class="btn btn-secondary">Run 1000 Trials</button>
+      <button id="btnResetBday" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="bdayLast">-</div><div class="stat-label">Last Result</div></div>
+      <div class="stat-card"><div class="stat-value" id="bdayTrials">0</div><div class="stat-label">Total Trials</div></div>
+      <div class="stat-card"><div class="stat-value" id="bdayCollisions">0</div><div class="stat-label">Collisions</div></div>
+      <div class="stat-card"><div class="stat-value" id="bdayRate">-</div><div class="stat-label">Collision Rate</div></div>
+      <div class="stat-card"><div class="stat-value" id="bdayTheory">-</div><div class="stat-label">Theoretical</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COUPON COLLECTOR ===== -->
+<section id="sec-coupon" class="section" data-track="coupon">
+  <h2 class="section-title">The Coupon Collector Problem</h2>
+
+  <div class="concept-box">
+    <p><strong>Problem:</strong> How many balls \(M(n)\) do we need to throw (uniformly at random into \(n\) bins) before every bin contains at least one ball?</p>
+    <p style="margin-top:0.5rem;">Equivalently: how many cereal boxes must you buy to collect all \(n\) different coupons?</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 18 (Coupon Collector)</h3>
+    <p>The expected number of balls needed to hit all \(n\) bins is:</p>
+    \[M(n) = nH_n = n\sum_{k=1}^{n} \frac{1}{k} = n\ln n + \gamma n + O(1)\]
+    <p>where \(H_n\) is the \(n\)-th harmonic number and \(\gamma \approx 0.5772\) is the Euler&ndash;Mascheroni constant.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-coupon">Show Proof</button>
+  <div class="proof-content" id="proof-coupon">
+    <p><strong>Key idea:</strong> Decompose \(m(n) = T_1 + T_2 + \cdots + T_n\), where \(T_i\) is the number of balls needed, after hitting \(i-1\) distinct bins, to hit a new one.</p>
+    <p>\(T_1 = 1\) always (the first ball always hits a new bin). After hitting \(i-1\) bins, the probability of hitting a new bin with each ball is:</p>
+    \[p_i = \frac{n - (i-1)}{n} = \frac{n - i + 1}{n}\]
+    <p>So \(T_i \sim \text{Geometric}(p_i)\), and \(\mathbb{E}[T_i] = \frac{1}{p_i} = \frac{n}{n-i+1}\).</p>
+    <p>By linearity of expectation:</p>
+    \[M(n) = \sum_{i=1}^{n} \mathbb{E}[T_i] = \sum_{i=1}^{n} \frac{n}{n-i+1} = n\sum_{j=1}^{n} \frac{1}{j} = nH_n \quad \square\]
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 19 (Variance Bound)</h3>
+    <p>The variance of the number of balls needed satisfies:</p>
+    \[\operatorname{Var}[m(n)] \leq \frac{\pi^2}{6} n^2\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-coupon-var">Show Proof</button>
+  <div class="proof-content" id="proof-coupon-var">
+    <p>The crucial observation is that \(T_1, \ldots, T_n\) are <strong>independent</strong> (by the memorylessness property of the geometric distribution). Therefore:</p>
+    \[\operatorname{Var}[m(n)] = \sum_{i=1}^{n} \operatorname{Var}[T_i]\]
+    <p>Since \(T_i \sim \text{Geometric}(p_i)\), its variance is \(\frac{1-p_i}{p_i^2} \leq \frac{1}{p_i^2} = \frac{n^2}{(n-i+1)^2}\).</p>
+    \[\operatorname{Var}[m(n)] \leq n^2 \sum_{i=1}^{n} \frac{1}{(n-i+1)^2} = n^2 \sum_{j=1}^{n} \frac{1}{j^2} \leq n^2 \cdot \frac{\pi^2}{6}\]
+    <p>using the Basel identity \(\sum_{k=1}^{\infty} \frac{1}{k^2} = \frac{\pi^2}{6}\).</p>
+    <p>By <strong>Chebyshev's inequality</strong>, this gives us:</p>
+    \[m(n) = nH_n \pm O(n) = n\ln n \pm O(n)\]
+    <p>with probability at least 0.99. &square;</p>
+  </div>
+
+  <!-- Interactive Coupon Collector Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Coupon Collector Simulation</h3>
+    <p>Choose the number of bins \(n\), then run the experiment to see how many balls are needed to fill all bins.</p>
+    <div class="sim-controls">
+      <label>n = <input type="range" id="sliderCoupon" min="5" max="200" value="50" style="width:150px;"> <span id="valCoupon">50</span></label>
+      <button id="btnRunCoupon" class="btn btn-primary">Run Once</button>
+      <button id="btnRunCoupon100" class="btn btn-secondary">Run 100</button>
+      <button id="btnResetCoupon" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="couponLast">-</div><div class="stat-label">Last Result</div></div>
+      <div class="stat-card"><div class="stat-value" id="couponTrials">0</div><div class="stat-label">Trials</div></div>
+      <div class="stat-card"><div class="stat-value" id="couponAvg">-</div><div class="stat-label">Average</div></div>
+      <div class="stat-card"><div class="stat-value" id="couponTheory">-</div><div class="stat-label">Theoretical (nH_n)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LOAD BALANCING ===== -->
+<section id="sec-load" class="section" data-track="load">
+  <h2 class="section-title">Load Balancing</h2>
+
+  <div class="concept-box">
+    <p><strong>Problem:</strong> Throw \(n\) balls into \(n\) bins uniformly and independently at random. What is the expected maximum load \(L(n) = \mathbb{E}[\max_{1 \leq i \leq n} L_i]\)?</p>
+    <p style="margin-top:0.5rem;">Each bin \(L_i \sim \text{Bin}(n, 1/n)\), so \(\mathbb{E}[L_i] = 1\) and \(\operatorname{Var}[L_i] = n \cdot \frac{1}{n}(1 - \frac{1}{n}) \leq 1\).</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Simple Bound via Chebyshev + Union Bound</h3>
+    <p>By Chebyshev's inequality with \(t = \sqrt{2n}\):</p>
+    \[\Pr\!\left[L_i \geq 1 + \sqrt{2n}\right] \leq \frac{\operatorname{Var}[L_i]}{2n} \leq \frac{1}{2n}\]
+    <p>Taking a union bound over all \(n\) bins:</p>
+    \[\Pr\!\left[\max_i L_i \geq 1 + \sqrt{2n}\right] \leq n \cdot \frac{1}{2n} = \frac{1}{2}\]
+    <p>So the max load is \(O(\sqrt{n})\) with constant probability. But can we do better?</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 20 (Maximum Load)</h3>
+    <p>The expected maximum load when throwing \(n\) balls uniformly and independently into \(n\) bins satisfies:</p>
+    \[L(n) = \Theta\!\left(\frac{\log n}{\log \log n}\right)\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-load-upper">Show Upper Bound Proof</button>
+  <div class="proof-content" id="proof-load-upper">
+    <p><strong>Step 1: Bound the probability that a single bin has load \(\geq \ell\).</strong></p>
+    <p>For a fixed bin \(i\), allowing double-counting over all subsets of exactly \(\ell\) balls:</p>
+    \[\Pr[L_i \geq \ell] \leq \binom{n}{\ell} \frac{1}{n^\ell}\]
+    <p>Using the binomial coefficient bound (Fact 20.1): \(\binom{n}{\ell} \leq \left(\frac{en}{\ell}\right)^\ell\):</p>
+    \[\Pr[L_i \geq \ell] \leq \left(\frac{en}{\ell}\right)^\ell \cdot \frac{1}{n^\ell} = \frac{e^\ell}{\ell^\ell}\]
+
+    <p><strong>Step 2: Union bound over all bins.</strong></p>
+    \[\Pr[L \geq \ell] \leq \frac{n \cdot e^\ell}{\ell^\ell}\]
+
+    <p><strong>Step 3: Split the expectation sum.</strong></p>
+    <p>Let \(\ell^*(n)\) be the smallest \(\ell\) such that \(\ell^\ell e^{-\ell} \geq n\). For \(\ell \leq \ell^*\), use the trivial bound \(\Pr[L \geq \ell] \leq 1\). For \(\ell > \ell^*\), use the union bound.</p>
+    \[L(n) = \sum_{\ell=1}^{\infty} \Pr[L \geq \ell] \leq \ell^*(n) + \sum_{\ell=\ell^*+1}^{\infty} \frac{ne^\ell}{\ell^\ell}\]
+    <p>The tail sum is bounded by a geometric series that sums to at most 1 (since \(\ell^* \geq 2e\)):</p>
+    \[L(n) \leq \ell^*(n) + 1\]
+
+    <p><strong>Step 4: Bound \(\ell^*(n)\).</strong></p>
+    <p>From \((\ell^* - 1)^{\ell^*-1} e^{-(\ell^*-1)} < n\), taking logarithms: \((\ell^*-1)\log(e^{-1}(\ell^*-1)) < \log n\). One can show:</p>
+    \[\ell^*(n) = \Theta\!\left(\frac{\log n}{\log \log n}\right)\]
+    <p>giving \(L(n) = O\!\left(\frac{\log n}{\log \log n}\right)\). &square;</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Alternative MGF Proof (Advanced)</h3>
+    <p>Using Jensen's inequality and the moment-generating function trick:</p>
+    \[L(n) = \frac{1}{t}\mathbb{E}\!\left[\ln e^{t \max_i L_i}\right] \leq \frac{1}{t}\ln\!\left(n \cdot \mathbb{E}[e^{tL_1}]\right)\]
+    <p>For \(L_1 \sim \text{Bin}(n, 1/n)\), the MGF is \(\mathbb{E}[e^{tL_1}] = \left(1 + \frac{e^t - 1}{n}\right)^n\). Using \(\ln(1+x) \leq x\):</p>
+    \[L(n) \leq \frac{1}{t}\left(\ln n + e^t - 1\right)\]
+    <p>Balancing the two terms by setting \(t = \ln\ln(en)\) gives:</p>
+    \[L(n) \leq \frac{2\ln n}{\ln\ln(en)}\]
+  </div>
+
+  <!-- Interactive Load Balancing Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Load Balancing Simulation</h3>
+    <p>Throw \(n\) balls into \(n\) bins and observe the maximum load.</p>
+    <div class="sim-controls">
+      <label>n = <input type="range" id="sliderLoad" min="10" max="1000" value="100" style="width:150px;"> <span id="valLoad">100</span></label>
+      <button id="btnRunLoad" class="btn btn-primary">Run Once</button>
+      <button id="btnRunLoad100" class="btn btn-secondary">Run 100</button>
+      <button id="btnResetLoad" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="loadMax">-</div><div class="stat-label">Last Max Load</div></div>
+      <div class="stat-card"><div class="stat-value" id="loadTrials">0</div><div class="stat-label">Trials</div></div>
+      <div class="stat-card"><div class="stat-value" id="loadAvg">-</div><div class="stat-label">Avg Max Load</div></div>
+      <div class="stat-card"><div class="stat-value" id="loadTheory">-</div><div class="stat-label">Theoretical Bound</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== POWER OF TWO CHOICES ===== -->
+<section id="sec-two-choices" class="section" data-track="two-choices">
+  <h2 class="section-title">The Power of Two Choices</h2>
+
+  <div class="concept-box">
+    <p><strong>Strategy:</strong> Instead of throwing each ball into a uniformly random bin, each ball selects <strong>two bins</strong> uniformly at random and goes into the <strong>least loaded</strong> of the two (ties broken arbitrarily).</p>
+    <p style="margin-top:0.5rem;">This seemingly minor change has a dramatic effect on the maximum load.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 21 (Power of Two Choices)</h3>
+    <p>The expected maximum load \(\hat{L}(n)\) when throwing \(n\) balls into \(n\) bins using the "best of two choices" strategy satisfies:</p>
+    \[\hat{L}(n) = \log\log n + O(1)\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Intuition: The Recurrence</h3>
+    <p>Let \(B_i\) denote the number of bins with at least \(i\) balls. The key insight is that \(B_2 \leq n/2\) (otherwise we'd need more than \(n\) balls), and we get the recurrence:</p>
+    \[B_{i+1} \leq \frac{B_i^2}{n}\]
+    <p>Starting from \(B_2 \leq n/2\), solving by induction gives \(B_i \leq \frac{n}{2^{2^{i-2}}}\). This reaches 1 when:</p>
+    \[2^{2^{i-2}} \geq n \implies i \leq \log_2 \log_2 n + 2\]
+    <p style="margin-top:0.5rem;">So the maximum load is at most \(\log\log n + O(1)\). This is <strong>exponentially smaller</strong> than the \(\Theta(\frac{\log n}{\log\log n})\) bound for uniform allocation!</p>
+  </div>
+
+  <div style="overflow-x:auto; margin-top:1.5rem;">
+    <table class="summary-table" style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);">
+          <th style="padding:0.75rem; text-align:left;">Strategy</th>
+          <th style="padding:0.75rem; text-align:left;">Expected Max Load</th>
+          <th style="padding:0.75rem; text-align:left;">Growth</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.75rem; font-weight:600; color:var(--yellow);">Uniform (1 choice)</td>
+          <td style="padding:0.75rem;">\(\Theta\!\left(\dfrac{\log n}{\log\log n}\right)\)</td>
+          <td style="padding:0.75rem;">Slow</td>
+        </tr>
+        <tr>
+          <td style="padding:0.75rem; font-weight:600; color:var(--green);">Best of 2 choices</td>
+          <td style="padding:0.75rem;">\(\log\log n + O(1)\)</td>
+          <td style="padding:0.75rem;">Very slow (exponential improvement!)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Interactive Two Choices Comparison -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Uniform vs Two-Choices Comparison</h3>
+    <p>Compare the maximum load under uniform random allocation versus the power of two choices.</p>
+    <div class="sim-controls">
+      <label>n = <input type="range" id="sliderTwoChoice" min="10" max="1000" value="100" style="width:150px;"> <span id="valTwoChoice">100</span></label>
+      <button id="btnRunTwoChoice" class="btn btn-primary">Run Comparison</button>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-top:1.25rem;">
+      <div class="stat-card"><div class="stat-value" id="tcUniform">-</div><div class="stat-label">Uniform Max Load</div></div>
+      <div class="stat-card"><div class="stat-value" id="tcTwoChoice">-</div><div class="stat-label">Two-Choices Max Load</div></div>
+      <div class="stat-card"><div class="stat-value" id="tcImprovement">-</div><div class="stat-label">Improvement Factor</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Work through these problems to reinforce your understanding of the balls-in-bins model.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Generalise Eq.&nbsp;(22) of the lecture notes to \(m > n\) balls, to compute \(\mathbb{E}[\text{empty bins after } m \text{ balls}]\), and solve for \(m\) to get this expectation to be at most \(1/2\). Show you retrieve the \(\Theta(n \log n)\) bound.</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p>By linearity of expectation:</p>
+      \[\mathbb{E}[\text{empty bins after } m \text{ balls}] = \sum_{i=1}^{n} \Pr[\text{bin } i \text{ empty}] = n\!\left(1 - \frac{1}{n}\right)^m \leq n \cdot e^{-m/n}\]
+      <p>Setting \(n \cdot e^{-m/n} \leq \frac{1}{2}\) and taking logarithms:</p>
+      \[\ln(2n) \leq \frac{m}{n} \implies m = \Omega(n \log n)\]
+      <p>So we need \(m = \Theta(n \log n)\) balls to expect all bins to be covered. &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Use Chebyshev's inequality to bound the probability that \(m(n)\), the number of balls needed to hit every bin at least once, is greater than \(\alpha n \ln n\) (for \(\alpha > 1\)).</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p>We have \(\mathbb{E}[m(n)] = nH_n = n\log n + O(n) \leq 2n\log n\) and \(\operatorname{Var}[m(n)] \leq \frac{\pi^2}{6}n^2\).</p>
+      <p>By Chebyshev with \(t = (\alpha - 2)n\log n\):</p>
+      \[\Pr[m \geq \alpha n\log n] \leq \Pr[|m - \mathbb{E}[m]| \geq t] \leq \frac{\operatorname{Var}[m]}{t^2} = \frac{\pi^2 n^2/6}{((\alpha-2)n\log n)^2} = O\!\left(\frac{1}{\log^2 n}\right)\]
+      <p>This goes to zero, but only polynomially in \(\log n\). &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Show that the expected number of balls \(M_2(n)\) needed before each bin contains at least <strong>two</strong> balls is \(\Theta(n \log n)\).</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p><strong>Lower bound:</strong> \(M_2(n) \geq M(n) = \Theta(n\log n)\), since to have 2 balls in each bin we first need at least 1.</p>
+      <p><strong>Upper bound:</strong> Wait until each bin has at least one ball (expected time \(M(n)\)). Then "restart from scratch" — forget all current loads, and wait until each bin receives at least one <em>new</em> ball. This second stage also takes \(M(n)\) in expectation. After both stages, each bin has at least \(1 + 1 = 2\) balls.</p>
+      <p>Therefore \(M_2(n) \leq 2M(n) = O(n\log n)\), giving \(M_2(n) = \Theta(n\log n)\). &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>Let \(c > 0\) be a constant. When throwing \(m = cn\ln n\) balls into \(n\) bins, show that with high probability every bin has \(\Theta(\ln n)\) balls.</p>
+    <p><strong>(a)</strong> Compute \(\mathbb{E}[L_i]\) and \(\operatorname{Var}[L_i]\). Use Chebyshev to bound \(\Pr\!\left[L_i \notin \left[\frac{c}{2}\ln n, \frac{3c}{2}\ln n\right]\right]\). Is it enough after a union bound?</p>
+    <p><strong>(b)</strong> Use a Chernoff bound to show \(\Pr\!\left[L_i \notin \left[\frac{c}{2}\ln n, \frac{3c}{2}\ln n\right]\right] \leq \frac{2}{n^{c/12}}\).</p>
+    <p><strong>(c)</strong> Pick a suitable \(c\) to conclude that all loads are \(\Theta(\ln n)\) with probability \(\geq 1 - 2/n\).</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p>Since \(L_i \sim \text{Bin}(m, 1/n)\), we have \(\mathbb{E}[L_i] = c\ln n\) and \(\operatorname{Var}[L_i] \leq c\ln n\).</p>
+      <p><strong>(a)</strong> Chebyshev gives \(\Pr[|L_i - c\ln n| \geq \frac{c}{2}\ln n] \leq \frac{4}{c\ln n}\). After a union bound over \(n\) bins, we get \(\frac{4n}{c\ln n}\), which is vacuous (greater than 1). Not enough!</p>
+      <p><strong>(b)</strong> By the Chernoff bound (with \(\delta = 1/2\)): \(\Pr[|L_i - c\ln n| \geq \frac{c}{2}\ln n] \leq 2\exp\!\left(-\frac{c\ln n}{12}\right) = \frac{2}{n^{c/12}}\).</p>
+      <p><strong>(c)</strong> Union bound: \(\Pr[\exists i: L_i \text{ bad}] \leq \frac{2n}{n^{c/12}} = \frac{2}{n^{c/12 - 1}}\). Choosing \(c = 24\) gives \(\leq 2/n\). &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>Suppose bin \(i\) has probability \(p_i\) (with \(\sum p_i = 1\)) instead of \(1/n\).</p>
+    <p><strong>(a)</strong> What is the probability of a collision when \(m = 2\)?</p>
+    <p><strong>(b)</strong> What is the expected number of collisions \(\mathbb{E}[c(m,n)]\) for general \(m\)?</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>(a)</strong> The probability of a collision with 2 balls is:</p>
+      \[\Pr[\text{collision}] = \sum_{i=1}^{n} p_i^2 = \|p\|_2^2\]
+      <p><strong>(b)</strong> By linearity of expectation over all \(\binom{m}{2}\) pairs:</p>
+      \[\mathbb{E}[c(m,n)] = \binom{m}{2} \|p\|_2^2\]
+      <p>Sanity check: for the uniform distribution \(p_i = 1/n\), we get \(\|p\|_2^2 = 1/n\), recovering the standard result. &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>(Guided) Sketch a proof of Theorem 21 (Power of Two Choices):</p>
+    <p><strong>(a)</strong> Explain why \(B_2 \leq n/2\).</p>
+    <p><strong>(b)</strong> Argue that \(B_i \leq B'_i\) where \(B'_i\) counts balls that were \(i\)-th or more in their bin when thrown.</p>
+    <p><strong>(c)&ndash;(d)</strong> Show \(\mathbb{E}[B'_{i+1}] \leq B_i^2/n\) and derive the recurrence \(B_{i+1} \leq B_i^2/n\).</p>
+    <p><strong>(e)&ndash;(f)</strong> Solve the recurrence to get \(B_i \leq n/2^{2^{i-2}}\) and conclude max load \(\leq \log\log n + 2\).</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>(a)</strong> If \(B_2 > n/2\), then more than \(n/2\) bins have \(\geq 2\) balls, meaning \(> n\) balls total. Contradiction since we only threw \(n\) balls.</p>
+      <p><strong>(b)</strong> Every bin with \(\geq i\) balls after all throws has a ball that was the \(i\)-th or more when thrown, so \(B_i \leq B'_i\).</p>
+      <p><strong>(c)</strong> At any time step, at most \(B_i\) bins have \(\geq i\) balls. With two choices, the probability a ball goes into such a bin is \(\leq (B_i/n)^2\). Summing over \(n\) balls: \(\mathbb{E}[B'_{i+1}] \leq n \cdot (B_i/n)^2 = B_i^2/n\).</p>
+      <p><strong>(d)&ndash;(e)</strong> Assuming \(B_i \approx \mathbb{E}[B_i]\) (handwaving), the recurrence \(B_{i+1} \leq B_i^2/n\) with \(B_2 \leq n/2\) gives by induction:</p>
+      \[B_i \leq \frac{n}{2^{2^{i-2}}}\]
+      <p><strong>(f)</strong> Setting \(B_i \geq 1\): \(2^{2^{i-2}} \leq n \implies i \leq \log_2\log_2 n + 2\). So the max load is at most \(\log_2\log_2 n + 2 = \log\log n + O(1)\). &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Show that for large enough \(n\), the expected number of empty bins when throwing \(n\) balls into \(n\) bins approaches \(n/e\).</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p>The expected number of empty bins is \(n(1 - 1/n)^n\). It remains to show:</p>
+      \[\lim_{n \to \infty} \left(1 - \frac{1}{n}\right)^n = e^{-1}\]
+      <p>Write \((1 - 1/n)^n = e^{n\ln(1 - 1/n)}\). Setting \(f(x) = \ln(1-x)\), we need \(\lim_{n\to\infty} \frac{\ln(1-1/n)}{1/n} = f'(0) = -1\), giving the limit \(e^{-1}\).</p>
+      <p>Therefore \(\mathbb{E}[\text{empty bins}] = n(1 - 1/n)^n \to n/e\). &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 8 -->
+  <div class="problem-card">
+    <h3>Problem 8 <span class="problem-tag problem-solving">Problem Solving</span></h3>
+    <p>You play the Australian 1st Division lottery: guess 6 numbers out of 45.</p>
+    <p><strong>(a)</strong> What is the probability \(p\) that a single ticket wins?</p>
+    <p><strong>(b)</strong> With a \(\$1{,}000{,}000\) prize and \(\$0.60\) ticket cost, what is the expected reward for 1 ticket? For 100 tickets?</p>
+    <p><strong>(c)</strong> You suspect half the outcomes never appear. How many tickets to get statistical evidence?</p>
+    <button class="solution-toggle" data-target="sol8">Show Solution</button>
+    <div class="proof-content" id="sol8">
+      <p><strong>(a)</strong> \(p = \frac{1}{\binom{45}{6}} = \frac{1}{8{,}145{,}060}\).</p>
+      <p><strong>(b)</strong> Expected reward for 1 ticket: \(10^6 \cdot p - 0.60 \approx 0.123 - 0.60 \approx -\$0.48\). For 100 tickets: \(\approx -\$48\). The expected gain is negative (as with all real lotteries).</p>
+      <p><strong>(c)</strong> To distinguish the uniform distribution over all \(n = \binom{45}{6}\) outcomes from a distribution supported on \(n/2\) outcomes, you need to observe a collision (by the birthday paradox). This requires \(\Omega(\sqrt{n}) \approx \Omega(2{,}854)\) tickets. Without collisions, the observed sequences are equally consistent with both hypotheses. &square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 9 -->
+  <div class="problem-card">
+    <h3>Problem 9 <span class="problem-tag advanced">Advanced</span></h3>
+    <p><strong>(Poissonization)</strong> Instead of throwing \(m\) balls, draw \(M \sim \text{Poi}(m)\) and throw \(M\) balls. Let \(N_j\) be the count in bin \(j\).</p>
+    <p><strong>(a)</strong> Show \(N_1, \ldots, N_n\) are independent with \(N_j \sim \text{Poi}(mp_j)\).</p>
+    <p><strong>(b)</strong> Rewrite the collision count \(\tilde{c}(m,n)\) in terms of the \(N_j\).</p>
+    <p><strong>(c)</strong> Compute \(\mathbb{E}[\tilde{c}(m,n)]\).</p>
+    <p><strong>(d)</strong> Compute \(\operatorname{Var}[\tilde{c}(m,n)]\).</p>
+    <button class="solution-toggle" data-target="sol9">Show Solution</button>
+    <div class="proof-content" id="sol9">
+      <p><strong>(a)</strong> By the multinomial theorem and the Poisson splitting property: if the total count is \(M \sim \text{Poi}(m)\), then \(N_j \sim \text{Poi}(mp_j)\) independently. The joint distribution factors as a product of marginals.</p>
+      <p><strong>(b)</strong> Collisions in bin \(j\) equal \(\binom{N_j}{2}\), so \(\tilde{c}(m,n) = \sum_{j=1}^{n} \binom{N_j}{2} = \sum_{j=1}^{n} \frac{N_j^2 - N_j}{2}\).</p>
+      <p><strong>(c)</strong> Using Poisson moments (\(\mathbb{E}[N_j^2 - N_j] = (mp_j)^2\)):</p>
+      \[\mathbb{E}[\tilde{c}(m,n)] = \sum_{j=1}^{n} \frac{(mp_j)^2}{2} = \frac{m^2}{2}\|p\|_2^2\]
+      <p><strong>(d)</strong> By independence of the \(N_j\):</p>
+      \[\operatorname{Var}[\tilde{c}(m,n)] = \frac{1}{4}\sum_{j=1}^{n} \operatorname{Var}[N_j^2 - N_j] = \frac{1}{4}m^4\|p\|_4^4 + m^3\|p\|_3^3 + \frac{1}{4}m^2\|p\|_2^2\]
+      <p>&square;</p>
+    </div>
+  </div>
+
+  <!-- Problem 10 -->
+  <div class="problem-card">
+    <h3>Problem 10 <span class="problem-tag advanced">Advanced</span></h3>
+    <p>Using the MGF-based approach from the lecture, show that if \(X_1, \ldots, X_n\) are (not necessarily independent) Gaussian r.v.s with mean 0 and variance \(\sigma^2\), then:</p>
+    \[\mathbb{E}\!\left[\max_{1 \leq i \leq n} X_i\right] \leq \sqrt{2\sigma^2 \ln n}\]
+    <p>As a corollary, show \(\mathbb{E}[\max_i |X_i|] \leq \sqrt{2\sigma^2 \ln(2n)}\).</p>
+    <button class="solution-toggle" data-target="sol10">Show Solution</button>
+    <div class="proof-content" id="sol10">
+      <p>Following the Jensen + MGF approach:</p>
+      \[\mathbb{E}\!\left[\max_i X_i\right] \leq \frac{1}{t}\ln\!\left(n \cdot \mathbb{E}[e^{tX_1}]\right) = \frac{1}{t}\ln\!\left(n \cdot e^{\sigma^2 t^2/2}\right) = \frac{\ln n}{t} + \frac{\sigma^2 t}{2}\]
+      <p>Balancing the two terms: set \(t = \sqrt{2\ln n/\sigma^2}\), giving:</p>
+      \[\mathbb{E}\!\left[\max_i X_i\right] \leq \sqrt{2\sigma^2 \ln n}\]
+      <p><strong>Corollary:</strong> \(\max_i |X_i| = \max_i \max(X_i, -X_i)\). Since \(-X_i \sim \mathcal{N}(0, \sigma^2)\) as well, we can apply the bound to \(2n\) variables \(X_1, -X_1, \ldots, X_n, -X_n\) (independence is not required!):</p>
+      \[\mathbb{E}\!\left[\max_i |X_i|\right] \leq \sqrt{2\sigma^2 \ln(2n)} \quad \square\]
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=3" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=3&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter3-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

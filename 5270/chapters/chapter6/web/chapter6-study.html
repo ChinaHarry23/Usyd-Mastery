@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6: Hashing and Friends</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F5C3;</span>
+    <h2>Chapter 6</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-dictionary" class="nav-link" data-section="sec-dictionary">Dictionary ADT</a></li>
+    <li><a href="#sec-hash-tables" class="nav-link" data-section="sec-hash-tables">Hash Tables</a></li>
+    <li><a href="#sec-hash-families" class="nav-link" data-section="sec-hash-families">Hash Families</a></li>
+    <li><a href="#sec-collision" class="nav-link" data-section="sec-collision">Collision Handling</a></li>
+    <li><a href="#sec-cuckoo" class="nav-link" data-section="sec-cuckoo">Cuckoo Hashing</a></li>
+    <li><a href="#sec-bloom" class="nav-link" data-section="sec-bloom">Bloom Filters</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Summary</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+<li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter6-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li>
+      <a href="chapter6-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/knowledge-graph.html?chapter=6" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a>
+    </li>
+    <li>
+      <a href="../../../tools/math-knowledge-graph.html?chapter=6" class="nav-link" style="color:var(--blue);">&#x1F4D0; Math Knowledge Graph</a>
+    </li>
+    <li><a href="../../../tools/flashcards.html?ch=6&start=1" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<!-- ===== HERO ===== -->
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 &mdash; Randomised and Advanced Algorithms</p>
+    <h1>Chapter 6: Hashing and Friends</h1>
+    <p class="hero-subtitle">Dictionary ADT implementations, universal and strongly universal hash families, collision resolution (separate chaining, open addressing, cuckoo hashing), and Bloom filters with false-positive analysis.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4D6;</span>
+        <span>Dictionary ADT</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3B2;</span>
+        <span>Hash Families</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4A5;</span>
+        <span>Collision Resolution</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F338;</span>
+        <span>Bloom Filters</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter6-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Math Foundations &rarr;
+      </a>
+      <a href="chapter6-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Modular arithmetic, pigeonhole principle, birthday paradox, and Bloom filter probability analysis</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DICTIONARY ADT ===== -->
+<section id="sec-dictionary" class="section" data-track="dictionary">
+  <h2 class="section-title">Dictionary ADT</h2>
+
+  <div class="concept-box">
+    <h3>The Dictionary Problem</h3>
+    <p>A <strong>dictionary</strong> stores a set \(S\) of elements from a universe \(X\) and supports three operations:</p>
+    <ul style="margin-top:0.5rem;">
+      <li><strong>Insert(x)</strong>: Add element \(x\) to \(S\).</li>
+      <li><strong>Lookup(x)</strong>: Return whether \(x \in S\) (and optionally associated data).</li>
+      <li><strong>Remove(x)</strong>: Delete element \(x\) from \(S\).</li>
+    </ul>
+    <p style="margin-top:0.75rem;">We have \(|S| = n\) stored elements and a universe of size \(|X| = m\), where typically \(m \gg n\).</p>
+  </div>
+
+  <div style="overflow-x:auto; margin-top:1.5rem;">
+    <table class="styled-table" style="width:100%;">
+      <thead><tr><th>Implementation</th><th>Insert</th><th>Lookup</th><th>Remove</th><th>Space</th></tr></thead>
+      <tbody>
+        <tr><td>Unsorted Linked List</td><td>\(O(1)\)</td><td>\(O(n)\)</td><td>\(O(n)\)</td><td>\(O(n)\)</td></tr>
+        <tr><td>Direct-Address Array</td><td>\(O(1)\)</td><td>\(O(1)\)</td><td>\(O(1)\)</td><td>\(O(m)\)</td></tr>
+        <tr><td>Balanced BST</td><td>\(O(\log n)\)</td><td>\(O(\log n)\)</td><td>\(O(\log n)\)</td><td>\(O(n)\)</td></tr>
+        <tr><td><strong>Hash Table</strong></td><td><strong>\(O(1)\) exp.</strong></td><td><strong>\(O(1)\) exp.</strong></td><td><strong>\(O(1)\) exp.</strong></td><td><strong>\(O(n)\)</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Why Hashing?</h3>
+    <p>A direct-address array gives \(O(1)\) operations but uses \(O(m)\) space, which is wasteful when \(m \gg n\). A balanced BST uses \(O(n)\) space but \(O(\log n)\) time. <strong>Hash tables</strong> achieve the best of both worlds: \(O(1)\) expected time and \(O(n)\) space &mdash; at the cost of using randomisation.</p>
+  </div>
+</section>
+
+<!-- ===== HASH TABLES ===== -->
+<section id="sec-hash-tables" class="section" data-track="hash-tables">
+  <h2 class="section-title">Hash Tables</h2>
+
+  <div class="concept-box">
+    <h3>The Idea</h3>
+    <p>Instead of allocating an array of size \(m\) (universe size), we allocate a table of size \(m' = O(n)\) and use a <strong>hash function</strong> \(h : X \to Y\) where \(Y = \{0, 1, \ldots, m'-1\}\) to map each element to a table slot.</p>
+    <p style="margin-top:0.5rem;">The fundamental problem: since \(|X| = m \gg m' = |Y|\), the function \(h\) cannot be injective. By the <strong>Pigeonhole Principle</strong>, there must exist distinct elements \(x \neq x'\) with \(h(x) = h(x')\). This is called a <strong>collision</strong>.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Key Parameters</h3>
+    <ul>
+      <li>\(n\): number of elements stored</li>
+      <li>\(m = |X|\): universe size</li>
+      <li>\(m' = |Y|\): table size, chosen to be \(O(n)\)</li>
+      <li>\(\alpha = n/m'\): <strong>load factor</strong> (fraction of table that is occupied)</li>
+    </ul>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Birthday Paradox Connection</h3>
+    <p>Even for a random hash function mapping \(n\) elements to \(m'\) slots, collisions are nearly inevitable once \(n = \Omega(\sqrt{m'})\). This is exactly the <strong>birthday paradox</strong>: with \(\approx 23\) people (elements), there is a \(> 50\%\) chance of a shared birthday among 365 days (slots). For hash tables with \(m' = O(n)\), collisions are <em>guaranteed</em>, so we must handle them.</p>
+  </div>
+</section>
+
+<!-- ===== HASH FAMILIES ===== -->
+<section id="sec-hash-families" class="section" data-track="hash-families">
+  <h2 class="section-title">Hash Families</h2>
+
+  <div class="concept-box">
+    <h3>Why Families Instead of a Single Function?</h3>
+    <p>For any fixed hash function \(h\), an adversary can choose \(n\) elements that all map to the same slot, making all operations \(O(n)\). The solution: pick \(h\) <strong>randomly</strong> from a family \(\mathcal{H}\) of functions. The adversary must choose elements before seeing which \(h\) was selected.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition: Universal Hash Family</h3>
+    <p>A family \(\mathcal{H} \subseteq \{h : X \to Y\}\) is <strong>universal</strong> if for every pair of distinct elements \(x \neq x' \in X\):</p>
+    \[\Pr_{h \sim \mathcal{H}}[h(x) = h(x')] \leq \frac{1}{|Y|} = \frac{1}{m'}\]
+    <p style="margin-top:0.5rem;">In other words, the collision probability is at most what we would expect from a completely random function.</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Definition: Strongly Universal Hash Family</h3>
+    <p>A family \(\mathcal{H}\) is <strong>strongly universal</strong> (also called <strong>2-independent</strong>) if for every pair of distinct elements \(x \neq x' \in X\) and every pair of values \(y, y' \in Y\):</p>
+    \[\Pr_{h \sim \mathcal{H}}[h(x) = y \;\text{and}\; h(x') = y'] = \frac{1}{|Y|^2}\]
+    <p style="margin-top:0.5rem;">This means \(h(x)\) and \(h(x')\) behave like independent uniform random variables over \(Y\).</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 31: Strongly Universal via Polynomials</h3>
+    <p>Let \(p\) be a prime with \(p \geq |X|\). For \(a, b \in \mathbb{Z}_p\), define:</p>
+    \[h_{a,b}(x) = ax + b \pmod{p}\]
+    <p>Then \(\mathcal{H} = \{h_{a,b} : a, b \in \mathbb{Z}_p\}\) is a strongly universal family over \(\mathbb{Z}_p\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm31">Show Proof</button>
+  <div class="proof-content" id="proof-thm31">
+    <p>Fix distinct \(x, x' \in \mathbb{Z}_p\) and target values \(y, y' \in \mathbb{Z}_p\). We need \(h_{a,b}(x) = y\) and \(h_{a,b}(x') = y'\), which gives the system:</p>
+    \[ax + b \equiv y \pmod{p}\]
+    \[ax' + b \equiv y' \pmod{p}\]
+    <p>Subtracting: \(a(x - x') \equiv y - y' \pmod{p}\). Since \(x \neq x'\) and \(p\) is prime, \((x - x')\) has an inverse mod \(p\), giving a unique \(a\). Then \(b = y - ax \pmod{p}\) is also uniquely determined.</p>
+    <p style="margin-top:0.5rem;">So exactly one pair \((a, b)\) out of \(p^2\) satisfies both equations, giving probability \(1/p^2 = 1/|Y|^2\). \(\square\)</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 32: Universal Hash Family Construction</h3>
+    <p>Let \(p\) be a prime with \(p \geq m\). For \(a \in \mathbb{Z}_p \setminus \{0\}\) and \(b \in \mathbb{Z}_p\), define:</p>
+    \[h_{a,b}(x) = ((ax + b) \bmod p) \bmod m'\]
+    <p>Then \(\mathcal{H} = \{h_{a,b}\}\) is a universal hash family mapping \(X \to \{0, \ldots, m'-1\}\).</p>
+  </div>
+</section>
+
+<!-- ===== COLLISION HANDLING ===== -->
+<section id="sec-collision" class="section" data-track="collision">
+  <h2 class="section-title">Collision Handling</h2>
+
+  <div class="concept-box">
+    <h3>Separate Chaining</h3>
+    <p>Each table slot contains a <strong>linked list</strong> of all elements that hash to that slot. Operations:</p>
+    <ul style="margin-top:0.5rem;">
+      <li><strong>Insert(x)</strong>: Compute \(h(x)\), prepend \(x\) to list at slot \(h(x)\). Time: \(O(1)\).</li>
+      <li><strong>Lookup(x)</strong>: Compute \(h(x)\), search the list at slot \(h(x)\). Time: \(O(\text{list length})\).</li>
+      <li><strong>Remove(x)</strong>: Compute \(h(x)\), search and delete from list. Time: \(O(\text{list length})\).</li>
+    </ul>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Expected Performance with Universal Hashing</h3>
+    <p>With a universal hash family and load factor \(\alpha = n/m'\), the expected time for Lookup and Remove is:</p>
+    \[O(1 + \alpha)\]
+    <p>If \(m' = \Theta(n)\), then \(\alpha = O(1)\), giving <strong>expected \(O(1)\)</strong> per operation.</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-chaining">Show Proof</button>
+  <div class="proof-content" id="proof-chaining">
+    <p>For a Lookup of element \(x\), the time is proportional to the length of the list at slot \(h(x)\). This list length equals \(1 + |\{y \in S \setminus \{x\} : h(y) = h(x)\}|\). By universality, for each \(y \neq x\):</p>
+    \[\Pr[h(y) = h(x)] \leq \frac{1}{m'}\]
+    <p>By linearity of expectation, the expected number of collisions is:</p>
+    \[\sum_{y \in S \setminus \{x\}} \Pr[h(y) = h(x)] \leq \frac{n - 1}{m'} < \alpha\]
+    <p>So the expected list length is at most \(1 + \alpha\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Open Addressing</h3>
+    <p>Instead of linked lists, all elements are stored directly in the table. When a collision occurs, we <strong>probe</strong> alternative slots according to a probe sequence \(h_1(x), h_2(x), h_3(x), \ldots\)</p>
+    <ul style="margin-top:0.5rem;">
+      <li><strong>Linear probing</strong>: \(h_i(x) = (h(x) + i) \bmod m'\). Simple, cache-friendly, but causes clustering.</li>
+      <li><strong>Double hashing</strong>: \(h_i(x) = (h_1(x) + i \cdot h_2(x)) \bmod m'\). Two independent hash functions reduce clustering.</li>
+    </ul>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 33: Open Addressing Expected Lookup</h3>
+    <p>Under the <strong>uniform hashing assumption</strong> (each probe sequence is a uniformly random permutation), the expected number of probes for a lookup in an open-addressing hash table with load factor \(\alpha < 1\) is at most:</p>
+    \[\frac{1}{1 - \alpha}\]
+  </div>
+
+  <button class="proof-toggle" data-target="proof-thm33">Show Proof</button>
+  <div class="proof-content" id="proof-thm33">
+    <p>The probability that the first probe hits an occupied slot is \(\alpha = n/m'\). Given that the first slot was occupied, the second probe hits an occupied slot with probability \((n-1)/(m'-1) < \alpha\). The expected number of probes is:</p>
+    \[\sum_{i=0}^{\infty} \alpha^i = \frac{1}{1 - \alpha}\]
+    <p>More precisely, the probability of needing more than \(k\) probes is at most \(\alpha^k\), so \(E[\text{probes}] = \sum_{k=0}^{\infty} \Pr[\text{probes} > k] \leq \sum_{k=0}^{\infty} \alpha^k = 1/(1 - \alpha)\). \(\square\)</p>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 34 (Knuth): Linear Probing</h3>
+    <p>Under a uniform hash function, the expected number of probes for a lookup with linear probing and load factor \(\alpha < 1\) is:</p>
+    \[O\!\left(\frac{1}{(1 - \alpha)^2}\right)\]
+    <p>Linear probing is slower than ideal open addressing due to <strong>primary clustering</strong>.</p>
+  </div>
+</section>
+
+<!-- ===== CUCKOO HASHING ===== -->
+<section id="sec-cuckoo" class="section" data-track="cuckoo">
+  <h2 class="section-title">Cuckoo Hashing</h2>
+
+  <div class="concept-box">
+    <h3>The Power of Two Choices</h3>
+    <p>Cuckoo hashing uses <strong>two hash tables</strong> \(T_1\) and \(T_2\) with <strong>two independent hash functions</strong> \(h_1\) and \(h_2\). Each element \(x\) can reside in either \(T_1[h_1(x)]\) or \(T_2[h_2(x)]\).</p>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Cuckoo Hashing Operations</h4>
+    <p><strong>Lookup(x)</strong>: Check \(T_1[h_1(x)]\) and \(T_2[h_2(x)]\). Time: <strong>worst-case \(O(1)\)</strong>.</p>
+    <p><strong>Remove(x)</strong>: Check both locations, delete if found. Time: <strong>worst-case \(O(1)\)</strong>.</p>
+    <p style="margin-top:0.75rem;"><strong>Insert(x)</strong>:</p>
+    <ol>
+      <li>If \(T_1[h_1(x)]\) is empty, place \(x\) there. Done.</li>
+      <li>Otherwise, evict the current occupant \(y\) from \(T_1[h_1(x)]\), place \(x\) there.</li>
+      <li>Try to insert \(y\) into its alternative location \(T_2[h_2(y)]\).</li>
+      <li>If that slot is also occupied, evict and continue the chain.</li>
+      <li>If a cycle is detected (or too many evictions), <strong>rehash</strong> with new hash functions.</li>
+    </ol>
+    <div class="algo-facts">
+      <span class="fact-pill green">Worst-case \(O(1)\) Lookup/Remove</span>
+      <span class="fact-pill blue">Expected \(O(1)\) Insert</span>
+      <span class="fact-pill red">Requires \(\alpha < 1/2\)</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>Theorem 35: Cuckoo Hashing Performance</h3>
+    <p>With table size \(m' \geq 2n\) (load factor \(\alpha \leq 1/2\)) and hash functions from a suitable family:</p>
+    <ul>
+      <li><strong>Lookup</strong> and <strong>Remove</strong>: worst-case \(O(1)\).</li>
+      <li><strong>Insert</strong>: expected \(O(1)\) amortised.</li>
+    </ul>
+  </div>
+
+  <!-- Interactive Cuckoo Hashing Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Cuckoo Hashing Simulator</h3>
+    <p>Insert keys into a cuckoo hash table with two tables. Watch the kick chains as collisions are resolved.</p>
+    <div class="sim-controls">
+      <input type="number" id="cuckooInput" min="0" placeholder="Key (0–99)…" style="padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text); font-size:0.9rem; width:130px;">
+      <button id="btnCuckooInsert" class="btn btn-primary">Insert</button>
+      <button id="btnCuckooRandom" class="btn btn-secondary">Insert Random</button>
+      <button id="btnCuckooReset" class="btn btn-outline">Reset</button>
+    </div>
+    <div style="display:flex; gap:2rem; margin-top:1rem; flex-wrap:wrap;">
+      <div style="flex:1; min-width:160px;">
+        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Table 1 &mdash; h&#x2081;(x) = x mod 7</h4>
+        <div id="cuckooT1" style="display:flex; flex-direction:column; gap:4px;"></div>
+      </div>
+      <div style="flex:1; min-width:160px;">
+        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Table 2 &mdash; h&#x2082;(x) = &lfloor;x/7&rfloor; mod 7</h4>
+        <div id="cuckooT2" style="display:flex; flex-direction:column; gap:4px;"></div>
+      </div>
+    </div>
+    <div id="cuckooLog" style="margin-top:1rem; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:0.75rem; font-family:var(--font-mono); font-size:0.8rem; max-height:160px; overflow-y:auto; color:var(--text-muted);"></div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="stat-card"><div class="stat-value" id="cuckooStored">0</div><div class="stat-label">Items Stored</div></div>
+      <div class="stat-card"><div class="stat-value" id="cuckooKicks">0</div><div class="stat-label">Last Kick Chain</div></div>
+      <div class="stat-card"><div class="stat-value" id="cuckooStatus" style="font-size:1.1rem;">Ready</div><div class="stat-label">Status</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BLOOM FILTERS ===== -->
+<section id="sec-bloom" class="section" data-track="bloom">
+  <h2 class="section-title">Bloom Filters</h2>
+
+  <div class="concept-box">
+    <h3>Approximate Set Membership</h3>
+    <p>A <strong>Bloom filter</strong> is a space-efficient probabilistic data structure that supports approximate set membership queries. It allows <strong>false positives</strong> but <strong>never false negatives</strong>.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Structure</h3>
+    <ul>
+      <li>An array of \(m'\) bits, all initially 0.</li>
+      <li>\(T\) independent hash functions \(h_1, h_2, \ldots, h_T : X \to \{0, \ldots, m'-1\}\).</li>
+    </ul>
+  </div>
+
+  <div class="algo-block" style="margin-top:1.5rem;">
+    <h4>Bloom Filter Operations</h4>
+    <p><strong>Insert(x)</strong>: Set bits \(h_1(x), h_2(x), \ldots, h_T(x)\) to 1.</p>
+    <p><strong>Lookup(x)</strong>: Return &ldquo;maybe in set&rdquo; if ALL bits \(h_1(x), \ldots, h_T(x)\) are 1; return &ldquo;definitely not in set&rdquo; if any bit is 0.</p>
+    <div class="algo-facts">
+      <span class="fact-pill green">Never false negatives</span>
+      <span class="fact-pill blue">\(O(T)\) per operation</span>
+      <span class="fact-pill red">False positives possible</span>
+    </div>
+  </div>
+
+  <div class="theorem-box" style="margin-top:1.5rem;">
+    <h3>False Positive Rate</h3>
+    <p>After inserting \(n\) elements into a Bloom filter with \(m'\) bits and \(T\) hash functions, the false positive probability for a new element is approximately:</p>
+    \[\text{FPR} \approx \left(1 - e^{-nT/m'}\right)^T\]
+    <p style="margin-top:0.5rem;">The optimal number of hash functions that minimises the FPR is:</p>
+    \[T^* = \frac{m'}{n} \ln 2 \approx 0.693 \cdot \frac{m'}{n}\]
+    <p>At this optimum, the FPR is \(\approx (1/2)^T \approx 0.6185^{m'/n}\).</p>
+  </div>
+
+  <button class="proof-toggle" data-target="proof-bloom-fpr">Show Derivation</button>
+  <div class="proof-content" id="proof-bloom-fpr">
+    <p>After inserting one element, each of the \(T\) hash functions sets one bit. The probability that a specific bit remains 0 after one hash is \(1 - 1/m'\). After \(nT\) total hash operations:</p>
+    \[\Pr[\text{bit } i = 0] = \left(1 - \frac{1}{m'}\right)^{nT} \approx e^{-nT/m'}\]
+    <p>So the probability that a specific bit is 1 is \(\approx 1 - e^{-nT/m'}\). A false positive occurs when all \(T\) bits for a non-member are 1:</p>
+    \[\text{FPR} \approx \left(1 - e^{-nT/m'}\right)^T\]
+    <p>To minimise, let \(p = e^{-nT/m'}\) and note that FPR \(= (1 - p)^T = (1 - p)^{-(m'/n) \ln p \cdot (n/m') / \ln(1/p) \cdot T}\). Taking the derivative and setting to zero gives \(p = 1/2\), hence \(T^* = (m'/n) \ln 2\). \(\square\)</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Space Complexity</h3>
+    <p>A Bloom filter uses:</p>
+    \[\text{Space} = O(T \log m + m') \text{ bits}\]
+    <p>where \(T \log m\) bits store the hash function descriptions and \(m'\) bits for the bit array. Compared to storing the actual set (\(O(n \log m)\) bits), the Bloom filter can be much more compact when the desired FPR is not too small.</p>
+  </div>
+
+  <!-- Interactive Bloom Filter Simulation -->
+  <div class="sim-container" style="margin-top:2rem;">
+    <h3>Interactive: Bloom Filter Simulator</h3>
+    <p>Insert elements and check for false positives. Watch how bits get set and observe the empirical false positive rate.</p>
+    <div class="sim-controls">
+      <label>Bits \(m'\) = <input type="range" id="sliderBFBits" min="8" max="64" value="16" style="width:100px;"> <span id="valBFBits">16</span></label>
+      <label style="margin-left:1rem;">Hash functions \(T\) = <input type="range" id="sliderBFHash" min="1" max="8" value="3" style="width:100px;"> <span id="valBFHash">3</span></label>
+    </div>
+    <div class="sim-controls" style="margin-top:0.5rem;">
+      <input type="text" id="bfInput" placeholder="Enter element..." style="padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text); font-size:0.9rem; width:160px;">
+      <button id="btnBFInsert" class="btn btn-primary" style="margin-left:0.5rem;">Insert</button>
+      <button id="btnBFLookup" class="btn btn-secondary" style="margin-left:0.5rem;">Lookup</button>
+      <button id="btnBFTest100" class="btn btn-outline" style="margin-left:0.5rem;">Test 100 Random</button>
+      <button id="btnBFReset" class="btn btn-outline" style="margin-left:0.5rem;">Reset</button>
+    </div>
+    <div id="bfBitArray" style="display:flex; flex-wrap:wrap; gap:3px; margin-top:1rem; font-family:var(--font-mono); font-size:0.8rem;"></div>
+    <div id="bfMessage" style="margin-top:0.75rem; font-size:0.9rem; min-height:1.5rem;"></div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:1rem; margin-top:1rem;">
+      <div class="stat-card"><div class="stat-value" id="bfInserted">0</div><div class="stat-label">Elements Inserted</div></div>
+      <div class="stat-card"><div class="stat-value" id="bfBitsSet">0</div><div class="stat-label">Bits Set to 1</div></div>
+      <div class="stat-card"><div class="stat-value" id="bfFPRate">-</div><div class="stat-label">Empirical FP Rate</div></div>
+      <div class="stat-card"><div class="stat-value" id="bfTheoryFP">-</div><div class="stat-label">Theoretical FP Rate</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title">Summary &amp; Comparison</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="styled-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Structure</th>
+          <th>Lookup</th>
+          <th>Insert</th>
+          <th>Remove</th>
+          <th>Space</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Separate Chaining</td>
+          <td>\(O(1+\alpha)\) exp.</td>
+          <td>\(O(1)\)</td>
+          <td>\(O(1+\alpha)\) exp.</td>
+          <td>\(O(n+m')\)</td>
+          <td>Simple, flexible \(\alpha\)</td>
+        </tr>
+        <tr>
+          <td>Open Addr. (double hash)</td>
+          <td>\(O(1/(1-\alpha))\) exp.</td>
+          <td>\(O(1/(1-\alpha))\) exp.</td>
+          <td>Tricky (tombstones)</td>
+          <td>\(O(m')\)</td>
+          <td>No pointers, cache-friendly</td>
+        </tr>
+        <tr>
+          <td>Linear Probing</td>
+          <td>\(O(1/(1-\alpha)^2)\) exp.</td>
+          <td>\(O(1/(1-\alpha)^2)\) exp.</td>
+          <td>Tricky</td>
+          <td>\(O(m')\)</td>
+          <td>Clustering, but cache-optimal</td>
+        </tr>
+        <tr>
+          <td>Cuckoo Hashing</td>
+          <td><strong>\(O(1)\) worst</strong></td>
+          <td>\(O(1)\) exp.</td>
+          <td><strong>\(O(1)\) worst</strong></td>
+          <td>\(O(n)\)</td>
+          <td>Requires \(\alpha < 1/2\)</td>
+        </tr>
+        <tr>
+          <td>Bloom Filter</td>
+          <td>\(O(T)\)</td>
+          <td>\(O(T)\)</td>
+          <td>Not supported</td>
+          <td>\(O(m')\) bits</td>
+          <td>Approximate, false positives</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box" style="margin-top:1.5rem;">
+    <h3>Key Takeaways</h3>
+    <ul>
+      <li><strong>Universal hashing</strong> guarantees expected \(O(1)\) operations regardless of the input distribution &mdash; only the random choice of \(h\) matters.</li>
+      <li><strong>Strongly universal</strong> (2-independent) hash families enable tighter analyses and can be constructed via linear functions over \(\mathbb{Z}_p\).</li>
+      <li><strong>Cuckoo hashing</strong> achieves worst-case \(O(1)\) Lookup and Remove by using two hash functions and displacement chains.</li>
+      <li><strong>Bloom filters</strong> trade exactness for extreme space efficiency. The optimal number of hash functions is \(T^* = (m'/n) \ln 2\).</li>
+      <li>The <strong>load factor</strong> \(\alpha = n/m'\) is the central parameter governing performance in all hashing schemes.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== TUTORIAL PROBLEMS ===== -->
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial Problems</h2>
+  <p style="margin-bottom:1.5rem;">Work through these problems to solidify your understanding of hashing and Bloom filters.</p>
+
+  <!-- Problem 1 -->
+  <div class="problem-card">
+    <h3>Problem 1 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Compare and contrast hash tables and Bloom filters. Under what circumstances would you choose a Bloom filter over a hash table?</p>
+    <button class="solution-toggle" data-target="sol1">Show Solution</button>
+    <div class="proof-content" id="sol1">
+      <p><strong>Hash Table</strong>: Stores exact data, supports Insert/Lookup/Remove, uses \(O(n)\) words of space, and gives exact answers.</p>
+      <p><strong>Bloom Filter</strong>: Does not store actual elements, supports Insert and approximate Lookup only (no Remove), uses \(O(m')\) <em>bits</em> of space, and may return false positives.</p>
+      <p style="margin-top:0.5rem;">Choose a Bloom filter when:</p>
+      <ul>
+        <li>Memory is extremely limited (e.g., network routers, mobile devices).</li>
+        <li>A small false positive rate is acceptable.</li>
+        <li>You do not need to remove elements or retrieve associated data.</li>
+        <li>The universe is very large (e.g., checking if a URL has been visited).</li>
+      </ul>
+      <p>\(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 2 -->
+  <div class="problem-card">
+    <h3>Problem 2 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Prove that the expected time for a Lookup in a hash table with separate chaining and a universal hash family is \(O(1 + \alpha)\), where \(\alpha = n/m'\).</p>
+    <button class="solution-toggle" data-target="sol2">Show Solution</button>
+    <div class="proof-content" id="sol2">
+      <p>Let \(x\) be the element we are looking up, and \(S\) be the set of \(n\) stored elements. The lookup time is proportional to the length of the chain at slot \(h(x)\).</p>
+      <p>Define indicator random variables \(I_y = \mathbf{1}[h(y) = h(x)]\) for each \(y \in S \setminus \{x\}\). The chain length is:</p>
+      \[L = 1 + \sum_{y \in S \setminus \{x\}} I_y\]
+      <p>By universality, \(\mathbb{E}[I_y] = \Pr[h(y) = h(x)] \leq 1/m'\). By linearity of expectation:</p>
+      \[\mathbb{E}[L] \leq 1 + \sum_{y \in S \setminus \{x\}} \frac{1}{m'} = 1 + \frac{n-1}{m'} < 1 + \alpha\]
+      <p>Therefore the expected lookup time is \(O(1 + \alpha)\). When \(m' = \Theta(n)\), this is \(O(1)\). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-card">
+    <h3>Problem 3 <span class="problem-tag warm-up">Warm-up</span></h3>
+    <p>Give an example of a universal hash family where the collision probability is strictly less than \(1/|Y|\) for some pairs of elements. (That is, universality only requires \(\leq 1/|Y|\), but equality is not always achieved.)</p>
+    <button class="solution-toggle" data-target="sol3">Show Solution</button>
+    <div class="proof-content" id="sol3">
+      <p>Consider the identity function family \(\mathcal{H} = \{h_{\text{id}}\}\) where \(h_{\text{id}}(x) = x\) on domain \(X = Y = \{0, 1, \ldots, m'-1\}\). Then for any distinct \(x \neq x'\):</p>
+      \[\Pr[h(x) = h(x')] = 0 < \frac{1}{m'}\]
+      <p>This is trivially universal (with strict inequality), but it is a degenerate example since \(|X| = |Y|\) (no compression). A more interesting example: take the strongly universal family \(\{h_{a,b}(x) = (ax+b \bmod p)\}\) on \(\mathbb{Z}_p\). The collision probability is exactly \(0\) for all distinct pairs, which is strictly less than \(1/p\). Universality is easily satisfied with strict inequality when the intermediate domain is at least as large as the input domain. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-card">
+    <h3>Problem 4 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>Given three arrays \(A[1..n]\), \(B[1..n]\), \(C[1..n]\) of integers, determine whether there exist indices \(i, j, k\) such that \(A[i] + B[j] = C[k]\). Give an \(O(n^2)\) expected-time algorithm using hashing.</p>
+    <button class="solution-toggle" data-target="sol4">Show Solution</button>
+    <div class="proof-content" id="sol4">
+      <p><strong>Algorithm:</strong></p>
+      <ol>
+        <li>Insert all elements of \(C\) into a hash table \(H\). Time: \(O(n)\) expected.</li>
+        <li>For each pair \((i, j)\) with \(1 \leq i, j \leq n\):</li>
+        <li>&emsp;Compute \(s = A[i] + B[j]\).</li>
+        <li>&emsp;Lookup \(s\) in \(H\). If found, return &ldquo;YES&rdquo;.</li>
+        <li>Return &ldquo;NO&rdquo;.</li>
+      </ol>
+      <p style="margin-top:0.5rem;"><strong>Analysis:</strong> Step 1 takes \(O(n)\) expected time with universal hashing. Step 2 iterates over \(n^2\) pairs, each requiring an \(O(1)\) expected-time lookup. Total: \(O(n^2)\) expected time.</p>
+      <p style="margin-top:0.5rem;">Without hashing, the best comparison-based approach is \(O(n^2 \log n)\) (sort \(C\), then binary search for each sum). \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-card">
+    <h3>Problem 5 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p><strong>(Perfect Hashing)</strong> Design a hash table with \(O(n)\) space and <strong>worst-case \(O(1)\)</strong> lookup time for a static set of \(n\) elements. (Hint: use a two-level scheme.)</p>
+    <button class="solution-toggle" data-target="sol5">Show Solution</button>
+    <div class="proof-content" id="sol5">
+      <p><strong>FKS (Fredman&ndash;Koml&oacute;s&ndash;Szemer&eacute;di) Perfect Hashing:</strong></p>
+      <ol>
+        <li><strong>First level:</strong> Use a universal hash function \(h\) to map \(n\) elements into \(m' = O(n)\) buckets. Let \(n_i\) be the number of elements in bucket \(i\).</li>
+        <li><strong>Second level:</strong> For each bucket \(i\), create a separate hash table of size \(n_i^2\) using another universal hash function \(h_i\). With probability \(\geq 1/2\), there are <strong>no collisions</strong> at the second level (birthday paradox in reverse: \(n_i\) elements into \(n_i^2\) slots).</li>
+      </ol>
+      <p style="margin-top:0.5rem;"><strong>Space analysis:</strong> The total space for the second level is:</p>
+      \[\sum_{i=0}^{m'-1} O(n_i^2)\]
+      <p>A key result from universal hashing: \(\mathbb{E}\left[\sum n_i^2\right] \leq n + n(n-1)/m'\). With \(m' = cn\) for a suitable constant \(c\), this is \(O(n)\).</p>
+      <p style="margin-top:0.5rem;"><strong>Lookup:</strong> Compute \(h(x)\) to find the bucket, then \(h_{h(x)}(x)\) to find the slot within the bucket. Two hash computations, each \(O(1)\), giving worst-case \(O(1)\) lookup. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-card">
+    <h3>Problem 6 <span class="problem-tag problem-solving">Problem Solving &#x2B50;</span></h3>
+    <p>A Bloom filter has \(m' = 8n\) bits (i.e., \(B = 8\) bits per element). What is the optimal number of hash functions \(T\)? What is the resulting false positive rate?</p>
+    <button class="solution-toggle" data-target="sol6">Show Solution</button>
+    <div class="proof-content" id="sol6">
+      <p><strong>Optimal \(T\):</strong></p>
+      \[T^* = \frac{m'}{n} \ln 2 = 8 \cdot \ln 2 \approx 8 \times 0.693 = 5.545\]
+      <p>Since \(T\) must be an integer, we use \(T = 6\).</p>
+      <p style="margin-top:0.5rem;"><strong>False positive rate with \(T = 6\):</strong></p>
+      \[\text{FPR} \approx \left(1 - e^{-nT/m'}\right)^T = \left(1 - e^{-6/8}\right)^6 = \left(1 - e^{-0.75}\right)^6\]
+      \[e^{-0.75} \approx 0.4724\]
+      \[\text{FPR} \approx (1 - 0.4724)^6 = (0.5276)^6 \approx 0.0216 \approx 2.16\%\]
+      <p>So with only 8 bits per element and 6 hash functions, the false positive rate is about 2.16%. \(\square\)</p>
+    </div>
+  </div>
+
+  <!-- Problem 7 -->
+  <div class="problem-card">
+    <h3>Problem 7 <span class="problem-tag advanced">Advanced &#x2B50;&#x2B50;</span></h3>
+    <p><strong>(Counting Bloom Filter)</strong> Standard Bloom filters do not support Remove. Propose a modification that supports Remove. What is the trade-off?</p>
+    <button class="solution-toggle" data-target="sol7">Show Solution</button>
+    <div class="proof-content" id="sol7">
+      <p><strong>Counting Bloom Filter:</strong> Replace each bit with a <strong>small counter</strong> (e.g., 4 bits). Operations:</p>
+      <ul>
+        <li><strong>Insert(x)</strong>: Increment counters at positions \(h_1(x), \ldots, h_T(x)\).</li>
+        <li><strong>Lookup(x)</strong>: Return &ldquo;maybe&rdquo; if all counters at \(h_1(x), \ldots, h_T(x)\) are \(> 0\).</li>
+        <li><strong>Remove(x)</strong>: Decrement counters at positions \(h_1(x), \ldots, h_T(x)\).</li>
+      </ul>
+      <p style="margin-top:0.5rem;"><strong>Correctness:</strong> Each counter tracks the number of elements hashing to that position. Decrementing on Remove undoes the Insert, preserving correctness for other elements. The &ldquo;never false negatives&rdquo; property is maintained as long as we only remove elements that were previously inserted.</p>
+      <p style="margin-top:0.5rem;"><strong>Trade-off:</strong> Space increases by a factor of \(c\) (the counter width). With 4-bit counters, space is \(4 \times\) that of a standard Bloom filter. Counter overflow is possible but very unlikely in practice (a 4-bit counter handles up to 15 collisions). \(\square\)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quiz Hub: chapter quizzes are centralised -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 id="quizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Chapter quizzes</h3>
+    <p id="quizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Self-test and math questions for this chapter are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center;">
+      <a id="quizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=6" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a>
+      <a id="flashcardsCalloutBtn" href="../../../tools/flashcards.html?ch=6&start=1" class="btn btn-secondary" style="text-decoration:none; display:inline-block;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="chapter6-study.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

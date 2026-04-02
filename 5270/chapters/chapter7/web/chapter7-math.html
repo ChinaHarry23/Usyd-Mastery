@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Chapter 7</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.back-bar a {
+  color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;
+}
+.back-bar a:hover { opacity: 0.8; }
+.back-bar .page-title-bar {
+  font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+#mainContent { margin-left: 0; }
+
+.toc-sidebar {
+  position: fixed; top: 50px; left: 0; width: var(--sidebar-w);
+  height: calc(100vh - 50px); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem 0; z-index: 40;
+}
+.toc-sidebar .home-link {
+  display: block; padding: 0.5rem 1.5rem 0.75rem; font-size: 0.8rem;
+  color: var(--text-dim); text-decoration: none; transition: color var(--transition);
+}
+.toc-sidebar .home-link:hover { color: var(--accent); }
+.toc-sidebar .sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0 1.5rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
+}
+.toc-sidebar .sidebar-brand .brand-icon { font-size: 1.4rem; }
+.toc-sidebar .sidebar-brand h2 { font-size: 1rem; font-weight: 600; color: var(--text); }
+.toc-sidebar ul { list-style: none; }
+.toc-sidebar li a {
+  display: block; padding: 0.45rem 1.5rem; color: var(--text-muted); text-decoration: none;
+  font-size: 0.82rem; border-left: 3px solid transparent; transition: all var(--transition);
+}
+.toc-sidebar li a:hover { color: var(--text); background: rgba(108,140,255,0.05); }
+.toc-sidebar li a.active {
+  color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); font-weight: 500;
+}
+.toc-group {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); padding: 0.75rem 1.5rem 0.35rem; margin-top: 0.5rem;
+}
+.toc-sidebar .back-to-study {
+  display: block; padding: 0.75rem 1.5rem; margin-top: 0.5rem;
+  border-top: 1px solid var(--border); font-size: 0.82rem;
+  color: var(--accent); text-decoration: none; font-weight: 500;
+}
+.toc-sidebar .back-to-study:hover { background: var(--accent-glow); }
+
+.math-content { margin-left: var(--sidebar-w); }
+.math-content .section { max-width: 860px; }
+
+.symbol-grid {
+  display: grid; grid-template-columns: auto 1fr 1fr; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 1.5rem 0; font-size: 0.9rem;
+}
+.sym-header {
+  background: var(--bg-card); padding: 0.6rem 1rem; font-weight: 600;
+  color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.04em; border-bottom: 1px solid var(--border);
+}
+.sym-cell {
+  padding: 0.65rem 1rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+}
+.sym-cell:nth-child(3n+1) { background: var(--bg-card); justify-content: center; font-size: 1.1rem; }
+.sym-cell:nth-child(3n+2) { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+
+.def-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.def-box .def-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); margin-bottom: 0.5rem; font-weight: 600;
+}
+.def-box.theorem-box { border-left-color: var(--purple); }
+.def-box.theorem-box .def-label { color: var(--purple); }
+.def-box.example-box { border-left-color: var(--green); }
+.def-box.example-box .def-label { color: var(--green); }
+.def-box.warning-box { border-left-color: var(--yellow); }
+.def-box.warning-box .def-label { color: var(--yellow); }
+
+.quick-check {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.quick-check .qc-question { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.qc-opt {
+  padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.875rem; transition: all var(--transition);
+}
+.qc-opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.qc-opt.not-right { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.7; }
+.qc-feedback {
+  margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+  font-size: 0.85rem; display: none;
+}
+.qc-feedback.show { display: block; }
+.qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+@media (max-width: 900px) {
+  .toc-sidebar { display: none; }
+  .math-content { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="back-bar">
+  <div>
+    <a href="chapter7-study.html">&larr; Back to Chapter 7 Study Guide</a>
+    <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
+    <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
+  </div>
+  <span class="page-title-bar">Math Foundations &mdash; Ch.7</span>
+</div>
+
+<!-- ===== TABLE OF CONTENTS SIDEBAR ===== -->
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#x1F50D;</span>
+    <h2>Ch 7 Math</h2>
+  </div>
+  <div class="toc-group">Spaces &amp; Distances</div>
+  <ul>
+    <li><a href="#sec-metric-spaces" class="toc-link">Metric Spaces</a></li>
+    <li><a href="#sec-norms" class="toc-link">Inner Products &amp; Norms</a></li>
+  </ul>
+  <div class="toc-group">Random Projections</div>
+  <ul>
+    <li><a href="#sec-gaussians" class="toc-link">Gaussian Vectors</a></li>
+    <li><a href="#sec-matrix" class="toc-link">Matrix-Vector Products</a></li>
+    <li><a href="#sec-chi-squared" class="toc-link">&chi;&sup2; Concentration</a></li>
+  </ul>
+  <div class="toc-group">Probability Tools</div>
+  <ul>
+    <li><a href="#sec-union-bound" class="toc-link">Logarithms &amp; Union Bound</a></li>
+  </ul>
+  <a href="chapter7-study.html" class="back-to-study">&larr; Chapter 7 Study Guide</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="math-content" id="mainContent">
+
+<!-- HERO -->
+<section class="section hero-section" id="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMPX270 — Chapter 7 Supplement</p>
+    <h1>Mathematical Foundations: NN &amp; Dimensionality Reduction</h1>
+    <p class="hero-subtitle">Metric spaces, norms, random Gaussian vectors, matrix-vector products, chi-squared concentration, and the union bound that makes JL work.</p>
+  </div>
+</section>
+
+<!-- ===== METRIC SPACES ===== -->
+<section class="section" id="sec-metric-spaces">
+  <h2 class="section-title">Metric Spaces</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Metric Space</div>
+    <p>A <strong>metric space</strong> is a pair \((X, \text{dist})\) where \(X\) is a set and \(\text{dist} : X \times X \to [0, \infty)\) satisfies:</p>
+    <ol>
+      <li><strong>Identity of indiscernibles:</strong> \(\text{dist}(x, y) = 0 \iff x = y\)</li>
+      <li><strong>Symmetry:</strong> \(\text{dist}(x, y) = \text{dist}(y, x)\)</li>
+      <li><strong>Triangle inequality:</strong> \(\text{dist}(x, z) \leq \text{dist}(x, y) + \text{dist}(y, z)\)</li>
+    </ol>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Common Metric Spaces</div>
+    <p><strong>Euclidean space:</strong> \((\mathbb{R}^d, \ell_2)\) with \(\text{dist}(x, y) = \|x - y\|_2\).</p>
+    <p><strong>Manhattan space:</strong> \((\mathbb{R}^d, \ell_1)\) with \(\text{dist}(x, y) = \|x - y\|_1 = \sum_i |x_i - y_i|\).</p>
+    <p><strong>Hamming space:</strong> \((\{0,1\}^d, \text{Ham})\) with \(\text{Ham}(x, y) = |\{i : x_i \neq y_i\}|\).</p>
+    <p><strong>Jaccard space:</strong> On subsets of \([n]\), \(\text{dist}_J(A, B) = 1 - |A \cap B|/|A \cup B|\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Verification — Hamming is a Metric</div>
+    <p>For \(x, y, z \in \{0,1\}^d\):</p>
+    <ol>
+      <li>\(\text{Ham}(x, y) = 0 \iff x = y\) (zero differing bits means identical).</li>
+      <li>\(\text{Ham}(x, y) = \text{Ham}(y, x)\) (bit differences are symmetric).</li>
+      <li>\(\text{Ham}(x, z) \leq \text{Ham}(x, y) + \text{Ham}(y, z)\) (each position where \(x_i \neq z_i\) must have either \(x_i \neq y_i\) or \(y_i \neq z_i\)).</li>
+    </ol>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="The triangle inequality requires dist(x,z) \u2264 dist(x,y) + dist(y,z). With dist(A,C) = 6, dist(A,B) = 3, dist(B,C) = 2, we get 6 \u2264 3 + 2 = 5, which is FALSE." data-explanation-zh="\u4e09\u89d2\u4e0d\u7b49\u5f0f\u8981\u6c42 dist(x,z) \u2264 dist(x,y) + dist(y,z)\u3002\u5f53 dist(A,C)=6, dist(A,B)=3, dist(B,C)=2 \u65f6\uff0c6 \u2264 3+2=5 \u4e0d\u6210\u7acb\u3002">
+    <div class="qc-question">Quick Check: Can a distance function have dist(A,B)=3, dist(B,C)=2, dist(A,C)=6 and still be a metric?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Yes</div>
+      <div class="qc-opt" data-idx="1">No &mdash; violates triangle inequality</div>
+      <div class="qc-opt" data-idx="2">Only if the space is infinite</div>
+      <div class="qc-opt" data-idx="3">Only for Hamming space</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== INNER PRODUCTS & NORMS ===== -->
+<section class="section" id="sec-norms">
+  <h2 class="section-title">Inner Products &amp; Norms</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Inner Product</div>
+    <p>The <strong>standard inner product</strong> (dot product) on \(\mathbb{R}^d\) is:</p>
+    \[\langle x, y \rangle = \sum_{i=1}^{d} x_i y_i\]
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — \(\ell_p\) Norms</div>
+    <p>For \(x \in \mathbb{R}^d\) and \(p \geq 1\):</p>
+    \[\|x\|_p = \left(\sum_{i=1}^{d} |x_i|^p\right)^{1/p}\]
+    <p>Special cases:</p>
+    <ul>
+      <li>\(\ell_1\): \(\|x\|_1 = \sum_i |x_i|\) (Manhattan norm)</li>
+      <li>\(\ell_2\): \(\|x\|_2 = \sqrt{\sum_i x_i^2} = \sqrt{\langle x, x \rangle}\) (Euclidean norm)</li>
+      <li>\(\ell_\infty\): \(\|x\|_\infty = \max_i |x_i|\) (Chebyshev norm)</li>
+    </ul>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Key Identity — Distance from Norm</div>
+    <p>The \(\ell_p\) distance between \(x\) and \(y\) is simply the \(\ell_p\) norm of their difference:</p>
+    \[\text{dist}_p(x, y) = \|x - y\|_p\]
+    <p>For Euclidean distance specifically:</p>
+    \[\|x - y\|_2^2 = \langle x - y, x - y \rangle = \|x\|_2^2 - 2\langle x, y \rangle + \|y\|_2^2\]
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Example — Angle between Unit Vectors</div>
+    <p>For unit vectors \(\|x\| = \|y\| = 1\):</p>
+    \[\|x - y\|_2^2 = 2 - 2\langle x, y \rangle = 2(1 - \cos \alpha)\]
+    <p>where \(\alpha = \arccos(\langle x, y \rangle)\) is the angle between \(x\) and \(y\). Thus:</p>
+    \[\langle x, y \rangle = \cos \alpha \qquad \text{and} \qquad \|x - y\|_2 = \sqrt{2(1 - \cos \alpha)}\]
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="||x||_2 = sqrt(3\u00b2 + 4\u00b2) = sqrt(9 + 16) = sqrt(25) = 5." data-explanation-zh="||x||_2 = sqrt(3\u00b2 + 4\u00b2) = sqrt(9 + 16) = sqrt(25) = 5\u3002">
+    <div class="qc-question">Quick Check: What is \(\|(3, 4)\|_2\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(7\)</div>
+      <div class="qc-opt" data-idx="1">\(4\)</div>
+      <div class="qc-opt" data-idx="2">\(5\)</div>
+      <div class="qc-opt" data-idx="3">\(\sqrt{7}\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== RANDOM GAUSSIAN VECTORS ===== -->
+<section class="section" id="sec-gaussians">
+  <h2 class="section-title">Random Gaussian Vectors</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Standard Gaussian</div>
+    <p>A random variable \(Z \sim \mathcal{N}(0, 1)\) has probability density:</p>
+    \[f(z) = \frac{1}{\sqrt{2\pi}} e^{-z^2/2}\]
+    <p>Key properties: \(\mathbb{E}[Z] = 0\), \(\text{Var}[Z] = \mathbb{E}[Z^2] = 1\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Property — Linear Combinations</div>
+    <p>If \(Z_1, Z_2, \ldots, Z_d\) are independent \(\mathcal{N}(0, 1)\), then for any fixed vector \(a = (a_1, \ldots, a_d) \in \mathbb{R}^d\):</p>
+    \[\sum_{i=1}^{d} a_i Z_i \sim \mathcal{N}\!\left(0, \|a\|_2^2\right)\]
+    <p>That is, a linear combination of independent Gaussians is Gaussian with variance \(\|a\|_2^2\).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Application to Random Projection</div>
+    <p>Let \(g = (g_1, \ldots, g_d)\) with \(g_i \sim \mathcal{N}(0, 1)\) i.i.d. For any fixed \(u \in \mathbb{R}^d\):</p>
+    \[\langle g, u \rangle = \sum_{i=1}^{d} g_i u_i \sim \mathcal{N}(0, \|u\|_2^2)\]
+    <p>This is why a random Gaussian vector serves as a natural building block for random projections: the projected length is proportional to the original length.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Scaled Projection Matrix</div>
+    <p>In the JL construction, we use a \(k \times d\) matrix \(M\) with entries \(M_{ij} \sim \mathcal{N}(0, 1/k)\). Each row \(m_i\) of \(M\) gives:</p>
+    \[\langle m_i, u \rangle \sim \mathcal{N}(0, \|u\|^2/k)\]
+    <p>The \(1/k\) scaling ensures that \(\mathbb{E}[\|Mu\|^2] = \|u\|^2\), making the projection <strong>unbiased</strong>.</p>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="If Z ~ N(0,1), then aZ ~ N(0, a\u00b2). So 3Z ~ N(0, 9). Var[3Z] = 9." data-explanation-zh="\u5982\u679c Z ~ N(0,1)\uff0c\u5219 aZ ~ N(0, a\u00b2)\u3002\u6240\u4ee5 3Z ~ N(0, 9)\uff0cVar[3Z] = 9\u3002">
+    <div class="qc-question">Quick Check: If \(Z \sim \mathcal{N}(0, 1)\), what is \(\text{Var}[3Z]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(3\)</div>
+      <div class="qc-opt" data-idx="1">\(9\)</div>
+      <div class="qc-opt" data-idx="2">\(1\)</div>
+      <div class="qc-opt" data-idx="3">\(6\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MATRIX-VECTOR MULTIPLICATION ===== -->
+<section class="section" id="sec-matrix">
+  <h2 class="section-title">Matrix-Vector Multiplication as Projection</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Matrix-Vector Product</div>
+    <p>For a \(k \times d\) matrix \(M\) and a vector \(u \in \mathbb{R}^d\), the product \(Mu \in \mathbb{R}^k\) has components:</p>
+    \[(Mu)_i = \sum_{j=1}^{d} M_{ij} u_j = \langle m_i, u \rangle\]
+    <p>where \(m_i\) is the \(i\)-th row of \(M\). So \(Mu\) is a vector of \(k\) inner products.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Key Property — Linearity Preserves Differences</div>
+    <p>Since matrix multiplication is linear:</p>
+    \[M(x - y) = Mx - My = \Phi(x) - \Phi(y)\]
+    <p>Therefore, if \(\|Mu\|^2 \approx \|u\|^2\) for all difference vectors \(u = x - y\), then all pairwise distances are approximately preserved.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Squared Norm of Projection</div>
+    <p>The squared norm of the projected vector is:</p>
+    \[\|Mu\|^2 = \sum_{i=1}^{k} \langle m_i, u \rangle^2\]
+    <p>When \(M\) has i.i.d. \(\mathcal{N}(0, 1/k)\) entries, each \(\langle m_i, u \rangle^2\) is \((\|u\|^2/k) \cdot \chi^2(1)\), so:</p>
+    \[\frac{k \cdot \|Mu\|^2}{\|u\|^2} = \sum_{i=1}^{k} \frac{k \cdot \langle m_i, u \rangle^2}{\|u\|^2} \sim \chi^2(k)\]
+  </div>
+</section>
+
+<!-- ===== CHI-SQUARED CONCENTRATION ===== -->
+<section class="section" id="sec-chi-squared">
+  <h2 class="section-title">Concentration of \(\chi^2\) Random Variables</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Chi-Squared Distribution</div>
+    <p>If \(Z_1, \ldots, Z_k\) are i.i.d. \(\mathcal{N}(0, 1)\), then:</p>
+    \[Y = \sum_{i=1}^{k} Z_i^2 \sim \chi^2(k)\]
+    <p>Properties: \(\mathbb{E}[Y] = k\), \(\text{Var}[Y] = 2k\).</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Chi-Squared Concentration Inequality</div>
+    <p>For \(Y \sim \chi^2(k)\) and \(\varepsilon \in (0, 1)\):</p>
+    \[\Pr\!\left[\left|\frac{Y}{k} - 1\right| > \varepsilon\right] \leq 2\exp\!\left(-\frac{k\varepsilon^2}{8}\right)\]
+    <p>This says \(Y/k\) concentrates around 1 with exponentially decreasing tails.</p>
+  </div>
+
+  <div class="concept-box" style="margin-top:1rem;">
+    <h3>Connection to JL Lemma</h3>
+    <p>From the previous section, \(k\|Mu\|^2/\|u\|^2 \sim \chi^2(k)\). Setting \(Y = k\|Mu\|^2/\|u\|^2\):</p>
+    \[\Pr\!\left[\left|\frac{\|Mu\|^2}{\|u\|^2} - 1\right| > \varepsilon\right] = \Pr\!\left[\left|\frac{Y}{k} - 1\right| > \varepsilon\right] \leq 2\exp\!\left(-\frac{k\varepsilon^2}{8}\right)\]
+    <p>Setting \(2\exp(-k\varepsilon^2/8) \leq \delta\) gives:</p>
+    \[k \geq \frac{8 \ln(2/\delta)}{\varepsilon^2} = O\!\left(\frac{\log(1/\delta)}{\varepsilon^2}\right)\]
+    <p>This is precisely the Distributional JL Lemma (Theorem 36).</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">Why Sub-Gaussian Tails Matter</div>
+    <p>If we only used Chebyshev's inequality (\(\Pr[|Y/k - 1| > \varepsilon] \leq 2/(k\varepsilon^2)\)), we would need \(k = O(1/(\delta\varepsilon^2))\), which depends linearly on \(1/\delta\). The sub-exponential concentration gives \(k = O(\log(1/\delta)/\varepsilon^2)\), which is <strong>logarithmic</strong> in \(1/\delta\). This logarithmic dependence is crucial for the union bound step.</p>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="E[\u03c7\u00b2(k)] = k, so E[\u03c7\u00b2(10)] = 10." data-explanation-zh="E[\u03c7\u00b2(k)] = k\uff0c\u6240\u4ee5 E[\u03c7\u00b2(10)] = 10\u3002">
+    <div class="qc-question">Quick Check: What is \(\mathbb{E}[\chi^2(10)]\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(10\)</div>
+      <div class="qc-opt" data-idx="1">\(20\)</div>
+      <div class="qc-opt" data-idx="2">\(\sqrt{10}\)</div>
+      <div class="qc-opt" data-idx="3">\(100\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== LOGARITHMS & UNION BOUND ===== -->
+<section class="section" id="sec-union-bound">
+  <h2 class="section-title">Logarithms &amp; Union Bound</h2>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Union Bound (Boole's Inequality)</div>
+    <p>For events \(A_1, A_2, \ldots, A_m\):</p>
+    \[\Pr\!\left[\bigcup_{i=1}^{m} A_i\right] \leq \sum_{i=1}^{m} \Pr[A_i]\]
+  </div>
+
+  <div class="concept-box" style="margin-top:1rem;">
+    <h3>Application: From One Pair to All Pairs</h3>
+    <p>The Distributional JL Lemma gives: for a <strong>single</strong> vector \(u\), the projection \(Mu\) preserves \(\|u\|\) within \((1 \pm \varepsilon)\) with probability \(\geq 1 - \delta\), provided \(k = O(\log(1/\delta)/\varepsilon^2)\).</p>
+    <p style="margin-top:0.5rem;">To preserve <strong>all</strong> \(\binom{n}{2}\) pairwise distances, we apply the union bound:</p>
+    \[\Pr[\text{any pair fails}] \leq \binom{n}{2} \cdot \delta\]
+    <p>We want this \(\leq \varepsilon_0\) (e.g., \(1/n\)). Setting \(\delta = \varepsilon_0 / \binom{n}{2}\):</p>
+    \[k = O\!\left(\frac{\log(\binom{n}{2}/\varepsilon_0)}{\varepsilon^2}\right) = O\!\left(\frac{\log n}{\varepsilon^2}\right)\]
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Worked Example</div>
+    <p>Suppose \(n = 10{,}000\) points and we want \(\varepsilon = 0.1\). Then:</p>
+    \[k = O\!\left(\frac{\log 10{,}000}{0.01}\right) = O\!\left(\frac{13.3}{0.01}\right) \approx 1330\]
+    <p>With a constant factor of about 8, this gives \(k \approx 10{,}640\). In practice, much smaller values (e.g., \(k \approx 100\text{--}500\)) often suffice due to conservative bounds.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Why Logarithms Arise</div>
+    <p>The \(\log n\) in the JL bound comes from two ingredients:</p>
+    <ol>
+      <li><strong>Sub-exponential tails:</strong> \(\Pr[\text{fail}] \leq e^{-\Theta(k\varepsilon^2)}\), giving \(\delta = e^{-\Theta(k\varepsilon^2)}\), i.e., \(k = O(\log(1/\delta)/\varepsilon^2)\).</li>
+      <li><strong>Union bound over \(\binom{n}{2} = O(n^2)\) pairs:</strong> We need \(\delta = O(1/n^2)\), so \(\log(1/\delta) = O(\log n)\).</li>
+    </ol>
+    <p>Together: \(k = O(\log n / \varepsilon^2)\). The magic is that the number of dimensions depends on \(\log n\), not on \(n\) or the original dimension \(d\).</p>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="By the union bound, Pr[any of 10 events] \u2264 10 \u00d7 0.01 = 0.1." data-explanation-zh="\u6839\u636e\u8054\u5408\u754c\uff0cPr[\u4efb\u4e0010\u4e2a\u4e8b\u4ef6] \u2264 10 \u00d7 0.01 = 0.1\u3002">
+    <div class="qc-question">Quick Check: If 10 events each have probability 0.01, what does the union bound give for the probability of at least one occurring?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(0.01\)</div>
+      <div class="qc-opt" data-idx="1">\(0.01^{10}\)</div>
+      <div class="qc-opt" data-idx="2">\(\leq 0.1\)</div>
+      <div class="qc-opt" data-idx="3">\(1 - 0.99^{10} \approx 0.096\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ===== MATH QUIZ ===== -->
+<!-- Quiz Hub -->
+<section id="sec-quiz-hub" class="section">
+  <div class="callout quiz-hub-callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06);">
+    <h3 id="mathQuizHubCalloutTitle" style="margin-top:0; font-size:1.15rem;">Math quiz</h3>
+    <p id="mathQuizHubCalloutBody" style="margin:0.5rem 0 0; line-height:1.55; color:var(--text-muted);">Chapter math quizzes are in the Quiz Hub. Filter by this chapter and choose Study / Math / All.</p>
+    <p style="margin-top:0.85rem;"><a id="mathQuizHubCalloutBtn" href="../../../tools/quiz-hub.html?ch=7" class="btn btn-primary" style="text-decoration:none; display:inline-block;">Open Quiz Hub</a></p>
+  </div>
+</section>
+
+</div><!-- /math-content -->
+
+<script src="chapter7-math.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>
