@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 5</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar { position: sticky; top: 0; z-index: 50; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.back-bar a { color: var(--accent); text-decoration: none; font-weight: 600; }
+#mainContent { max-width: 860px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin: 1rem 0; }
+.qc-opt { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; margin: 0.25rem 0; }
+.qc-opt.chosen { pointer-events: none; } .qc-opt.right { border-color: var(--green); background: var(--green-bg); } .qc-opt.not-right { border-color: var(--red); background: var(--red-bg); opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; } .qc-feedback.show { display: block; padding: 0.75rem; font-size: 0.85rem; } .qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); } .qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter5-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 5 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Impurity measures for decision trees, information gain, Gini, and the probability logic behind bagging, Random Forests, and boosting.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">H</span><strong>Entropy</strong><span>Measures node impurity with \(-\sum p_k \log_2 p_k\).</span></div>
+      <div class="hero-card"><span class="hero-card-icon">IG</span><strong>Split quality</strong><span>Information gain rewards splits that sharply reduce impurity.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">G</span><strong>Gini</strong><span>CART-style trees use \(1-\sum p_k^2\) as a simpler impurity score.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">ens</span><strong>Ensembles</strong><span>Bagging reduces variance; Random Forest adds decorrelation; boosting focuses on hard cases.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-impurity" data-track="impurity">
+  <h2 class="section-title">How trees decide where to split</h2>
+  <p class="section-lead">A decision tree wants child nodes that are purer than the parent. Week 5 presents two main impurity measures: entropy and Gini. Both are zero when a node contains only one class and larger when the classes are mixed.</p>
+  <div class="theorem-box">
+    <h3>Entropy and information gain</h3>
+    <p>\[
+      H(S)=-\sum_k p_k \log_2 p_k
+    \]</p>
+    <p style="margin-top:0.7rem;">If attribute \(A\) splits \(S\) into child subsets \(S_1,\dots,S_r\), then the remaining entropy is</p>
+    <p style="margin-top:0.7rem;">\[
+      H(S\mid A)=\sum_{j=1}^r \frac{|S_j|}{|S|}H(S_j)
+    \]</p>
+    <p style="margin-top:0.7rem;">Information gain is</p>
+    <p style="margin-top:0.7rem;">\[
+      \operatorname{Gain}(S,A)=H(S)-H(S\mid A)
+    \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Gini impurity</h3>
+    <p>\[
+      G(S)=1-\sum_k p_k^2=\sum_k p_k(1-p_k)
+    \]</p>
+    <p style="margin-top:0.7rem;">Lower is better. A split is good when the weighted average Gini of the children is much smaller than the parent Gini.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: entropy and information gain</h2>
+  <p>Use the tutorial dataset of 8 examples with class labels \(+\) and \(-\): five positives and three negatives.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Parent entropy</h3>
+      <p>\[
+        H(S)=I\left(\frac{5}{8},\frac{3}{8}\right)
+        =-\frac{5}{8}\log_2\frac{5}{8}-\frac{3}{8}\log_2\frac{3}{8}
+        \approx 0.95
+      \]</p>
+      <p style="margin-top:0.8rem;">This is the impurity before any split.</p>
+    </div>
+    <div class="col-card">
+      <h3>Split on shape</h3>
+      <p>The child entropies from the tutorial solution are:</p>
+      <p style="margin-top:0.6rem;">\(H(S_{\text{circle}})=0\)</p>
+      <p>\(H(S_{\text{square}})=1\)</p>
+      <p>\(H(S_{\text{triangle}})=0\)</p>
+      <p style="margin-top:0.8rem;">Weighted remainder:</p>
+      <p style="margin-top:0.6rem;">\[
+        H(S\mid \text{shape})=\frac{3}{8}(0)+\frac{4}{8}(1)+\frac{1}{8}(0)=0.5
+      \]</p>
+      <p style="margin-top:0.8rem;">So \[
+        \operatorname{Gain}(S,\text{shape})=0.95-0.5=0.45
+      \]</p>
+      <p style="margin-top:0.8rem;">Since the tutorial computes \(\operatorname{Gain}(S,\text{color})=0.34\), the root attribute is <strong>shape</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: Gini impurity and split reduction</h2>
+  <p>Suppose a node contains 10 examples: 6 positives and 4 negatives.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Parent node Gini</h3>
+      <p>\[
+        G_{\text{parent}}=1-\left(\frac{6}{10}\right)^2-\left(\frac{4}{10}\right)^2
+        =1-0.36-0.16=0.48
+      \]</p>
+      <p style="margin-top:0.8rem;">Now split into:</p>
+      <p style="margin-top:0.5rem;">Left child: 4 positive, 0 negative</p>
+      <p>Right child: 2 positive, 4 negative</p>
+    </div>
+    <div class="col-card">
+      <h3>Weighted child Gini</h3>
+      <p>Left child is pure, so \(G_L=0\).</p>
+      <p style="margin-top:0.7rem;">For the right child:</p>
+      <p style="margin-top:0.6rem;">\[
+        G_R=1-\left(\frac{2}{6}\right)^2-\left(\frac{4}{6}\right)^2
+        =1-\frac{1}{9}-\frac{4}{9}=\frac{4}{9}\approx0.444
+      \]</p>
+      <p style="margin-top:0.8rem;">Weighted post-split impurity:</p>
+      <p style="margin-top:0.6rem;">\[
+        G_{\text{split}}=\frac{4}{10}(0)+\frac{6}{10}(0.444)\approx0.267
+      \]</p>
+      <p style="margin-top:0.8rem;">Impurity reduction: \(0.48-0.267\approx0.213\). This is a strong split because it creates one pure node and one much cleaner mixed node.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-ensembles" data-track="ensembles">
+  <h2 class="section-title">Why ensembles help and what each method changes</h2>
+  <p>Ensembles work best when the base models are individually decent and not all making the exact same mistakes. The lecture’s error-rate graph makes this explicit: diversity matters, not just quantity.</p>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Bagging</h3>
+      <p>Train each tree on a bootstrap sample. Because trees are unstable learners, averaging many of them mainly reduces variance.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Random Forest</h3>
+      <p>Bagging plus random feature subsets at each split. This decorrelates the trees, which improves the value of averaging.</p>
+    </div>
+    <div class="glance-card">
+      <h3>AdaBoost</h3>
+      <p>Sequentially increases the weight of previously misclassified examples, so later models focus on harder cases.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Gradient Boosting</h3>
+      <p>Adds new models that correct the current ensemble’s residual errors stage by stage.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <h3 style="margin-top:0;">Lecture probability insight</h3>
+    <p>If 25 binary classifiers each have error rate \(\varepsilon=0.35\) and their errors are independent, the ensemble majority-vote error is</p>
+    <p style="margin-top:0.7rem;">\[
+      \varepsilon_{\text{ensemble}}=\sum_{i=13}^{25}\binom{25}{i}\varepsilon^i(1-\varepsilon)^{25-i}\approx 0.06
+    \]</p>
+    <p style="margin-top:0.7rem;">That is the mathematical reason bagging and Random Forest can outperform one tree: averaging many slightly different, better-than-random models collapses variance.</p>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="Bagging trains many models on bootstrap samples and averages them, which mainly reduces variance for unstable learners such as decision trees." data-explanation-zh="Bagging 在自助采样上训练多个模型并做平均，对决策树这类不稳定学习器主要降低的是方差。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">What is the main bias-variance effect of bagging decision trees?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">It mainly reduces variance</div><div class="qc-opt" data-idx="1">It mainly increases variance</div><div class="qc-opt" data-idx="2">It removes both bias and variance completely</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=5" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

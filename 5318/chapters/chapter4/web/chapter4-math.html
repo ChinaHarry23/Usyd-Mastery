@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 4</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<style>
+.back-bar { position: sticky; top: 0; z-index: 50; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.back-bar a { color: var(--accent); text-decoration: none; font-weight: 600; }
+#mainContent { max-width: 860px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin: 1rem 0; }
+.qc-opt { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; margin: 0.25rem 0; }
+.qc-opt.chosen { pointer-events: none; } .qc-opt.right { border-color: var(--green); background: var(--green-bg); } .qc-opt.not-right { border-color: var(--red); background: var(--red-bg); opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; } .qc-feedback.show { display: block; padding: 0.75rem; font-size: 0.85rem; } .qc-feedback.correct-fb { background: var(--green-bg); color: var(--green); } .qc-feedback.wrong-fb { background: var(--red-bg); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter4-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 4 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Bayes theorem, Naive Bayes factorisation, confusion-matrix metrics, and cross-validation logic for evaluating model quality instead of just quoting one accuracy number.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">P</span><strong>Bayes core</strong><span>Posterior = likelihood times prior, divided by evidence.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">NB</span><strong>Naive factorisation</strong><span>Conditional independence turns one hard probability into a product of simpler ones.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">F1</span><strong>Metrics</strong><span>Precision, recall, and F1 tell a more detailed story than accuracy alone.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">CV</span><strong>Evaluation</strong><span>Cross-validation estimates generalisation without spending the test set early.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-bayes" data-track="bayes">
+  <h2 class="section-title">Bayes theorem and the Naive Bayes simplification</h2>
+  <p class="section-lead">Week 4 moves from geometric decision boundaries to probabilistic classification. The mathematical question becomes: given the observed feature values \(E\), which class \(c\) makes those observations most plausible?</p>
+  <div class="theorem-box">
+    <h3>Bayes theorem</h3>
+    <p>\[
+      P(H\mid E)=\frac{P(E\mid H)P(H)}{P(E)}
+    \]</p>
+    <p style="margin-top:0.7rem;"><strong>Prior</strong> \(P(H)\): belief in class \(H\) before seeing the example.</p>
+    <p style="margin-top:0.45rem;"><strong>Likelihood</strong> \(P(E\mid H)\): how compatible the evidence is with class \(H\).</p>
+    <p style="margin-top:0.45rem;"><strong>Posterior</strong> \(P(H\mid E)\): updated class probability after seeing the evidence.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Naive Bayes rule</div>
+    <p>For attributes \(E_1,\dots,E_d\), the independence assumption gives</p>
+    <p style="margin-top:0.7rem;">\[
+      P(c\mid E_1,\dots,E_d)\propto P(c)\prod_{j=1}^d P(E_j\mid c)
+    \]</p>
+    <p style="margin-top:0.7rem; color:var(--text-muted);">The denominator \(P(E)\) is the same for every class, so for classification we usually compare only the numerators.</p>
+  </div>
+  <div class="callout">
+    <h3 style="margin-top:0;">Numeric features in Gaussian NB</h3>
+    <p>When a feature is numeric, the tutorial models \(P(E_j\mid c)\) with a Gaussian density. That means estimating a class-specific mean \(\mu_c\) and standard deviation \(\sigma_c\), then evaluating</p>
+    <p style="margin-top:0.7rem;">\[
+      f(x)=\frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{(x-\mu)^2}{2\sigma^2}}
+    \]</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: nominal Naive Bayes from the tutorial</h2>
+  <p>Use the Week 4 tutorial loan-default dataset to classify the new example:</p>
+  <p style="margin-top:0.7rem;"><strong>home owner = no, marital status = married, annual income = very high</strong></p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Posterior numerator for class yes</h3>
+      <p>From the table:</p>
+      <p style="margin-top:0.6rem;">\(P(\text{yes})=5/10\)</p>
+      <p>\(P(E_1\mid\text{yes})=P(\text{home owner=no}\mid\text{yes})=3/5\)</p>
+      <p>\(P(E_2\mid\text{yes})=P(\text{married}\mid\text{yes})=1/5\)</p>
+      <p>\(P(E_3\mid\text{yes})=P(\text{very high}\mid\text{yes})=1/5\)</p>
+      <p style="margin-top:0.8rem;">So the unnormalised posterior is</p>
+      <p style="margin-top:0.6rem;">\[
+        \frac{3}{5}\cdot\frac{1}{5}\cdot\frac{1}{5}\cdot\frac{5}{10}
+        =\frac{3}{250}=0.012
+      \]</p>
+    </div>
+    <div class="col-card">
+      <h3>Posterior numerator for class no</h3>
+      <p>Similarly:</p>
+      <p style="margin-top:0.6rem;">\(P(\text{no})=5/10\)</p>
+      <p>\(P(E_1\mid\text{no})=3/5\)</p>
+      <p>\(P(E_2\mid\text{no})=3/5\)</p>
+      <p>\(P(E_3\mid\text{no})=2/5\)</p>
+      <p style="margin-top:0.8rem;">\[
+        \frac{3}{5}\cdot\frac{3}{5}\cdot\frac{2}{5}\cdot\frac{5}{10}
+        =\frac{9}{125}=0.072
+      \]</p>
+      <div class="insight-box" style="margin-bottom:0;">
+        <p>Because \(0.072 &gt; 0.012\), Naive Bayes predicts <strong>loan default = no</strong>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-metrics" data-track="metrics">
+  <h2 class="section-title">Confusion matrix, precision, recall, and F1</h2>
+  <p>When classes are imbalanced or false positives and false negatives matter differently, accuracy by itself is too blunt. The lecture introduces the confusion matrix to split performance into more interpretable pieces.</p>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Accuracy</h3>
+      <p>\[
+        \frac{TP+TN}{TP+FP+FN+TN}
+      \]</p>
+    </div>
+    <div class="glance-card">
+      <h3>Precision</h3>
+      <p>\[
+        \frac{TP}{TP+FP}
+      \]
+      “Of the predicted positives, how many were correct?”</p>
+    </div>
+    <div class="glance-card">
+      <h3>Recall</h3>
+      <p>\[
+        \frac{TP}{TP+FN}
+      \]
+      “Of the real positives, how many did we recover?”</p>
+    </div>
+    <div class="glance-card">
+      <h3>F1</h3>
+      <p>\[
+        \frac{2PR}{P+R}=\frac{2TP}{2TP+FP+FN}
+      \]
+      Harmonic mean of precision and recall.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: compute metrics from a confusion matrix</h2>
+  <p>Suppose a binary classifier produces the following counts on a test set: \(TP=12\), \(FP=3\), \(FN=5\), \(TN=30\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Accuracy, precision, recall</h3>
+      <p>\[
+        \text{Accuracy}=\frac{12+30}{12+3+5+30}=\frac{42}{50}=0.84
+      \]</p>
+      <p style="margin-top:0.7rem;">\[
+        \text{Precision}=\frac{12}{12+3}=\frac{12}{15}=0.80
+      \]</p>
+      <p style="margin-top:0.7rem;">\[
+        \text{Recall}=\frac{12}{12+5}=\frac{12}{17}\approx0.706
+      \]</p>
+    </div>
+    <div class="col-card">
+      <h3>F1 and interpretation</h3>
+      <p>\[
+        F1=\frac{2TP}{2TP+FP+FN}=\frac{24}{24+3+5}=\frac{24}{32}=0.75
+      \]</p>
+      <p style="margin-top:0.8rem;">This model is reasonably precise, but recall is lower. It misses 5 true positives, which pulls the F1 score below precision.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-cv" data-track="cv">
+  <h2 class="section-title">Why cross-validation is the standard evaluation procedure</h2>
+  <p>The notebook emphasizes that a single train/test split can be noisy because the result depends on which examples happened to land in the test set. Cross-validation reduces that variance by rotating the hold-out part.</p>
+  <div class="algo-block">
+    <h4>10-fold cross-validation in plain language</h4>
+    <ol>
+      <li>Split the training data into 10 folds.</li>
+      <li>Train on 9 folds and evaluate on the remaining fold.</li>
+      <li>Repeat until every fold has served as validation once.</li>
+      <li>Average the 10 scores to estimate generalisation performance.</li>
+    </ol>
+  </div>
+  <div class="callout">
+    <p><strong>Parameter tuning rule:</strong> tune with cross-validation on the training set only, then evaluate once on the untouched test set. If you tune on the test set, information leaks and the final score stops being trustworthy.</p>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="The test set is meant to simulate new unseen data. Using it for tuning leaks information and makes the final estimate optimistic." data-explanation-zh="测试集用于模拟真正未见过的数据；在它上面调参会导致信息泄漏，使最终评估过于乐观。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Which dataset should remain untouched until the very end of model selection?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">One of the training folds</div><div class="qc-opt" data-idx="1">The validation folds used inside cross-validation</div><div class="qc-opt" data-idx="2">The final test set</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=4" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-toggle.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+</body>
+</html>

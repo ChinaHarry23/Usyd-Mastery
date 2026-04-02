@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 5 — Encoder–Decoder Models</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../shared/chat-panel.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x21C4;</span>
+    <h2>Lecture 5</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-static" class="nav-link" data-section="sec-static">Static embeddings</a></li>
+    <li><a href="#sec-context" class="nav-link" data-section="sec-context">Contextual vectors</a></li>
+    <li><a href="#sec-encdec" class="nav-link" data-section="sec-encdec">Encoder–decoder</a></li>
+    <li><a href="#sec-train" class="nav-link" data-section="sec-train">Training &amp; decoding</a></li>
+    <li><a href="#sec-mt" class="nav-link" data-section="sec-mt">MT evaluation</a></li>
+    <li><a href="#sec-bpe" class="nav-link" data-section="sec-bpe">Tokenisation &amp; BPE</a></li>
+    <li><a href="#sec-attn" class="nav-link" data-section="sec-attn">Toward attention</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Workshop &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter5-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter5-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=5" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=5" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 11</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 5: Models &mdash; Encoder–Decoder</h1>
+    <p class="hero-subtitle">Static &amp; contextual embeddings · seq2seq RNN · MT metrics · BPE · bottleneck → attention.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use:</strong> pair each bullet cluster with <strong>Recall</strong> · use Quiz Hub for spaced retrieval.</p>
+  </div>
+</section>
+
+<section id="sec-static" class="section" data-track="sec-static">
+  <p class="section-kicker">Vectors</p>
+  <h2 class="section-title">Static embeddings: word2vec, GloVe, FastText</h2>
+  <ul class="kp-list tight">
+    <li><strong>word2vec CBOW:</strong> predict centre word from averaged context embeddings.</li>
+    <li><strong>Skip-gram:</strong> predict context from centre word.</li>
+    <li><strong>GloVe:</strong> global co-occurrence stats + learned dot-product objective.</li>
+    <li><strong>FastText:</strong> word = sum of character n-gram vectors → rare / misspelled words.</li>
+    <li>Domain ≠ pretraining corpus (e.g. medical vs web): <strong>fine-tune</strong> on in-domain data or init from published vectors and continue training.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>CBOW vs skip-gram direction; what FastText adds vs word2vec.</p>
+</section>
+
+<section id="sec-context" class="section" data-track="sec-context">
+  <p class="section-kicker">Sense</p>
+  <h2 class="section-title">Contextual representations</h2>
+  <ul class="kp-list tight">
+    <li>One static vector per word → cannot split senses (<em>bat</em> animal vs sport).</li>
+    <li><strong>Bidirectional RNNs:</strong> left + right context per position → contextual vectors per token.</li>
+    <li>Training: CBOW-style prediction at each position (masked words).</li>
+    <li><strong>ELMo</strong> (2018): landmark deep contextualised representations.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why static embeddings fail on polysemy; what ELMo signals.</p>
+</section>
+
+<section id="sec-encdec" class="section" data-track="sec-encdec">
+  <p class="section-kicker">Seq2seq</p>
+  <h2 class="section-title">Encoder–decoder</h2>
+  <ul class="kp-list tight">
+    <li><strong>Encoder</strong> RNN reads source → hidden states; <strong>decoder</strong> generates target L→R conditioned on encoder.</li>
+    <li>Uses: MT, summarisation, dialogue, code generation.</li>
+    <li><strong>Stopping:</strong> fixed length, or until <code>&lt;/s&gt;</code> (EOS).</li>
+    <li><strong>Practice:</strong> decoder often gets encoder context every step; encoder can be bidirectional; stacks of layers common.</li>
+  </ul>
+  <div class="diagram-flow" style="margin-top:1rem;">
+    <div class="flow-node">Source tokens</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">Encoder RNN</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node flow-highlight">\(\mathbf{c}\) (context)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">Decoder RNN</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">Target tokens</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">&lt;/s&gt;</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Two ways to end generation.</p>
+</section>
+
+<section id="sec-train" class="section" data-track="sec-train">
+  <p class="section-kicker">Train vs test</p>
+  <h2 class="section-title">Training and inference</h2>
+  <ul class="kp-list tight">
+    <li><strong>Teacher forcing:</strong> feed decoder the <strong>gold</strong> previous token in training so errors don’t compound immediately.</li>
+    <li>Test: <strong>greedy</strong> argmax, <strong>sampling</strong>, or <strong>beam search</strong> (Lecture 4).</li>
+    <li>Compare hypotheses of different lengths: <strong>normalise</strong> scores (e.g. by length).</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 460 140" width="460" height="140">
+      <defs><marker id="at5" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Training -->
+      <text x="115" y="14" class="node-label" style="font-size:10px;fill:var(--green)">Training (teacher forcing)</text>
+      <rect x="10" y="24" width="40" height="20" class="node-box-green" rx="4"/><text x="30" y="34" class="node-label" style="font-size:8px">gold₁</text>
+      <rect x="60" y="24" width="40" height="20" class="node-box-green" rx="4"/><text x="80" y="34" class="node-label" style="font-size:8px">gold₂</text>
+      <rect x="110" y="24" width="40" height="20" class="node-box-green" rx="4"/><text x="130" y="34" class="node-label" style="font-size:8px">gold₃</text>
+      <line x1="50" y1="34" x2="60" y2="34" class="arrow-line" marker-end="url(#at5)"/>
+      <line x1="100" y1="34" x2="110" y2="34" class="arrow-line" marker-end="url(#at5)"/>
+      <rect x="10" y="52" width="140" height="18" class="node-box" rx="4"/><text x="80" y="61" class="node-label" style="font-size:8px">Decoder RNN</text>
+      <line x1="30" y1="44" x2="30" y2="52" class="arrow-line" marker-end="url(#at5)"/>
+      <line x1="80" y1="44" x2="80" y2="52" class="arrow-line" marker-end="url(#at5)"/>
+      <line x1="130" y1="44" x2="130" y2="52" class="arrow-line" marker-end="url(#at5)"/>
+      <!-- Inference -->
+      <text x="350" y="14" class="node-label" style="font-size:10px;fill:var(--purple)">Inference (autoregressive)</text>
+      <rect x="250" y="24" width="42" height="20" class="node-box-purple" rx="4"/><text x="271" y="34" class="node-label" style="font-size:8px">pred₁</text>
+      <rect x="302" y="24" width="42" height="20" class="node-box-purple" rx="4"/><text x="323" y="34" class="node-label" style="font-size:8px">pred₂</text>
+      <rect x="354" y="24" width="42" height="20" class="node-box-purple" rx="4"/><text x="375" y="34" class="node-label" style="font-size:8px">pred₃</text>
+      <line x1="292" y1="34" x2="302" y2="34" class="arrow-line" marker-end="url(#at5)"/>
+      <line x1="344" y1="34" x2="354" y2="34" class="arrow-line" marker-end="url(#at5)"/>
+      <rect x="250" y="52" width="146" height="18" class="node-box-purple" rx="4"/><text x="323" y="61" class="node-label" style="font-size:8px">Decoder RNN</text>
+      <line x1="271" y1="44" x2="271" y2="52" class="arrow-line" marker-end="url(#at5)"/>
+      <line x1="323" y1="44" x2="323" y2="52" class="arrow-line" marker-end="url(#at5)"/>
+      <line x1="375" y1="44" x2="375" y2="52" class="arrow-line" marker-end="url(#at5)"/>
+      <!-- Feedback arrows for inference -->
+      <path d="M271,70 L271,84 L312,84 L312,44" style="stroke:var(--purple);stroke-width:1;fill:none;" marker-end="url(#at5)"/>
+      <path d="M323,70 L323,94 L364,94 L364,44" style="stroke:var(--purple);stroke-width:1;fill:none;" marker-end="url(#at5)"/>
+      <!-- Labels -->
+      <text x="80" y="85" class="node-label-sm" style="fill:var(--green)">Input = ground truth tokens</text>
+      <text x="323" y="115" class="node-label-sm" style="fill:var(--purple)">Input = own previous predictions</text>
+    </svg>
+    <div class="arch-caption">Teacher forcing (train): decoder receives gold tokens. Autoregressive (inference): decoder feeds its own predictions back as input.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What is fed to the decoder during training vs at inference?</p>
+</section>
+
+<section id="sec-mt" class="section" data-track="sec-mt">
+  <p class="section-kicker">Metrics</p>
+  <h2 class="section-title">Evaluating translation</h2>
+  <ul class="kp-list tight">
+    <li>Gold: human judgements (fluency, adequacy).</li>
+    <li><strong>chrF:</strong> character n-gram precision/recall, combined with \(F_\beta\) (tune \(\beta\) precision vs recall).</li>
+    <li><strong>BLEU:</strong> word n-gram precisions, geometric mean, <strong>brevity penalty</strong>.</li>
+    <li>Tokenisation affects scores (e.g. <em>read</em> vs <em>Reading</em>).</li>
+    <li><strong>chrF example:</strong> character 3-gram matching → TP=11, FP=3, FN=5 → P=11/14≈0.79, R=11/16≈0.69, F1≈0.73.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>chrF vs BLEU: what unit each uses; why BLEU has brevity penalty.</p>
+</section>
+
+<section id="sec-bpe" class="section" data-track="sec-bpe">
+  <p class="section-kicker">Subwords</p>
+  <h2 class="section-title">Tokenisation and BPE</h2>
+  <ul class="kp-list tight">
+    <li>Whitespace-only: misses contractions, punctuation attachment, rare words.</li>
+    <li><strong>BPE:</strong> start from characters; repeatedly merge most frequent adjacent pair until vocab size \(K\) (e.g. 100k).</li>
+    <li>Subwords generalise to unseen typos and long compounds.</li>
+    <li><strong>WordPiece:</strong> similar to BPE but merges by perplexity reduction (not raw frequency); used by BERT.</li>
+    <li><strong>BPE at inference:</strong> apply learned merge rules in order to segment new text (e.g. "store" → "s t o r e" → merge pairs greedily).</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>BPE merge rule in one sentence.</p>
+</section>
+
+<section id="sec-attn" class="section" data-track="sec-attn">
+  <p class="section-kicker">Bridge</p>
+  <h2 class="section-title">Encoder–decoder limits</h2>
+  <ul class="kp-list tight">
+    <li>Classic seq2seq: source compressed into <strong>one vector</strong> (bottleneck).</li>
+    <li>Decoder sequential → hard to parallelise.</li>
+    <li><strong>Attention</strong> fix: at each decoder step compute scores \(e_{ij}=\mathbf{s}_i^\top\mathbf{h}_j\), softmax → weights \(\alpha_{ij}\), blend encoder states → context \(\mathbf{a}_i=\sum_j\alpha_{ij}\mathbf{h}_j\).</li>
+    <li>Variants introduced here: <strong>dot-product</strong>, <strong>bilinear</strong> \(e=\mathbf{s}^\top W\mathbf{h}\), <strong>additive</strong> \(e=\mathbf{b}^\top\tanh(W_1\mathbf{h}+W_2\mathbf{s})\), <strong>scaled</strong> \(e=\mathbf{s}^\top\mathbf{h}/\sqrt{d}\).</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Two limits of vanilla encoder–decoder that attention addresses.</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop 5 &amp; materials</h2>
+  <ul class="kp-list tight">
+    <li><code>chapters/chapter5/Materials/Workshop5/workshop5.ipynb</code> — Keras <code>TextVectorization</code>, IMDB sentiment, Conv1D, LSTM/BiLSTM pipelines.</li>
+  </ul>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="1" data-explanation="Teacher forcing feeds the ground-truth previous token to the decoder during training, preventing error accumulation from the model's own predictions.">
+    <div class="qc-question">What is teacher forcing and why use it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Feed the model's own previous prediction during training</div>
+      <div class="qc-opt" data-idx="1">Feed the gold previous token during training to stabilise gradients</div>
+      <div class="qc-opt" data-idx="2">Force the teacher model to generate harder examples</div>
+      <div class="qc-opt" data-idx="3">Use a separate teacher network for distillation</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="BPE breaks rare words into subword fragments that overlap with frequent words, so the model can still represent them.">
+    <div class="qc-question">Why does BPE help with rare words?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Rare words decompose into known subword pieces shared with common words</div>
+      <div class="qc-opt" data-idx="1">BPE memorises all rare words in a lookup table</div>
+      <div class="qc-opt" data-idx="2">BPE uses character-level RNNs</div>
+      <div class="qc-opt" data-idx="3">BPE increases the vocabulary to include all words</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice for this lecture.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=5" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=5&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, { delimiters: [{left:"\\[", right:"\\]", display: true},{left:"\\(", right:"\\)", display: false}], throwOnError: false });
+    } else setTimeout(tryRender, 200);
+  }
+  tryRender();
+});
+</script>
+<script src="chapter5-study.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<script src="../../../shared/chat-panel.js"></script>
+</body>
+</html>

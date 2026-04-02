@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 2 — Foundations of NLP Systems</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../shared/chat-panel.css">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F524;</span>
+    <h2>Lecture 2</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-five" class="nav-link" data-section="sec-five">Five components</a></li>
+    <li><a href="#sec-example" class="nav-link" data-section="sec-example">Sentiment example</a></li>
+    <li><a href="#sec-data" class="nav-link" data-section="sec-data">Data scale</a></li>
+    <li><a href="#sec-token-bow" class="nav-link" data-section="sec-token-bow">Tokenisation &amp; BoW</a></li>
+    <li><a href="#sec-linear" class="nav-link" data-section="sec-linear">Linear classifier</a></li>
+    <li><a href="#sec-learn" class="nav-link" data-section="sec-learn">Learning &amp; losses</a></li>
+    <li><a href="#sec-embed" class="nav-link" data-section="sec-embed">Word vectors in the baseline</a></li>
+    <li><a href="#sec-metrics" class="nav-link" data-section="sec-metrics">Train/dev/test &amp; metrics</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Workshop &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=2" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=2" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 12</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 2: Foundations of NLP Systems</h1>
+    <p class="hero-subtitle">Five components · linear BoW baseline · embeddings · train/dev/test · P/R/F1 · ROC.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use this guide:</strong> bullets = chunking. Answer <strong>Recall</strong> prompts with the page hidden. Quiz Hub + flashcards = retrieval + spacing.</p>
+  </div>
+</section>
+
+<section id="sec-five" class="section" data-track="sec-five">
+  <p class="section-kicker">Architecture</p>
+  <h2 class="section-title">Five core components</h2>
+  <ul class="kp-list tight">
+    <li><strong>Data</strong> — phenomena you want the system to cover.</li>
+    <li><strong>Model</strong> — scores (input, output) pairs.</li>
+    <li><strong>Inference</strong> — pick output given input + model.</li>
+    <li><strong>Learning</strong> — update model from data + metric/loss.</li>
+    <li><strong>Metric</strong> — score prediction vs gold.</li>
+    <li><strong>Inference algorithms:</strong> Greedy search, A* search, Dynamic Programming — strategies when exhaustive search is intractable.</li>
+    <li><em>Rule sentiment:</em> rules + fire rules + human edits + 0/1.</li>
+    <li><em>Linear:</em> weighted features · argmax/sign · perceptron / logistic · 0-1 or CE.</li>
+    <li><em>Neural:</em> preprocess → differentiable model · gradients on CE etc.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>List the five components. In one line each: what does inference do? What does learning do?</p>
+</section>
+
+<section id="sec-example" class="section" data-track="sec-example">
+  <p class="section-kicker">Running example</p>
+  <h2 class="section-title">Sentiment (Pang et al. 2002)</h2>
+  <ul class="kp-list tight">
+    <li>Movie reviews → pos/neg; same template: spam, authorship, legal responsiveness, demographics from text.</li>
+    <li>Consider <strong>ethics</strong> and consent for sensitive attributes.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Name two classification tasks beyond sentiment from the lecture list.</p>
+</section>
+
+<section id="sec-data" class="section" data-track="sec-data">
+  <p class="section-kicker">Scale</p>
+  <h2 class="section-title">How much data?</h2>
+  <ul class="kp-list tight">
+    <li>LM: \(10^6\)–\(10^{13}+\) words (illustrative).</li>
+    <li>MT: \(\sim 6\times 10^7\) words × many langs.</li>
+    <li>Sentiment: \(\sim 10^4\) sentences; syntax: \(\sim 4\times 10^4\) sentences.</li>
+    <li>Scale ∝ task hardness &amp; model class.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Order-of-magnitude: sentiment vs LM corpus (which is larger?).</p>
+</section>
+
+<section id="sec-token-bow" class="section" data-track="sec-token-bow">
+  <p class="section-kicker">Features</p>
+  <h2 class="section-title">Tokenisation &amp; BoW</h2>
+  <ul class="kp-list tight">
+    <li>Baseline tokenisation: <strong>whitespace split</strong> — OK English; fails w/o spaces; long compounds (German).</li>
+    <li><strong>BoW</strong>: count vector over types; sparse dict vs dense \(|V|\) — short docs ≈ few nonzeros.</li>
+    <li>Limits: sense conflation (<em>bank</em>); UNK/ drop unknowns at test.</li>
+    <li><strong>Stopwords</strong>: often stripped in IR; sometimes critical (authorship).</li>
+    <li>Extras: <strong>bigrams</strong>; <strong>NOT_</strong> negation scope (Pang); lexicon features (e.g. city list).</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why is sparse storage cheaper than full \(|V|\) for a short sentence? Name two feature tricks beyond unigrams.</p>
+</section>
+
+<section id="sec-linear" class="section" data-track="sec-linear">
+  <p class="section-kicker">Scoring</p>
+  <h2 class="section-title">Linear classifier &amp; multi-class</h2>
+  <ul class="kp-list tight">
+    <li>Score = \(\sum_f \mathrm{count}_f \cdot w_f\) + optional <strong>bias</strong> (feature always 1).</li>
+    <li>Binary: threshold score or two scores.</li>
+    <li>Multi-class: weight vector per class → \(\arg\max_\ell \mathbf{x}\!\cdot\!\mathbf{w}_\ell\) / max-index(\(\mathbf{x}W\)); small \(|\mathcal{L}|\) → exhaustive (assignments).</li>
+  </ul>
+  <p class="text-block" style="margin-top:0.5rem;">\[\text{score} = \sum_{f \in \text{features}} \text{count}_f \cdot \text{weight}_{f}\]</p>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>How do you predict multi-class with linear weights? Why exhaustive label scoring is OK when \(|\mathcal{L}|\) is small?</p>
+</section>
+
+<section id="sec-learn" class="section" data-track="sec-learn">
+  <p class="section-kicker">Objectives</p>
+  <h2 class="section-title">Learning &amp; losses</h2>
+  <ul class="kp-list tight">
+    <li>0–1 · hinge \(\max(0,1-yf(x))\) · squared error · <strong>cross-entropy</strong> \(-\log p(y)\).</li>
+    <li><strong>Perceptron:</strong> wrong class → add \(\mathbf{x}\) to true weights, subtract from predicted.</li>
+    <li>Logistic gradient: \((\sigma(\mathbf{x}\!\cdot\!\mathbf{w})-y)\,x_j\) per coordinate.</li>
+    <li><strong>Naive Bayes:</strong> estimate weight \(w_{f,c}=\frac{\text{count}(f \text{ in class }c)}{\text{count}(\text{all features in class }c)}\) from data frequencies; fast BoW baseline.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Perceptron update rule in words. Logistic loss gradient form.</p>
+</section>
+
+<section id="sec-embed" class="section" data-track="sec-embed">
+  <p class="section-kicker">Dense inputs</p>
+  <h2 class="section-title">Word vectors in the baseline</h2>
+  <ul class="kp-list tight">
+    <li>Document vector = pool word embeddings (e.g. <strong>mean</strong>) → same linear layer: \(\mathrm{scores}=\mathrm{emb(doc)}\cdot W\).</li>
+    <li>Pros: reuse GloVe etc.; semantics; small/fast.</li>
+    <li>Cons: less interpretable; <strong>bias</strong> from pretraining data.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>One pro and one con of embedding-based features vs raw counts.</p>
+</section>
+
+<section id="sec-metrics" class="section" data-track="sec-metrics">
+  <p class="section-kicker">Evaluation</p>
+  <h2 class="section-title">Splits &amp; metrics</h2>
+  <ul class="kp-list tight">
+    <li><strong>Train</strong> fit · <strong>dev/val</strong> tune (don’t train final weights on it) · <strong>test</strong> rare, no daily peeking.</li>
+    <li>Accuracy = \(\frac{TP+TN}{\text{all}}\); Precision = \(\frac{TP}{TP+FP}\); Recall = \(\frac{TP}{TP+FN}\); F1 = \(\frac{2PR}{P+R}=\frac{2TP}{2TP+FP+FN}\).</li>
+    <li>Multi-class: per-class P/R; <strong>macro</strong> = average of class scores; <strong>micro</strong> = pool counts then P/R (micro P=R when no “none” class in slide example).</li>
+    <li><strong>Worked example:</strong> Spam detection with TP=4, FP=3, FN=6, TN=7 → Accuracy=0.55, Precision=4/7≈0.57, Recall=4/10=0.40, F1≈0.47.</li>
+    <li><strong>ROC/AUC</strong>: TPR vs FPR tradeoff; <strong>PR curve</strong> for rare positives; pick metric matching costs (spam FP costly).</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Write Precision and Recall. When does micro-averaging P equal micro R in the slide example?</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop 2</h2>
+  <ul class="kp-list tight">
+    <li>Pre-work: classifier pipeline (e.g. 20 Newsgroups style).</li>
+    <li>Workshop: <strong>Diplomacy</strong> deception detection · JSONL · sklearn <code>CountVectorizer</code> → <code>TfidfTransformer</code> → <code>LogisticRegression</code>.</li>
+    <li>Path: <code>chapters/chapter2/Materials/Workshop2/</code> — <code>workshop2-prework.ipynb</code>, <code>workshop2ED.ipynb</code>, <code>mod-*.jsonl</code>.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Name the three pipeline stages in order.</p>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="1" data-explanation="The five components are data, model, inference, learning, and metric.">
+    <div class="qc-question">What are the five core components of an NLP system?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Data, model, features, loss, accuracy</div>
+      <div class="qc-opt" data-idx="1">Data, model, inference, learning, metric</div>
+      <div class="qc-opt" data-idx="2">Input, hidden, output, loss, optimizer</div>
+      <div class="qc-opt" data-idx="3">Tokenise, embed, classify, decode, evaluate</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="Short documents use few words from the full vocabulary, so only storing non-zero counts saves memory.">
+    <div class="qc-question">Why is a sparse dictionary cheaper than a full length-\(|V|\) array?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Only non-zero entries stored; most of \(|V|\) unused in short docs</div>
+      <div class="qc-opt" data-idx="1">Sparse arrays use compression algorithms</div>
+      <div class="qc-opt" data-idx="2">Python dicts are always faster than arrays</div>
+      <div class="qc-opt" data-idx="3">Sparse storage avoids floating-point issues</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice beats passive review.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=2" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=2&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, { delimiters: [{left:"\\[", right:"\\]", display: true},{left:"\\(", right:"\\)", display: false}], throwOnError: false });
+    } else setTimeout(tryRender, 200);
+  }
+  tryRender();
+});
+</script>
+<script src="chapter2-study.js"></script>
+<script src="../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<script src="../../../shared/chat-panel.js"></script>
+</body>
+</html>
