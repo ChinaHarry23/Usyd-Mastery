@@ -1,0 +1,329 @@
+/* ================================================================
+   mindmap.css — Modern Mind Map Visualization
+   Horizontal tree with gradient nodes and glowing connectors.
+   ================================================================ */
+
+.mm-page {
+  min-height: 100vh;
+  background: #0a0a14;
+  color: #e4e6ed;
+  font-family: var(--font, 'Inter', -apple-system, sans-serif);
+  overflow: auto;
+}
+/* Suppress the hero image and grid overlay inherited from study-base.css */
+.mm-page::before,
+.mm-page::after {
+  display: none !important;
+}
+
+/* ── Back Bar ── */
+.mm-back-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  background: #0a0a14;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+.mm-back-bar a {
+  color: rgba(165, 180, 252, 0.8);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.28rem 0.6rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.mm-back-bar a:hover {
+  color: #c7d2fe;
+  background: rgba(99, 102, 241, 0.1);
+}
+.mm-back-bar .spacer { flex: 1; }
+.mm-back-bar .mm-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: rgba(228, 230, 237, 0.9);
+  letter-spacing: -0.01em;
+}
+
+/* ── Controls ── */
+.mm-controls {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.mm-controls button {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: rgba(165, 180, 252, 0.8);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.32rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s;
+  letter-spacing: 0.01em;
+}
+.mm-controls button:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #e0e7ff;
+}
+
+/* ── Legend ── */
+.mm-legend {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0.7rem 1.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(146, 153, 172, 0.7);
+  letter-spacing: 0.02em;
+}
+.mm-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.mm-legend .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* ── Canvas Wrapper ── */
+.mm-canvas {
+  position: relative;
+  padding: 3rem 2.5rem 4rem;
+  display: inline-flex;
+  min-width: 100%;
+  min-height: calc(100vh - 120px);
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+/* ── SVG Connectors ── */
+.mm-canvas > svg.mm-connectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+.mm-connectors path {
+  fill: none;
+  stroke: rgba(99, 102, 241, 0.2);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+/* ── Horizontal Tree Layout ── */
+.mm-branch {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.mm-children {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-left: 2.5rem;
+  padding: 0.3rem 0;
+}
+
+.mm-branch.collapsed > .mm-children {
+  display: none;
+}
+
+/* ── Node Base ── */
+.mm-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: normal;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(20, 20, 36, 0.85);
+  color: rgba(200, 208, 220, 0.9);
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+  max-width: min(30rem, 94vw);
+}
+.mm-node:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  background: rgba(30, 30, 55, 0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+}
+.mm-node .mm-text {
+  white-space: normal;
+  max-width: min(28rem, 92vw);
+}
+.mm-node .mm-text .katex { font-size: 0.95em; }
+.mm-node.n-leaf .mm-text .katex { font-size: 0.92em; }
+.mm-node.n-root .mm-text .katex { font-size: 1em; }
+
+/* ── Chevron ── */
+.mm-chevron {
+  font-size: 0.65rem;
+  opacity: 0.4;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.mm-node:hover .mm-chevron { opacity: 0.8; }
+
+/* ── Root Node ── */
+.mm-node.n-root {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.15));
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #e8e4f8;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.8rem 1.4rem;
+  border-radius: 14px;
+  letter-spacing: -0.01em;
+  box-shadow:
+    0 0 30px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.mm-node.n-root:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(139, 92, 246, 0.25));
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow:
+    0 0 40px rgba(99, 102, 241, 0.18),
+    0 8px 30px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ── Branch Nodes (level 1) ── */
+.mm-node.n-branch {
+  background: rgba(22, 30, 44, 0.9);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  color: rgba(168, 220, 200, 0.95);
+  font-weight: 600;
+  font-size: 0.84rem;
+  padding: 0.6rem 1.1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.mm-node.n-branch:hover {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(28, 40, 52, 0.95);
+  box-shadow:
+    0 4px 20px rgba(52, 211, 153, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ── Sub Nodes (level 2) ── */
+.mm-node.n-sub {
+  background: rgba(18, 22, 36, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(176, 188, 200, 0.9);
+  font-size: 0.8rem;
+}
+.mm-node.n-sub:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* ── Leaf Nodes (level 3+) ── */
+.mm-node.n-leaf {
+  background: rgba(16, 20, 32, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(148, 176, 168, 0.85);
+  font-size: 0.77rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+}
+.mm-node.n-leaf:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  background: rgba(22, 28, 44, 0.9);
+  color: rgba(180, 200, 196, 0.95);
+}
+
+/* ── Color-Coded Accents ── */
+.mm-node.c-green {
+  border-color: rgba(52, 211, 153, 0.3);
+  box-shadow: inset 3px 0 0 rgba(52, 211, 153, 0.5);
+}
+.mm-node.c-green:hover {
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: inset 3px 0 0 rgba(52, 211, 153, 0.7), 0 4px 20px rgba(52, 211, 153, 0.06);
+}
+
+.mm-node.c-purple {
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow: inset 3px 0 0 rgba(167, 139, 250, 0.5);
+}
+.mm-node.c-purple:hover {
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: inset 3px 0 0 rgba(167, 139, 250, 0.7), 0 4px 20px rgba(167, 139, 250, 0.06);
+}
+
+.mm-node.c-yellow {
+  border-color: rgba(251, 191, 36, 0.25);
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.45);
+}
+.mm-node.c-yellow:hover {
+  border-color: rgba(251, 191, 36, 0.45);
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.65), 0 4px 20px rgba(251, 191, 36, 0.06);
+}
+
+.mm-node.c-red {
+  border-color: rgba(251, 113, 133, 0.25);
+  box-shadow: inset 3px 0 0 rgba(251, 113, 133, 0.45);
+}
+.mm-node.c-red:hover {
+  border-color: rgba(251, 113, 133, 0.45);
+  box-shadow: inset 3px 0 0 rgba(251, 113, 133, 0.65), 0 4px 20px rgba(251, 113, 133, 0.06);
+}
+
+.mm-node.c-blue {
+  border-color: rgba(96, 165, 250, 0.25);
+  box-shadow: inset 3px 0 0 rgba(96, 165, 250, 0.45);
+}
+.mm-node.c-blue:hover {
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow: inset 3px 0 0 rgba(96, 165, 250, 0.65), 0 4px 20px rgba(96, 165, 250, 0.06);
+}
+
+/* ── Linked Node Indicator ── */
+.mm-node[data-href]::after {
+  content: " \2197";
+  font-size: 0.58rem;
+  opacity: 0.3;
+  margin-left: 0.2rem;
+  transition: opacity 0.2s;
+}
+.mm-node[data-href]:hover::after { opacity: 0.7; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .mm-canvas { padding: 1.5rem 0.75rem 3rem; }
+  .mm-children { margin-left: 1.5rem; gap: 0.4rem; }
+  .mm-node { font-size: 0.72rem; padding: 0.38rem 0.65rem; border-radius: 9px; }
+  .mm-node.n-root { font-size: 0.82rem; padding: 0.55rem 1rem; }
+  .mm-back-bar { padding: 0.5rem 1rem; gap: 0.4rem; }
+}

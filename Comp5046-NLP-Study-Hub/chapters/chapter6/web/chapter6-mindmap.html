@@ -8,8 +8,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mind Map — Lecture 6</title>
 <link rel="stylesheet" href="../../../shared/study.css">
-<link rel="stylesheet" href="../../../shared/mindmap.css">
-<link rel="stylesheet" href="../../../shared/chat-panel.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
 </head>
 <body class="mm-page">
 
@@ -33,42 +33,126 @@
 
 <div class="mm-canvas" id="mindmapCanvas"></div>
 
-<script src="../../../shared/mindmap.js"></script>
+<script src="../../../../shared/mindmap.js"></script>
 <script>
 var data = {
-  label: "Lecture 6: Transformers & pretrained models",
+  label: "Lecture 6: Transformer Models",
+  label_zh: "第6讲：Transformer模型",
   children: [
     {
-      label: "Attention",
+      label: "Motivation (Beyond RNNs)",
+      label_zh: "动机（超越RNN）",
       color: "blue",
       children: [
-        { label: "Q, K, V" },
-        { label: "Multi-head" },
-        { label: "Scaling" }
+        { label: "RNNs: sequential → slow", label_zh: "RNN：顺序处理 → 慢" },
+        { label: "Long-range dependency issues", label_zh: "长距离依赖问题" },
+        { label: "Parallelisable architecture needed", label_zh: "需要可并行化架构" }
       ]
     },
     {
-      label: "Transformer",
+      label: "Attention Forms",
+      label_zh: "注意力形式",
       color: "green",
       children: [
-        { label: "Encoder / decoder" },
-        { label: "Residual + FFN" },
-        { label: "Positional encoding" }
+        { label: "Additive (Bahdanau): MLP score", label_zh: "加性注意力（Bahdanau）：MLP评分" },
+        { label: "Dot-product (Luong): $q^T k$", label_zh: "点积注意力（Luong）：$q^T k$" },
+        { label: "Scaled dot-product: $q^T k / \\sqrt{d}$", label_zh: "缩放点积：$q^T k / \\sqrt{d}$" },
+        { label: "Softmax → attention weights", label_zh: "Softmax → 注意力权重" }
       ]
     },
     {
-      label: "Pretraining",
+      label: "Self-Attention",
+      label_zh: "自注意力",
       color: "yellow",
       children: [
-        { label: "MLM vs CLM" },
-        { label: "Fine-tuning" },
-        { label: "PEFT (LoRA, adapters)" }
+        { label: "All-to-all: every token attends to every other", label_zh: "全对全：每个token关注所有其他token" },
+        { label: "Captures dependencies regardless of distance", label_zh: "捕捉任意距离的依赖" },
+        { label: "Replaces recurrence entirely", label_zh: "完全替代循环结构" },
+        { label: "$O(n^2 d)$ complexity", label_zh: "$O(n^2 d)$ 复杂度" }
+      ]
+    },
+    {
+      label: "Q / K / V Projections",
+      label_zh: "Q / K / V 投影",
+      color: "purple",
+      children: [
+        { label: "Query: 'what am I looking for?'", label_zh: "Query：'我在找什么？'" },
+        { label: "Key: 'what do I contain?'", label_zh: "Key：'我包含什么？'" },
+        { label: "Value: 'what do I return?'", label_zh: "Value：'我返回什么？'" },
+        { label: "Learned linear projections $W_Q, W_K, W_V$", label_zh: "学习到的线性投影 $W_Q, W_K, W_V$" }
+      ]
+    },
+    {
+      label: "Positional Encoding",
+      label_zh: "位置编码",
+      color: "blue",
+      children: [
+        { label: "No inherent order in self-attention", label_zh: "自注意力无固有顺序" },
+        { label: "Sinusoidal: $\\sin / \\cos$ at different freqs", label_zh: "正弦：不同频率的 $\\sin / \\cos$" },
+        { label: "Learned positional embeddings", label_zh: "可学习位置嵌入" },
+        { label: "Relative vs absolute position", label_zh: "相对位置 vs 绝对位置" }
+      ]
+    },
+    {
+      label: "Causal Masking",
+      label_zh: "因果掩码",
+      color: "green",
+      children: [
+        { label: "Prevent attending to future tokens", label_zh: "防止关注未来token" },
+        { label: "Lower-triangular mask matrix", label_zh: "下三角掩码矩阵" },
+        { label: "Essential for autoregressive generation", label_zh: "自回归生成的必要条件" }
+      ]
+    },
+    {
+      label: "Transformer Block",
+      label_zh: "Transformer块",
+      color: "yellow",
+      children: [
+        { label: "Self-attention sublayer", label_zh: "自注意力子层" },
+        { label: "Residual connections (skip)", label_zh: "残差连接（跳跃）" },
+        { label: "LayerNorm (pre-norm or post-norm)", label_zh: "层归一化（前置或后置）" },
+        { label: "Feed-forward network (FFN): 2 linear + ReLU", label_zh: "前馈网络（FFN）：2个线性层 + ReLU" },
+        { label: "Stacking N blocks", label_zh: "堆叠N个块" }
+      ]
+    },
+    {
+      label: "Multi-Head Attention",
+      label_zh: "多头注意力",
+      color: "purple",
+      children: [
+        { label: "Multiple parallel attention heads", label_zh: "多个并行注意力头" },
+        { label: "Each head: different subspace", label_zh: "每个头：不同子空间" },
+        { label: "Concat + linear projection", label_zh: "拼接 + 线性投影" },
+        { label: "Captures diverse relationships", label_zh: "捕捉多样化关系" }
+      ]
+    },
+    {
+      label: "Decoder & Cross-Attention",
+      label_zh: "解码器与交叉注意力",
+      color: "blue",
+      children: [
+        { label: "Masked self-attention in decoder", label_zh: "解码器中的掩码自注意力" },
+        { label: "Cross-attention: Q from decoder, K/V from encoder", label_zh: "交叉注意力：Q来自解码器，K/V来自编码器" },
+        { label: "Autoregressive token generation", label_zh: "自回归token生成" },
+        { label: "Encoder-only vs decoder-only vs enc-dec", label_zh: "仅编码器 vs 仅解码器 vs 编解码器" }
+      ]
+    },
+    {
+      label: "Landmark Models",
+      label_zh: "里程碑模型",
+      color: "green",
+      children: [
+        { label: "BERT: encoder-only, MLM + NSP", label_zh: "BERT：仅编码器，MLM + NSP" },
+        { label: "GPT: decoder-only, causal LM", label_zh: "GPT：仅解码器，因果语言模型" },
+        { label: "T5: encoder-decoder, text-to-text", label_zh: "T5：编解码器，文本到文本" },
+        { label: "Fine-tuning & in-context learning", label_zh: "微调与上下文学习" },
+        { label: "Scaling laws & emergent abilities", label_zh: "缩放定律与涌现能力" }
       ]
     }
   ]
 };
 renderMindmap("mindmapCanvas", data);
 </script>
-<script src="../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
 </body>
 </html>

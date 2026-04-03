@@ -1,0 +1,40 @@
+name: Validate & Lint
+on:
+  push:
+    paths:
+      - '**/data/*.js'
+      - '**/shared/*.js'
+      - 'shared/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'eslint.config.mjs'
+  pull_request:
+    paths:
+      - '**/data/*.js'
+      - '**/shared/*.js'
+      - 'shared/**'
+      - 'tests/**'
+      - 'scripts/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint shared modules
+        run: npm run lint
+      - name: Validate data files
+        run: node scripts/validate.js
+      - name: Validate chapter manifests
+        run: node scripts/validate-manifest.js
+      - name: Run unit tests
+        run: node tests/test-pure-functions.js
+      - name: Run DOM integration tests
+        run: node tests/test-dom-integration.js
+      - name: Check no stale hub copies
+        run: bash scripts/sync-shared.sh --check
