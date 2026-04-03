@@ -3,771 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz Hub — COMPX270</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Quiz Hub — COMP5270</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-<style>
-:root {
-  --bg: #0f1117; --bg-card: #181b24; --bg-sidebar: #13151d; --border: #2a2e3a;
-  --text: #e4e6ed; --text-muted: #9299ac; --text-dim: #6b7280;
-  --accent: #6c8cff; --accent-glow: rgba(108,140,255,0.08);
-  --green: #34d399; --green-bg: rgba(52,211,153,0.08);
-  --red: #f87171; --red-bg: rgba(248,113,113,0.08);
-  --yellow: #fbbf24; --yellow-bg: rgba(251,191,36,0.08);
-  --purple: #a78bfa;
-  --font: 'Inter', -apple-system, sans-serif;
-  --radius: 12px; --radius-sm: 8px;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
-
-.top-bar {
-  position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; gap: 1rem; padding: 0.65rem 1.5rem;
-  background: rgba(15,17,23,0.95); backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border); flex-wrap: wrap;
-}
-.top-bar a { color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: color 0.2s; }
-.top-bar a:hover { color: #93b4ff; }
-.top-bar .title { font-size: 1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
-.top-bar .spacer { flex: 1; }
-#langToggle {
-  background: var(--bg-card); border: 1px solid var(--accent); color: var(--accent);
-  font-size: 0.82rem; font-weight: 600; padding: 0.35rem 0.9rem; border-radius: 16px;
-  cursor: pointer; font-family: var(--font); transition: all 0.2s;
-}
-#langToggle:hover { background: var(--accent); color: #fff; }
-
-.layout { display: flex; min-height: calc(100vh - 50px); }
-
-.sidebar {
-  width: 300px; min-width: 300px; background: var(--bg-sidebar);
-  border-right: 1px solid var(--border); padding: 1.35rem 1.25rem; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 1.25rem;
-}
-.sidebar h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.5rem; }
-.sidebar label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: var(--text-muted); cursor: pointer; padding: 0.15rem 0; }
-.sidebar input[type="checkbox"] { accent-color: var(--accent); }
-
-.filter-group { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.filter-btn {
-  padding: 0.3rem 0.7rem; border-radius: 14px; font-size: 0.75rem; font-weight: 600;
-  border: 1px solid var(--border); background: transparent; color: var(--text-muted);
-  cursor: pointer; transition: all 0.2s; font-family: var(--font);
-}
-.filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.filter-btn:hover { border-color: var(--accent); }
-
-.mode-btns { display: flex; gap: 0.5rem; }
-.mode-btn {
-  flex: 1; padding: 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600;
-  border: 1px solid var(--border); background: transparent; color: var(--text-muted);
-  cursor: pointer; transition: all 0.2s; font-family: var(--font); text-align: center;
-}
-.mode-btn.active { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
-
-.score-box {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 1rem; text-align: center;
-}
-.score-box .big { font-size: 2rem; font-weight: 800; color: var(--accent); }
-.score-box .label { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem; }
-.progress-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; margin-top: 0.75rem; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; width: 0%; }
-
-.action-btns { display: flex; flex-direction: column; gap: 0.5rem; }
-.action-btn {
-  padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
-  border: none; cursor: pointer; font-family: var(--font); transition: all 0.2s;
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: #5a7ae6; }
-.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
-.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-.btn-missed { background: var(--yellow-bg); border: 1px solid rgba(251,191,36,0.35); color: var(--yellow); }
-.btn-missed:hover { background: rgba(251,191,36,0.15); color: #fcd34d; }
-.missed-box {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 0.85rem; font-size: 0.8rem;
-}
-.missed-box .missed-count { font-size: 1.35rem; font-weight: 800; color: var(--yellow); }
-.missed-box .missed-hint { color: var(--text-dim); font-size: 0.72rem; margin-top: 0.35rem; line-height: 1.4; }
-
-.main-area {
-  flex: 1;
-  padding: 1.5rem 2rem 2rem;
-  overflow-y: auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  box-sizing: border-box;
-  background:
-    radial-gradient(ellipse 85% 55% at 50% 12%, rgba(108, 140, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 55% 45% at 15% 75%, rgba(167, 139, 250, 0.05) 0%, transparent 45%),
-    var(--bg);
-}
-.main-area > * {
-  width: 100%;
-  max-width: min(960px, 100%);
-}
-
-.quiz-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-  padding: clamp(1.5rem, 2.5vw, 1.85rem); margin-bottom: 1.35rem; transition: border-color 0.3s;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-}
-.quiz-card.answered-correct { border-color: var(--green); }
-.quiz-card.answered-wrong { border-color: var(--red); }
-
-.q-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
-.q-num { font-size: 0.8rem; font-weight: 700; color: var(--accent); background: var(--accent-glow); padding: 0.25rem 0.65rem; border-radius: 10px; white-space: nowrap; }
-.q-tag { font-size: 0.7rem; font-weight: 600; padding: 0.18rem 0.52rem; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
-.q-tag.study { background: var(--green-bg); color: var(--green); }
-.q-tag.math { background: rgba(167,139,250,0.1); color: var(--purple); }
-.q-chapter { font-size: 0.7rem; color: var(--text-dim); }
-
-.q-text { font-size: clamp(1.02rem, 1.8vw, 1.14rem); line-height: 1.58; margin-bottom: 1.1rem; font-weight: 500; }
-
-.q-options { display: flex; flex-direction: column; gap: 0.5rem; }
-.q-opt {
-  display: block; padding: 0.78rem 1.1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
-  cursor: pointer; font-size: clamp(0.92rem, 1.3vw, 1rem); line-height: 1.52; transition: all 0.2s; background: transparent; color: var(--text);
-  font-family: var(--font); text-align: left; width: 100%;
-}
-.q-opt:hover:not(.locked) { border-color: var(--accent); background: var(--accent-glow); }
-.q-opt.locked { cursor: default; }
-.q-opt.correct { border-color: var(--green); background: var(--green-bg); color: var(--green); }
-.q-opt.wrong { border-color: var(--red); background: var(--red-bg); color: var(--red); opacity: 0.6; }
-.q-opt.missed { border-color: var(--green); border-style: dashed; }
-
-.q-feedback {
-  margin-top: 0.85rem; padding: 0.85rem 1.05rem; border-radius: var(--radius-sm);
-  font-size: 0.95rem; line-height: 1.55; display: none;
-}
-.q-feedback.show { display: block; }
-.q-feedback.correct-fb { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
-.q-feedback.wrong-fb { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
-
-.practice-nav {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;
-  padding: 0.85rem 1rem;
-  background: rgba(24, 27, 36, 0.55);
-  border: 1px solid rgba(108, 140, 255, 0.1);
-  border-radius: 12px;
-}
-.practice-nav button {
-  padding: 0.55rem 1.25rem; border-radius: var(--radius-sm); font-size: 0.92rem; font-weight: 600;
-  border: 1px solid var(--border); background: var(--bg-card); color: var(--text-muted);
-  cursor: pointer; font-family: var(--font); transition: all 0.2s;
-}
-.practice-nav button:hover { border-color: var(--accent); color: var(--accent); }
-.practice-nav button:disabled { opacity: 0.3; cursor: default; }
-.practice-counter { font-size: 1.05rem; color: var(--text); font-weight: 700; }
-
-.results-summary {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 2rem; text-align: center; margin-top: 1.5rem;
-}
-.results-summary .big-score { font-size: 3rem; font-weight: 800; }
-.results-summary .big-score.good { color: var(--green); }
-.results-summary .big-score.ok { color: var(--yellow); }
-.results-summary .big-score.bad { color: var(--red); }
-.chapter-breakdown { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; margin-top: 1.5rem; text-align: center; }
-.ch-score { background: var(--bg-sidebar); padding: 0.5rem; border-radius: var(--radius-sm); }
-.ch-score .ch-label { font-size: 0.7rem; color: var(--text-dim); }
-.ch-score .ch-val { font-size: 1.1rem; font-weight: 700; }
-
-.empty-state { text-align: center; padding: clamp(2.5rem, 8vh, 5rem) 1.5rem; color: var(--text-dim); max-width: 38rem; }
-.empty-state h2 { font-size: clamp(1.35rem, 2.5vw, 1.65rem); margin-bottom: 0.65rem; color: var(--text-muted); }
-.empty-state p { font-size: clamp(0.95rem, 1.4vw, 1.05rem); line-height: 1.65; }
-
-@media (max-width: 768px) {
-  .sidebar { display: none; }
-  .main-area { padding: 1rem; }
-}
-</style>
-<link rel="stylesheet" href="../shared/chat-panel.css">
+<link rel="stylesheet" href="../../shared/quiz-hub.css">
+<link rel="stylesheet" href="../../shared/chat-panel.css">
 </head>
 <body>
 
-<div class="top-bar">
-  <a href="../index.html">&#x1F3E0; Home</a>
-  <a href="knowledge-graph.html">&#x1F578; Knowledge Graph</a>
-  <a href="flashcards.html">&#x1F4E6; Flashcards</a>
-  <span class="title">&#x1F4DD; Quiz Hub</span>
-  <span class="spacer"></span>
+<nav class="nav-bar">
+  <a href="../index.html">Home</a>
+  <a href="knowledge-graph.html">Graph</a>
+  <a href="flashcards.html">Cards</a>
+  <span class="nav-title">Quiz Hub</span>
+  <span class="nav-spacer"></span>
   <button id="langToggle">中文</button>
+</nav>
+
+<div class="config-panel">
+  <div class="config-toggle open" id="configToggle">
+    <span class="cfg-icon">&#x2699;</span>
+    <span class="cfg-label" id="lbl-configure">Configure Quiz</span>
+    <span class="cfg-summary" id="cfgSummary"></span>
+    <span class="cfg-arrow">&#x25BC;</span>
+  </div>
+  <div class="config-body show" id="configBody">
+    <div class="config-grid">
+      <div class="cfg-card" style="grid-column: 1 / -1;">
+        <h4 id="lbl-chapters">Chapters</h4>
+        <div class="ch-chips" id="chChips">
+          <button class="ch-chip-action" id="btnAllCh">All</button>
+          <button class="ch-chip-action" id="btnNoneCh">None</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4 id="lbl-type">Quiz Type</h4>
+        <div class="seg-ctrl" id="typeFilters">
+          <button class="seg-btn active" data-type="all" id="btnTypeAll">All</button>
+          <button class="seg-btn" data-type="study" id="btnTypeStudy">Study</button>
+          <button class="seg-btn" data-type="math" id="btnTypeMath">Math</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4 id="lbl-mode">Mode</h4>
+        <div class="seg-ctrl">
+          <button class="seg-btn active" data-mode="practice" id="btnPractice">Practice</button>
+          <button class="seg-btn" data-mode="exam" id="btnExam">Exam</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4>Options</h4>
+        <label class="toggle-row">
+          <span class="toggle-label" id="lbl-shuffle">Shuffle Questions</span>
+          <input type="checkbox" id="chkShuffle"><span class="toggle-switch"></span>
+        </label>
+        <label class="toggle-row">
+          <span class="toggle-label" id="lbl-only-missed">Only missed questions</span>
+          <input type="checkbox" id="chkOnlyMissed"><span class="toggle-switch"></span>
+        </label>
+      </div>
+      <div class="cfg-card">
+        <h4 id="lbl-missed-title">Missed Stack</h4>
+        <div style="display:flex;align-items:baseline;gap:0.4rem;margin-bottom:0.4rem;">
+          <span style="font-size:1.6rem;font-weight:800;color:var(--yellow);font-family:var(--mono);" id="missedCount">0</span>
+          <span style="font-size:0.78rem;color:var(--text-dim);" id="lbl-missed-in-stack">in stack</span>
+        </div>
+        <p style="font-size:0.72rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.6rem;" id="missed-hint">Wrong answers are added. Two consecutive correct answers remove a question.</p>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          <button class="btn btn-warn btn-sm" id="btnReviewMissed" disabled>Review missed</button>
+          <button class="btn btn-ghost btn-sm" id="btnClearMissed">Clear stack</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card score-stat">
+      <div class="stat-value" id="scoreDisplay" style="color:var(--accent);">0 / 0</div>
+      <div class="stat-label" id="lbl-score">Score</div>
+    </div>
+    <div class="stat-card progress-stat">
+      <div class="stat-value" id="pctDisplay" style="color:var(--green);">0%</div>
+      <div class="stat-label">Correct</div>
+    </div>
+    <div class="stat-card missed-stat">
+      <div class="stat-value" id="missedDisplay" style="color:var(--yellow);">0</div>
+      <div class="stat-label">Missed</div>
+    </div>
+  </div>
+  <div class="action-row" style="margin-bottom:1.5rem;">
+    <button class="btn btn-primary" id="btnStart">Start Quiz</button>
+    <button class="btn btn-ghost" id="btnReset">Reset</button>
+  </div>
 </div>
 
-<div class="layout">
-
-<aside class="sidebar">
-
-  <div>
-    <h3 id="lbl-chapters">Chapters</h3>
-    <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem;">
-      <button class="filter-btn" id="btnAllCh" style="font-size:0.7rem;">All</button>
-      <button class="filter-btn" id="btnNoneCh" style="font-size:0.7rem;">None</button>
+<div class="quiz-wrapper" id="mainArea">
+  <div class="empty-hero" id="emptyState">
+    <span class="empty-icon">&#x1F9E0;</span>
+    <h2 id="empty-title">Ready to test your knowledge?</h2>
+    <p id="empty-desc">Configure your quiz above, then hit <strong>Start Quiz</strong>. 200 questions across 12 chapters await.</p>
+    <div class="kbd-hints">
+      <span class="kbd"><kbd>1</kbd>–<kbd>4</kbd> Select option</span>
+      <span class="kbd"><kbd>&#x2190;</kbd><kbd>&#x2192;</kbd> Navigate</span>
     </div>
-    <div id="chFilters" style="display:grid; grid-template-columns:1fr 1fr; gap:0.15rem;"></div>
-  </div>
-
-  <div>
-    <h3 id="lbl-type">Quiz Type</h3>
-    <div class="filter-group" id="typeFilters">
-      <button class="filter-btn active" data-type="all" id="btnTypeAll">All</button>
-      <button class="filter-btn" data-type="study" id="btnTypeStudy">Study</button>
-      <button class="filter-btn" data-type="math" id="btnTypeMath">Math</button>
-    </div>
-  </div>
-
-  <div>
-    <h3 id="lbl-mode">Mode</h3>
-    <div class="mode-btns">
-      <button class="mode-btn active" data-mode="practice" id="btnPractice">Practice</button>
-      <button class="mode-btn" data-mode="exam" id="btnExam">Exam</button>
-    </div>
-  </div>
-
-  <div>
-    <label><input type="checkbox" id="chkShuffle"> <span id="lbl-shuffle">Shuffle Questions</span></label>
-  </div>
-
-  <div>
-    <label><input type="checkbox" id="chkOnlyMissed"> <span id="lbl-only-missed">Only missed questions</span></label>
-  </div>
-
-  <div class="missed-box">
-    <h3 id="lbl-missed-title" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.35rem;">Missed stack</h3>
-    <div><span class="missed-count" id="missedCount">0</span> <span id="lbl-missed-in-stack">in stack</span></div>
-    <p class="missed-hint" id="missed-hint">Wrong answers are added to the stack. Two consecutive correct answers remove a question (a wrong answer resets the streak).</p>
-    <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.65rem;">
-      <button type="button" class="action-btn btn-missed" id="btnReviewMissed" disabled>Review missed</button>
-      <button type="button" class="action-btn btn-outline" id="btnClearMissed" style="font-size:0.78rem;padding:0.45rem;">Clear missed stack</button>
-    </div>
-  </div>
-
-  <div class="score-box">
-    <div class="big" id="scoreDisplay">0 / 0</div>
-    <div class="label" id="lbl-score">Score</div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
-    <div class="label" style="margin-top:0.4rem;" id="pctDisplay">0% correct</div>
-  </div>
-
-  <div class="action-btns">
-    <button class="action-btn btn-primary" id="btnStart">Start Quiz</button>
-    <button class="action-btn btn-outline" id="btnReset">Reset</button>
-  </div>
-
-</aside>
-
-<main class="main-area" id="mainArea">
-  <div class="empty-state" id="emptyState">
-    <h2 id="empty-title">Welcome to the Quiz Hub</h2>
-    <p id="empty-desc">Select chapters and quiz type, then click <strong>Start Quiz</strong> to begin. 200 questions across 12 chapters await!</p>
   </div>
   <div id="quizContainer" style="display:none;"></div>
   <div id="resultsContainer" style="display:none;"></div>
-</main>
-
 </div>
 
 <script src="../data/quiz-data-extract.js"></script>
 <script>
-(function() {
-"use strict";
-
-var LANG_KEY = "compx270_lang";
-var lang = localStorage.getItem(LANG_KEY) || "en";
-var btn = document.getElementById("langToggle");
-
-var T = {
-  "lbl-chapters": "章节", "lbl-type": "题型", "lbl-mode": "模式",
-  "lbl-shuffle": "随机排序", "lbl-score": "得分",
-  "btnTypeAll": "全部", "btnTypeStudy": "学习", "btnTypeMath": "数学",
-  "btnPractice": "练习", "btnExam": "考试",
-  "btnStart": "开始测验", "btnReset": "重置",
-  "btnAllCh": "全选", "btnNoneCh": "全不选",
-  "empty-title": "欢迎来到测验中心",
-  "empty-desc": "选择章节和题型，然后点击<strong>开始测验</strong>。共有200道题目，涵盖12个章节！",
-  "prev": "上一题", "next": "下一题", "submit": "提交全部",
-  "result-title": "测验结果", "breakdown": "章节明细",
-  "correct-label": "正确！", "wrong-label": "错误。",
-  "pct-correct": "正确率",
-  "lbl-only-missed": "仅错题",
-  "lbl-missed-title": "错题栈",
-  "lbl-missed-in-stack": "道在栈中",
-  "missed-hint": "答错的题目会入栈。对同一题连续答对两次会从栈中移除；再答错会重置连续次数。",
-  "btnReviewMissed": "复习错题栈",
-  "btnClearMissed": "清空错题栈",
-  "clear-missed-confirm": "确定清空所有错题记录？",
-  "empty-missed": "当前没有错题，或筛选条件下没有可复习的错题。"
-};
-
-function applyLang() {
-  btn.textContent = lang === "en" ? "中文" : "EN";
-  if (lang === "zh") {
-    Object.keys(T).forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) {
-        if (!el.dataset.en) el.dataset.en = el.innerHTML;
-        el.innerHTML = T[id];
-      }
-    });
-  } else {
-    Object.keys(T).forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && el.dataset.en) el.innerHTML = el.dataset.en;
-    });
-  }
-  updateMissedBadge();
-}
-
-btn.addEventListener("click", function() {
-  lang = lang === "en" ? "zh" : "en";
-  localStorage.setItem(LANG_KEY, lang);
-  applyLang();
-  renderMath();
-});
-
-function renderMath() {
-  if (typeof renderMathInElement === "function") {
-    try {
-      renderMathInElement(document.body, {
-        delimiters: [
-          { left: "\\[", right: "\\]", display: true },
-          { left: "\\(", right: "\\)", display: false }
-        ],
-        throwOnError: false
-      });
-    } catch(e) {}
-  }
-}
-
-var chFilter = {};
-for (var i = 1; i <= 12; i++) chFilter[i] = true;
-var typeFilter = "all";
-var mode = "practice";
-var shuffleOn = false;
-var reviewMissedOnly = false;
-var activeQuestions = [];
-var currentIdx = 0;
-var answers = {};
-var submitted = false;
-
-var MISSED_STACK_KEY = "compx270_quiz_missed_stack";
-
-function ensureQuestionIds() {
-  if (!window.ALL_QUIZ_DATA || !ALL_QUIZ_DATA.length) return;
-  if (ALL_QUIZ_DATA[0].id !== undefined) return;
-  for (var i = 0; i < ALL_QUIZ_DATA.length; i++) ALL_QUIZ_DATA[i].id = i;
-}
-
-function getMissedMap() {
-  try {
-    var raw = localStorage.getItem(MISSED_STACK_KEY);
-    if (!raw) return {};
-    var o = JSON.parse(raw);
-    return typeof o === "object" && o !== null ? o : {};
-  } catch (e) {
-    return {};
-  }
-}
-
-function saveMissedMap(m) {
-  try {
-    localStorage.setItem(MISSED_STACK_KEY, JSON.stringify(m));
-  } catch (e) {}
-}
-
-/** isCorrect: streak increments; wrong: streak resets to 0 (question stays in stack). Two consecutive correct answers remove. */
-function recordAnswerResult(qId, isCorrect) {
-  if (qId === undefined || qId === null) return;
-  var key = String(qId);
-  var m = getMissedMap();
-  if (isCorrect) {
-    if (m[key] !== undefined) {
-      m[key]++;
-      if (m[key] >= 2) delete m[key];
-    }
-  } else {
-    m[key] = 0;
-  }
-  saveMissedMap(m);
-  updateMissedBadge();
-}
-
-function updateMissedBadge() {
-  var m = getMissedMap();
-  var n = Object.keys(m).length;
-  var el = document.getElementById("missedCount");
-  var btn = document.getElementById("btnReviewMissed");
-  if (el) el.textContent = n;
-  if (btn) btn.disabled = n === 0;
-}
-
-function clearMissedStack() {
-  localStorage.removeItem(MISSED_STACK_KEY);
-  updateMissedBadge();
-}
-
-var CHNAMES = {
-  1:"Randomness & Algorithms", 2:"Concentration Bounds", 3:"Balls in Bins",
-  4:"Derandomisation", 5:"Graph Algorithms", 6:"Hashing",
-  7:"Nearest Neighbours", 8:"Streaming I", 9:"Streaming II",
-  10:"LP & Rounding", 11:"Distributions", 12:"Experts"
-};
-
-function buildChFilters() {
-  var container = document.getElementById("chFilters");
-  container.innerHTML = "";
-  for (var ch = 1; ch <= 12; ch++) {
-    var lbl = document.createElement("label");
-    var cb = document.createElement("input");
-    cb.type = "checkbox"; cb.checked = chFilter[ch]; cb.dataset.ch = ch;
-    cb.addEventListener("change", function() { chFilter[parseInt(this.dataset.ch)] = this.checked; });
-    lbl.appendChild(cb);
-    lbl.appendChild(document.createTextNode(" Ch" + ch));
-    container.appendChild(lbl);
-  }
-}
-
-document.getElementById("btnAllCh").addEventListener("click", function() {
-  for (var c = 1; c <= 12; c++) chFilter[c] = true;
-  document.querySelectorAll("#chFilters input").forEach(function(cb) { cb.checked = true; });
-});
-document.getElementById("btnNoneCh").addEventListener("click", function() {
-  for (var c = 1; c <= 12; c++) chFilter[c] = false;
-  document.querySelectorAll("#chFilters input").forEach(function(cb) { cb.checked = false; });
-});
-
-document.querySelectorAll("#typeFilters .filter-btn").forEach(function(b) {
-  b.addEventListener("click", function() {
-    document.querySelectorAll("#typeFilters .filter-btn").forEach(function(x) { x.classList.remove("active"); });
-    b.classList.add("active");
-    typeFilter = b.dataset.type;
-  });
-});
-
-document.querySelectorAll(".mode-btn").forEach(function(b) {
-  b.addEventListener("click", function() {
-    document.querySelectorAll(".mode-btn").forEach(function(x) { x.classList.remove("active"); });
-    b.classList.add("active");
-    mode = b.dataset.mode;
-  });
-});
-
-document.getElementById("chkShuffle").addEventListener("change", function() { shuffleOn = this.checked; });
-
-document.getElementById("chkOnlyMissed").addEventListener("change", function() {
-  reviewMissedOnly = this.checked;
-});
-
-document.getElementById("btnReviewMissed").addEventListener("click", function() {
-  if (Object.keys(getMissedMap()).length === 0) return;
-  reviewMissedOnly = true;
-  var chk = document.getElementById("chkOnlyMissed");
-  if (chk) chk.checked = true;
-  startQuiz();
-});
-
-document.getElementById("btnClearMissed").addEventListener("click", function() {
-  var msg = lang === "zh" ? T["clear-missed-confirm"] : "Clear all missed-question records?";
-  if (!confirm(msg)) return;
-  clearMissedStack();
-});
-
-function shuffle(arr) {
-  for (var i = arr.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-  }
-  return arr;
-}
-
-function filterQuestions() {
-  var missed = getMissedMap();
-  return ALL_QUIZ_DATA.filter(function(q) {
-    if (!chFilter[q.ch]) return false;
-    if (typeFilter !== "all" && q.type !== typeFilter) return false;
-    if (reviewMissedOnly && missed[String(q.id)] === undefined) return false;
-    return true;
-  });
-}
-
-function qText(q) { return lang === "zh" && q.q_zh ? q.q_zh : q.q; }
-function qOpts(q) { return lang === "zh" && q.opts_zh ? q.opts_zh : q.opts; }
-function qExp(q) { return lang === "zh" && q.exp_zh ? q.exp_zh : q.exp; }
-
-function updateScore() {
-  var total = activeQuestions.length;
-  var answered = Object.keys(answers).length;
-  var correct = 0;
-  Object.keys(answers).forEach(function(k) {
-    if (answers[k] === activeQuestions[parseInt(k)].answer) correct++;
-  });
-  document.getElementById("scoreDisplay").textContent = correct + " / " + total;
-  var pct = total > 0 ? Math.round(correct / total * 100) : 0;
-  document.getElementById("pctDisplay").textContent = pct + "% " + (lang === "zh" ? T["pct-correct"] : "correct");
-  var progPct = total > 0 ? Math.round(answered / total * 100) : 0;
-  document.getElementById("progressFill").style.width = progPct + "%";
-}
-
-function renderQuizCard(q, idx, showFeedback) {
-  var answered = idx in answers;
-  var selected = answers[idx];
-  var isCorrect = answered && selected === q.answer;
-  var opts = qOpts(q);
-
-  var html = '<div class="quiz-card' + (answered ? (isCorrect ? ' answered-correct' : ' answered-wrong') : '') + '" id="qcard-' + idx + '">';
-  html += '<div class="q-header">';
-  html += '<span class="q-num">Q' + (idx + 1) + '</span>';
-  html += '<span class="q-tag ' + q.type + '">' + (q.type === "study" ? "Study" : "Math") + '</span>';
-  html += '<span class="q-chapter">Ch' + q.ch + ' ' + CHNAMES[q.ch] + '</span>';
-  html += '</div>';
-  html += '<div class="q-text">' + qText(q) + '</div>';
-  html += '<div class="q-options">';
-  for (var oi = 0; oi < opts.length; oi++) {
-    var cls = "q-opt";
-    if (answered) {
-      cls += " locked";
-      if (oi === q.answer) cls += " correct";
-      else if (oi === selected) cls += " wrong";
-    }
-    html += '<button class="' + cls + '" data-qi="' + idx + '" data-oi="' + oi + '">' + opts[oi] + '</button>';
-  }
-  html += '</div>';
-
-  if (showFeedback && answered) {
-    var fbCls = isCorrect ? "correct-fb" : "wrong-fb";
-    var prefix = isCorrect ? (lang === "zh" ? "\u2713 " + T["correct-label"] : "\u2713 Correct!") : (lang === "zh" ? "\u2717 " + T["wrong-label"] : "\u2717 Incorrect.");
-    html += '<div class="q-feedback show ' + fbCls + '">' + prefix + ' ' + qExp(q) + '</div>';
-  } else {
-    html += '<div class="q-feedback" id="fb-' + idx + '"></div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-function handleOptClick(qi, oi) {
-  if (qi in answers) return;
-  answers[qi] = oi;
-  var q = activeQuestions[qi];
-  var isCorrect = oi === q.answer;
-  var card = document.getElementById("qcard-" + qi);
-  card.className = "quiz-card " + (isCorrect ? "answered-correct" : "answered-wrong");
-
-  card.querySelectorAll(".q-opt").forEach(function(btn) {
-    btn.classList.add("locked");
-    var boi = parseInt(btn.dataset.oi);
-    if (boi === q.answer) btn.classList.add("correct");
-    else if (boi === oi) btn.classList.add("wrong");
-  });
-
-  if (mode === "practice") {
-    var fb = document.getElementById("fb-" + qi);
-    var fbCls = isCorrect ? "correct-fb" : "wrong-fb";
-    var prefix = isCorrect ? (lang === "zh" ? "\u2713 " + T["correct-label"] : "\u2713 Correct!") : (lang === "zh" ? "\u2717 " + T["wrong-label"] : "\u2717 Incorrect.");
-    fb.innerHTML = prefix + " " + qExp(q);
-    fb.className = "q-feedback show " + fbCls;
-    renderMath();
-  }
-  updateScore();
-  if (mode !== "exam") recordAnswerResult(q.id, isCorrect);
-}
-
-function renderPractice() {
-  var container = document.getElementById("quizContainer");
-  var q = activeQuestions[currentIdx];
-  var html = '<div class="practice-nav">';
-  html += '<button id="btnPrev"' + (currentIdx === 0 ? ' disabled' : '') + '>&larr; ' + (lang === "zh" ? T.prev : "Previous") + '</button>';
-  html += '<span class="practice-counter">' + (currentIdx + 1) + ' / ' + activeQuestions.length + '</span>';
-  html += '<button id="btnNext"' + (currentIdx === activeQuestions.length - 1 ? ' disabled' : '') + '>' + (lang === "zh" ? T.next : "Next") + ' &rarr;</button>';
-  html += '</div>';
-  html += renderQuizCard(q, currentIdx, true);
-  container.innerHTML = html;
-  renderMath();
-  bindOptClicks();
-  document.getElementById("btnPrev").addEventListener("click", function() { if (currentIdx > 0) { currentIdx--; renderPractice(); } });
-  document.getElementById("btnNext").addEventListener("click", function() { if (currentIdx < activeQuestions.length - 1) { currentIdx++; renderPractice(); } });
-}
-
-function renderExam() {
-  var container = document.getElementById("quizContainer");
-  var html = "";
-  for (var i = 0; i < activeQuestions.length; i++) {
-    html += renderQuizCard(activeQuestions[i], i, submitted);
-  }
-  if (!submitted) {
-    html += '<div style="text-align:center; margin-top:1.5rem;"><button class="action-btn btn-primary" id="btnSubmitExam" style="padding:0.75rem 3rem; font-size:1rem;">' + (lang === "zh" ? T.submit : "Submit All") + '</button></div>';
-  }
-  container.innerHTML = html;
-  renderMath();
-  bindOptClicks();
-  var se = document.getElementById("btnSubmitExam");
-  if (se) se.addEventListener("click", submitExam);
-}
-
-function submitExam() {
-  submitted = true;
-  for (var i = 0; i < activeQuestions.length; i++) {
-    if (!(i in answers)) answers[i] = -1;
-  }
-  if (mode === "exam") {
-    for (var j = 0; j < activeQuestions.length; j++) {
-      var sel = answers[j];
-      var qj = activeQuestions[j];
-      if (sel === -1 || sel === undefined) continue;
-      recordAnswerResult(qj.id, sel === qj.answer);
-    }
-  }
-  renderExam();
-  showResults();
-  updateScore();
-  saveQuizToProgress();
-}
-
-function saveQuizToProgress() {
-  try {
-    var PK = "compx270_progress";
-    var p = JSON.parse(localStorage.getItem(PK) || "{}");
-    if (!p.quizHistory) p.quizHistory = [];
-    var total = activeQuestions.length;
-    var correct = 0;
-    activeQuestions.forEach(function(q, i) { if (answers[i] === q.answer) correct++; });
-    var pct = total > 0 ? Math.round(correct / total * 100) : 0;
-    var d = new Date();
-    var dateStr = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-    var chs = {}; activeQuestions.forEach(function(q) { chs[q.ch] = true; });
-    var scope = "Quiz Hub: Ch" + Object.keys(chs).sort(function(a,b){return parseInt(a,10)-parseInt(b,10);}).join(",");
-    p.quizHistory.push({ date: dateStr, scope: scope, correct: correct, total: total, pct: pct });
-    if (p.quizHistory.length > 100) p.quizHistory = p.quizHistory.slice(-100);
-
-    // Mirror chapter pages' _trackQuizScore: update per-chapter quizBest from this attempt.
-    var chScores = {};
-    activeQuestions.forEach(function(q, i) {
-      var c = String(q.ch);
-      if (!chScores[c]) chScores[c] = { t: 0, c: 0 };
-      chScores[c].t++;
-      if (answers[i] === q.answer) chScores[c].c++;
-    });
-    var chBreakdown = {};
-    Object.keys(chScores).forEach(function(ch) {
-      var s = chScores[ch];
-      var pctCh = s.t > 0 ? Math.round(s.c / s.t * 100) : 0;
-      chBreakdown[ch] = pctCh;
-      var ck = "ch" + ch;
-      if (!p[ck]) p[ck] = {};
-      if (!p[ck].quizBest || pctCh > p[ck].quizBest) {
-        p[ck].quizBest = pctCh;
-      }
-    });
-
-    p.quizHistory[p.quizHistory.length - 1].chBreakdown = chBreakdown;
-
-    localStorage.setItem(PK, JSON.stringify(p));
-  } catch(e) {}
-}
-
-function showResults() {
-  var rc = document.getElementById("resultsContainer");
-  var total = activeQuestions.length;
-  var correct = 0;
-  var chScores = {};
-  activeQuestions.forEach(function(q, i) {
-    var c = q.ch;
-    if (!chScores[c]) chScores[c] = { t: 0, c: 0 };
-    chScores[c].t++;
-    if (answers[i] === q.answer) { correct++; chScores[c].c++; }
-  });
-  var pct = total > 0 ? Math.round(correct / total * 100) : 0;
-  var cls = pct >= 80 ? "good" : pct >= 50 ? "ok" : "bad";
-
-  var html = '<div class="results-summary">';
-  html += '<h2>' + (lang === "zh" ? T["result-title"] : "Quiz Results") + '</h2>';
-  html += '<div class="big-score ' + cls + '">' + pct + '%</div>';
-  html += '<div style="color:var(--text-muted); margin-top:0.5rem;">' + correct + ' / ' + total + '</div>';
-  html += '<h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--text-dim);">' + (lang === "zh" ? T.breakdown : "Chapter Breakdown") + '</h3>';
-  html += '<div class="chapter-breakdown">';
-  Object.keys(chScores).sort(function(a,b){return a-b;}).forEach(function(ch) {
-    var s = chScores[ch];
-    var p = s.t > 0 ? Math.round(s.c / s.t * 100) : 0;
-    var col = p >= 80 ? "var(--green)" : p >= 50 ? "var(--yellow)" : "var(--red)";
-    html += '<div class="ch-score"><div class="ch-label">Ch' + ch + '</div><div class="ch-val" style="color:' + col + ';">' + s.c + '/' + s.t + '</div></div>';
-  });
-  html += '</div></div>';
-  rc.innerHTML = html;
-  rc.style.display = "block";
-}
-
-function bindOptClicks() {
-  document.querySelectorAll(".q-opt:not(.locked)").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      handleOptClick(parseInt(btn.dataset.qi), parseInt(btn.dataset.oi));
-      if (mode === "exam") return;
-    });
-  });
-}
-
-function startQuiz() {
-  var chkM = document.getElementById("chkOnlyMissed");
-  reviewMissedOnly = chkM ? chkM.checked : false;
-  activeQuestions = filterQuestions();
-  if (shuffleOn) shuffle(activeQuestions);
-  if (activeQuestions.length === 0) {
-    var emptyMsg = lang === "zh"
-      ? (reviewMissedOnly ? T["empty-missed"] : "请至少选择一个章节")
-      : (reviewMissedOnly ? "No missed questions match your filters, or the stack is empty." : "Select at least one chapter");
-    var emptyTitle = lang === "zh" ? "没有题目" : "No Questions";
-    document.getElementById("quizContainer").innerHTML = '<div class="empty-state"><h2>' + emptyTitle + '</h2><p>' + emptyMsg + '</p></div>';
-    document.getElementById("quizContainer").style.display = "block";
-    document.getElementById("emptyState").style.display = "none";
-    return;
-  }
-  currentIdx = 0;
-  answers = {};
-  submitted = false;
-  document.getElementById("emptyState").style.display = "none";
-  document.getElementById("quizContainer").style.display = "block";
-  document.getElementById("resultsContainer").style.display = "none";
-  updateScore();
-  if (mode === "practice") renderPractice();
-  else renderExam();
-}
-
-document.getElementById("btnStart").addEventListener("click", startQuiz);
-document.getElementById("btnReset").addEventListener("click", function() {
-  answers = {};
-  submitted = false;
-  currentIdx = 0;
-  reviewMissedOnly = false;
-  var chkM = document.getElementById("chkOnlyMissed");
-  if (chkM) chkM.checked = false;
-  document.getElementById("quizContainer").style.display = "none";
-  document.getElementById("resultsContainer").style.display = "none";
-  document.getElementById("emptyState").style.display = "block";
-  updateScore();
-});
-
-var params = new URLSearchParams(location.search);
-if (params.has("ch")) {
-  var pch = params.get("ch").split(",").map(Number);
-  for (var c = 1; c <= 12; c++) chFilter[c] = pch.indexOf(c) >= 0;
-}
-if (params.has("type")) typeFilter = params.get("type");
-
-ensureQuestionIds();
-buildChFilters();
-applyLang();
-updateScore();
-
-window.addEventListener("load", function() { setTimeout(renderMath, 500); });
-})();
+window.QUIZ_CONFIG = { courseCode: "comp5270", numChapters: 12, totalQuestions: 200, progressKey: "comp5270_progress", chapterNames: { 1:"Randomness & Algorithms", 2:"Concentration Bounds", 3:"Balls in Bins", 4:"Derandomisation", 5:"Graph Algorithms", 6:"Hashing", 7:"Nearest Neighbours", 8:"Streaming I", 9:"Streaming II", 10:"LP & Rounding", 11:"Distributions", 12:"Experts" } };
 </script>
-<script src="../shared/chat-panel.js"></script>
+<script src="../../shared/quiz-hub.js"></script>
+<script src="../../shared/chat-panel.js"></script>
 </body>
 </html>

@@ -525,10 +525,11 @@ body {
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link" style="position:absolute;top:-40px;left:0;background:#000;color:#fff;padding:8px 16px;z-index:10000;transition:top 0.2s;" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">Skip to content</a>
 
 <div class="noise"></div>
 
-<div class="hub-wrap">
+<div class="hub-wrap" id="main-content">
 
   <header class="hub-header">
     <div class="uni-badge">
@@ -754,19 +755,29 @@ body {
 <script>
 (function() {
   document.querySelectorAll('.course-card').forEach(function(card) {
+    var bg = card.querySelector('.card-bg');
+    var origBg = bg ? getComputedStyle(bg).background : '';
     card.addEventListener('mousemove', function(e) {
       var rect = card.getBoundingClientRect();
       var x = ((e.clientX - rect.left) / rect.width) * 100;
       var y = ((e.clientY - rect.top) / rect.height) * 100;
-      var bg = card.querySelector('.card-bg');
       if (bg) {
         bg.style.background =
           'radial-gradient(circle at ' + x + '% ' + y + '%, rgba(255,255,255,0.04), transparent 40%),' +
-          bg.style.background;
+          origBg;
       }
+    });
+    card.addEventListener('mouseleave', function() {
+      if (bg) bg.style.background = origBg;
     });
   });
 })();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(function() {});
+}
 </script>
 
 </body>

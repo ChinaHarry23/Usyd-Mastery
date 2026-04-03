@@ -3,120 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flashcards · COMP9001</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../shared/study.css">
-<script defer src="../data/site-data.js"></script>
-<script defer src="../data/flashcard-data.js"></script>
-<script defer src="../shared/flashcard-srs.js"></script>
-<link rel="stylesheet" href="../shared/chat-panel.css">
+<title>Flashcards — COMP9001</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../shared/flashcards.css">
+<link rel="stylesheet" href="../../shared/chat-panel.css">
 </head>
 <body>
-  <div class="site-shell">
-    <nav class="top-nav">
-      <a class="brand" href="../index.html">
-        <span class="brand-mark">C9</span>
-        <span class="brand-copy"><strong>Flashcards</strong><span>Starter revision deck</span></span>
-      </a>
-      <div class="nav-links">
-        <a href="../index.html">Home</a>
-        <a href="quiz-hub.html">Quiz Hub</a>
-      </div>
-    </nav>
-    <section class="page-hero hero-card">
-      <span class="eyebrow">Shared tool</span>
-      <h1>Flashcards</h1>
-      <p>These are intentionally small starter cards so the site is usable now and easy to expand when the PDFs are fully turned into study notes.</p>
-    </section>
-    <section class="page-grid">
-      <aside class="stack">
-        <article class="panel">
-          <h3>Chapter filter</h3>
-          <div class="filter-row">
-            <select id="chapterFilter">
-              <option value="all">All available flashcards</option>
-              <option value="1">Chapter 1</option>
-              <option value="2">Chapter 2</option>
-              <option value="3">Chapter 3</option>
-              <option value="4">Chapter 4</option>
-              <option value="5">Chapter 5</option>
-            </select>
-          </div>
-        </article>
-        <article class="panel">
-          <h3>Deck size</h3>
-          <p id="deckCount" class="muted"></p>
-        </article>
-      </aside>
-      <div class="stack">
-        <article class="flashcard">
-          <span class="label" id="cardLabel"></span>
-          <div class="front" id="cardFront"></div>
-          <div class="back hidden" id="cardBack"></div>
-          <div class="hero-actions">
-            <button class="button" id="flipBtn" type="button">Show answer</button>
-            <button class="button secondary" id="nextBtn" type="button">Next card</button>
-          </div>
-        </article>
-      </div>
-    </section>
+
+<nav class="nav-bar">
+  <a href="../index.html">Home</a>
+  <a href="quiz-hub.html">Quiz</a>
+  <a href="progress-dashboard.html">Progress</a>
+  <span class="nav-title">Flashcards</span>
+  <span class="nav-spacer"></span>
+  <button id="langToggle">中文</button>
+</nav>
+
+<div class="config-panel">
+  <div class="config-toggle open" id="configToggle">
+    <span class="cfg-icon">&#x1F4E6;</span>
+    <span class="cfg-label" id="lbl-configure">Configure Deck</span>
+    <span class="cfg-summary" id="cfgSummary"></span>
+    <span class="cfg-arrow">&#x25BC;</span>
   </div>
-  <script>
-    window.addEventListener("DOMContentLoaded", function () {
-      var allCards = window.COMP9001_FLASHCARDS || [];
-      var currentIndex = 0;
-      var currentDeck = allCards.slice();
-      var filter = document.getElementById("chapterFilter");
-      var label = document.getElementById("cardLabel");
-      var front = document.getElementById("cardFront");
-      var back = document.getElementById("cardBack");
-      var deckCount = document.getElementById("deckCount");
-      var flipBtn = document.getElementById("flipBtn");
-      var nextBtn = document.getElementById("nextBtn");
+  <div class="config-body show" id="configBody">
+    <div class="config-row">
+      <div class="cfg-card" style="flex:2;">
+        <h4 id="lbl-chapters">Chapters</h4>
+        <div class="ch-chips" id="chChips">
+          <button class="ch-chip-action" id="btnAllCh">All</button>
+          <button class="ch-chip-action" id="btnNoneCh">None</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4>Options</h4>
+        <label class="toggle-row">
+          <span class="toggle-label" id="lbl-shuffle">Shuffle deck</span>
+          <input type="checkbox" id="chkShuffle"><span class="toggle-switch"></span>
+        </label>
+        <p style="font-size:0.72rem;color:var(--text-dim);line-height:1.5;margin-top:0.5rem;" id="srs-hint">SM-2 spaced repetition: flip, recall, rate. Overdue cards shown first.</p>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card due-stat">
+      <div class="stat-value" id="statDue" style="color:var(--yellow);">0</div>
+      <div class="stat-label">Due</div>
+    </div>
+    <div class="stat-card new-stat">
+      <div class="stat-value" id="statNew" style="color:var(--accent);">0</div>
+      <div class="stat-label">New</div>
+    </div>
+    <div class="stat-card total-stat">
+      <div class="stat-value" id="statTotal" style="color:var(--green);">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+  </div>
+  <div class="action-row">
+    <button class="btn btn-primary" id="btnStart">Start session</button>
+    <button class="btn btn-ghost" id="btnClearSRS">Reset SRS progress</button>
+  </div>
+</div>
 
-      function draw() {
-        var card = currentDeck[currentIndex];
-        if (!card) {
-          label.textContent = "No cards available";
-          front.textContent = "Add more flashcards in data/flashcard-data.js when you expand the chapters.";
-          back.classList.add("hidden");
-          deckCount.textContent = "0 cards";
-          return;
-        }
-        label.textContent = "Chapter " + card.chapter;
-        front.textContent = card.prompt;
-        back.textContent = card.answer;
-        back.classList.add("hidden");
-        flipBtn.textContent = "Show answer";
-        deckCount.textContent = currentDeck.length + " cards in this deck";
-      }
+<div class="fc-wrapper">
+  <div class="empty-hero" id="emptyState">
+    <span class="empty-icon">&#x1F4E6;</span>
+    <h2 id="empty-title">Spaced-repetition flashcards</h2>
+    <p id="empty-desc">About <strong>35</strong> cards across 5 chapters. Pick chapters, then <strong>Start session</strong>.</p>
+    <div class="kbd-hints">
+      <span class="kbd"><kbd>Space</kbd> Flip card</span>
+      <span class="kbd"><kbd>1</kbd>–<kbd>4</kbd> Rate</span>
+    </div>
+  </div>
+  <div id="fcArea" style="display:none;"></div>
+</div>
 
-      function applyFilter() {
-        var value = filter.value;
-        currentDeck = value === "all"
-          ? allCards.slice()
-          : allCards.filter(function (card) { return String(card.chapter) === value; });
-        currentIndex = 0;
-        draw();
-      }
-
-      flipBtn.addEventListener("click", function () {
-        var hidden = back.classList.contains("hidden");
-        back.classList.toggle("hidden");
-        flipBtn.textContent = hidden ? "Hide answer" : "Show answer";
-      });
-
-      nextBtn.addEventListener("click", function () {
-        currentIndex = window.nextFlashcardIndex(currentIndex, currentDeck.length);
-        draw();
-      });
-
-      filter.addEventListener("change", applyFilter);
-      applyFilter();
-    });
-  </script>
-<script src="../shared/chat-panel.js"></script>
+<script src="../../shared/flashcard-srs.js"></script>
+<script src="../data/flashcard-data.js"></script>
+<script>
+window.FLASHCARD_CONFIG = { courseCode: "comp9001", numChapters: 5, totalCards: 35, progressKey: "comp9001_progress" };
+</script>
+<script src="../../shared/flashcards.js"></script>
+<script src="../../shared/chat-panel.js"></script>
 </body>
 </html>

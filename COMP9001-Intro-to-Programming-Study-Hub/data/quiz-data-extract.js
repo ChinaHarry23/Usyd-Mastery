@@ -1,104 +1,98 @@
-window.COMP9001_QUIZ_DATA = [
-  {
-    chapter: 1,
-    question: "Which description best matches a program?",
-    options: [
-      "A step-by-step set of instructions a computer can execute",
-      "Any file saved on a laptop",
-      "A diagram with no logic"
-    ],
-    answer: 0,
-    explanation: "Programming turns problem-solving steps into instructions the computer can follow."
-  },
-  {
-    chapter: 1,
-    question: "Why does the lecture spend time on ordering actions before writing code?",
-    options: [
-      "Because sequence matters when instructions are executed",
-      "Because computers can guess the missing steps",
-      "Because order only matters for human language"
-    ],
-    answer: 0,
-    explanation: "The lecture uses everyday sequences to show that programs must be ordered correctly."
-  },
-  {
-    chapter: 1,
-    question: "Which statement is true about interpreters?",
-    options: [
-      "They translate and execute code while the program runs",
-      "They only work with printed books",
-      "They always ignore syntax problems"
-    ],
-    answer: 0,
-    explanation: "The lecture contrasts interpreters with compilers by emphasizing statement-by-statement execution."
-  },
-  {
-    chapter: 1,
-    question: "Which command shows where you currently are in the terminal?",
-    options: ["pwd", "touch", "mv"],
-    answer: 0,
-    explanation: "`pwd` prints the working directory."
-  },
-  {
-    chapter: 1,
-    question: "What is one purpose of `print()` in Python?",
-    options: [
-      "To output text or values",
-      "To rename a file",
-      "To compile a whole program"
-    ],
-    answer: 0,
-    explanation: "`print()` is introduced as a built-in function for text output."
-  },
-  {
-    chapter: 2,
-    question: "Which value is text rather than a number?",
-    options: ["42", "\"42\"", "3.14"],
-    answer: 1,
-    explanation: "Quoted content is treated as a string."
-  },
-  {
-    chapter: 2,
-    question: "What happens when a variable is reassigned?",
-    options: [
-      "Its stored value can change",
-      "Its name stops existing",
-      "The program must restart"
-    ],
-    answer: 0,
-    explanation: "Assignment updates what value the variable currently refers to."
-  },
-  {
-    chapter: 3,
-    question: "What kind of expression belongs inside an `if` condition?",
-    options: [
-      "A boolean expression",
-      "Only a comment",
-      "Only a loop header"
-    ],
-    answer: 0,
-    explanation: "Conditions are evaluated as true or false."
-  },
-  {
-    chapter: 4,
-    question: "What is the current role of Chapter 4 in this study hub?",
-    options: [
-      "It is a chapter shell linked to the provided Lecture 4 PDF and ready for fuller extraction",
-      "It already contains a final, complete content build confirmed from the slides",
-      "It has no lecture material attached at all"
-    ],
-    answer: 0,
-    explanation: "Chapter 4 is intentionally kept as a structured shell until the lecture topic is extracted more fully."
-  },
-  {
-    chapter: 5,
-    question: "Which loop risk is especially common for beginners?",
-    options: [
-      "Accidentally creating an infinite loop",
-      "Making the computer forget variables permanently",
-      "Removing all conditions from the language"
-    ],
-    answer: 0,
-    explanation: "Loops must make progress toward termination."
-  }
+// COMP9001 Intro to Programming — quiz bank (study mode)
+// Schema: { ch, type, q, q_zh, opts, opts_zh, answer, exp, exp_zh }
+// 40 questions: 8 per chapter (ch 1–5), all study type
+// Answer distribution: 10 × answer 0, 10 × answer 1, 10 × answer 2, 10 × answer 3
+
+var ALL_QUIZ_DATA = [
+
+  /* ====== Chapter 1 — Programs, Ordering, Compilers vs Interpreters, REPL, print, Comments, CLI ====== */
+
+  { ch: 1, type: "study", q: "Which description best matches a program?", q_zh: "以下哪项描述最符合「程序」的定义？", opts: ["A step-by-step set of instructions a computer can execute", "Any file saved on a laptop", "A diagram with no logic", "A spreadsheet full of numbers"], opts_zh: ["一组计算机可以执行的逐步指令", "保存在笔记本电脑上的任何文件", "没有逻辑的图表", "一个充满数字的电子表格"], answer: 0, exp: "A program is a set of instructions that a computer follows to perform a task.", exp_zh: "程序是计算机按顺序执行的一组指令，用于完成特定任务。" },
+
+  { ch: 1, type: "study", q: "Why does the order of instructions matter in a program?", q_zh: "为什么程序中指令的顺序很重要？", opts: ["Because computers can guess the missing steps", "Because computers execute instructions in the given sequence", "Because order only matters for human language", "Because modern CPUs ignore instruction order"], opts_zh: ["因为计算机可以猜测缺失的步骤", "因为计算机按给定的顺序执行指令", "因为顺序只对人类语言有意义", "因为现代 CPU 会忽略指令顺序"], answer: 1, exp: "Computers execute instructions sequentially, so the order directly affects the result.", exp_zh: "计算机按顺序执行指令，因此顺序直接影响结果。" },
+
+  { ch: 1, type: "study", q: "Which statement is true about interpreters?", q_zh: "关于解释器，以下哪项说法是正确的？", opts: ["They always ignore syntax errors", "They only work with printed books", "They translate and execute code one statement at a time while the program runs", "They convert source code to machine code before any execution"], opts_zh: ["它们总是忽略语法错误", "它们只处理纸质文本", "它们在程序运行时逐语句翻译并执行代码", "它们在执行前将源代码转换为机器码"], answer: 2, exp: "An interpreter translates and runs code statement by statement, unlike a compiler which translates the whole program first.", exp_zh: "解释器逐语句翻译并执行代码，而编译器则先翻译整个程序再执行。" },
+
+  { ch: 1, type: "study", q: "What does the Python REPL allow you to do?", q_zh: "Python REPL 允许你做什么？", opts: ["Compile Python into a standalone binary", "Only edit .py files on disk", "Only debug compiled programs", "Type Python code and see results immediately"], opts_zh: ["将 Python 编译为独立的二进制文件", "仅在磁盘上编辑 .py 文件", "仅调试已编译的程序", "输入 Python 代码并立即查看结果"], answer: 3, exp: "REPL (Read-Eval-Print Loop) lets you interactively execute Python code and see output right away.", exp_zh: "REPL（读取-求值-输出循环）允许你交互式地执行 Python 代码并立即看到输出。" },
+
+  { ch: 1, type: "study", q: "Which terminal command shows your current working directory?", q_zh: "哪个终端命令可以显示当前工作目录？", opts: ["pwd", "touch", "mv", "rm"], opts_zh: ["pwd", "touch", "mv", "rm"], answer: 0, exp: "`pwd` (print working directory) outputs the full path of the directory you are currently in.", exp_zh: "`pwd`（打印工作目录）输出你当前所在目录的完整路径。" },
+
+  { ch: 1, type: "study", q: "What is the purpose of `print()` in Python?", q_zh: "`print()` 在 Python 中的作用是什么？", opts: ["To rename a file on disk", "To output text or values to the console", "To compile the program into machine code", "To read user input from the keyboard"], opts_zh: ["重命名磁盘上的文件", "将文本或值输出到控制台", "将程序编译为机器码", "从键盘读取用户输入"], answer: 1, exp: "`print()` is a built-in function used to display output in the console.", exp_zh: "`print()` 是一个用于在控制台显示输出的内置函数。" },
+
+  { ch: 1, type: "study", q: "What is the purpose of comments in Python code?", q_zh: "Python 代码中注释的作用是什么？", opts: ["They make the program run faster", "They are executed as regular statements", "They provide human-readable explanations that the interpreter ignores", "They automatically generate documentation websites"], opts_zh: ["它们使程序运行更快", "它们作为普通语句执行", "它们提供解释器会忽略的、供人阅读的说明", "它们自动生成文档网站"], answer: 2, exp: "Comments (lines starting with #) are ignored by Python and serve to explain code to readers.", exp_zh: "注释（以 # 开头的行）会被 Python 忽略，用于向读者解释代码。" },
+
+  { ch: 1, type: "study", q: "What is the main difference between a compiler and an interpreter?", q_zh: "编译器和解释器的主要区别是什么？", opts: ["A compiler runs code line by line while an interpreter translates everything first", "A compiler only works with Python", "There is no difference; they are the same thing", "A compiler translates the entire program before execution; an interpreter processes it line by line"], opts_zh: ["编译器逐行运行代码，而解释器先翻译全部代码", "编译器只能用于 Python", "没有区别，它们是一样的", "编译器在执行前翻译整个程序，解释器则逐行处理"], answer: 3, exp: "A compiler translates the whole source code to machine code before running, while an interpreter executes line by line.", exp_zh: "编译器在运行前将全部源代码翻译成机器码，解释器则逐行执行。" },
+
+  /* ====== Chapter 2 — Variables, Data Types, Type Conversion, input, Strings, f-strings, Operators ====== */
+
+  { ch: 2, type: "study", q: "Which of the following is a string value in Python?", q_zh: "以下哪个是 Python 中的字符串值？", opts: ["\"hello\"", "42", "3.14", "True"], opts_zh: ["\"hello\"", "42", "3.14", "True"], answer: 0, exp: "Anything enclosed in quotes is a string, even if its content looks like a number.", exp_zh: "用引号括起来的内容都是字符串，即使内容看起来像数字。" },
+
+  { ch: 2, type: "study", q: "What happens when you reassign a variable in Python?", q_zh: "在 Python 中重新赋值变量时会发生什么？", opts: ["The variable name is deleted", "The variable now refers to the new value", "The program must restart", "Python raises an error because variables are immutable"], opts_zh: ["变量名被删除", "变量现在指向新的值", "程序必须重新启动", "Python 会报错，因为变量是不可变的"], answer: 1, exp: "Reassignment updates the value a variable refers to; the old value is discarded if nothing else references it.", exp_zh: "重新赋值会更新变量指向的值；如果没有其他引用，旧值会被丢弃。" },
+
+  { ch: 2, type: "study", q: "What does `int(\"5\")` do in Python?", q_zh: "`int(\"5\")` 在 Python 中做了什么？", opts: ["Creates the string \"int5\"", "Raises a TypeError", "Converts the string \"5\" to the integer 5", "Deletes the variable named \"5\""], opts_zh: ["创建字符串 \"int5\"", "抛出 TypeError", "将字符串 \"5\" 转换为整数 5", "删除名为 \"5\" 的变量"], answer: 2, exp: "`int()` converts a compatible value to an integer.", exp_zh: "`int()` 将兼容的值转换为整数。" },
+
+  { ch: 2, type: "study", q: "Which built-in function reads text input from the user?", q_zh: "哪个内置函数用于读取用户输入的文本？", opts: ["print()", "open()", "str()", "input()"], opts_zh: ["print()", "open()", "str()", "input()"], answer: 3, exp: "`input()` pauses the program and waits for the user to type something, returning it as a string.", exp_zh: "`input()` 会暂停程序并等待用户输入，将输入内容作为字符串返回。" },
+
+  { ch: 2, type: "study", q: "What is the result of `3 + 2 * 4` in Python?", q_zh: "在 Python 中 `3 + 2 * 4` 的结果是什么？", opts: ["11", "20", "14", "24"], opts_zh: ["11", "20", "14", "24"], answer: 0, exp: "Multiplication has higher precedence than addition, so 2 × 4 = 8, then 3 + 8 = 11.", exp_zh: "乘法优先级高于加法，所以先算 2 × 4 = 8，再算 3 + 8 = 11。" },
+
+  { ch: 2, type: "study", q: "Which data type represents True or False in Python?", q_zh: "Python 中哪种数据类型表示 True 或 False？", opts: ["str", "bool", "int", "float"], opts_zh: ["str", "bool", "int", "float"], answer: 1, exp: "The `bool` type has only two values: True and False.", exp_zh: "`bool` 类型只有两个值：True 和 False。" },
+
+  { ch: 2, type: "study", q: "What does an f-string allow you to do?", q_zh: "f-string 允许你做什么？", opts: ["Import modules automatically", "Define new functions inline", "Embed expressions directly inside a string literal using curly braces", "Compile Python code to C"], opts_zh: ["自动导入模块", "内联定义新函数", "使用花括号在字符串字面量中直接嵌入表达式", "将 Python 代码编译为 C"], answer: 2, exp: "f-strings (formatted string literals) let you write `f\"value is {x}\"` to include variable values in strings.", exp_zh: "f-string（格式化字符串字面量）允许你写 `f\"value is {x}\"` 将变量值嵌入字符串中。" },
+
+  { ch: 2, type: "study", q: "What does the `//` operator do in Python?", q_zh: "`//` 运算符在 Python 中的作用是什么？", opts: ["Starts a comment", "Performs regular division", "Raises the left operand to a power", "Performs integer (floor) division"], opts_zh: ["开始一行注释", "执行普通除法", "对左操作数求幂", "执行整数（向下取整）除法"], answer: 3, exp: "`//` divides and rounds down to the nearest integer (floor division).", exp_zh: "`//` 执行除法并向下取整到最近的整数（地板除法）。" },
+
+  /* ====== Chapter 3 — Conditionals, Comparisons, Boolean Logic, Loops, range, break/continue ====== */
+
+  { ch: 3, type: "study", q: "What kind of expression belongs inside an `if` condition?", q_zh: "`if` 条件中应该放什么类型的表达式？", opts: ["A boolean expression that evaluates to True or False", "Only a comment", "Only a loop header", "A function definition"], opts_zh: ["一个求值为 True 或 False 的布尔表达式", "仅一条注释", "仅一个循环头", "一个函数定义"], answer: 0, exp: "The `if` keyword expects an expression that Python can evaluate as truthy or falsy.", exp_zh: "`if` 关键字需要一个 Python 能判断为真或假的表达式。" },
+
+  { ch: 3, type: "study", q: "What does the `elif` keyword do?", q_zh: "`elif` 关键字的作用是什么？", opts: ["Ends the entire program", "Checks an additional condition when all previous conditions were False", "Defines a new variable", "Imports a module"], opts_zh: ["结束整个程序", "在所有先前条件为 False 时检查一个额外条件", "定义一个新变量", "导入一个模块"], answer: 1, exp: "`elif` (else if) introduces another condition that is tested only when the preceding `if` or `elif` was False.", exp_zh: "`elif`（else if）引入另一个条件，仅在前面的 `if` 或 `elif` 为 False 时才检测。" },
+
+  { ch: 3, type: "study", q: "What does the `not` operator do in Python?", q_zh: "`not` 运算符在 Python 中做什么？", opts: ["Combines two conditions with logical AND", "Repeats a block of code", "Inverts a boolean value — True becomes False and vice versa", "Compares two numbers for equality"], opts_zh: ["用逻辑与合并两个条件", "重复执行一段代码", "反转布尔值——True 变为 False，反之亦然", "比较两个数是否相等"], answer: 2, exp: "`not` is a unary boolean operator that flips True to False and False to True.", exp_zh: "`not` 是一个一元布尔运算符，将 True 变为 False，False 变为 True。" },
+
+  { ch: 3, type: "study", q: "What does `range(5)` produce?", q_zh: "`range(5)` 产生什么？", opts: ["The numbers 1 through 5 inclusive", "A list [5, 4, 3, 2, 1]", "A single integer 5", "The sequence 0, 1, 2, 3, 4"], opts_zh: ["1 到 5 的数字（含 5）", "列表 [5, 4, 3, 2, 1]", "单个整数 5", "序列 0, 1, 2, 3, 4"], answer: 3, exp: "`range(n)` generates integers from 0 up to but not including n.", exp_zh: "`range(n)` 生成从 0 开始到 n（不含 n）的整数。" },
+
+  { ch: 3, type: "study", q: "Which loop is best when you know the exact number of iterations?", q_zh: "当你知道确切的迭代次数时，哪种循环最合适？", opts: ["A for loop with range()", "A while True loop", "An if statement", "A try/except block"], opts_zh: ["使用 range() 的 for 循环", "while True 循环", "if 语句", "try/except 块"], answer: 0, exp: "A `for` loop with `range()` is ideal when the iteration count is known in advance.", exp_zh: "当迭代次数预先已知时，使用 `range()` 的 `for` 循环是最佳选择。" },
+
+  { ch: 3, type: "study", q: "What does `break` do inside a loop?", q_zh: "`break` 在循环中做什么？", opts: ["Pauses the loop for one second", "Immediately exits the loop entirely", "Skips to the next iteration", "Restarts the loop from the beginning"], opts_zh: ["暂停循环一秒钟", "立即完全退出循环", "跳到下一次迭代", "从头重新开始循环"], answer: 1, exp: "`break` terminates the nearest enclosing loop immediately.", exp_zh: "`break` 立即终止最近的外层循环。" },
+
+  { ch: 3, type: "study", q: "What risk is especially common with `while` loops for beginners?", q_zh: "对于初学者来说，`while` 循环最常见的风险是什么？", opts: ["The loop runs too fast", "The variable names become too long", "Accidentally creating an infinite loop", "The loop deletes all variables"], opts_zh: ["循环运行太快", "变量名变得太长", "不小心创建了无限循环", "循环删除所有变量"], answer: 2, exp: "If the loop condition never becomes False (e.g., forgetting to update the counter), the loop runs forever.", exp_zh: "如果循环条件永远不变为 False（例如忘记更新计数器），循环就会永远运行下去。" },
+
+  { ch: 3, type: "study", q: "What does `continue` do inside a loop?", q_zh: "`continue` 在循环中做什么？", opts: ["Exits the loop permanently", "Defines a new loop variable", "Prints the current value", "Skips the rest of the current iteration and moves to the next one"], opts_zh: ["永久退出循环", "定义一个新的循环变量", "打印当前值", "跳过当前迭代的剩余部分，继续下一次迭代"], answer: 3, exp: "`continue` skips the remaining body of the loop for this iteration and jumps to the next.", exp_zh: "`continue` 跳过本次迭代中循环体的剩余部分，直接进入下一次迭代。" },
+
+  /* ====== Chapter 4 — Functions (def, parameters, return), Scope, Default Arguments, Docstrings ====== */
+
+  { ch: 4, type: "study", q: "Which keyword is used to define a function in Python?", q_zh: "Python 中使用哪个关键字来定义函数？", opts: ["def", "func", "function", "lambda"], opts_zh: ["def", "func", "function", "lambda"], answer: 0, exp: "`def` followed by a name and parentheses defines a new function.", exp_zh: "`def` 后跟名称和括号来定义一个新函数。" },
+
+  { ch: 4, type: "study", q: "What does the `return` statement do in a function?", q_zh: "`return` 语句在函数中做什么？", opts: ["Prints a value to the console", "Sends a value back to the caller and exits the function", "Restarts the function from the beginning", "Declares a new variable"], opts_zh: ["将值打印到控制台", "将值返回给调用者并退出函数", "从头重新开始函数", "声明一个新变量"], answer: 1, exp: "`return` exits the function immediately and passes a value back to wherever the function was called.", exp_zh: "`return` 立即退出函数，并将值传递回函数被调用的地方。" },
+
+  { ch: 4, type: "study", q: "What is a parameter in a function definition?", q_zh: "函数定义中的参数（parameter）是什么？", opts: ["A global variable that all functions share", "The value returned by the function", "A variable listed in the function header that receives a value when the function is called", "A comment inside the function body"], opts_zh: ["所有函数共享的全局变量", "函数返回的值", "在函数头部列出的变量，在函数被调用时接收值", "函数体内的注释"], answer: 2, exp: "Parameters are placeholders in the function definition; they get their values from the arguments passed at call time.", exp_zh: "参数是函数定义中的占位符；它们在调用时从传入的实参获取值。" },
+
+  { ch: 4, type: "study", q: "What is variable scope?", q_zh: "什么是变量作用域？", opts: ["The speed at which a variable is processed", "The data type of the variable", "The amount of memory a variable uses", "The region of code where a variable is accessible"], opts_zh: ["变量被处理的速度", "变量的数据类型", "变量使用的内存量", "代码中变量可被访问的区域"], answer: 3, exp: "Scope determines where a variable can be read or modified; local variables exist only inside their function.", exp_zh: "作用域决定了变量可以在哪里被读取或修改；局部变量只存在于其函数内部。" },
+
+  { ch: 4, type: "study", q: "What is a default argument in a function?", q_zh: "函数中的默认参数是什么？", opts: ["A parameter value that is used when no argument is provided by the caller", "An argument that must always be supplied", "A variable defined outside the function", "A keyword that ends the function"], opts_zh: ["调用者未提供实参时使用的参数值", "必须始终提供的实参", "在函数外部定义的变量", "结束函数的关键字"], answer: 0, exp: "Default arguments let you call a function without supplying every parameter, using a pre-set fallback value.", exp_zh: "默认参数允许你在调用函数时不提供每个参数，使用预设的备用值。" },
+
+  { ch: 4, type: "study", q: "What is a docstring?", q_zh: "什么是文档字符串（docstring）？", opts: ["A variable that stores documentation URLs", "A string placed at the start of a function (or module/class) that documents its purpose", "A type of comment that starts with //", "A built-in function for printing documentation"], opts_zh: ["存储文档 URL 的变量", "放在函数（或模块/类）开头用来说明其用途的字符串", "以 // 开头的注释类型", "用于打印文档的内置函数"], answer: 1, exp: "A docstring is a triple-quoted string on the first line of a function body; it can be accessed via `help()` or `.__doc__`.", exp_zh: "文档字符串是函数体第一行的三引号字符串；可通过 `help()` 或 `.__doc__` 访问。" },
+
+  { ch: 4, type: "study", q: "What happens if you call a function with fewer arguments than it has parameters (and no defaults)?", q_zh: "如果调用函数时传入的实参比参数少（且没有默认值），会发生什么？", opts: ["Python silently fills in None for missing arguments", "The function runs without those parameters", "Python raises a TypeError indicating missing arguments", "The program compiles successfully but never runs"], opts_zh: ["Python 静默地用 None 填充缺少的实参", "函数在没有这些参数的情况下运行", "Python 抛出 TypeError，提示缺少实参", "程序编译成功但永远不会运行"], answer: 2, exp: "Python is strict about positional arguments: missing ones raise a TypeError at call time.", exp_zh: "Python 对位置参数要求严格：缺少参数会在调用时抛出 TypeError。" },
+
+  { ch: 4, type: "study", q: "What is the difference between local and global scope?", q_zh: "局部作用域和全局作用域有什么区别？", opts: ["Local scope is faster than global scope", "Global variables are automatically deleted after each function call", "They are identical; Python has only one scope", "Local variables exist only inside a function; global variables are accessible throughout the module"], opts_zh: ["局部作用域比全局作用域更快", "全局变量在每次函数调用后自动删除", "它们是相同的；Python 只有一个作用域", "局部变量只存在于函数内部；全局变量在整个模块中可访问"], answer: 3, exp: "Variables defined inside a function are local; those defined at the top level of a module are global.", exp_zh: "在函数内部定义的变量是局部的；在模块顶层定义的变量是全局的。" },
+
+  /* ====== Chapter 5 — Lists, Tuples, Dictionaries, Indexing/Slicing, Methods, Iteration, Comprehensions ====== */
+
+  { ch: 5, type: "study", q: "What is a list in Python?", q_zh: "Python 中的列表是什么？", opts: ["An ordered, mutable collection of items enclosed in square brackets", "An immutable sequence of characters", "A mapping of keys to values", "A single fixed-size integer"], opts_zh: ["用方括号括起来的有序、可变的元素集合", "一个不可变的字符序列", "一个键到值的映射", "一个固定大小的整数"], answer: 0, exp: "Lists are ordered collections that can be changed (items added, removed, or modified) after creation.", exp_zh: "列表是有序集合，创建后可以更改（添加、删除或修改元素）。" },
+
+  { ch: 5, type: "study", q: "How do you access the first element of a list `a`?", q_zh: "如何访问列表 `a` 的第一个元素？", opts: ["a(1)", "a[0]", "a{0}", "first(a)"], opts_zh: ["a(1)", "a[0]", "a{0}", "first(a)"], answer: 1, exp: "Python uses zero-based indexing, so `a[0]` is the first element.", exp_zh: "Python 使用零基索引，因此 `a[0]` 是第一个元素。" },
+
+  { ch: 5, type: "study", q: "What is the difference between a list and a tuple?", q_zh: "列表和元组有什么区别？", opts: ["Lists use curly braces; tuples use square brackets", "There is no difference", "A tuple is immutable (cannot be changed after creation) while a list is mutable", "Tuples can only store strings"], opts_zh: ["列表使用花括号；元组使用方括号", "没有区别", "元组是不可变的（创建后不能更改），而列表是可变的", "元组只能存储字符串"], answer: 2, exp: "Tuples are created with parentheses and cannot be modified; lists use square brackets and are mutable.", exp_zh: "元组用圆括号创建且不可修改；列表用方括号创建且可变。" },
+
+  { ch: 5, type: "study", q: "What does `my_dict[\"key\"]` do?", q_zh: "`my_dict[\"key\"]` 做了什么？", opts: ["Deletes the key from the dictionary", "Creates a new dictionary", "Adds a new key with value None", "Retrieves the value associated with \"key\""], opts_zh: ["从字典中删除该键", "创建一个新字典", "添加一个值为 None 的新键", "检索与 \"key\" 关联的值"], answer: 3, exp: "Square bracket notation on a dictionary looks up and returns the value mapped to the given key.", exp_zh: "在字典上使用方括号标记会查找并返回给定键映射的值。" },
+
+  { ch: 5, type: "study", q: "What does the `append()` method do to a list?", q_zh: "`append()` 方法对列表做了什么？", opts: ["Adds an element to the end of the list", "Removes the first element", "Sorts the list alphabetically", "Reverses the list"], opts_zh: ["在列表末尾添加一个元素", "删除第一个元素", "按字母顺序排列列表", "反转列表"], answer: 0, exp: "`append(x)` adds the item x to the end of the list, increasing its length by one.", exp_zh: "`append(x)` 将元素 x 添加到列表末尾，列表长度加一。" },
+
+  { ch: 5, type: "study", q: "What does the slice `a[1:4]` return?", q_zh: "切片 `a[1:4]` 返回什么？", opts: ["Elements at indices 0, 1, 2, 3, 4", "Elements at indices 1, 2, and 3", "Only the element at index 4", "The entire list"], opts_zh: ["索引 0、1、2、3、4 处的元素", "索引 1、2、3 处的元素", "仅索引 4 处的元素", "整个列表"], answer: 1, exp: "Slicing `a[start:stop]` returns elements from index start up to (but not including) stop.", exp_zh: "切片 `a[start:stop]` 返回从索引 start 到 stop（不含 stop）的元素。" },
+
+  { ch: 5, type: "study", q: "What is a list comprehension?", q_zh: "什么是列表推导式？", opts: ["A way to delete items from a list", "A debugging tool for lists", "A concise syntax to create a new list by applying an expression to each item of an iterable", "A method that sorts a list in place"], opts_zh: ["一种从列表中删除元素的方法", "一种列表调试工具", "一种简洁语法，通过对可迭代对象的每个元素应用表达式来创建新列表", "一种就地排序列表的方法"], answer: 2, exp: "`[expr for item in iterable]` builds a new list by evaluating expr for every item.", exp_zh: "`[expr for item in iterable]` 通过对每个元素求值 expr 来构建新列表。" },
+
+  { ch: 5, type: "study", q: "Which method removes and returns the last element of a list?", q_zh: "哪个方法移除并返回列表的最后一个元素？", opts: ["remove()", "del()", "clear()", "pop()"], opts_zh: ["remove()", "del()", "clear()", "pop()"], answer: 3, exp: "`pop()` with no argument removes and returns the last item; you can also pass an index.", exp_zh: "`pop()` 不带参数时移除并返回最后一个元素；也可以传入索引。" }
+
 ];

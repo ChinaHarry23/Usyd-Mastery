@@ -4,729 +4,89 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flashcards — COMP5318</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-<style>
-:root {
-  --bg: #0f1117; --bg-card: #181b24; --bg-sidebar: #13151d; --border: #2a2e3a;
-  --text: #e4e6ed; --text-muted: #9299ac; --text-dim: #6b7280;
-  --accent: #6c8cff; --accent-glow: rgba(108,140,255,0.08);
-  --green: #34d399; --green-bg: rgba(52,211,153,0.08);
-  --red: #f87171; --red-bg: rgba(248,113,113,0.08);
-  --yellow: #fbbf24; --yellow-bg: rgba(251,191,36,0.08);
-  --purple: #a78bfa;
-  --font: 'Inter', -apple-system, sans-serif;
-  --radius: 12px; --radius-sm: 8px;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
-
-.top-bar {
-  position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; gap: 1rem; padding: 0.65rem 1.5rem;
-  background: rgba(15,17,23,0.95); backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border); flex-wrap: wrap;
-}
-.top-bar a { color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: color 0.2s; }
-.top-bar a:hover { color: #93b4ff; }
-.top-bar .title { font-size: 1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
-.top-bar .spacer { flex: 1; }
-#langToggle {
-  background: var(--bg-card); border: 1px solid var(--accent); color: var(--accent);
-  font-size: 0.82rem; font-weight: 600; padding: 0.35rem 0.9rem; border-radius: 16px;
-  cursor: pointer; font-family: var(--font); transition: all 0.2s;
-}
-#langToggle:hover { background: var(--accent); color: #fff; }
-
-.layout { display: flex; min-height: calc(100vh - 50px); }
-
-.sidebar {
-  width: 300px; min-width: 300px; background: var(--bg-sidebar);
-  border-right: 1px solid var(--border); padding: 1.35rem 1.25rem; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 1.15rem;
-}
-.sidebar h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.5rem; }
-.sidebar label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: var(--text-muted); cursor: pointer; padding: 0.15rem 0; }
-.sidebar input[type="checkbox"] { accent-color: var(--accent); }
-
-.filter-group { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.filter-btn {
-  padding: 0.3rem 0.7rem; border-radius: 14px; font-size: 0.75rem; font-weight: 600;
-  border: 1px solid var(--border); background: transparent; color: var(--text-muted);
-  cursor: pointer; transition: all 0.2s; font-family: var(--font);
-}
-.filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.filter-btn:hover { border-color: var(--accent); }
-
-.score-box {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 1rem; text-align: center;
-}
-.score-box .big { font-size: 2rem; font-weight: 800; color: var(--accent); }
-.score-box .label { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.25rem; }
-.srs-hint {
-  font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; margin-top: 0.55rem; text-align: left;
-}
-
-.action-btns { display: flex; flex-direction: column; gap: 0.5rem; }
-.action-btn {
-  padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
-  border: none; cursor: pointer; font-family: var(--font); transition: all 0.2s;
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: #5a7ae6; }
-.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
-.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-
-.main-area {
-  flex: 1;
-  padding: 1.5rem 2rem 2rem;
-  overflow-y: auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: clamp(1rem, 3vh, 2rem);
-  min-height: calc(100vh - 52px);
-  box-sizing: border-box;
-  background:
-    radial-gradient(ellipse 85% 55% at 50% 18%, rgba(108, 140, 255, 0.09) 0%, transparent 52%),
-    radial-gradient(ellipse 60% 40% at 80% 70%, rgba(52, 211, 153, 0.04) 0%, transparent 45%),
-    var(--bg);
-}
-.main-area > * {
-  width: 100%;
-  max-width: min(960px, 100%);
-}
-
-.empty-state { text-align: center; padding: clamp(2rem, 6vh, 4rem) 1.5rem; color: var(--text-dim); max-width: 40rem; }
-.empty-state h2 { font-size: clamp(1.35rem, 2.5vw, 1.65rem); margin-bottom: 0.65rem; color: var(--text-muted); }
-.empty-state p { font-size: clamp(0.95rem, 1.4vw, 1.05rem); line-height: 1.65; }
-
-.fc-wrap { display: none; }
-.fc-wrap.active {
-  display: block;
-  width: 100%;
-  padding: clamp(1rem, 2.5vw, 1.75rem);
-  background: rgba(24, 27, 36, 0.72);
-  border: 1px solid rgba(108, 140, 255, 0.12);
-  border-radius: 18px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.fc-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
-  padding: clamp(1.5rem, 3vw, 2.25rem);
-  min-height: min(320px, 42vh);
-  position: relative;
-  perspective: 1200px;
-}
-.fc-inner { position: relative; }
-.fc-back { padding: 0; }
-
-.fc-header { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1.15rem; flex-wrap: wrap; }
-.fc-tag { font-size: 0.72rem; font-weight: 600; padding: 0.22rem 0.55rem; border-radius: 8px; text-transform: uppercase; }
-.fc-tag.study { background: var(--green-bg); color: var(--green); }
-.fc-tag.guide { background: rgba(167,139,250,0.12); color: var(--purple); }
-.fc-ch { font-size: 0.8rem; color: var(--text-dim); }
-
-.fc-q { font-size: clamp(1.08rem, 2.2vw, 1.38rem); line-height: 1.55; margin-bottom: 1.15rem; font-weight: 500; }
-
-.fc-flip-btn {
-  display: inline-flex; align-items: center; gap: 0.45rem;
-  padding: 0.65rem 1.35rem; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 600;
-  border: 1px solid var(--accent); background: var(--accent-glow); color: var(--accent);
-  cursor: pointer; font-family: var(--font); transition: all 0.2s;
-}
-.fc-flip-btn:hover { background: var(--accent); color: #fff; }
-
-.fc-exp { font-size: clamp(1rem, 1.6vw, 1.12rem); line-height: 1.65; color: var(--text); padding: 1rem 1.1rem; background: rgba(0,0,0,0.28); border-radius: var(--radius-sm); border: 1px solid var(--border); }
-.fc-ans-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; font-weight: 600; }
-
-.fc-rate { display: none; margin-top: 1.35rem; padding-top: 1.15rem; border-top: 1px solid var(--border); }
-.fc-rate.show { display: block; }
-.fc-rate-label { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-.fc-rate-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.55rem; }
-@media (max-width: 560px) { .fc-rate-btns { grid-template-columns: repeat(2, 1fr); } }
-.fc-rate-btns button {
-  padding: 0.7rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
-  min-height: 2.75rem;
-  border: 1px solid var(--border); cursor: pointer; font-family: var(--font); transition: all 0.2s;
-}
-.fc-r-again { background: var(--red-bg); color: var(--red); border-color: rgba(248,113,113,0.35); }
-.fc-r-hard { background: var(--yellow-bg); color: var(--yellow); border-color: rgba(251,191,36,0.35); }
-.fc-r-good { background: var(--green-bg); color: var(--green); border-color: rgba(52,211,153,0.25); }
-.fc-r-easy { background: var(--accent-glow); color: var(--accent); border-color: rgba(108,140,255,0.35); }
-.fc-rate-btns button:hover { filter: brightness(1.08); }
-
-#fcActive { display: flex; flex-direction: column; gap: 1rem; }
-
-.fc-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.25rem;
-  padding: 0.85rem 1rem;
-  background: rgba(15, 17, 23, 0.65);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.fc-nav button {
-  padding: 0.55rem 1.15rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
-  border: 1px solid var(--border); background: var(--bg-card); color: var(--text-muted);
-  cursor: pointer; font-family: var(--font);
-}
-.fc-nav button:disabled { opacity: 0.35; cursor: default; }
-#fcCounter { font-size: 1.05rem !important; font-weight: 700 !important; color: var(--text) !important; }
-
-.fc-done { text-align: center; padding: clamp(2rem, 5vh, 3rem) 1.25rem; }
-.fc-done h2 { font-size: clamp(1.35rem, 2.5vw, 1.6rem); margin-bottom: 0.85rem; color: var(--green); }
-.fc-done p { font-size: 1.02rem; line-height: 1.55; }
-
-@media (max-width: 768px) {
-  .sidebar { display: none; }
-  .main-area { padding: 1rem; }
-}
-</style>
-<link rel="stylesheet" href="../shared/chat-panel.css">
+<link rel="stylesheet" href="../../shared/flashcards.css">
+<link rel="stylesheet" href="../../shared/chat-panel.css">
 </head>
 <body>
 
-<div class="top-bar">
-  <a href="../index.html" id="navHome">&#x1F3E0; Home</a>
-  <a href="quiz-hub.html" id="navQuiz">&#x1F4DD; Quiz Hub</a>
-  <a href="progress-dashboard.html" id="navProgress">&#x1F4CA; Progress</a>
-  <span class="title" id="pageTitle">&#x1F4E6; Flashcards</span>
-  <span class="spacer"></span>
+<nav class="nav-bar">
+  <a href="../index.html">Home</a>
+  <a href="quiz-hub.html">Quiz</a>
+  <a href="progress-dashboard.html">Progress</a>
+  <span class="nav-title">Flashcards</span>
+  <span class="nav-spacer"></span>
   <button id="langToggle">中文</button>
-</div>
+</nav>
 
-<div class="layout">
-
-<aside class="sidebar">
-  <div>
-    <h3 id="lbl-chapters">Chapters</h3>
-    <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem;">
-      <button class="filter-btn" id="btnAllCh" style="font-size:0.7rem;">All</button>
-      <button class="filter-btn" id="btnNoneCh" style="font-size:0.7rem;">None</button>
-    </div>
-    <div id="chFilters" style="display:grid; grid-template-columns:1fr 1fr; gap:0.15rem;"></div>
+<div class="config-panel">
+  <div class="config-toggle open" id="configToggle">
+    <span class="cfg-icon">&#x1F4E6;</span>
+    <span class="cfg-label" id="lbl-configure">Configure Deck</span>
+    <span class="cfg-summary" id="cfgSummary"></span>
+    <span class="cfg-arrow">&#x25BC;</span>
   </div>
-
-  <div>
-    <label><input type="checkbox" id="chkShuffle"> <span id="lbl-shuffle">Shuffle deck</span></label>
-  </div>
-
-  <div class="score-box">
-    <div class="big" id="deckStat">0 / 0</div>
-    <div class="label" id="lbl-deck">Due &amp; new in deck</div>
-    <p class="srs-hint" id="srs-hint">Spaced repetition (SM-2 style): rate each card after you reveal the answer. Overdue cards are shown first, then new cards.</p>
-  </div>
-
-  <div class="action-btns">
-    <button class="action-btn btn-primary" id="btnStart">Start session</button>
-    <button class="action-btn btn-outline" id="btnClearSRS">Reset flashcard progress</button>
-  </div>
-</aside>
-
-<main class="main-area">
-  <div class="empty-state" id="emptyState">
-    <h2 id="empty-title">Spaced-repetition flashcards</h2>
-    <p id="empty-desc">About <strong>120</strong> prompts distilled from each chapter&rsquo;s <strong>study guide</strong> (separate from the Quiz Hub). Pick chapters, then <strong>Start session</strong>. Flip, recall, rate — spaced repetition updates your review schedule.</p>
-  </div>
-
-  <div class="fc-wrap" id="fcWrap">
-    <div id="fcActive">
-      <div class="fc-card" id="fcCard">
-        <div class="fc-inner" id="fcInner">
-          <div class="fc-face fc-front" id="fcFront">
-            <div class="fc-header">
-              <span class="fc-tag guide" id="fcTypeTag">Study guide</span>
-              <span class="fc-ch" id="fcChLabel">Ch 1</span>
-            </div>
-            <div class="fc-q" id="fcQuestion"></div>
-            <button type="button" class="fc-flip-btn" id="btnFlip">&#x1F504; Show answer</button>
-          </div>
-          <div class="fc-face fc-back" id="fcBack" style="display:none;">
-            <div class="fc-header">
-              <span class="fc-tag guide" id="fcTypeTagB">Study guide</span>
-              <span class="fc-ch" id="fcChLabelB">Ch 1</span>
-            </div>
-            <div class="fc-q" id="fcQuestionDup" style="font-size:0.85rem;color:var(--text-dim);"></div>
-            <div class="fc-ans-label" id="lbl-answer">Answer</div>
-            <div class="fc-exp" id="fcExp"></div>
-            <div class="fc-rate show" id="fcRate">
-              <div class="fc-rate-label" id="lbl-rate">How well did you know it?</div>
-              <div class="fc-rate-btns">
-                <button type="button" class="fc-r-again" data-q="0" id="btnAgain">Again</button>
-                <button type="button" class="fc-r-hard" data-q="1" id="btnHard">Hard</button>
-                <button type="button" class="fc-r-good" data-q="2" id="btnGood">Good</button>
-                <button type="button" class="fc-r-easy" data-q="3" id="btnEasy">Easy</button>
-              </div>
-            </div>
-          </div>
+  <div class="config-body show" id="configBody">
+    <div class="config-row">
+      <div class="cfg-card" style="flex:2;">
+        <h4 id="lbl-chapters">Chapters</h4>
+        <div class="ch-chips" id="chChips">
+          <button class="ch-chip-action" id="btnAllCh">All</button>
+          <button class="ch-chip-action" id="btnNoneCh">None</button>
         </div>
       </div>
-      <div class="fc-nav">
-        <button type="button" id="btnEndSession">End session</button>
-        <span id="fcCounter" style="font-size:0.88rem;color:var(--text-muted);font-weight:600;">1 / 10</span>
-        <span></span>
+      <div class="cfg-card">
+        <h4>Options</h4>
+        <label class="toggle-row">
+          <span class="toggle-label" id="lbl-shuffle">Shuffle deck</span>
+          <input type="checkbox" id="chkShuffle"><span class="toggle-switch"></span>
+        </label>
+        <p style="font-size:0.72rem;color:var(--text-dim);line-height:1.5;margin-top:0.5rem;" id="srs-hint">SM-2 spaced repetition: flip, recall, rate. Overdue cards shown first.</p>
       </div>
     </div>
-    <div class="fc-done" id="fcDone" style="display:none;">
-      <h2 id="done-title">Session complete</h2>
-      <p id="done-desc" style="color:var(--text-muted);margin-bottom:1rem;">Nice work. Check the Progress page for your next review times.</p>
-      <button type="button" class="action-btn btn-primary" id="btnDoneHome" style="padding:0.6rem 1.2rem;">Back to filters</button>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card due-stat">
+      <div class="stat-value" id="statDue" style="color:var(--yellow);">0</div>
+      <div class="stat-label">Due</div>
+    </div>
+    <div class="stat-card new-stat">
+      <div class="stat-value" id="statNew" style="color:var(--accent);">0</div>
+      <div class="stat-label">New</div>
+    </div>
+    <div class="stat-card total-stat">
+      <div class="stat-value" id="statTotal" style="color:var(--green);">0</div>
+      <div class="stat-label">Total</div>
     </div>
   </div>
-</main>
-
+  <div class="action-row">
+    <button class="btn btn-primary" id="btnStart">Start session</button>
+    <button class="btn btn-ghost" id="btnClearSRS">Reset SRS progress</button>
+  </div>
 </div>
 
-<script src="../shared/flashcard-srs.js"></script>
+<div class="fc-wrapper">
+  <div class="empty-hero" id="emptyState">
+    <span class="empty-icon">&#x1F4E6;</span>
+    <h2 id="empty-title">Spaced-repetition flashcards</h2>
+    <p id="empty-desc">About <strong>60</strong> cards across 6 chapters. Pick chapters, then <strong>Start session</strong>.</p>
+    <div class="kbd-hints">
+      <span class="kbd"><kbd>Space</kbd> Flip card</span>
+      <span class="kbd"><kbd>1</kbd>–<kbd>4</kbd> Rate</span>
+    </div>
+  </div>
+  <div id="fcArea" style="display:none;"></div>
+</div>
+
+<script src="../../shared/flashcard-srs.js"></script>
 <script src="../data/flashcard-data.js"></script>
 <script>
-(function() {
-"use strict";
-
-var LANG_KEY = "comp5318_lang";
-var FC_KEY = "comp5318_flashcards";
-var DECK_VERSION = typeof FLASHCARD_DECK_VERSION !== "undefined" ? FLASHCARD_DECK_VERSION : "sg1";
-var lang = localStorage.getItem(LANG_KEY) || "en";
-var btn = document.getElementById("langToggle");
-
-var T = {
-  "navHome": "&#x1F3E0; 首页",
-  "navQuiz": "&#x1F4DD; 测验中心",
-  "navProgress": "&#x1F4CA; 进度",
-  "pageTitle": "&#x1F4E6; 闪卡",
-  "lbl-chapters": "章节",
-  "lbl-shuffle": "随机洗牌",
-  "lbl-deck": "待复习与新卡",
-  "btnStart": "开始学习", "btnClearSRS": "重置闪卡进度",
-  "btnAllCh": "全选", "btnNoneCh": "全不选",
-  "empty-title": "间隔重复闪卡",
-  "empty-desc": "约 <strong>120</strong> 道题，由各章<strong>学习指南</strong>提炼（与测验题库分开）。选择章节后点击<strong>开始学习</strong>。翻牌回忆答案，再自评掌握程度——系统会安排复习时间。",
-  "srs-hint": "采用 SM-2 类间隔重复：看完答案后为掌握程度打分。优先显示逾期卡片，再显示新卡。",
-  "lbl-rate": "掌握得如何？",
-  "lbl-answer": "答案",
-  "tag-guide": "学习指南",
-  "Again": "重来", "Hard": "吃力", "Good": "一般", "Easy": "简单",
-  "Show answer": "显示答案",
-  "btnFlip": "显示答案",
-  "btnEndSession": "结束本轮",
-  "done-title": "本轮完成",
-  "done-desc": "做得好。可在进度页查看下次复习安排。",
-  "btnDoneHome": "返回筛选",
-  "clear-fc-confirm": "确定重置所有闪卡复习进度？",
-  "fcCounter": "{cur} / {tot}"
-};
-
-function applyLang() {
-  btn.textContent = lang === "en" ? "中文" : "EN";
-  var ids = ["lbl-chapters", "lbl-shuffle", "lbl-deck", "srs-hint", "empty-title", "empty-desc", "lbl-rate", "lbl-answer", "btnEndSession", "done-title", "done-desc", "btnDoneHome"];
-  var btnIds = ["btnStart", "btnClearSRS", "btnAllCh", "btnNoneCh"];
-  if (lang === "zh") {
-    ids.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (!el || !T[id]) return;
-      if (!el.dataset.en) el.dataset.en = el.innerHTML;
-      el.innerHTML = T[id];
-    });
-    btnIds.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (!el || !T[id]) return;
-      if (!el.dataset.en) el.dataset.en = el.textContent;
-      el.textContent = T[id];
-    });
-    var bf = document.getElementById("btnFlip");
-    if (bf) {
-      if (!bf.dataset.en) bf.dataset.en = "Show answer";
-      bf.textContent = "\uD83D\uDD04 " + T["Show answer"];
-    }
-    [["btnAgain", "Again"], ["btnHard", "Hard"], ["btnGood", "Good"], ["btnEasy", "Easy"]].forEach(function(pair) {
-      var b = document.getElementById(pair[0]);
-      if (b) {
-        if (!b.dataset.en) b.dataset.en = b.textContent;
-        b.textContent = T[pair[1]];
-      }
-    });
-    var tg = document.getElementById("fcTypeTag");
-    var tgB = document.getElementById("fcTypeTagB");
-    if (tg) { if (!tg.dataset.en) tg.dataset.en = tg.textContent; tg.textContent = T["tag-guide"]; }
-    if (tgB) { if (!tgB.dataset.en) tgB.dataset.en = tgB.textContent; tgB.textContent = T["tag-guide"]; }
-  } else {
-    ids.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && el.dataset.en) el.innerHTML = el.dataset.en;
-    });
-    btnIds.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && el.dataset.en) el.textContent = el.dataset.en;
-    });
-    var bf = document.getElementById("btnFlip");
-    if (bf && bf.dataset.en) bf.textContent = "\uD83D\uDD04 " + bf.dataset.en;
-    [["btnAgain", "Again"], ["btnHard", "Hard"], ["btnGood", "Good"], ["btnEasy", "Easy"]].forEach(function(pair) {
-      var b = document.getElementById(pair[0]);
-      if (b && b.dataset.en) b.textContent = b.dataset.en;
-    });
-    var tg = document.getElementById("fcTypeTag");
-    var tgB = document.getElementById("fcTypeTagB");
-    if (tg && tg.dataset.en) tg.textContent = tg.dataset.en;
-    if (tgB && tgB.dataset.en) tgB.textContent = tgB.dataset.en;
-  }
-  renderChapterFilters();
-  document.title = lang === "zh" ? "闪卡 — COMP5318" : "Flashcards — COMP5318";
-  renderMath();
-}
-
-function renderMath() {
-  if (typeof renderMathInElement === "function") {
-    try {
-      renderMathInElement(document.body, {
-        delimiters: [
-          { left: "\\[", right: "\\]", display: true },
-          { left: "\\(", right: "\\)", display: false }
-        ],
-        throwOnError: false
-      });
-    } catch (e) {}
-  }
-}
-
-btn.addEventListener("click", function() {
-  lang = lang === "en" ? "zh" : "en";
-  localStorage.setItem(LANG_KEY, lang);
-  applyLang();
-  if (currentIdx >= 0 && queue.length) showCard(currentIdx);
-});
-
-var chFilter = {};
-for (var i = 1; i <= 6; i++) chFilter[i] = true;
-var shuffleOn = false;
-
-function chapterShort(ch) {
-  return lang === "zh" ? ("第" + ch + "章") : ("Ch " + ch);
-}
-
-function renderChapterFilters() {
-  var root = document.getElementById("chFilters");
-  root.innerHTML = "";
-  for (var c = 1; c <= 6; c++) {
-    var lab = document.createElement("label");
-    lab.innerHTML = '<input type="checkbox" data-ch="' + c + '"' + (chFilter[c] ? " checked" : "") + '> ' + chapterShort(c);
-    lab.querySelector("input").addEventListener("change", function(ev) {
-      chFilter[parseInt(ev.target.getAttribute("data-ch"), 10)] = ev.target.checked;
-      updateDeckStat();
-    });
-    root.appendChild(lab);
-  }
-}
-
-function ensureFlashcardIds() {
-  if (!window.ALL_FLASHCARD_DATA || !ALL_FLASHCARD_DATA.length) return;
-  if (ALL_FLASHCARD_DATA[0].id !== undefined) return;
-  for (var i = 0; i < ALL_FLASHCARD_DATA.length; i++) ALL_FLASHCARD_DATA[i].id = i;
-}
-
-function loadFC() {
-  try {
-    var raw = localStorage.getItem(FC_KEY);
-    if (!raw) return { v: 1, deckVersion: DECK_VERSION, cards: {} };
-    var o = JSON.parse(raw);
-    if (!o || typeof o.cards !== "object") return { v: 1, deckVersion: DECK_VERSION, cards: {} };
-    if (o.deckVersion !== DECK_VERSION) return { v: 1, deckVersion: DECK_VERSION, cards: {} };
-    return o;
-  } catch (e) {
-    return { v: 1, deckVersion: DECK_VERSION, cards: {} };
-  }
-}
-
-function saveFC(data) {
-  data.deckVersion = DECK_VERSION;
-  try {
-    localStorage.setItem(FC_KEY, JSON.stringify(data));
-  } catch (e) {}
-}
-
-function getCardState(id) {
-  var d = loadFC();
-  return d.cards[String(id)] || null;
-}
-
-function setCardState(id, state) {
-  var d = loadFC();
-  d.cards[String(id)] = state;
-  saveFC(d);
-}
-
-function passesFilters(card) {
-  return chFilter[card.ch] === true;
-}
-
-function buildFilteredIndices() {
-  var out = [];
-  for (var i = 0; i < ALL_FLASHCARD_DATA.length; i++) {
-    if (passesFilters(ALL_FLASHCARD_DATA[i])) out.push(i);
-  }
-  return out;
-}
-
-function isDueId(id, now) {
-  var st = getCardState(id);
-  if (!st) return true;
-  return FlashcardSRS.isDue(st, now);
-}
-
-function buildQueue() {
-  var ids = buildFilteredIndices();
-  var now = Date.now();
-  var due = [];
-  var fresh = [];
-  for (var i = 0; i < ids.length; i++) {
-    var id = ids[i];
-    var st = getCardState(id);
-    if (!st) {
-      fresh.push({ id: id, sort: Infinity });
-    } else if (st.nextDue <= now) {
-      due.push({ id: id, sort: st.nextDue });
-    }
-  }
-  due.sort(function(a, b) { return a.sort - b.sort; });
-  fresh.sort(function(a, b) { return a.id - b.id; });
-  var q = [];
-  for (var d = 0; d < due.length; d++) q.push(due[d].id);
-  for (var f = 0; f < fresh.length; f++) q.push(fresh[f].id);
-  if (shuffleOn) {
-    for (var s = q.length - 1; s > 0; s--) {
-      var j = Math.floor(Math.random() * (s + 1));
-      var t = q[s]; q[s] = q[j]; q[j] = t;
-    }
-  }
-  return q;
-}
-
-function updateDeckStat() {
-  var ids = buildFilteredIndices();
-  var now = Date.now();
-  var nDue = 0, nNew = 0;
-  for (var i = 0; i < ids.length; i++) {
-    var id = ids[i];
-    var st = getCardState(id);
-    if (!st) nNew++;
-    else if (st.nextDue <= now) nDue++;
-  }
-  document.getElementById("deckStat").textContent = nDue + " + " + nNew;
-  var lbl = document.getElementById("lbl-deck");
-  if (lbl && lang === "zh") lbl.textContent = "到期 + 新卡";
-  else if (lbl) lbl.textContent = "Due + new in deck";
-}
-
-var queue = [];
-var currentIdx = -1;
-/** Session tracking for progress (comp5318_progress.flashcardHistory) */
-var sessionRatedCount = 0;
-var sessionNaturalComplete = false;
-var sessionQueueLen = 0;
-
-function getSelectedChapters() {
-  var chs = [];
-  for (var c = 1; c <= 6; c++) if (chFilter[c]) chs.push(c);
-  return chs;
-}
-
-function recordFlashcardSession(completed) {
-  try {
-    var PK = "comp5318_progress";
-    var p = JSON.parse(localStorage.getItem(PK) || "{}");
-    if (!p.flashcardHistory) p.flashcardHistory = [];
-    var d = new Date();
-    var pad = function(n) { return n < 10 ? "0" + n : "" + n; };
-    var dateStr = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-    var chs = getSelectedChapters();
-    var scope = chs.length === 1 ? "Flashcards: Ch " + chs[0] : "Flashcards: Ch" + chs.join(",");
-    p.flashcardHistory.push({
-      date: dateStr,
-      scope: scope,
-      cardsRated: sessionRatedCount,
-      deckSize: sessionQueueLen,
-      completed: completed
-    });
-    if (p.flashcardHistory.length > 100) p.flashcardHistory = p.flashcardHistory.slice(-100);
-    localStorage.setItem(PK, JSON.stringify(p));
-  } catch (e) {}
-}
-
-function showCard(idx) {
-  if (idx < 0 || idx >= queue.length) return;
-  var id = queue[idx];
-  var q = ALL_FLASHCARD_DATA[id];
-  var isZh = lang === "zh";
-  var qtext = isZh && q.front_zh ? q.front_zh : q.front;
-  var ans = isZh && q.back_zh ? q.back_zh : q.back;
-  var typeTag = document.getElementById("fcTypeTag");
-  var typeTagB = document.getElementById("fcTypeTagB");
-  typeTag.className = "fc-tag guide";
-  typeTagB.className = "fc-tag guide";
-  typeTag.textContent = lang === "zh" ? T["tag-guide"] : "Study guide";
-  typeTagB.textContent = typeTag.textContent;
-  document.getElementById("fcChLabel").textContent = chapterShort(q.ch);
-  document.getElementById("fcChLabelB").textContent = chapterShort(q.ch);
-  document.getElementById("fcQuestion").innerHTML = qtext;
-  document.getElementById("fcQuestionDup").innerHTML = qtext;
-
-  document.getElementById("fcFront").style.display = "";
-  document.getElementById("fcBack").style.display = "none";
-
-  document.getElementById("fcExp").innerHTML = ans.replace(/\n/g, "<br>");
-
-  document.getElementById("fcCounter").textContent = (idx + 1) + " / " + queue.length;
-  renderMath();
-}
-
-function endSession() {
-  if (sessionRatedCount > 0 && !sessionNaturalComplete) {
-    recordFlashcardSession(false);
-  }
-  sessionNaturalComplete = false;
-  sessionRatedCount = 0;
-  sessionQueueLen = 0;
-  document.getElementById("fcWrap").classList.remove("active");
-  document.getElementById("emptyState").style.display = "";
-  document.getElementById("fcActive").style.display = "";
-  document.getElementById("fcDone").style.display = "none";
-  queue = [];
-  currentIdx = -1;
-  updateDeckStat();
-}
-
-document.getElementById("btnFlip").addEventListener("click", function() {
-  document.getElementById("fcFront").style.display = "none";
-  document.getElementById("fcBack").style.display = "block";
-  renderMath();
-});
-
-function rate(quality) {
-  if (currentIdx < 0 || !queue.length) return;
-  sessionRatedCount++;
-  var id = queue[currentIdx];
-  var prev = getCardState(id) || { ef: 2.5, reps: 0, intervalDays: 0, nextDue: null };
-  var next = FlashcardSRS.schedule(prev, quality);
-  setCardState(id, next);
-  currentIdx++;
-  if (currentIdx >= queue.length) {
-    sessionNaturalComplete = true;
-    recordFlashcardSession(true);
-    document.getElementById("fcActive").style.display = "none";
-    document.getElementById("fcDone").style.display = "block";
-    updateDeckStat();
-    return;
-  }
-  showCard(currentIdx);
-}
-
-document.querySelectorAll(".fc-rate-btns button").forEach(function(b) {
-  b.addEventListener("click", function() {
-    rate(parseInt(b.getAttribute("data-q"), 10));
-  });
-});
-
-document.getElementById("btnEndSession").addEventListener("click", endSession);
-document.getElementById("btnDoneHome").addEventListener("click", endSession);
-
-function startSession() {
-  ensureFlashcardIds();
-  queue = buildQueue();
-  if (!queue.length) {
-    alert(lang === "zh" ? "当前筛选下没有可用卡片。" : "No cards match your filters.");
-    return false;
-  }
-  sessionRatedCount = 0;
-  sessionNaturalComplete = false;
-  sessionQueueLen = queue.length;
-  document.getElementById("emptyState").style.display = "none";
-  document.getElementById("fcWrap").classList.add("active");
-  document.getElementById("fcActive").style.display = "";
-  document.getElementById("fcDone").style.display = "none";
-  currentIdx = 0;
-  showCard(0);
-  updateDeckStat();
-  return true;
-}
-
-document.getElementById("btnStart").addEventListener("click", function() {
-  startSession();
-});
-
-document.getElementById("btnClearSRS").addEventListener("click", function() {
-  var msg = lang === "zh" ? T["clear-fc-confirm"] : "Reset all flashcard scheduling data?";
-  if (!confirm(msg)) return;
-  try { localStorage.removeItem(FC_KEY); } catch (e) {}
-  updateDeckStat();
-});
-
-renderChapterFilters();
-
-document.getElementById("btnAllCh").addEventListener("click", function() {
-  document.querySelectorAll("#chFilters input").forEach(function(inp) {
-    inp.checked = true;
-    chFilter[parseInt(inp.getAttribute("data-ch"), 10)] = true;
-  });
-  updateDeckStat();
-});
-document.getElementById("btnNoneCh").addEventListener("click", function() {
-  document.querySelectorAll("#chFilters input").forEach(function(inp) {
-    inp.checked = false;
-    chFilter[parseInt(inp.getAttribute("data-ch"), 10)] = false;
-  });
-  updateDeckStat();
-});
-
-document.getElementById("chkShuffle").addEventListener("change", function() {
-  shuffleOn = this.checked;
-});
-
-/** If opened as flashcards.html?ch=7 — only that chapter selected. */
-function applyChapterQueryFromURL() {
-  try {
-    var params = new URLSearchParams(window.location.search);
-    var chRaw = params.get("ch");
-    if (chRaw === null || chRaw === "") return;
-    var n = parseInt(chRaw, 10);
-    if (isNaN(n) || n < 1 || n > 6) return;
-    document.querySelectorAll("#chFilters input").forEach(function(inp) {
-      var c = parseInt(inp.getAttribute("data-ch"), 10);
-      var on = c === n;
-      inp.checked = on;
-      chFilter[c] = on;
-    });
-  } catch (err) {}
-}
-
-/** flashcards.html?ch=N&start=1 — jump straight into a session for that chapter. */
-function maybeAutoStartFromURL() {
-  try {
-    var params = new URLSearchParams(window.location.search);
-    if (params.get("start") !== "1") return;
-    if (!startSession()) return;
-    if (history.replaceState) {
-      var u = new URL(window.location.href);
-      u.searchParams.delete("start");
-      history.replaceState(null, "", u.pathname + u.search + u.hash);
-    }
-  } catch (err) {}
-}
-
-ensureFlashcardIds();
-applyChapterQueryFromURL();
-applyLang();
-updateDeckStat();
-maybeAutoStartFromURL();
-})();
+window.FLASHCARD_CONFIG = { courseCode: "comp5318", numChapters: 6, totalCards: 60, progressKey: "comp5318_progress" };
 </script>
-<script src="../shared/chat-panel.js"></script>
+<script src="../../shared/flashcards.js"></script>
+<script src="../../shared/chat-panel.js"></script>
 </body>
 </html>

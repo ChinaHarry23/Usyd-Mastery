@@ -8,7 +8,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <link rel="stylesheet" href="../../../shared/study.css">
-<link rel="stylesheet" href="../../../shared/chat-panel.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
 </head>
 <body>
 
@@ -91,18 +91,20 @@
     <li><strong>Stopping:</strong> fixed length, or until <code>&lt;/s&gt;</code> (EOS).</li>
     <li><strong>Practice:</strong> decoder often gets encoder context every step; encoder can be bidirectional; stacks of layers common.</li>
   </ul>
-  <div class="diagram-flow" style="margin-top:1rem;">
-    <div class="flow-node">Source tokens</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node">Encoder RNN</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node flow-highlight">\(\mathbf{c}\) (context)</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node">Decoder RNN</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node">Target tokens</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-node">&lt;/s&gt;</div>
+  <div style="margin:1.5rem 0; padding:1.5rem; background:#fff; border:2px solid #d1fae5; border-radius:16px; overflow-x:auto;">
+    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:nowrap; min-width:max-content;">
+      <div style="padding:0.7rem 1.2rem; background:#ecfdf5; border:2px solid #059669; border-radius:10px; font-weight:700; font-size:0.95rem; color:#065f46; white-space:nowrap;">Source tokens</div>
+      <div style="font-size:1.5rem; color:#059669; font-weight:300;">&#x2192;</div>
+      <div style="padding:0.7rem 1.2rem; background:#ecfdf5; border:2px solid #059669; border-radius:10px; font-weight:700; font-size:0.95rem; color:#065f46; white-space:nowrap;">Encoder RNN</div>
+      <div style="font-size:1.5rem; color:#059669; font-weight:300;">&#x2192;</div>
+      <div style="padding:0.7rem 1.2rem; background:#059669; border:2px solid #047857; border-radius:10px; font-weight:800; font-size:0.95rem; color:#fff; white-space:nowrap; box-shadow:0 4px 12px rgba(5,150,105,0.3);">\(\mathbf{c}\) (context)</div>
+      <div style="font-size:1.5rem; color:#059669; font-weight:300;">&#x2192;</div>
+      <div style="padding:0.7rem 1.2rem; background:#f5f3ff; border:2px solid #7c3aed; border-radius:10px; font-weight:700; font-size:0.95rem; color:#5b21b6; white-space:nowrap;">Decoder RNN</div>
+      <div style="font-size:1.5rem; color:#7c3aed; font-weight:300;">&#x2192;</div>
+      <div style="padding:0.7rem 1.2rem; background:#f5f3ff; border:2px solid #7c3aed; border-radius:10px; font-weight:700; font-size:0.95rem; color:#5b21b6; white-space:nowrap;">Target tokens</div>
+      <div style="font-size:1.5rem; color:#7c3aed; font-weight:300;">&#x2192;</div>
+      <div style="padding:0.7rem 1.2rem; background:#faf5ff; border:2px dashed #a78bfa; border-radius:10px; font-weight:700; font-size:0.95rem; color:#6d28d9; white-space:nowrap; font-family:var(--font-mono);">&lt;/s&gt;</div>
+    </div>
   </div>
   <p class="recall-prompt"><span class="recall-label">Recall</span>Two ways to end generation.</p>
 </section>
@@ -115,40 +117,46 @@
     <li>Test: <strong>greedy</strong> argmax, <strong>sampling</strong>, or <strong>beam search</strong> (Lecture 4).</li>
     <li>Compare hypotheses of different lengths: <strong>normalise</strong> scores (e.g. by length).</li>
   </ul>
-  <div class="arch-diagram">
-    <svg viewBox="0 0 460 140" width="460" height="140">
-      <defs><marker id="at5" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
-      <!-- Training -->
-      <text x="115" y="14" class="node-label" style="font-size:10px;fill:var(--green)">Training (teacher forcing)</text>
-      <rect x="10" y="24" width="40" height="20" class="node-box-green" rx="4"/><text x="30" y="34" class="node-label" style="font-size:8px">gold₁</text>
-      <rect x="60" y="24" width="40" height="20" class="node-box-green" rx="4"/><text x="80" y="34" class="node-label" style="font-size:8px">gold₂</text>
-      <rect x="110" y="24" width="40" height="20" class="node-box-green" rx="4"/><text x="130" y="34" class="node-label" style="font-size:8px">gold₃</text>
-      <line x1="50" y1="34" x2="60" y2="34" class="arrow-line" marker-end="url(#at5)"/>
-      <line x1="100" y1="34" x2="110" y2="34" class="arrow-line" marker-end="url(#at5)"/>
-      <rect x="10" y="52" width="140" height="18" class="node-box" rx="4"/><text x="80" y="61" class="node-label" style="font-size:8px">Decoder RNN</text>
-      <line x1="30" y1="44" x2="30" y2="52" class="arrow-line" marker-end="url(#at5)"/>
-      <line x1="80" y1="44" x2="80" y2="52" class="arrow-line" marker-end="url(#at5)"/>
-      <line x1="130" y1="44" x2="130" y2="52" class="arrow-line" marker-end="url(#at5)"/>
-      <!-- Inference -->
-      <text x="350" y="14" class="node-label" style="font-size:10px;fill:var(--purple)">Inference (autoregressive)</text>
-      <rect x="250" y="24" width="42" height="20" class="node-box-purple" rx="4"/><text x="271" y="34" class="node-label" style="font-size:8px">pred₁</text>
-      <rect x="302" y="24" width="42" height="20" class="node-box-purple" rx="4"/><text x="323" y="34" class="node-label" style="font-size:8px">pred₂</text>
-      <rect x="354" y="24" width="42" height="20" class="node-box-purple" rx="4"/><text x="375" y="34" class="node-label" style="font-size:8px">pred₃</text>
-      <line x1="292" y1="34" x2="302" y2="34" class="arrow-line" marker-end="url(#at5)"/>
-      <line x1="344" y1="34" x2="354" y2="34" class="arrow-line" marker-end="url(#at5)"/>
-      <rect x="250" y="52" width="146" height="18" class="node-box-purple" rx="4"/><text x="323" y="61" class="node-label" style="font-size:8px">Decoder RNN</text>
-      <line x1="271" y1="44" x2="271" y2="52" class="arrow-line" marker-end="url(#at5)"/>
-      <line x1="323" y1="44" x2="323" y2="52" class="arrow-line" marker-end="url(#at5)"/>
-      <line x1="375" y1="44" x2="375" y2="52" class="arrow-line" marker-end="url(#at5)"/>
-      <!-- Feedback arrows for inference -->
-      <path d="M271,70 L271,84 L312,84 L312,44" style="stroke:var(--purple);stroke-width:1;fill:none;" marker-end="url(#at5)"/>
-      <path d="M323,70 L323,94 L364,94 L364,44" style="stroke:var(--purple);stroke-width:1;fill:none;" marker-end="url(#at5)"/>
-      <!-- Labels -->
-      <text x="80" y="85" class="node-label-sm" style="fill:var(--green)">Input = ground truth tokens</text>
-      <text x="323" y="115" class="node-label-sm" style="fill:var(--purple)">Input = own previous predictions</text>
-    </svg>
-    <div class="arch-caption">Teacher forcing (train): decoder receives gold tokens. Autoregressive (inference): decoder feeds its own predictions back as input.</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin:1.5rem 0;">
+    <!-- TRAINING CARD -->
+    <div style="background:#fff; border:2px solid #059669; border-radius:16px; padding:1.5rem; position:relative;">
+      <div style="position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#059669,#34d399); border-radius:16px 16px 0 0;"></div>
+      <h4 style="color:#059669; font-size:1rem; font-weight:800; margin-bottom:1.25rem; text-align:center; letter-spacing:0.02em;">Training (teacher forcing)</h4>
+      <div style="display:flex; justify-content:center; gap:0.5rem; margin-bottom:1rem;">
+        <div style="padding:0.6rem 1rem; background:#ecfdf5; border:2px solid #059669; border-radius:10px; font-family:var(--font-mono); font-weight:700; font-size:0.95rem; color:#065f46;">gold<sub>1</sub></div>
+        <div style="display:flex; align-items:center; color:#059669; font-size:1.3rem;">&#x2192;</div>
+        <div style="padding:0.6rem 1rem; background:#ecfdf5; border:2px solid #059669; border-radius:10px; font-family:var(--font-mono); font-weight:700; font-size:0.95rem; color:#065f46;">gold<sub>2</sub></div>
+        <div style="display:flex; align-items:center; color:#059669; font-size:1.3rem;">&#x2192;</div>
+        <div style="padding:0.6rem 1rem; background:#ecfdf5; border:2px solid #059669; border-radius:10px; font-family:var(--font-mono); font-weight:700; font-size:0.95rem; color:#065f46;">gold<sub>3</sub></div>
+      </div>
+      <div style="display:flex; justify-content:center; margin-bottom:0.85rem;">
+        <span style="color:#059669; font-size:1.3rem;">&#x2193; &nbsp; &#x2193; &nbsp; &#x2193;</span>
+      </div>
+      <div style="padding:0.75rem 1.25rem; background:#f0fdf4; border:2px solid #059669; border-radius:10px; text-align:center; font-weight:700; font-size:1rem; color:#065f46;">Decoder RNN</div>
+      <p style="text-align:center; margin-top:1rem; font-size:0.88rem; font-weight:600; color:#059669;">Input = ground truth tokens</p>
+    </div>
+    <!-- INFERENCE CARD -->
+    <div style="background:#fff; border:2px solid #7c3aed; border-radius:16px; padding:1.5rem; position:relative;">
+      <div style="position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#7c3aed,#a78bfa); border-radius:16px 16px 0 0;"></div>
+      <h4 style="color:#7c3aed; font-size:1rem; font-weight:800; margin-bottom:1.25rem; text-align:center; letter-spacing:0.02em;">Inference (autoregressive)</h4>
+      <div style="display:flex; justify-content:center; gap:0.5rem; margin-bottom:1rem;">
+        <div style="padding:0.6rem 1rem; background:#f5f3ff; border:2px solid #7c3aed; border-radius:10px; font-family:var(--font-mono); font-weight:700; font-size:0.95rem; color:#5b21b6;">pred<sub>1</sub></div>
+        <div style="display:flex; align-items:center; color:#7c3aed; font-size:1.3rem;">&#x2192;</div>
+        <div style="padding:0.6rem 1rem; background:#f5f3ff; border:2px solid #7c3aed; border-radius:10px; font-family:var(--font-mono); font-weight:700; font-size:0.95rem; color:#5b21b6;">pred<sub>2</sub></div>
+        <div style="display:flex; align-items:center; color:#7c3aed; font-size:1.3rem;">&#x2192;</div>
+        <div style="padding:0.6rem 1rem; background:#f5f3ff; border:2px solid #7c3aed; border-radius:10px; font-family:var(--font-mono); font-weight:700; font-size:0.95rem; color:#5b21b6;">pred<sub>3</sub></div>
+      </div>
+      <div style="display:flex; justify-content:center; margin-bottom:0.85rem;">
+        <span style="color:#7c3aed; font-size:1.3rem;">&#x2193; &nbsp; &#x2193; &nbsp; &#x2193;</span>
+      </div>
+      <div style="padding:0.75rem 1.25rem; background:#faf5ff; border:2px solid #7c3aed; border-radius:10px; text-align:center; font-weight:700; font-size:1rem; color:#5b21b6;">Decoder RNN</div>
+      <div style="display:flex; justify-content:center; margin-top:0.75rem;">
+        <span style="color:#7c3aed; font-size:1.1rem;">&#x21BA; feeds predictions back as next input</span>
+      </div>
+      <p style="text-align:center; margin-top:0.5rem; font-size:0.88rem; font-weight:600; color:#7c3aed;">Input = own previous predictions</p>
+    </div>
   </div>
+  <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); margin-top:-0.5rem; margin-bottom:0.5rem;"><strong>Left:</strong> decoder receives gold tokens. <strong>Right:</strong> decoder feeds back its own predictions.</p>
   <p class="recall-prompt"><span class="recall-label">Recall</span>What is fed to the decoder during training vs at inference?</p>
 </section>
 
@@ -248,9 +256,9 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 <script src="chapter5-study.js"></script>
-<script src="../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
 <script src="../../../shared/quick-check.js"></script>
 <script src="../../../shared/scroll-anim.js"></script>
-<script src="../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
 </body>
 </html>
