@@ -1,2 +1,3 @@
-
 - [Codebase Audit April 2026](codebase_audit_april_2026.md) — ## Architecture
+- [Session Patterns and Feedback](session_patterns_and_feedback.md) — ---
+- [File Structure Reference](file_structure_reference.md) — ---

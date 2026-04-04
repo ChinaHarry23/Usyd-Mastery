@@ -1,102 +1,6 @@
 (function () {
   "use strict";
-
-  function renderMath() {
-    if (typeof renderMathInElement === "function") {
-      renderMathInElement(document.body, {
-        delimiters: [
-          { left: "\\[", right: "\\]", display: true },
-          { left: "\\(", right: "\\)", display: false },
-        ],
-        throwOnError: false,
-      });
-    }
-  }
-
-  // ========== SIDEBAR ==========
-  const sidebar = document.getElementById("sidebar");
-  const sidebarToggle = document.getElementById("sidebarToggle");
-  sidebarToggle.addEventListener("click", () =>
-    sidebar.classList.toggle("open")
-  );
-  document.getElementById("mainContent").addEventListener("click", () => {
-    if (sidebar.classList.contains("open")) sidebar.classList.remove("open");
-  });
-
-  // ========== SCROLL SPY & PROGRESS ==========
-  const sections = document.querySelectorAll(".section[data-track]");
-  const navLinks = document.querySelectorAll(".nav-link");
-  const visited = new Set();
-
-  function updateProgress() {
-    visited.add("hero");
-    const pct = (visited.size / sections.length) * 100;
-    document.getElementById("progressFill").style.width = pct + "%";
-    document.getElementById("progressText").textContent =
-      visited.size + " / " + sections.length;
-  }
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          const id = e.target.dataset.track;
-          visited.add(id);
-          updateProgress();
-          navLinks.forEach((l) => {
-            l.classList.toggle("active", l.dataset.section === e.target.id);
-          });
-        }
-      });
-    },
-    { rootMargin: "-20% 0px -60% 0px" }
-  );
-  sections.forEach((s) => observer.observe(s));
-
-  // ========== PROOF TOGGLES ==========
-  document.querySelectorAll(".proof-toggle").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = document.getElementById(btn.dataset.target);
-      const isOpen = target.classList.contains("open");
-      target.classList.toggle("open");
-      btn.classList.toggle("open");
-      if (!isOpen) renderMath();
-    });
-  });
-
-  // ========== SOLUTION TOGGLES ==========
-  document.querySelectorAll(".solution-toggle").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = document.getElementById(btn.dataset.target);
-      const isOpen = target.classList.contains("open");
-      target.classList.toggle("open");
-      var zh = typeof getLang === "function" && getLang() === "zh";
-      btn.textContent = isOpen
-        ? zh
-          ? "查看解答"
-          : "Show Solution"
-        : zh
-          ? "隐藏解答"
-          : "Hide Solution";
-      if (!isOpen) renderMath();
-    });
-  });
-
-  // ========== TABS ==========
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const parent = btn.closest(".interactive-compare");
-      parent
-        .querySelectorAll(".tab-btn")
-        .forEach((b) => b.classList.remove("active"));
-      parent
-        .querySelectorAll(".tab-content")
-        .forEach((c) => c.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(btn.dataset.tab).classList.add("active");
-      renderMath();
-    });
-  });
+  var renderMath = window.chapterRenderMath || function () {};
 
   // ========== INTERACTIVE: TAIL BOUND COMPARISON ==========
   var sliderN = document.getElementById("sliderN");
@@ -426,5 +330,4 @@
       (errors / trials).toFixed(4);
   });
 
-renderMath();
 })();
