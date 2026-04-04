@@ -4,7 +4,7 @@
 #
 # After the deduplication migration (scripts/migrate-shared-paths.js), all HTML
 # pages reference root /shared/ directly. Hub /shared/ directories now contain
-# ONLY hub-specific files (study.css, lang-toggle.js, translations.js, etc.).
+# ONLY hub-specific files (study.css, lang-config.js, translations.js, etc.).
 #
 # This script checks that none of the canonical files have crept back in.
 #
@@ -31,6 +31,7 @@ CANONICAL_FILES=(
   "mindmap.css"
   "flashcard-srs.js"
   "progress-tracker.js"
+  "lang-toggle.js"
 )
 
 MODE="report"

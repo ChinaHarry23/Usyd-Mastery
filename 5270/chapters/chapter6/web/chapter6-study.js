@@ -1,84 +1,6 @@
 (function () {
   "use strict";
-
-  function renderMath() {
-    if (typeof renderMathInElement === "function") {
-      renderMathInElement(document.body, {
-        delimiters: [
-          { left: "\\[", right: "\\]", display: true },
-          { left: "\\(", right: "\\)", display: false },
-        ],
-        throwOnError: false,
-      });
-    }
-  }
-
-  // ========== SIDEBAR ==========
-  var sidebar = document.getElementById("sidebar");
-  var sidebarToggle = document.getElementById("sidebarToggle");
-  sidebarToggle.addEventListener("click", function () {
-    sidebar.classList.toggle("open");
-  });
-  document.getElementById("mainContent").addEventListener("click", function () {
-    if (sidebar.classList.contains("open")) sidebar.classList.remove("open");
-  });
-
-  // ========== SCROLL SPY & PROGRESS ==========
-  var sections = document.querySelectorAll(".section[data-track]");
-  var navLinks = document.querySelectorAll(".nav-link");
-  var visited = new Set();
-
-  function updateProgress() {
-    visited.add("hero");
-    var pct = (visited.size / sections.length) * 100;
-    document.getElementById("progressFill").style.width = pct + "%";
-    document.getElementById("progressText").textContent =
-      visited.size + " / " + sections.length;
-  }
-
-  var observer = new IntersectionObserver(
-    function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          var id = e.target.dataset.track;
-          visited.add(id);
-          updateProgress();
-          navLinks.forEach(function (l) {
-            l.classList.toggle("active", l.dataset.section === e.target.id);
-          });
-        }
-      });
-    },
-    { rootMargin: "-20% 0px -60% 0px" }
-  );
-  sections.forEach(function (s) {
-    observer.observe(s);
-  });
-
-  // ========== PROOF TOGGLES ==========
-  document.querySelectorAll(".proof-toggle").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var target = document.getElementById(btn.dataset.target);
-      var isOpen = target.classList.contains("open");
-      target.classList.toggle("open");
-      btn.classList.toggle("open");
-      if (!isOpen) renderMath();
-    });
-  });
-
-  // ========== SOLUTION TOGGLES ==========
-  document.querySelectorAll(".solution-toggle").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var target = document.getElementById(btn.dataset.target);
-      var isOpen = target.classList.contains("open");
-      target.classList.toggle("open");
-      var zh = typeof getLang === "function" && getLang() === "zh";
-      btn.textContent = isOpen
-        ? zh ? "\u67e5\u770b\u89e3\u7b54" : "Show Solution"
-        : zh ? "\u9690\u85cf\u89e3\u7b54" : "Hide Solution";
-      if (!isOpen) renderMath();
-    });
-  });
+  var renderMath = window.chapterRenderMath || function () {};
 
   // ========== BLOOM FILTER SIMULATOR ==========
   var bfBits = [];
@@ -404,6 +326,4 @@
 
   document.getElementById("btnCuckooReset").addEventListener("click", cuckooReset);
   cuckooReset();
-
-renderMath();
 })();

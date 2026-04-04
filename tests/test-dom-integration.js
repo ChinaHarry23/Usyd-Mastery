@@ -428,7 +428,7 @@ test("Chapter pages reference root shared/ not hub shared/", function() {
 
 test("No stale hub copies of canonical shared files", function() {
   var hubs = ["5270", "5318", "Comp5046-NLP-Study-Hub", "COMP9001-Intro-to-Programming-Study-Hub"];
-  var canonical = ["chat-panel.js", "chat-panel.css", "mindmap.js", "mindmap.css", "flashcard-srs.js", "progress-tracker.js"];
+  var canonical = ["chat-panel.js", "chat-panel.css", "mindmap.js", "mindmap.css", "flashcard-srs.js", "progress-tracker.js", "lang-toggle.js"];
   hubs.forEach(function(hub) {
     canonical.forEach(function(file) {
       var filePath = path.join(ROOT, hub, "shared", file);
@@ -442,7 +442,7 @@ test("Root shared/ contains all canonical modules", function() {
     "chat-panel.js", "chat-panel.css", "mindmap.js", "mindmap.css",
     "flashcard-srs.js", "progress-tracker.js", "storage.js",
     "mission-control.js", "knowledge-graph.js", "progress-dashboard.js",
-    "quiz-hub.js", "flashcards.js", "math.css"
+    "quiz-hub.js", "flashcards.js", "math.css", "lang-toggle.js"
   ];
   expected.forEach(function(file) {
     assert.ok(
