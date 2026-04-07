@@ -17,10 +17,10 @@ set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 HUBS=(
-  "5270"
-  "5318"
-  "Comp5046-NLP-Study-Hub"
-  "COMP9001-Intro-to-Programming-Study-Hub"
+  "5270RandomAlgo"
+  "5318ML"
+  "5046NLP"
+  "9001Py"
 )
 
 # Files that should ONLY live in root /shared/, never in hub /shared/

@@ -23,10 +23,10 @@ var root   = path.resolve(__dirname, "..");
 var errors = [];
 
 var hubs = [
-  { dir: "5270",          chapters: 12 },
-  { dir: "5318",          chapters: 6  },
-  { dir: "Comp5046-NLP-Study-Hub", chapters: 6 },
-  { dir: "COMP9001-Intro-to-Programming-Study-Hub", chapters: 5 }
+  { dir: "5270RandomAlgo", chapters: 12 },
+  { dir: "5318ML",         chapters: 6  },
+  { dir: "5046NLP",        chapters: 6 },
+  { dir: "9001Py",         chapters: 5 }
 ];
 
 function loadManifest(hubDir) {

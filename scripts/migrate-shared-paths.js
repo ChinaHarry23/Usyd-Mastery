@@ -19,7 +19,7 @@ var path = require("path");
 var ROOT = path.resolve(__dirname, "..");
 var DRY_RUN = process.argv.includes("--dry-run");
 
-var HUBS = ["5270", "5318", "Comp5046-NLP-Study-Hub", "COMP9001-Intro-to-Programming-Study-Hub"];
+var HUBS = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py"];
 
 var SYNC_FILES = [
   "chat-panel.js",
