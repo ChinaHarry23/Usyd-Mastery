@@ -396,7 +396,7 @@ test("Progress + SRS: quiz score and SRS data coexist in localStorage", function
 console.log("\n\u2500\u2500 HTML Structure Validation \u2500\u2500");
 
 test("All hub index.html files exist and are valid HTML", function() {
-  var hubs = ["5270", "5318", "Comp5046-NLP-Study-Hub", "COMP9001-Intro-to-Programming-Study-Hub"];
+  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py"];
   hubs.forEach(function(hub) {
     var filePath = path.join(ROOT, hub, "index.html");
     assert.ok(fs.existsSync(filePath), hub + "/index.html should exist");
@@ -407,14 +407,14 @@ test("All hub index.html files exist and are valid HTML", function() {
 });
 
 test("Math pages link to shared/math.css instead of inline styles", function() {
-  var mathPage = path.join(ROOT, "5270/chapters/chapter1/web/chapter1-math.html");
+  var mathPage = path.join(ROOT, "5270RandomAlgo/chapters/chapter1/web/chapter1-math.html");
   var content = fs.readFileSync(mathPage, "utf8");
   assert.ok(content.indexOf("math.css") !== -1, "should reference math.css");
   assert.strictEqual(content.indexOf("<style>"), -1, "should not have inline <style> block");
 });
 
 test("Chapter pages reference root shared/ not hub shared/", function() {
-  var studyPage = path.join(ROOT, "5270/chapters/chapter1/web/chapter1-study.html");
+  var studyPage = path.join(ROOT, "5270RandomAlgo/chapters/chapter1/web/chapter1-study.html");
   var content = fs.readFileSync(studyPage, "utf8");
   assert.ok(
     content.indexOf('src="../../../../shared/chat-panel.js"') !== -1,
@@ -427,7 +427,7 @@ test("Chapter pages reference root shared/ not hub shared/", function() {
 });
 
 test("No stale hub copies of canonical shared files", function() {
-  var hubs = ["5270", "5318", "Comp5046-NLP-Study-Hub", "COMP9001-Intro-to-Programming-Study-Hub"];
+  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py"];
   var canonical = ["chat-panel.js", "chat-panel.css", "mindmap.js", "mindmap.css", "flashcard-srs.js", "progress-tracker.js", "lang-toggle.js"];
   hubs.forEach(function(hub) {
     canonical.forEach(function(file) {
