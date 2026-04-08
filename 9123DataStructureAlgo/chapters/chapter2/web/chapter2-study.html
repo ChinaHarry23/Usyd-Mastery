@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 — Lists & Sequences</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 2</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-adt" class="nav-link" data-section="sec-adt">List ADT</a></li>
+    <li><a href="#sec-arrays" class="nav-link" data-section="sec-arrays">Array-backed Lists</a></li>
+    <li><a href="#sec-why-linked" class="nav-link" data-section="sec-why-linked">Why Linked Lists?</a></li>
+    <li><a href="#sec-singly" class="nav-link" data-section="sec-singly">Singly Linked Lists</a></li>
+    <li><a href="#sec-operations" class="nav-link" data-section="sec-operations">Pointer Rewiring</a></li>
+    <li><a href="#sec-doubly" class="nav-link" data-section="sec-doubly">Doubly Linked Lists</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial 2</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter2-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=2" class="nav-link" style="color:var(--accent);">&#128376; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=2&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 2: Lists &amp; Sequences</h1>
+    <p class="hero-subtitle">This is the week where the course stops talking about collections in the abstract and starts asking what storage choice actually buys you. The useful lecture starts at slide 6: first the List ADT, then arrays, then linked lists, then the pointer edits that make linked structures work.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128203;</span>
+        <span>List ADT contract</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128452;</span>
+        <span>Static arrays and shifting costs</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128279;</span>
+        <span>Nodes, head pointers, traversal</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128736;</span>
+        <span>Insertion and deletion patterns</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Lecture content from slide 6 onward</span>
+      <span>Recap and admin skipped</span>
+      <span>Diagram-heavy week</span>
+      <span>Built for revision</span>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter2-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#128208; Foundations &rarr;
+      </a>
+      <a href="chapter2-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#128506; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.82rem; color: rgba(var(--sidebar-text-rgb), 0.7); margin-top: 0.7rem;">Big picture: Week 2 teaches that the same List ADT can behave very differently depending on whether you store items contiguously or as linked nodes.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-adt" class="section" data-track="adt">
+  <h2 class="section-title">List ADT: the Promise Before the Storage</h2>
+  <p class="section-lead">The lecture begins with a discipline that matters all semester: separate what a data structure is supposed to do from how it happens to be implemented.</p>
+
+  <div class="concept-box">
+    <p><strong>ADT idea:</strong> an abstract data type is defined by its data items and supported operations, not by the concrete memory layout. The user of the structure cares about behaviour; the implementer cares about representation.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>List operation</th>
+          <th>What it promises</th>
+          <th>What Week 2 wants you to notice</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>size()</code>, <code>isEmpty()</code></td>
+          <td>Report the current logical state of the list.</td>
+          <td>The ADT says nothing yet about where that information is stored.</td>
+        </tr>
+        <tr>
+          <td><code>get(i)</code>, <code>set(i, e)</code></td>
+          <td>Read or replace the element at index <code>i</code>.</td>
+          <td>The cost depends entirely on the chosen representation.</td>
+        </tr>
+        <tr>
+          <td><code>add(i, e)</code>, <code>remove(i)</code></td>
+          <td>Change the sequence while preserving order.</td>
+          <td>Storage choice determines whether edits are global shifts or local pointer changes.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Professor mindset:</strong> do not say “a list is an array” or “a list is a linked list.” The lecture is teaching that a <em>list</em> is the abstraction, and arrays / linked structures are competing ways to realise it.</p>
+  </div>
+</section>
+
+<section id="sec-arrays" class="section" data-track="arrays">
+  <h2 class="section-title">Array-Backed Lists: Fast Indexing, Costly Shifting</h2>
+  <p class="section-lead">Once the List ADT is clear, the lecture uses arrays as the first concrete implementation because arrays make indexing beautifully simple.</p>
+
+  <div class="concept-box">
+    <p><strong>Array model:</strong> if <code>A[i]</code> stores the element at logical index <code>i</code>, then <code>get(i)</code> and <code>set(i, e)</code> are just direct access into contiguous storage, provided the index is valid.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Typical cost</th>
+          <th>Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>get(i)</code>, <code>set(i, e)</code></td>
+          <td>\(O(1)\)</td>
+          <td>Index arithmetic takes you straight to the target cell.</td>
+        </tr>
+        <tr>
+          <td><code>add(i, e)</code></td>
+          <td>\(O(n-i)\)</td>
+          <td>Everything from position <code>i</code> onward must shift forward.</td>
+        </tr>
+        <tr>
+          <td><code>remove(i)</code></td>
+          <td>\(O(n-i)\)</td>
+          <td>You must close the hole by shifting elements back.</td>
+        </tr>
+        <tr>
+          <td>Capacity limit</td>
+          <td>Structural limitation</td>
+          <td>A static array only works while \(n \leq N\).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What arrays do brilliantly</h3>
+      <p>Indexed access, replacement, and compact contiguous storage. This is why arrays stay central throughout algorithms courses.</p>
+    </div>
+    <div class="col-card">
+      <h3>What arrays do badly</h3>
+      <p>Middle edits and unknown future growth. The lecture's point is that the cost comes from moving many elements, not from the idea of the List ADT itself.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Key limitation from the slides:</strong> static array-backed lists use \(O(N)\) space even when the logical list only has \(n\) elements, and they force you to choose capacity before you know the future.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Middle insertion in an array-backed list is expensive because the suffix must shift forward to make room.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Why is <code>add(i, e)</code> expensive in an array-backed list when <code>i</code> is near the front?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because the array cannot store numbers</div>
+      <div class="qc-opt" data-idx="1">Because many later elements must shift to open a gap</div>
+      <div class="qc-opt" data-idx="2">Because index access is logarithmic</div>
+      <div class="qc-opt" data-idx="3">Because linked lists are always faster</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-why-linked" class="section" data-track="why-linked">
+  <h2 class="section-title">Why the Lecture Leaves Arrays and Moves to Linked Structures</h2>
+  <p class="section-lead">Slides 22 to 26 are the bridge. The lecture is not abandoning arrays because they are bad. It is showing what kind of problem pressure makes a different representation worth it.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Dynamic size</h3>
+      <p>Linked lists do not require a fixed capacity ahead of time. They grow and shrink one node at a time.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Scattered memory</h3>
+      <p>Nodes can live in different places in memory. The structure is held together by references instead of contiguity.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Head reference</h3>
+      <p>The whole list is represented by access to the first node. Everything else is reached by following links.</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Trade-off:</strong> linked lists remove global shifting, but they also remove direct random access. You gain local edits and flexible growth, and you lose instant indexing.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>The question to ask:</strong> if my workload is dominated by editing nearby links rather than jumping to arbitrary indices, am I still paying for the right representation?</p>
+  </div>
+</section>
+
+<section id="sec-singly" class="section" data-track="singly">
+  <h2 class="section-title">Singly Linked Lists: Nodes, Head Pointers, and Traversal</h2>
+  <p class="section-lead">The singly linked part of the lecture teaches a completely different way to think about structure: not as slots in a block, but as nodes connected one step at a time.</p>
+
+  <div class="concept-box">
+    <p><strong>Node model:</strong> each node stores its data and a reference to the next node. The final node points to <code>None</code>, and the whole list is captured by the <code>head</code> reference.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What you can do naturally</h3>
+      <p>Walk forward one node at a time, insert at the head cheaply, and splice nodes into the structure by updating a small number of links.</p>
+    </div>
+    <div class="col-card">
+      <h3>What you must give up</h3>
+      <p>You cannot jump to position <code>i</code> without traversing through earlier nodes first. Indexing becomes a walk, not an address calculation.</p>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>Traversal pattern from the slides</h3>
+    <p>Traversal is the first core pattern because everything else builds on it.</p>
+    <pre class="code-block">current = head
+while current != None:
+    print(current.data)
+    current = current.next</pre>
+  </div>
+
+  <div class="callout">
+    <p><strong>Lecture advice worth keeping forever:</strong> draw the diagram before editing pointers. Most linked-list mistakes happen because students manipulate names in code without first fixing the picture in their head.</p>
+  </div>
+</section>
+
+<section id="sec-operations" class="section" data-track="operations">
+  <h2 class="section-title">Pointer Rewiring: the Reusable Insertion and Deletion Moves</h2>
+  <p class="section-lead">Most of Week 2 is really a set of repeatable pointer-edit templates. Once you see the pattern, the many slides stop feeling like many different algorithms.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Edit</th>
+          <th>Core move</th>
+          <th>What the lecture is trying to train</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Insert at beginning</td>
+          <td>Point the new node at the old head, then move <code>head</code>.</td>
+          <td>How to update a distinguished reference safely.</td>
+        </tr>
+        <tr>
+          <td>Insert at end</td>
+          <td>Traverse to the last node, then set <code>current.next = newNode</code>.</td>
+          <td>Why missing metadata such as a tail pointer changes cost.</td>
+        </tr>
+        <tr>
+          <td>Insert at position</td>
+          <td>Traverse to the predecessor, then splice the new node into the gap.</td>
+          <td>Why the predecessor matters in singly linked lists.</td>
+        </tr>
+        <tr>
+          <td>Delete at beginning</td>
+          <td>Move <code>head</code> to <code>head.next</code>, then sever the old node.</td>
+          <td>How to preserve access before disconnecting nodes.</td>
+        </tr>
+        <tr>
+          <td>Delete at end / position</td>
+          <td>Find the node before the cut, bypass the removed node, then disconnect stale links.</td>
+          <td>Why pointer order is part of correctness.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week2-pointer-order">
+      <span class="toggle-icon">&#9654;</span> Why update order matters in linked-list edits
+    </button>
+    <div class="proof-content" id="proof-week2-pointer-order">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>If you overwrite the only reference to a still-needed node too early, you lose the part of the structure you were meant to preserve.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>That is why the slides repeatedly store temporary references such as <code>current</code> and <code>temp</code> before changing links.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>A correct edit preserves reachability of everything that should remain and disconnects exactly what should leave.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Memory hook:</strong> preserve access first, rewire second, clean up last.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="If you already have the predecessor node, the actual pointer splice is constant time. The expensive part is only finding the location.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">In a singly linked list, if you already have a reference to the node <em>before</em> the insertion point, what is the cost of the splice itself?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(O(1)\)</div>
+      <div class="qc-opt" data-idx="1">\(O(n)\)</div>
+      <div class="qc-opt" data-idx="2">\(O(\log n)\)</div>
+      <div class="qc-opt" data-idx="3">\(O(n \log n)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-doubly" class="section" data-track="doubly">
+  <h2 class="section-title">Doubly Linked Lists: Paying Extra Space for More Local Power</h2>
+  <p class="section-lead">The doubly linked part of the lecture is not just “the same thing with one more arrow.” It is about what changes once each node knows both its predecessor and successor.</p>
+
+  <div class="concept-box">
+    <p><strong>Doubly linked node:</strong> each node stores <code>data</code>, <code>next</code>, and <code>prev</code>. That extra reference costs space, but it makes reverse traversal and many deletions much more local.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Question</th>
+          <th>Singly linked answer</th>
+          <th>Doubly linked answer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Can you move backwards directly?</td>
+          <td>No</td>
+          <td>Yes, via <code>prev</code></td>
+        </tr>
+        <tr>
+          <td>Delete a known interior node locally?</td>
+          <td>Not without its predecessor</td>
+          <td>Yes, if you already have the node handle</td>
+        </tr>
+        <tr>
+          <td>Memory per node</td>
+          <td>Lower</td>
+          <td>Higher</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Insert at beginning</h3>
+      <p>You now update both directions: new node points forward, and the old head points back.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Delete interior node</h3>
+      <p>The predecessor and successor can be linked directly around the removed node, which is why doubly linked structures are so popular for local edits.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Circular extra</h3>
+      <p>The closing slides treat circular linked lists as an extension: useful when processes repeat around a ring rather than terminate at <code>None</code>.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Design lesson:</strong> extra fields are not free, but they can dramatically simplify the operations you care about most.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="The extra prev reference is what enables reverse traversal and local predecessor updates.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which extra field is the key feature that distinguishes a doubly linked list from a singly linked list?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">A size counter only</div>
+      <div class="qc-opt" data-idx="1">An array index</div>
+      <div class="qc-opt" data-idx="2">A <code>prev</code> reference</div>
+      <div class="qc-opt" data-idx="3">A hash function</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial 2: Build Nodes, Then Think Like a Data-Structure Designer</h2>
+  <p class="section-lead">The tutorial is not just practice on syntax. It is a staged transition from writing basic Python to implementing the exact linked-list patterns the lecture has been diagramming.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Tutorial cluster</th>
+          <th>What students are asked to do</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Setup warm-up</td>
+          <td>Check Python, write <code>hello.py</code>, run it from the terminal.</td>
+          <td>Removes tooling friction before the actual data-structure work begins.</td>
+        </tr>
+        <tr>
+          <td>Core node tasks</td>
+          <td>Implement <code>Node</code>, <code>DoublyNode</code>, traversal, and insertion / deletion helpers.</td>
+          <td>Turns the lecture diagrams into executable structure.</td>
+        </tr>
+        <tr>
+          <td>Reasoning problems</td>
+          <td>Explain singly linked deletion, reverse traversal under space limits, recursive permutation generation.</td>
+          <td>Pushes you from code writing into algorithm design and analysis.</td>
+        </tr>
+        <tr>
+          <td>Challenge question</td>
+          <td>Design one singly linked-list-based structure supporting append, delete, findMiddle, and reverse.</td>
+          <td>Forces you to think about what metadata the structure should maintain, not just what methods it exposes.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>What strong Week 2 understanding sounds like:</strong> “I can explain when arrays win, when linked lists win, and which extra references or stored fields would change the runtime of an operation.”</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Chapter Quizzes</h2>
+  <p class="section-lead">Use the embedded checks above as you go, then finish with mixed repetition in the Quiz Hub and flashcards.</p>
+  <div class="callout">
+    <p><strong>Best rhythm:</strong> read one section, answer its local quick check immediately, then move on. After the whole page feels stable, switch to the Quiz Hub for broader recall.</p>
+  </div>
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=2" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=2&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4 — Trees</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 4</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-why-tree" class="nav-link" data-section="sec-why-tree">Why Trees?</a></li>
+    <li><a href="#sec-terms" class="nav-link" data-section="sec-terms">Tree Vocabulary</a></li>
+    <li><a href="#sec-adt" class="nav-link" data-section="sec-adt">Tree ADT &amp; Node Model</a></li>
+    <li><a href="#sec-traversal" class="nav-link" data-section="sec-traversal">Preorder &amp; Postorder</a></li>
+    <li><a href="#sec-binary" class="nav-link" data-section="sec-binary">Binary Trees</a></li>
+    <li><a href="#sec-inorder" class="nav-link" data-section="sec-inorder">Inorder &amp; Euler Tour</a></li>
+    <li><a href="#sec-recursion" class="nav-link" data-section="sec-recursion">Recursive Tree Code</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter4-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter4-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=4" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=4&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 4: Trees</h1>
+    <p class="hero-subtitle">Week 4 is where the course leaves linear structures behind and starts thinking in hierarchies. The lecture teaches the language of trees, shows how traversal order changes meaning, and then uses recursion because trees are naturally defined in terms of smaller trees.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#127794;</span>
+        <span>Branching structure instead of one straight line</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128207;</span>
+        <span>Depth, height, ancestors, and subtrees</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128257;</span>
+        <span>Preorder, postorder, inorder, Euler tour</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#129518;</span>
+        <span>Recursive algorithms that follow the structure</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Lecture grounded in slides 11 to 55</span>
+      <span>Binary trees arrive here before BSTs next week</span>
+      <span>Tutorial 4 focuses on induction and subtree-size reasoning</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter4-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter4-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+      <p style="font-size:0.84rem; color:rgba(var(--sidebar-text-rgb),0.68); margin-top:0.7rem;">The right question for this week is not just “what is a tree?” but “why does this problem want a branching model and which visit order matches the goal?”</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-why-tree" class="section" data-track="why-tree">
+  <h2 class="section-title">Why Trees? When a List Stops Being the Right Shape</h2>
+  <p class="section-lead">The lecture opens by asking a structural question. Some problems do not look like a sequence at all. Game strategies branch, file systems branch, document outlines branch, and organisation charts branch. Once one object can lead to several next objects, a list is the wrong mental model.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Hierarchy</h3>
+      <p>A parent-child relation matters. Higher nodes organise lower nodes rather than merely appearing before them.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Branching choices</h3>
+      <p>A node can have many children, so one position in the structure can open several possible next steps.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Subproblems inside the whole</h3>
+      <p>Every subtree looks like a smaller version of the original object, which is why recursive algorithms fit so naturally.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Lecture application</th>
+          <th>What the tree is modelling</th>
+          <th>Why a list is not enough</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Organisation chart</td>
+          <td>Management and reporting structure</td>
+          <td>Each manager can supervise several branches at once.</td>
+        </tr>
+        <tr>
+          <td>OS file structure</td>
+          <td>Folders containing files and subfolders</td>
+          <td>Directories nest and branch instead of forming one chain.</td>
+        </tr>
+        <tr>
+          <td>Document structure</td>
+          <td>Book, chapter, section, subsection</td>
+          <td>One heading can own many smaller headings below it.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Professor lens:</strong> before coding, ask whether the data is really “one next element at a time” or whether it has branching ownership, branching decisions, or branching decomposition. Week 4 is training that judgement.</p>
+  </div>
+</section>
+
+<section id="sec-terms" class="section" data-track="terms">
+  <h2 class="section-title">Tree Vocabulary: Root, Leaf, Ancestor, Depth, Height</h2>
+  <p class="section-lead">Tree algorithms become hard only when the language is vague. The lecture slows down here because these words are the grammar of every later tree proof and implementation.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Term</th>
+          <th>Meaning</th>
+          <th>What students often mix up</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Root</td>
+          <td>The unique node with no parent.</td>
+          <td>The root is not “the first inserted node” by definition; it is the structural top.</td>
+        </tr>
+        <tr>
+          <td>Internal vs external</td>
+          <td>Internal nodes have at least one child; external nodes are leaves.</td>
+          <td>A leaf can still store important data; leaf does not mean empty.</td>
+        </tr>
+        <tr>
+          <td>Ancestors / descendants</td>
+          <td>Parent, grandparent, and so on upward; children, grandchildren, and so on downward.</td>
+          <td>These relations are transitive, not just one edge long.</td>
+        </tr>
+        <tr>
+          <td>Depth</td>
+          <td>How far a node is from the root, counted upward by ancestors.</td>
+          <td>Depth looks upward, not downward.</td>
+        </tr>
+        <tr>
+          <td>Height</td>
+          <td>How far a node or tree can still reach downward to a deepest leaf.</td>
+          <td>Height looks downward, not upward.</td>
+        </tr>
+        <tr>
+          <td>Subtree</td>
+          <td>A node together with all of its descendants.</td>
+          <td>This is the natural recursive unit for both proofs and code.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Ordered trees</h3>
+      <p>The lecture explicitly notes that sibling order can matter. In an ordered tree, the children of a node have a prescribed left-to-right order, and traversals must respect it.</p>
+    </div>
+    <div class="col-card">
+      <h3>Lowest common ancestor</h3>
+      <p>Two nodes can share many ancestors. The lowest common ancestor is the deepest node that still lies above both of them.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Depth counts edges upward to the root, while height counts the longest downward route to a descendant leaf.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which statement correctly separates depth from height?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Depth and height both count children only</div>
+      <div class="qc-opt" data-idx="1">Depth looks upward to the root, while height looks downward to the deepest leaf</div>
+      <div class="qc-opt" data-idx="2">Depth is only defined for leaves, while height is only defined for roots</div>
+      <div class="qc-opt" data-idx="3">Depth and height are always equal in every tree</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-adt" class="section" data-track="adt">
+  <h2 class="section-title">Tree ADT &amp; Node Model: What Questions the Structure Must Answer</h2>
+  <p class="section-lead">The Tree ADT in the slides is deliberately abstract. It tells you what a correct tree implementation should support before committing to a particular representation.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>ADT operation</th>
+          <th>What it asks</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>size()</code>, <code>isEmpty()</code></td>
+          <td>How large is the structure?</td>
+          <td>These are whole-tree questions about scale and emptiness.</td>
+        </tr>
+        <tr>
+          <td><code>root()</code>, <code>parent(p)</code></td>
+          <td>Where is a node in the hierarchy?</td>
+          <td>Upward navigation supports depth reasoning and ancestor logic.</td>
+        </tr>
+        <tr>
+          <td><code>children(p)</code>, <code>numChildren(p)</code></td>
+          <td>What lies below this node?</td>
+          <td>Downward navigation drives traversals and recursive algorithms.</td>
+        </tr>
+        <tr>
+          <td><code>isInternal(p)</code>, <code>isExternal(p)</code>, <code>isRoot(p)</code></td>
+          <td>What structural role does this node play?</td>
+          <td>Many base cases are just tests on one of these predicates.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-card">
+    <h3>What the Week 4 code bundle is teaching you to store</h3>
+    <pre class="code-block">class Node(Generic[T]):
+    _value: T
+    _parent: Node[T]
+    _children: List[Node[T]]
+    _subtree_size: int
+
+class Tree(Generic[T]):
+    _root: Node[T]
+    _size: int
+
+    def add_node(self, p, parent): ...
+    def remove_node(self, p): ...
+    def preorder(self, p, ls): ...
+    def postorder(self, p, ls): ...</pre>
+    <p>The abstraction in the slides becomes concrete here: parent links support upward reasoning, child lists support branching traversal, and subtree metadata prepares you for tutorial-style aggregation problems.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>The important design habit:</strong> separate the interface from the representation. “Tree” is the abstract behaviour. A linked node structure is one way of implementing it.</p>
+  </div>
+</section>
+
+<section id="sec-traversal" class="section" data-track="traversal">
+  <h2 class="section-title">Preorder &amp; Postorder: The Visit Timing Is the Whole Idea</h2>
+  <p class="section-lead">Lists have one obvious forward traversal. Trees do not. The lecture's key message is that traversal order is not a small technicality. It changes what the visit sequence means.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Preorder</h3>
+      <p>Visit the node before its children. This is the right fit when the parent sets context or when you want a top-down explanation of the structure.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Postorder</h3>
+      <p>Visit all child subtrees before the node. This is the natural fit when the parent must combine information coming up from below.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Ordered-tree rule</h3>
+      <p>If the tree is ordered, the traversal must respect the prescribed child order. Otherwise “the” traversal result is ambiguous.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Lecture challenge example</th>
+          <th>Better traversal</th>
+          <th>Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Company strategic decisions</td>
+          <td>Preorder</td>
+          <td>You want to see the big decision before its sub-decisions.</td>
+        </tr>
+        <tr>
+          <td>Chatbot interaction tree</td>
+          <td>Preorder</td>
+          <td>Conversation branches make sense only after the current prompt is seen.</td>
+        </tr>
+        <tr>
+          <td>File-system backup</td>
+          <td>Postorder</td>
+          <td>You often want to finish children before finishing the parent directory.</td>
+        </tr>
+        <tr>
+          <td>Cleaning a room / clearing a structure</td>
+          <td>Postorder</td>
+          <td>The container or parent is logically finished after its contents are handled.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week4-postorder">
+      <span class="toggle-icon">&#9654;</span> Why subtree-size computation naturally wants postorder
+    </button>
+    <div class="proof-content" id="proof-week4-postorder">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>The size of a node's subtree depends on the sizes of all child subtrees below it.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>So every child result must already be available before the parent can finish its own value.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>That is exactly the dependency pattern of postorder: descendants first, parent second.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Why it matters.</strong> Many tree algorithms are really about choosing the traversal order that respects the data dependency.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="If a parent's answer depends on fully processed child answers, the safe order is to process all descendants first and combine at the parent.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">A problem asks you to compute a value for each node using the completed values of all of its children. Which traversal is the best default choice?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Preorder</div>
+      <div class="qc-opt" data-idx="1">Level order</div>
+      <div class="qc-opt" data-idx="2">Postorder</div>
+      <div class="qc-opt" data-idx="3">Random order</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-binary" class="section" data-track="binary">
+  <h2 class="section-title">Binary Trees: Left and Right Become Part of the Meaning</h2>
+  <p class="section-lead">A binary tree is the course's first important special case. The structure is still a tree, but now each internal node has at most two children, and those children are distinguished as left and right.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Binary-tree feature</th>
+          <th>Meaning</th>
+          <th>Why it matters later</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>At most two children</td>
+          <td>Branching is limited to left and right positions.</td>
+          <td>This creates stronger structure than a general tree.</td>
+        </tr>
+        <tr>
+          <td>Left child / right child labels</td>
+          <td>The order is built into the node itself, not just its child list.</td>
+          <td>That makes inorder traversal possible.</td>
+        </tr>
+        <tr>
+          <td>Proper binary tree</td>
+          <td>Every internal node has exactly two children.</td>
+          <td>This version has especially clean counting properties.</td>
+        </tr>
+        <tr>
+          <td>Extra operations</td>
+          <td><code>leftChild(p)</code>, <code>rightChild(p)</code>, <code>sibling(p)</code></td>
+          <td>The ADT becomes more specialised because the structure is more specialised.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Expression trees</h3>
+      <p>Internal nodes hold operators and leaves hold operands. Traversal order determines how the expression is reconstructed.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Decision trees</h3>
+      <p>Internal nodes hold yes/no questions and leaves hold decisions. The tree models a branching reasoning process.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Preview of BSTs</h3>
+      <p>Week 4 introduces the structure. Week 5 will add an ordering rule on top of it and turn it into a search tree.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Watch the wording:</strong> “binary” means at most two children, not automatically two children. The word <em>proper</em> is what adds the stronger exactly-two condition for internal nodes.</p>
+  </div>
+</section>
+
+<section id="sec-inorder" class="section" data-track="inorder">
+  <h2 class="section-title">Inorder &amp; Euler Tour: Binary-Specific Ways to Read the Tree</h2>
+  <p class="section-lead">Inorder only makes sense once left and right have different roles. That is why it appears after binary trees are introduced, not before.</p>
+
+  <div class="algo-card">
+    <h3>The core inorder idea</h3>
+    <pre class="code-block">def in_order(v):
+    if v.left != null:
+        in_order(v.left)
+    visit(v)
+    if v.right != null:
+        in_order(v.right)</pre>
+    <p>Left subtree, then node, then right subtree. That small change in visit timing is enough to make inorder behave very differently from preorder and postorder.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Printing arithmetic expressions</h3>
+      <p>The slides extend inorder by printing an opening bracket before the left subtree and a closing bracket after the right subtree. That reconstructs the familiar infix expression with parentheses.</p>
+    </div>
+    <div class="col-card">
+      <h3>Euler tour viewpoint</h3>
+      <p>Euler tour is the unifying picture: when you “walk around” a binary tree, each node is encountered three times. First visit gives preorder, second visit gives inorder, third visit gives postorder.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Moment of visit in Euler tour</th>
+          <th>Traversal it matches</th>
+          <th>Interpretation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>On the left</td>
+          <td>Preorder</td>
+          <td>Parent first, before descending into the left side.</td>
+        </tr>
+        <tr>
+          <td>From below</td>
+          <td>Inorder</td>
+          <td>Between finishing the left subtree and entering the right subtree.</td>
+        </tr>
+        <tr>
+          <td>On the right</td>
+          <td>Postorder</td>
+          <td>After both subtrees have been fully processed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="3" data-explanation="Inorder needs a distinguished left side and right side around the node, so it is naturally defined for binary trees rather than arbitrary general trees.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Why is inorder traversal introduced as a binary-tree traversal rather than a general-tree traversal?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because general trees have no leaves</div>
+      <div class="qc-opt" data-idx="1">Because inorder is always slower than preorder</div>
+      <div class="qc-opt" data-idx="2">Because only binary trees can be recursive</div>
+      <div class="qc-opt" data-idx="3">Because inorder relies on the left-node-right split</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recursion" class="section" data-track="recursion">
+  <h2 class="section-title">Recursive Tree Code: Depth, Height, and Tutorial Thinking</h2>
+  <p class="section-lead">The final lecture segment turns tree vocabulary into executable reasoning. Recursive code on trees works because a subtree is itself a tree, so the problem naturally breaks into smaller copies of the same shape.</p>
+
+  <div class="algo-card">
+    <h3>Two recursive patterns straight from the slides</h3>
+    <pre class="code-block">def depth(v):
+    if v.parent == null:
+        return 0
+    return depth(v.parent) + 1
+
+def height(v):
+    if v.isExternal():
+        return 0
+    h = 0
+    for each child w of v:
+        h = max(h, height(w))
+    return h + 1</pre>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Tutorial / code task</th>
+          <th>Best thinking pattern</th>
+          <th>Why it works</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Compute subtree size for every node</td>
+          <td>Postorder aggregation</td>
+          <td>Each parent combines already-computed child sizes plus one for itself.</td>
+        </tr>
+        <tr>
+          <td>Visit all nodes at level <code>k</code> left-to-right</td>
+          <td>Carry current depth during traversal</td>
+          <td>The target level is a structural property, so traversal state should track level.</td>
+        </tr>
+        <tr>
+          <td>Compute balance factor at every node</td>
+          <td>Bottom-up height computation</td>
+          <td>Each balance factor depends on left and right subtree heights.</td>
+        </tr>
+        <tr>
+          <td>Find preorder successor of a node</td>
+          <td>Reason using traversal order, not by building the whole list</td>
+          <td>The tutorial is pushing you toward structural navigation rather than brute force.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Best Week 4 habit:</strong> whenever the problem says “for every node,” stop and ask what each recursive call should return, what the base case is, and whether the parent should act before its children or after them.</p>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Complexity rule from the last slide:</strong> if the method recurses on all children and does only constant extra work per node, the total cost is \(O(n)\). If it follows at most one child at each level, the cost is \(O(\text{height})\).</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; Revision Targets</h2>
+  <p class="section-lead">Once you can describe the structure, the next step is to retrieve it without notes. Use the practice tools after you can already explain why a traversal order or recursive pattern is the right one.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>You should be able to explain</h3>
+      <p>Why trees model branching data better than lists, and why sibling order matters in ordered trees.</p>
+    </div>
+    <div class="glance-card">
+      <h3>You should be able to distinguish</h3>
+      <p>Depth vs height, preorder vs postorder, and general trees vs binary trees.</p>
+    </div>
+    <div class="glance-card">
+      <h3>You should be able to design</h3>
+      <p>A recursive algorithm that returns a value from each subtree and combines those values correctly at the parent.</p>
+    </div>
+  </div>
+
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=4" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=4&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+
+  <div class="callout">
+    <p><strong>Suggested sequence:</strong> reread the traversal sections, do the foundations page next for the induction and counting facts, then come back here for mixed practice once the ideas feel stable.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 9 — Graph Algorithms</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 9</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-shortest" class="nav-link" data-section="sec-shortest">Shortest Paths</a></li>
+    <li><a href="#sec-relaxation" class="nav-link" data-section="sec-relaxation">Relaxation</a></li>
+    <li><a href="#sec-dijkstra" class="nav-link" data-section="sec-dijkstra">Dijkstra</a></li>
+    <li><a href="#sec-mst" class="nav-link" data-section="sec-mst">MST Principles</a></li>
+    <li><a href="#sec-prim" class="nav-link" data-section="sec-prim">Prim</a></li>
+    <li><a href="#sec-kruskal" class="nav-link" data-section="sec-kruskal">Kruskal &amp; Union-Find</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial &amp; Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter9-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter9-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=9" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=9&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 9: Graph Algorithms</h1>
+    <p class="hero-subtitle">Week 9 turns graph traversal into optimization. The lecture first studies weighted shortest paths through relaxation and Dijkstra, then pivots to minimum spanning trees and shows how Prim and Kruskal apply greedy reasoning in two different ways.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#127758;</span>
+        <span>Weighted edges turn reachability into optimization</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128205;</span>
+        <span>Relaxation improves tentative distances</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128663;</span>
+        <span>Dijkstra settles shortest distances greedily</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#127795;</span>
+        <span>MSTs use cut and cycle logic to connect everything cheaply</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Shortest-path trees</span>
+      <span>Priority queues and greedy correctness</span>
+      <span>Prim, Kruskal, and Union-Find</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter9-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter9-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+      <p style="font-size:0.84rem; color:rgba(var(--sidebar-text-rgb),0.68); margin-top:0.7rem;">A strong Week 9 answer keeps the objectives separate: shortest paths optimize route cost from one source, while MSTs optimize total connection cost for the whole graph.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-shortest" class="section" data-track="shortest">
+  <h2 class="section-title">Shortest Paths: Weighted Graphs Add Cost to the Traversal Story</h2>
+  <p class="section-lead">Week 8 gave you shortest paths in unweighted graphs via BFS layers. Week 9 generalizes that idea to weighted graphs, where each edge has a numerical cost, distance, or travel time. Now the path with the fewest edges may not be the cheapest path at all.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Idea</th>
+          <th>What the lecture says</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Weighted graph</td>
+          <td>Each edge carries a real-valued weight representing cost, distance, or some other penalty.</td>
+          <td>Traversal order alone no longer reveals the optimal route.</td>
+        </tr>
+        <tr>
+          <td>Shortest path</td>
+          <td>The path weight is the sum of its edge weights, and we seek the minimum total.</td>
+          <td>This is the optimization target behind routing and navigation examples.</td>
+        </tr>
+        <tr>
+          <td>Subpath property</td>
+          <td>Every subpath of a shortest path is itself shortest between its endpoints.</td>
+          <td>This is the structural fact that makes all shortest-path algorithms possible.</td>
+        </tr>
+        <tr>
+          <td>Shortest-path tree</td>
+          <td>From one source vertex, the chosen predecessor edges form a tree of optimal routes.</td>
+          <td>The output is not just distances; it is also a recoverable route system.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Why BFS is no longer enough</h3>
+      <p>BFS treats every edge as one hop. As soon as weights differ, “fewest edges” and “cheapest total weight” split apart.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Professor move</h3>
+      <p>The shortest-path tree slide is not extra notation. It is the lecture showing you that single-source shortest paths produce a reusable global structure, not just one answer for one destination.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Good sanity check</h3>
+      <p>If two candidate routes share a prefix, you should immediately ask whether that prefix is itself optimal. If not, the full route cannot be optimal either.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-relaxation" class="section" data-track="relaxation">
+  <h2 class="section-title">Relaxation: The Core Local Update Behind Shortest-Path Algorithms</h2>
+  <p class="section-lead">The lecture treats relaxation as the fundamental shortest-path move. You maintain a tentative label <code>D[v]</code> for each vertex and improve it whenever going through some edge gives a better route.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core update</div>
+    <p>For an edge \((u,z)\), replace <code>D[z]</code> by <code>min(D[z], D[u] + w(u,z))</code>. If the new route is cheaper, update the predecessor of <code>z</code> as well.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why labels start at infinity</h3>
+      <p>At the start, nothing is known except the source distance 0. Infinity is a clean way to say “no route found yet.”</p>
+    </div>
+    <div class="col-card">
+      <h3>What relaxation is really testing</h3>
+      <p>Every relaxation asks one question: if the best known route to <code>u</code> is trusted, does extending through \((u,z)\) beat the current best claim for <code>z</code>?</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>Week 9 is much easier once you stop memorizing algorithm names and start seeing them as different schedules for performing relaxations.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Relaxing an edge means checking whether the route to z through u is cheaper than the current label on z. If it is, we lower D[z] and update the predecessor.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is the point of relaxing an edge \((u,z)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">To prove that the graph has no cycles</div>
+      <div class="qc-opt" data-idx="1">To see whether going through \(u\) gives a cheaper route to \(z\)</div>
+      <div class="qc-opt" data-idx="2">To sort all edges by weight</div>
+      <div class="qc-opt" data-idx="3">To delete the heaviest edge in the graph</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-dijkstra" class="section" data-track="dijkstra">
+  <h2 class="section-title">Dijkstra: Greedy Single-Source Shortest Paths with a Priority Queue</h2>
+  <p class="section-lead">Dijkstra's algorithm keeps a set <code>S</code> of vertices whose distances are already final, and repeatedly settles the remaining vertex with the smallest tentative label. After each settlement, it relaxes outgoing edges from that vertex.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Initialize</h3>
+      <p>Set <code>D[s]=0</code>, all other labels to infinity, and place all vertices in a min-priority queue keyed by current distance label.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Remove the minimum label</h3>
+      <p>The next extracted vertex is the current best candidate to become permanently correct.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Relax its outgoing edges</h3>
+      <p>Neighbors may receive improved labels, which trigger priority-queue updates and parent changes.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Lecture point</th>
+          <th>Interpretation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Setup work is \(O(n)\)</td>
+          <td>Initialize labels, parents, and the queue.</td>
+        </tr>
+        <tr>
+          <td>Graph scanning outside PQ work is \(O(m)\)</td>
+          <td>Across the whole algorithm, adjacency-list edge scans add up linearly in the number of edges.</td>
+        </tr>
+        <tr>
+          <td>With a heap, runtime is \(O(m \log n)\)</td>
+          <td>The queue dominates once <code>remove_min</code> and <code>decrease_key</code> are counted.</td>
+        </tr>
+        <tr>
+          <td>With a Fibonacci heap, runtime improves to \(O(m + n \log n)\)</td>
+          <td>The lecture is showing how ADT choice sharpens algorithm complexity.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week9-dijkstra">
+      <span class="toggle-icon">&#9654;</span> Why non-negative edges are the critical assumption
+    </button>
+    <div class="proof-content" id="proof-week9-dijkstra">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>When Dijkstra extracts the smallest label, it commits to the claim that this distance will never need to decrease later.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>That is safe only if future path extensions cannot subtract cost. Non-negative edges guarantee that extending a path cannot make it cheaper than what has already been settled.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>A negative edge can violate that monotonicity, which is exactly why the greedy proof fails.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Important nuance.</strong> The lecture also states that Dijkstra still works for directed graphs. The algorithmic structure is the same; you simply follow directed paths and relax outgoing directed edges.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="Standard Dijkstra correctness depends on all edge weights being non-negative, because the algorithm greedily finalizes the smallest current label and assumes no later path can lower it.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What assumption does standard Dijkstra need in order for its greedy settlement step to be valid?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">All edge weights are non-negative</div>
+      <div class="qc-opt" data-idx="1">The graph is acyclic</div>
+      <div class="qc-opt" data-idx="2">Every vertex has degree at most 2</div>
+      <div class="qc-opt" data-idx="3">The graph is complete</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-mst" class="section" data-track="mst">
+  <h2 class="section-title">MST Principles: Cheapest Global Connectivity Is Not a Shortest-Path Problem</h2>
+  <p class="section-lead">The second half of the lecture changes the optimization target. A minimum spanning tree does not care about source distances at all. It only cares about selecting a spanning tree whose total edge weight is as small as possible.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Optimization problem</th>
+          <th>What it minimizes</th>
+          <th>What it outputs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Single-source shortest paths</td>
+          <td>Distance from one source to each vertex</td>
+          <td>A shortest-path tree rooted at the source</td>
+        </tr>
+        <tr>
+          <td>Minimum spanning tree</td>
+          <td>Total weight of a spanning tree</td>
+          <td>A globally cheapest connecting tree</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Cut property</h3>
+      <p>For any cut, the cheapest edge crossing it is safe to include in some MST.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Cycle property</h3>
+      <p>Within any cycle, the heaviest edge cannot belong to the MST when edge costs are distinct.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why both matter</h3>
+      <p>Prim grows an MST by repeatedly using the cut property, while Kruskal often feels like the cycle property in action.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>Students often blur Prim and Dijkstra because both use priority queues. The invariant is different: Dijkstra keys vertices by distance from the source, while Prim keys them by cheapest connection into the current tree.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="An MST minimizes the total weight of a spanning tree over the entire graph. It does not try to minimize the distance from a chosen source to every vertex.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What does a minimum spanning tree optimize?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The number of vertices reached from one source</div>
+      <div class="qc-opt" data-idx="1">The shortest path from one source to every destination</div>
+      <div class="qc-opt" data-idx="2">The total edge weight of a spanning tree connecting all vertices</div>
+      <div class="qc-opt" data-idx="3">The maximum degree of every vertex</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-prim" class="section" data-track="prim">
+  <h2 class="section-title">Prim: Grow One Tree Outward Using the Cheapest Crossing Edge</h2>
+  <p class="section-lead">Prim starts from an arbitrary vertex and grows one connected tree. At every step, it adds the lightest edge from the current tree to a vertex outside the tree. The lecture's implementation makes this concrete with an array <code>d[v]</code> and a priority queue.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Pick any start vertex</h3>
+      <p>The start does not change correctness, only the specific MST chosen when ties are possible.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Track cheapest attachment cost</h3>
+      <p>For each outside vertex <code>v</code>, keep <code>d[v]</code> as the cheapest edge from the current tree into <code>v</code>.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Repeatedly attach the best vertex</h3>
+      <p>Delete the minimum <code>d[v]</code>, add that vertex to the tree, and update neighbors just as the lecture's table walk-through does.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Most useful comparison sentence:</strong> Dijkstra and Prim have strikingly similar code shape, but the label in Dijkstra means “distance from source,” while the label in Prim means “cheapest connecting edge into the current MST.”</p>
+  </div>
+
+  <div class="algo-card">
+    <h3>Complexity from the lecture</h3>
+    <p>Prim has essentially the same queue analysis shape as Dijkstra: \(O(m \log n)\) with a heap, and \(O(m + n \log n)\) with a Fibonacci heap.</p>
+  </div>
+</section>
+
+<section id="sec-kruskal" class="section" data-track="kruskal">
+  <h2 class="section-title">Kruskal &amp; Union-Find: Sort Edges, Then Prevent Cycles Efficiently</h2>
+  <p class="section-lead">Kruskal attacks the MST problem from the opposite direction. Instead of growing one connected tree outward, it scans edges in increasing order of weight and adds an edge whenever doing so does not create a cycle.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>What Kruskal does</th>
+          <th>Why it is safe</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sort edges</td>
+          <td>Process edges from lightest to heaviest.</td>
+          <td>The cut property tells us cheap safe edges should be taken early.</td>
+        </tr>
+        <tr>
+          <td>Test for cycle</td>
+          <td>Add the edge only if its endpoints are currently in different components.</td>
+          <td>Otherwise it would close a cycle and violate the cycle property.</td>
+        </tr>
+        <tr>
+          <td>Merge components</td>
+          <td>After adding a safe edge, union the two components.</td>
+          <td>This keeps the component partition synchronized with the growing forest.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why naive cycle checking is too slow</h3>
+      <p>If you run DFS every time you consider an edge, the main loop becomes expensive. The tutorial quotes \(O(mn)\) for this basic approach.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why Union-Find helps</h3>
+      <p>Union-Find keeps track of the evolving component partition directly, so cycle tests become component-identity tests rather than fresh graph traversals.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>The lecture's simple Union-Find implementation still leaves a nontrivial runtime, but the conceptual gain is the important thing here: MST algorithms often succeed because we find the right auxiliary data structure to represent “which pieces are already connected?”</p>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial &amp; problem lens: Week 9 is about comparing greedy ideas, not memorizing one algorithm</h2>
+  <p class="section-lead">The tutorial is excellent this week because it forces you to compare algorithms rather than run them mechanically. That is exactly the right preparation for an exam or an interview question, where the main challenge is often choosing the right optimization lens before doing any calculations.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Problems directly tied to the lecture</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Directed-graph Dijkstra: same greedy framework, but relax outgoing directed edges and think in directed paths.</li>
+        <li>Compare Kruskal and Prim orderings on the same graph to see that they can build the same MST through different local choices.</li>
+        <li>Weight transformations: learn what changes shortest paths, what preserves MSTs, and why the two objectives react differently.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Problem-solving extensions</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Tie-break shortest paths by fewest edges using modified edge lengths.</li>
+        <li>Handle vertex costs by re-modeling the path objective carefully.</li>
+        <li>Prove correctness of improving-mst and reverse-mst style algorithms.</li>
+        <li>Compute all-pairs bottleneck bandwidth in \(O(n^3)\).</li>
+        <li>Model library-and-road planning as a graph optimization problem.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>Best study habit for Week 9</h3>
+    <p>When you read any graph optimization question, say out loud what the objective function is before naming an algorithm. “Minimize source-to-destination path cost” and “minimize total spanning-tree cost” sound similar, but they lead to fundamentally different greedy invariants.</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; spaced review</h2>
+  <p class="section-lead">Use the inline checks to make sure you can explain relaxation, Dijkstra's key assumption, and the MST objective first. Then use the mixed tools to practice distinguishing shortest paths from spanning trees without being led by the chapter headings.</p>
+  <div class="callout">
+    <p><strong>Recommended sequence.</strong> Re-run one small Dijkstra example and one small Prim or Kruskal example by hand, answer the inline checks without notes, and then open the Quiz Hub or flashcards for mixed retrieval.</p>
+  </div>
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=9" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=9&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

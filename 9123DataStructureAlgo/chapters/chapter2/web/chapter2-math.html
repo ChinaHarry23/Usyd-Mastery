@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 2 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div><ul><li><a href="#sec-m-series" class="toc-link">Series behind shifting costs</a></li></ul><div class="toc-group">Proof moves</div><ul><li><a href="#sec-m-amortised" class="toc-link">Amortised analysis for dynamic arrays</a></li></ul><div class="toc-group">Exam triggers</div><ul><li><a href="#sec-m-invariants" class="toc-link">Pointer invariants for linked-list edits</a></li></ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">Quick checks</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter2-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 2</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 2 foundations are the hidden mechanics behind list runtimes: series from shifts, amortised reasoning for growth, and invariants that keep pointer edits safe.</p>
+<div class="chip-list"><span>Short derivations</span><span>Exam-style proof cues</span><span>Linked directly to this week's lecture and tutorial</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-series" data-track="series"><h2 class="section-title">Series behind shifting costs</h2><p class="section-lead">Whenever an array operation moves many elements, you can model the total work as a sum of small repeated actions.</p><div class="def-box"><div class="def-label">Core idea</div><p>Middle insertions and deletions are not mysterious: they are repeated assignments. Summations turn 'shift everything after position i' into a precise bound.</p></div><div class="table-responsive"><table class="styled-table"><thead><tr><th>Pattern</th><th>Sum model</th><th>Result</th></tr></thead><tbody><tr><td>Shift one suffix</td><td>\(\sum_{j=i}^{n-1} 1\)</td><td>\(\Theta(n-i)\)</td></tr><tr><td>Build by repeated head insertion on an array</td><td>\(\sum_{k=1}^{n} k\)</td><td>\(\Theta(n^2)\)</td></tr><tr><td>Geometric capacity growth</td><td>\(1+2+4+\dots+2^m\)</td><td>\(\Theta(2^m) = \Theta(n)\) total copied elements</td></tr></tbody></table></div><div class="def-box"><div class="def-label">Worked move</div><p>If an append sequence doubles capacity whenever the array is full, the expensive copies happen rarely. The total copied volume across many appends is geometric, not quadratic.</p></div><div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="The triangular sum grows quadratically, which is why repeated front shifts can build up to quadratic work."><div class="qc-h">Quick check</div><div class="qc-question">\(\sum_{i=1}^{n} i\) grows as:</div><div class="qc-options"><div class="qc-opt" data-idx="0">\(\Theta(n^2)\)</div><div class="qc-opt" data-idx="1">\(\Theta(n)\)</div><div class="qc-opt" data-idx="2">\(\Theta(n\log n)\)</div><div class="qc-opt" data-idx="3">\(\Theta(2^n)\)</div></div><div class="qc-feedback"></div></div></section><section class="section" id="sec-m-amortised" data-track="amortised"><h2 class="section-title">Amortised analysis for dynamic arrays</h2><p class="section-lead">Week 2's dynamic-size story is the first place where worst-case per operation and average cost over a sequence diverge.</p><div class="def-box"><div class="def-label">Core idea</div><p>A single resize can cost \(O(n)\), but if capacity doubles, each element is copied only a bounded number of times across a long append sequence, giving amortised \(O(1)\) append.</p></div><div class="glance-grid"><div class="glance-card"><h3>Worst case</h3><p>The resize step itself is linear because every existing element moves to a new array.</p></div><div class="glance-card"><h3>Aggregate view</h3><p>Across \(n\) appends, the total number of copied elements is linear, so the average cost per append stays constant.</p></div><div class="glance-card"><h3>Why it matters</h3><p>This is why Python-style dynamic arrays are still a practical default for many list workloads.</p></div></div><div class="callout"><p>Exams often ask you to say both things correctly: the worst-case cost of one append and the amortised cost over many appends.</p></div><div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="The geometric series \(1 + 1/2 + 1/4 + \cdots\) converges to 2, which is the intuition behind bounded total copying."><div class="qc-h">Quick check</div><div class="qc-question">What does the geometric series \(\sum_{i=0}^{\infty} 1/2^i\) converge to?</div><div class="qc-options"><div class="qc-opt" data-idx="0">2</div><div class="qc-opt" data-idx="1">1</div><div class="qc-opt" data-idx="2">\(\infty\)</div><div class="qc-opt" data-idx="3">1/2</div></div><div class="qc-feedback"></div></div><div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="Amortised analysis spreads rare expensive operations across many cheap ones to estimate average cost over a long sequence."><div class="qc-h">Quick check</div><div class="qc-question">Amortised analysis is mainly about:</div><div class="qc-options"><div class="qc-opt" data-idx="0">Spreading rare expensive operations over many cheap ones</div><div class="qc-opt" data-idx="1">Only reporting the exact worst case of one step</div><div class="qc-opt" data-idx="2">Tracking memory leaks</div><div class="qc-opt" data-idx="3">Compiler optimisations only</div></div><div class="qc-feedback"></div></div></section><section class="section" id="sec-m-invariants" data-track="invariants"><h2 class="section-title">Pointer invariants for linked-list edits</h2><p class="section-lead">The lecture examples are easier once you know what must remain true before and after every edit.</p><div class="def-box"><div class="def-label">Core idea</div><p>Typical invariants are: the head points to the first node, the last node's <code>next</code> is <code>None</code> (unless circular), and every predecessor / successor pair agrees about their connection.</p></div><div class="proof-block"><button class="proof-toggle" data-target="proof-week2-invariants"><span class="toggle-icon">&#9654;</span> A quick correctness checklist for linked-list insertion</button><div class="proof-content" id="proof-week2-invariants"><div class="proof-step"><div class="step-num">1</div><div class="step-body"><p>Preserve access to both sides of the splice before editing any link.</p></div></div><div class="proof-step"><div class="step-num">2</div><div class="step-body"><p>Reconnect the new node so the path from head to tail stays continuous with no skipped nodes unless deletion is intentional.</p></div></div><div class="proof-step"><div class="step-num">3</div><div class="step-body"><p>Update any distinguished references such as head, tail, or predecessor / successor links that the representation promises to maintain.</p></div></div><div class="insight-box"><strong>Why it matters.</strong> Thinking in invariants makes debugging much faster than tracing individual pointer assignments in isolation.</div></div></div></section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">Quick checks</h2>
+  <p class="section-lead">The Week 2 checkpoints now sit directly under the series and amortised sections above, so you can test each idea while it is still fresh.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial PDF review</h2>
+  <p class="section-lead">Open the tutorial PDF in <code>Materials/</code>, attempt the problems first, then use the checklist below to self-audit whether you really understand the intended reasoning moves.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w2">Show review checklist</button>
+  <div class="solution-content" id="sol-w2">
+    <p><strong>Tutorial 2 checklist.</strong> Make sure you can explain why a node needs both data and links, how traversal works without indexing, and which extra references (like a tail pointer) would change the cost of append or delete operations.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

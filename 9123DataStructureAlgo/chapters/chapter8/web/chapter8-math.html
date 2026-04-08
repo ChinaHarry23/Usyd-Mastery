@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 8</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter8-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 8 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-counting" class="toc-link">Counting facts</a></li>
+    <li><a href="#sec-m-representation" class="toc-link">Representation cost</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-traversal" class="toc-link">Traversal invariants</a></li>
+    <li><a href="#sec-m-bridges" class="toc-link">Bridge criterion</a></li>
+  </ul>
+  <div class="toc-group">Exam triggers</div>
+  <ul>
+    <li><a href="#sec-m-apps" class="toc-link">Applications</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">How to review</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter8-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 8</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 8 foundations turn graph traversal into a set of reusable proof habits: count vertices and edges correctly, match representation to runtime, use BFS layers for distance arguments, and use DFS tree structure to detect bridges and cut vertices.</p>
+    <div class="chip-list"><span>Handshake-style facts</span><span>Layer proofs</span><span>Low-link intuition</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-counting" data-track="counting">
+  <h2 class="section-title">Counting Facts: Small Identities That Prevent Big Mistakes</h2>
+  <p class="section-lead">Graph proofs get much easier when a few identities are automatic. These facts are the graph equivalent of knowing how many edges a binary tree has or how many terms a summation contributes.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Fact</th>
+          <th>Meaning</th>
+          <th>How it gets used</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>\(\sum_{v\in V}\deg(v)=2m\) for undirected graphs</td>
+          <td>Each undirected edge contributes to two endpoint degrees.</td>
+          <td>This is the cleanest way to justify many \(O(m)\) degree-sum arguments.</td>
+        </tr>
+        <tr>
+          <td>A tree on \(n\) vertices has \(n-1\) edges</td>
+          <td>Trees are exactly connected acyclic graphs with the minimum number of edges needed for connectivity.</td>
+          <td>Helps check whether a spanning subgraph can really be a tree.</td>
+        </tr>
+        <tr>
+          <td>Simple undirected graph: \(m \le n(n-1)/2\)</td>
+          <td>You can choose at most one edge per unordered vertex pair.</td>
+          <td>This is why adjacency matrices become plausible only when the graph is dense.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="A connected acyclic graph is a tree, and every tree on n vertices has exactly n-1 edges. More edges would force a cycle; fewer would lose connectivity.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">How many edges does a tree with \(n\) vertices have?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(n\)</div>
+      <div class="qc-opt" data-idx="1">\(n-1\)</div>
+      <div class="qc-opt" data-idx="2">\(2n\)</div>
+      <div class="qc-opt" data-idx="3">\(n(n-1)/2\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-representation" data-track="representation">
+  <h2 class="section-title">Representation Cost: Why the Same Traversal Can Be Linear or Quadratic</h2>
+  <p class="section-lead">The lecture's performance table is one of the highest-value slides in the week. It teaches a habit that goes beyond graphs: whenever an algorithm repeatedly asks “what are the neighbors of this object?”, the underlying representation can completely change the runtime.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Adjacency list</th>
+          <th>Adjacency matrix</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Space</td>
+          <td>\(O(n+m)\)</td>
+          <td>\(O(n^2)\)</td>
+        </tr>
+        <tr>
+          <td><code>incidentEdges(v)</code></td>
+          <td>\(O(\deg(v))\)</td>
+          <td>\(O(n)\)</td>
+        </tr>
+        <tr>
+          <td><code>getEdge(u,v)</code></td>
+          <td>\(O(\min(\deg(u),\deg(v)))\)</td>
+          <td>\(O(1)\)</td>
+        </tr>
+        <tr>
+          <td>BFS / DFS traversal</td>
+          <td>\(O(n+m)\)</td>
+          <td>\(O(n^2)\)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>This is exactly why the tutorial includes a special adjacency-matrix problem about a get-stuck vertex. Sometimes the matrix is not a mistake; it is the right representation for the query pattern.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-m-traversal" data-track="traversal">
+  <h2 class="section-title">Traversal Invariants: The Correctness Story Behind DFS and BFS</h2>
+  <p class="section-lead">Most Week 8 proofs are invariant proofs in disguise. They ask what stays true about discovered vertices, parent edges, or layer numbers while the traversal runs.</p>
+
+  <div class="def-box">
+    <div class="def-label">DFS invariant</div>
+    <p>Each time DFS discovers a new vertex, the parent pointer records a tree edge in the DFS forest. Once the traversal of a component finishes, those parent edges form a spanning tree of that component.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">BFS invariant</div>
+    <p>If a vertex is first discovered in layer \(L_i\), then there exists a path of exactly \(i\) edges from the source to that vertex, and no shorter path exists. This is the engine behind shortest-path and bipartite proofs.</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week8-layers">
+      <span class="toggle-icon">&#9654;</span> Why any edge in a BFS layering connects only nearby layers
+    </button>
+    <div class="proof-content" id="proof-week8-layers">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Suppose \(u\) is in layer \(L_i\). Then BFS has already found a path of length \(i\) from the source to \(u\).</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>If \((u,v)\) is an edge, then appending that edge gives a path to \(v\) of length at most \(i+1\), so \(v\) cannot be in a layer farther than \(L_{i+1}\).</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>By symmetry, \(u\) cannot be more than one layer away from \(v\) either, so \(|d(u)-d(v)| \le 1\).</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Why this matters.</strong> This one local fact is exactly what powers the BFS-based bipartite test in the tutorial.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="If BFS assigns layer numbers d(u) and d(v), then any edge can connect only vertices in the same layer or in consecutive layers, so |d(u)-d(v)| <= 1.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">If \((u,v)\) is an edge in a graph explored by BFS from source \(s\), what must be true about the layer numbers \(d(u)\) and \(d(v)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(|d(u)-d(v)| \le 1\)</div>
+      <div class="qc-opt" data-idx="1">\(|d(u)-d(v)| = 2\)</div>
+      <div class="qc-opt" data-idx="2">They must be equal</div>
+      <div class="qc-opt" data-idx="3">No relationship is guaranteed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-bridges" data-track="bridges">
+  <h2 class="section-title">Bridge Criterion: Turning DFS Structure into a Linear-Time Test</h2>
+  <p class="section-lead">The bridge material is the first moment in the graph unit where DFS stops being just a traversal and becomes an information-extraction tool. The traversal tree tells you what the obvious upward routes are, and the back edges tell you what alternative upward routes still exist.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>For each vertex \(v\), the lecture defines <code>level[v]</code> in the DFS tree and <code>down_and_up[v]</code>, the highest ancestor level reachable by first moving down the DFS tree and then using one back edge upward.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Bridge test</div>
+    <p>For a DFS tree edge \((u,v)\) where \(u = parent[v]\), the edge is not a bridge if and only if <code>down_and_up[v] &le; level[u]</code>. If that inequality fails, the subtree under \(v\) has no alternate route back.</p>
+  </div>
+
+  <div class="callout">
+    <p>Cut vertices are the natural follow-up. The tutorial asks you to adapt the cut-edge reasoning by asking whether removing a vertex destroys the last route between parts of the DFS tree.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-m-apps" data-track="apps">
+  <h2 class="section-title">Applications: Recognizing Which Traversal Fact Solves Which Problem</h2>
+  <p class="section-lead">The later tutorial problems are pattern-recognition drills. They are not asking for ten unrelated algorithms. They are asking whether you can match a problem to the right graph invariant.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Problem type</th>
+          <th>Main idea</th>
+          <th>Relevant Week 8 fact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bipartite testing</td>
+          <td>Use BFS layers as a two-coloring guide</td>
+          <td>An edge inside one layer is evidence against bipartiteness</td>
+        </tr>
+        <tr>
+          <td>Get-stuck vertex in adjacency matrix</td>
+          <td>Eliminate impossible candidates without scanning every matrix entry</td>
+          <td>Representation matters as much as the graph property</td>
+        </tr>
+        <tr>
+          <td><code>small(i)</code> for each vertex</td>
+          <td>Compute component minima and assign them to whole components</td>
+          <td>Connected components are the natural reusable unit</td>
+        </tr>
+        <tr>
+          <td>Snakes and Ladders</td>
+          <td>Model board positions as vertices and legal moves as edges</td>
+          <td>BFS gives the minimum number of dice rolls</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="If BFS finds an edge whose endpoints lie in the same layer, then those endpoints would receive the same parity color, which violates the bipartite condition.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is the key BFS signal that an undirected graph is not bipartite?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">A vertex has odd degree</div>
+      <div class="qc-opt" data-idx="1">The graph is disconnected</div>
+      <div class="qc-opt" data-idx="2">An edge connects two vertices in the same BFS layer</div>
+      <div class="qc-opt" data-idx="3">The graph has more than \(n-1\) edges</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">How to review this page well</h2>
+  <p class="section-lead">The three quick checks are now attached directly to the facts they test: tree counting, BFS layer reasoning, and BFS-based bipartite detection. If one feels shaky, the fix is local: re-read that section and narrate the argument using a tiny hand-drawn graph.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial review</h2>
+  <p class="section-lead">Open the tutorial after the study guide, not before. Week 8 goes much better when the pictures in the sheet feel like instances of ideas you already understand rather than fresh notation to decode.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w8">Show review checklist</button>
+  <div class="solution-content" id="sol-w8">
+    <p><strong>Tutorial 8 checklist.</strong> You should be able to compare adjacency lists against matrices, trace one BFS layering and one DFS order by hand, explain why disconnected graphs require a restart loop, prove the layer bound \(|d(u)-d(v)| \le 1\), identify the BFS sign of non-bipartiteness, and state the down-and-up bridge criterion in words.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

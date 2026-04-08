@@ -54,6 +54,20 @@ function detectProgressTrackerConfig() {
       chapterProgressGetterName: null
     };
   }
+  if (
+    /9123|comp9123/i.test(path) ||
+    pathLower.indexOf("9123datastructurealgo") !== -1
+  ) {
+    return {
+      storageKey: "comp9123_progress",
+      splitQuickChecks: true,
+      enhancedQuickChecks: true,
+      accessibilityQuickChecks: false,
+      progressUpdateEvent: null,
+      contentRefreshEvent: null,
+      chapterProgressGetterName: null
+    };
+  }
   return {
     storageKey: "studyhub_progress",
     splitQuickChecks: false,

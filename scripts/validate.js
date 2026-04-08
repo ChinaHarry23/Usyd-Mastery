@@ -64,7 +64,7 @@ function validate(filePath, expectedVars) {
 console.log("Validating quiz and flashcard data files...\n");
 
 // Find all data directories
-var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py"];
+var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py", "9123DataStructureAlgo"];
 
 hubs.forEach(function(hub) {
   var dataDir = path.join(root, hub, "data");

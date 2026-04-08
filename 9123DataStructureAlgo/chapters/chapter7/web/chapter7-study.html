@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 7 — Hashing</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 7</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-direct" class="nav-link" data-section="sec-direct">Why Hashing?</a></li>
+    <li><a href="#sec-hash" class="nav-link" data-section="sec-hash">Hash Design</a></li>
+    <li><a href="#sec-chain" class="nav-link" data-section="sec-chain">Separate Chaining</a></li>
+    <li><a href="#sec-open" class="nav-link" data-section="sec-open">Open Addressing</a></li>
+    <li><a href="#sec-cuckoo" class="nav-link" data-section="sec-cuckoo">Cuckoo Hashing</a></li>
+    <li><a href="#sec-set" class="nav-link" data-section="sec-set">Sets &amp; Multisets</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial &amp; Code</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter7-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter7-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=7" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=7&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 7: Hashing</h1>
+    <p class="hero-subtitle">Week 7 asks a very practical question: how do we keep map operations near constant time when the key space is huge, sparse, or made of strings and objects rather than tiny integers? The answer is hashing, but the real lesson is that fast lookup depends on both a good hash function and a careful collision strategy.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128246;</span>
+        <span>Routers and dictionaries need fast key-based lookup</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#35;</span>
+        <span>Hash code + compression turn rich keys into table slots</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128257;</span>
+        <span>Chaining and probing resolve collisions differently</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#129419;</span>
+        <span>Cuckoo hashing trades harder inserts for stronger lookups</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Direct addressing vs sparse key spaces</span>
+      <span>Load factor and collision behavior</span>
+      <span>Set, multiset, and multimap reuse</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter7-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter7-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+      <p style="font-size:0.84rem; color:rgba(var(--sidebar-text-rgb),0.68); margin-top:0.7rem;">A good Week 7 answer sounds like a systems designer: you justify the table layout, the collision plan, and the resizing rule together.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-direct" class="section" data-track="direct">
+  <h2 class="section-title">Why Hashing Exists: Direct Access Is Wonderful Until the Key Space Explodes</h2>
+  <p class="section-lead">The lecture starts with network routers because the motivation is real, not decorative. A router needs destination-based <code>get(k)</code> and routing-table <code>put(k, c)</code> at high speed. In the abstract, this is just the map ADT. The challenge is implementing that map when keys are large, sparse, or not naturally tiny integers.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Idea</th>
+          <th>Why it is tempting</th>
+          <th>Why it breaks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Unsorted list map</td>
+          <td>Easy to store key-value pairs and iterate over them.</td>
+          <td><code>get</code>, <code>put</code>, and <code>remove</code> can all degrade to a full scan.</td>
+        </tr>
+        <tr>
+          <td>Direct-address array</td>
+          <td>If keys lie in <code>[0, N-1]</code>, then the key itself can be the array index and access is true worst-case <code>O(1)</code>.</td>
+          <td>Space becomes absurd when the possible key universe is much larger than the number of stored items, like nine-digit student IDs.</td>
+        </tr>
+        <tr>
+          <td>Hash table</td>
+          <td>Preserves array-style indexing without demanding a tiny key space.</td>
+          <td>Different keys can now land on the same slot, so collisions become the central design problem.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Map recap</h3>
+      <p>Week 7 still lives inside the map ADT: <code>get</code>, <code>put</code>, <code>remove</code>, iteration, size, emptiness.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Professor move</h3>
+      <p>When a lecture suddenly returns to an old ADT, it is usually preparing a new implementation comparison, not repeating content.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Key insight</h3>
+      <p>Hashing is what you choose when direct addressing is too wasteful and ordered structures are slower than the workload wants.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Useful exam sentence:</strong> direct addressing is fast because there are no collisions, but it is often impractical because the table size must match the full key universe rather than the number of stored items.</p>
+  </div>
+</section>
+
+<section id="sec-hash" class="section" data-track="hash">
+  <h2 class="section-title">Hash Design: From Arbitrary Keys to Apparently Random Slots</h2>
+  <p class="section-lead">A hash function does not need to be magical. It needs to be deterministic, fast, and good at dispersion. The lecture makes an important conceptual split here: usually we first convert the key into an integer hash code, then compress that integer into the table range.</p>
+
+  <div class="chip-list">
+    <span>Slides 14&ndash;25</span>
+    <span>\(h(x)=h_2(h_1(x))\)</span>
+    <span>Modulo arithmetic</span>
+    <span>2-universal families</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Role</th>
+          <th>Week 7 example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Hash code \(h_1\)</td>
+          <td>Turn the original key type into an integer.</td>
+          <td>A string, image, or tuple is reduced to a number first.</td>
+        </tr>
+        <tr>
+          <td>Compression \(h_2\)</td>
+          <td>Map that integer into the legal slot range <code>[0, N-1]</code>.</td>
+          <td>Modulo division such as <code>k mod N</code>.</td>
+        </tr>
+        <tr>
+          <td>Final goal</td>
+          <td>Spread keys so the table looks random enough that no bucket becomes a hotspot.</td>
+          <td>Uniform collision behavior matters more than “clever-looking” formulas.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Simple modular division</h3>
+      <p>For integer keys, <code>h(k)=k mod N</code> is easy to compute and easy to reason about by hand.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Bad tuple idea</h3>
+      <p>Summing components can collide on permutations, so <code>mate</code>, <code>meat</code>, <code>tame</code>, and <code>team</code> can all receive the same code.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Universal hashing</h3>
+      <p>Choose a random function from a 2-universal family so the collision probability between distinct keys stays at most \(1/N\).</p>
+    </div>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week7-universal">
+      <span class="toggle-icon">&#9654;</span> What the random linear family is buying you
+    </button>
+    <div class="proof-content" id="proof-week7-universal">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>The lecture's random linear form \(h(k)=((ak+b)\bmod p)\bmod N\) injects controlled randomness into the compression stage.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>That makes it much harder for a structured key set to line up with one especially unlucky deterministic pattern.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>The clean takeaway is probabilistic: for distinct keys, collision probability is bounded by \(1/N\), and the expected number of collisions against a fixed key in a set of \(n\) keys is at most \(n/N\).</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Why this matters.</strong> Week 7 is teaching expected-time analysis through randomness, not promising that collisions literally disappear.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="A sum-of-components hash code ignores order, so any permutation of the same letters produces the same total and therefore the same code.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Why can <code>mate</code>, <code>meat</code>, <code>tame</code>, and <code>team</code> all collide under a sum-of-components hash code?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because they begin with the same letter</div>
+      <div class="qc-opt" data-idx="1">Because permuting the same letters keeps the component sum unchanged</div>
+      <div class="qc-opt" data-idx="2">Because modulo arithmetic sorts strings alphabetically</div>
+      <div class="qc-opt" data-idx="3">Because universal hashing forces anagrams into one bucket</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-chain" class="section" data-track="chain">
+  <h2 class="section-title">Separate Chaining: Let Each Slot Own a Small Collection</h2>
+  <p class="section-lead">Separate chaining handles collisions by admitting that one array cell may need to represent several entries. Instead of forcing everything into a single slot, each slot points to a bucket, commonly a linked list or small secondary structure.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Question</th>
+          <th>Answer in chaining</th>
+          <th>Why students should care</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>What happens on a collision?</td>
+          <td>The entry is appended to the bucket for that slot.</td>
+          <td>The table itself stays simple; the complexity moves into bucket scans.</td>
+        </tr>
+        <tr>
+          <td>How does load factor matter?</td>
+          <td>\(\alpha=n/N\) is the expected bucket size under uniform hashing.</td>
+          <td>The expected cost becomes \(O(1+\alpha)\), which is why resizing matters.</td>
+        </tr>
+        <tr>
+          <td>What is the weakness?</td>
+          <td>If too many keys pile into one bucket, worst-case time becomes \(O(n)\).</td>
+          <td>This is the “average fast, worst-case fragile” theme of classical hashing.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why chaining is easy to delete from</h3>
+      <p>Removing a key only changes its bucket. There is no global search path to preserve, unlike linear probing.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why rehashing still matters</h3>
+      <p>If \(\alpha\) keeps growing, buckets stop being tiny. The lecture explicitly ties performance back to keeping the load factor bounded.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>The lecture's practical note is worth remembering: Java's <code>HashSet</code> keeps the load factor below about <code>0.75</code> and even upgrades very large buckets away from plain linked lists.</p>
+  </div>
+</section>
+
+<section id="sec-open" class="section" data-track="open">
+  <h2 class="section-title">Open Addressing: Keep Everything in the Table and Probe for Space</h2>
+  <p class="section-lead">Open addressing stores all keys inside the table itself. With linear probing, a collision at <code>h(k)</code> means: try the next slot, then the next, wrapping around as needed. This often feels elegant at first because the memory layout is compact, but the invariants are much more delicate.</p>
+
+  <div class="chip-list">
+    <span>Slides 31&ndash;36</span>
+    <span>Linear probing</span>
+    <span>Primary clustering</span>
+    <span>DEFUNCT markers</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Key idea</th>
+          <th>Implementation consequence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>get(k)</code></td>
+          <td>Start at <code>h(k)</code> and follow the probe sequence until you find the key, a truly empty slot, or you have probed \(N\) cells.</td>
+          <td>Search must keep moving past DEFUNCT cells.</td>
+        </tr>
+        <tr>
+          <td><code>put(k,v)</code></td>
+          <td>Search like <code>get</code>, but also remember the first DEFUNCT or empty slot that could host the new item.</td>
+          <td>Insertion depends on the same probe path as lookup.</td>
+        </tr>
+        <tr>
+          <td><code>remove(k)</code></td>
+          <td>Replace the found entry with DEFUNCT rather than clearing it outright.</td>
+          <td>Deletion is a correctness issue, not just a bookkeeping issue.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week7-defunct">
+      <span class="toggle-icon">&#9654;</span> Why you cannot simply erase a deleted slot
+    </button>
+    <div class="proof-content" id="proof-week7-defunct">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Suppose a later key collided earlier and was placed farther down the same probe chain.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>If you turn a removed slot into a truly empty cell, future lookups may stop there and incorrectly conclude the later key is absent.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>DEFUNCT preserves the search corridor: lookup skips over it, while insertion may reuse it.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Memorize this as an invariant.</strong> Linear probing works only because every operation respects the same probe sequence semantics.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>Python's <code>dict</code> is the lecture's real-world reminder that open addressing is not a toy. It is fast in practice because memory locality is excellent, but it only stays fast when the load factor is kept comfortably below full.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="A DEFUNCT cell does not prove the key is absent. It only says a deleted item used to live there, so lookup must continue along the same probe sequence.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">During linear probing, what should <code>get(k)</code> do when it reaches a DEFUNCT slot?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Stop immediately and return <code>null</code></div>
+      <div class="qc-opt" data-idx="1">Rehash the whole table before continuing</div>
+      <div class="qc-opt" data-idx="2">Keep probing, because the key may appear later in the same search chain</div>
+      <div class="qc-opt" data-idx="3">Overwrite the DEFUNCT slot during lookup</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-cuckoo" class="section" data-track="cuckoo">
+  <h2 class="section-title">Cuckoo Hashing: Two Homes Per Key, Stronger Lookups, Trickier Inserts</h2>
+  <p class="section-lead">Cuckoo hashing answers the main complaint against ordinary hash tables: bad worst-case lookup behavior. Each key gets two candidate locations, one in each of two tables. Lookup becomes tiny and predictable, but insertion can trigger an eviction chain.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Two legal homes</h3>
+      <p>For key <code>k</code>, only <code>T1[h1(k)]</code> and <code>T2[h2(k)]</code> are ever relevant.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Evict on collision</h3>
+      <p>If the target cell is occupied, kick out the old item and move it to its alternate home.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Watch for cycles</h3>
+      <p>If evictions start repeating, insertion has entered a cycle and the implementation must bail out or rehash.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Why the bound is attractive</th>
+          <th>Lecture message</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Lookup / remove</td>
+          <td>Worst-case \(O(1)\), because only two locations ever matter.</td>
+          <td>This is the big upgrade over chaining and linear probing.</td>
+        </tr>
+        <tr>
+          <td>Insert</td>
+          <td>Expected \(O(1)\), not worst-case \(O(1)\).</td>
+          <td>The hard work has been moved into eviction management.</td>
+        </tr>
+        <tr>
+          <td>Table sizing</td>
+          <td>The lecture states expected \(O(n)\) for \(n\) inserts when \(N &gt; 2n\).</td>
+          <td>Low occupancy is part of the guarantee story.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>The tutorial pushes you to think operationally here: cycle detection can be done by counting evictions or by flagging visited entries. Both methods are really answering the same question, namely whether the insertion path has started repeating.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="A long or repeating eviction chain means the insertion path has cycled. The usual repair is to stop and rebuild or rehash into larger tables.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">In cuckoo hashing, what does a long repeating eviction sequence usually tell you?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The key should be stored in both tables at once</div>
+      <div class="qc-opt" data-idx="1">Insertion has hit a cycle, so the structure should rehash or rebuild</div>
+      <div class="qc-opt" data-idx="2">Lookup has become \(O(n)\) because the tables are sorted</div>
+      <div class="qc-opt" data-idx="3">The load factor is negative</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-set" class="section" data-track="set">
+  <h2 class="section-title">Sets, Multisets, and Multimaps: Reuse the Map Idea Instead of Reinventing It</h2>
+  <p class="section-lead">The end of the lecture is deceptively important. It shows how once you trust a fast map, several other ADTs fall out almost for free. This is the kind of abstraction reuse that shows up repeatedly in tutorials and interviews.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>ADT</th>
+          <th>Map-based implementation idea</th>
+          <th>Why Week 7 cares</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Set</td>
+          <td>Store each element as a key and ignore the value.</td>
+          <td><code>contains(e)</code> becomes ordinary map lookup.</td>
+        </tr>
+        <tr>
+          <td>Multiset / bag</td>
+          <td>Use the element as the key and store its occurrence count as the value.</td>
+          <td><code>count(e)</code> becomes one map query instead of a full scan.</td>
+        </tr>
+        <tr>
+          <td>Multimap</td>
+          <td>Map each key to a small collection of associated values.</td>
+          <td>The tutorial's \(O(1+s)\) target is exactly this pattern.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Intersection in expected \(O(n+m)\)</h3>
+      <p>Hash the smaller array into a set, then scan the other array and report matches. The extra-space bound follows because you only store the smaller side.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Most frequent value in expected \(O(n)\)</h3>
+      <p>Use a frequency map while scanning once, then track the best count seen so far.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Birthday collision question</h3>
+      <p>The tutorial's stated <code>O(1)</code> wording is clearly a typo in context; the intended design is a one-pass hash-based duplicate detector.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Professor lens:</strong> once a map gives expected constant-time membership, a huge class of “have I seen this before?” problems collapse into one-pass scans.</p>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial &amp; Code Lens: Week 7 Is About Operational Precision</h2>
+  <p class="section-lead">This is one of the most implementation-heavy weeks in the unit. The tutorial is not just asking you to recite definitions. It is asking you to reason with exact probe behavior, exact storage overhead, and exact failure modes.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Tutorial patterns to practice</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Warm-up 1: compare chaining and open addressing when the hash function is disastrously poor.</li>
+        <li>Warm-up 2: prove that collisions can be forced on a huge dataset no matter how good the advertised range looks.</li>
+        <li>Warm-up 3: use a hash set to compute \(A \cap B\) in expected linear time.</li>
+        <li>Warm-up 4&ndash;5: turn cuckoo cycle detection into concrete implementation logic.</li>
+        <li>Problems 6&ndash;10: use maps to preserve insertion order, count frequencies, build multimaps, detect duplicates, and tally k-grams.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What the code bundle is testing</h3>
+      <p><code>SeparateChaining.py</code> asks you to implement the clean bucket version first. <code>open_addressing.py</code> adds the DEFUNCT invariant and iteration helpers. <code>cuckoo.py</code> forces you to think about two tables, two hash functions, and controlled eviction.</p>
+      <pre class="code-block"># Skeleton pressure points across the three files
+put(key, value)
+get(key)
+remove(key)
+size()
+capacity()
+is_empty()
+entries()</pre>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>Best way to study the code this week</h3>
+    <p>Do not start by coding all three classes at once. Implement and test chaining first, because it is the cleanest collision story. Then move to linear probing and write down the search rules for EMPTY, OCCUPIED, and DEFUNCT before touching code. Leave cuckoo for last and trace a few eviction sequences on paper before implementing <code>put</code>.</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; spaced review</h2>
+  <p class="section-lead">Your local checks should now feel surgical rather than random: one for weak hash codes, one for DEFUNCT, and one for cuckoo cycle detection. Use the external tools next to mix those ideas with earlier weeks.</p>
+  <div class="callout">
+    <p><strong>Recommended sequence.</strong> Finish the tutorial sheet, then return to the three inline checks from this page, then use flashcards or the Quiz Hub to see whether you can still explain the trade-offs without the tables in front of you.</p>
+  </div>
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=7" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=7&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

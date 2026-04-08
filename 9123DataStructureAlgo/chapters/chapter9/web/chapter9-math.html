@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 9</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter9-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 9 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-relaxation" class="toc-link">Relaxation invariants</a></li>
+    <li><a href="#sec-m-dijkstra" class="toc-link">Dijkstra reasoning</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-transform" class="toc-link">Weight transforms</a></li>
+    <li><a href="#sec-m-mst-proof" class="toc-link">MST exchange proof</a></li>
+  </ul>
+  <div class="toc-group">Exam triggers</div>
+  <ul>
+    <li><a href="#sec-m-apps" class="toc-link">Tutorial applications</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">How to review</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter9-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 9</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 9 foundations are about the invariants behind greedy graph optimization: when a relaxation is trustworthy, why Dijkstra's greedy commitment works, how edge-weight transformations change optimization problems, and why the cut property makes MST choices safe.</p>
+    <div class="chip-list"><span>Relaxation logic</span><span>Greedy correctness</span><span>MST exchange arguments</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-relaxation" data-track="relaxation">
+  <h2 class="section-title">Relaxation Invariants: Tentative Labels Are Upper Bounds Until Proven Final</h2>
+  <p class="section-lead">The safest way to think about shortest-path labels is this: before a vertex is settled, its label is a current best claim, not yet a mathematical guarantee of optimality. Relaxation only ever lowers that claim when a better route is discovered.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>If you know a route to <code>u</code> of cost <code>D[u]</code>, then traversing one more edge \((u,v)\) gives a candidate route to <code>v</code> of cost <code>D[u] + w(u,v)</code>. Comparing that candidate to <code>D[v]</code> is exactly what relaxation means.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Subpath property</div>
+    <p>If a full path is shortest, then every prefix of that path must already be shortest to its endpoint. Otherwise the whole path could be improved by replacing a bad prefix with a better one.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="If a path from s to t is shortest, every prefix must also be shortest to its endpoint. Otherwise replacing a nonoptimal prefix would create a cheaper s-t path.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Why must every subpath of a shortest path also be shortest between its own endpoints?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because trees have no cycles</div>
+      <div class="qc-opt" data-idx="1">Because MSTs always contain shortest paths</div>
+      <div class="qc-opt" data-idx="2">Because a nonoptimal subpath could be replaced to make the whole path cheaper</div>
+      <div class="qc-opt" data-idx="3">Because all edge weights are equal</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-dijkstra" data-track="dijkstra">
+  <h2 class="section-title">Dijkstra Reasoning: Where Correctness and Runtime Both Come From</h2>
+  <p class="section-lead">The lecture separates Dijkstra into two stories: a correctness story about why the smallest label can be safely settled, and a runtime story about how graph scanning and priority-queue operations contribute differently.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Part of the algorithm</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Initialization</td>
+          <td>Sets the source label to 0, all others to infinity, and makes the predecessor relation meaningful from the start.</td>
+        </tr>
+        <tr>
+          <td><code>remove_min</code></td>
+          <td>This is the greedy commitment step, where the next vertex becomes final.</td>
+        </tr>
+        <tr>
+          <td><code>decrease_key</code></td>
+          <td>This is how improved relaxations are reflected in the queue ordering.</td>
+        </tr>
+        <tr>
+          <td>Adjacency scans</td>
+          <td>Across the whole algorithm they sum to \(O(m)\), which is why the queue implementation becomes the key complexity lever.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>The lecture's directed-graph note is important. Dijkstra still works for directed graphs as long as weights are non-negative. What changes is the path structure and which outgoing edges are available for relaxation, not the core greedy logic or runtime shape.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="Adding a positive constant to every edge penalizes paths with more edges, so two routes with the same original total but different edge counts may no longer tie. Shortest paths are therefore not preserved in general.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">If you add the same positive constant \(\beta\) to every edge weight, what happens to shortest paths in general?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">They are always preserved</div>
+      <div class="qc-opt" data-idx="1">They may change, because longer-edge-count routes are penalized more</div>
+      <div class="qc-opt" data-idx="2">They disappear entirely</div>
+      <div class="qc-opt" data-idx="3">They become MSTs</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-transform" data-track="transform">
+  <h2 class="section-title">Weight Transforms: Shortest Paths and MSTs React Differently</h2>
+  <p class="section-lead">The tutorial's transformation problem is one of the best conceptual exercises in the week. It forces you to separate “what preserves local edge order?” from “what preserves total path cost?”</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Transformation</th>
+          <th>Shortest paths</th>
+          <th>MSTs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>\(w_1(e)=\alpha w(e)\) with \(\alpha &gt; 0\)</td>
+          <td>Preserved, because every path weight is scaled by the same positive factor.</td>
+          <td>Preserved, because every tree weight is scaled by the same positive factor.</td>
+        </tr>
+        <tr>
+          <td>\(w_2(e)=w(e)+\beta\) with \(\beta &gt; 0\)</td>
+          <td>Not preserved in general, because paths with more edges pay the extra cost more times.</td>
+          <td>Preserved, because every spanning tree has exactly \(n-1\) edges and receives the same total additive shift.</td>
+        </tr>
+        <tr>
+          <td>\(w_3(e)=w(e)^2\)</td>
+          <td>Not preserved in general, because squaring can change which multi-edge path has the smaller sum.</td>
+          <td>Preserved when weights are positive, because squaring keeps the edge order and MST selection depends on edge-order comparisons.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>This is a beautiful contrast: shortest paths care about sums along one route, while MSTs care about which individual edges are safe across cuts and cycles. That is why the same transformation can affect one problem but not the other.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-m-mst-proof" data-track="mst-proof">
+  <h2 class="section-title">MST Exchange Proof: Why the Cheapest Crossing Edge Is Safe</h2>
+  <p class="section-lead">The cut property is the backbone of MST correctness proofs. The lecture presents it as a structural fact, but the proof move to remember is an exchange argument: add a supposedly safe edge, find a cycle, and swap out something no better.</p>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week9-cut">
+      <span class="toggle-icon">&#9654;</span> The exchange argument in plain language
+    </button>
+    <div class="proof-content" id="proof-week9-cut">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Take any MST that does not already include the cheapest edge crossing a chosen cut.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>Adding that cheapest crossing edge creates a cycle. Because the cycle crosses the cut, it must also contain some other edge crossing the same cut.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Swap out the other crossing edge. Since the chosen edge was the cheapest one crossing the cut, total cost does not increase, so there exists an MST containing it.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>General lesson.</strong> Many greedy proofs work by showing that if an optimal solution avoids your greedy choice, you can exchange something and stay optimal.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="The cut property says the minimum-cost edge crossing any cut is safe: there exists some MST containing it.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What does the cut property let you conclude about the cheapest edge crossing a cut?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It is safe to include in some MST</div>
+      <div class="qc-opt" data-idx="1">It must be the first edge in every shortest path tree</div>
+      <div class="qc-opt" data-idx="2">It should always be deleted</div>
+      <div class="qc-opt" data-idx="3">It creates a negative cycle</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-apps" data-track="apps">
+  <h2 class="section-title">Tutorial Applications: Modeling Tricks Matter as Much as Core Algorithms</h2>
+  <p class="section-lead">The later tutorial problems are really modeling exercises. They ask whether you can reshape an optimization goal into one of the known frameworks from the lecture.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Problem</th>
+          <th>Main idea</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Tie-break shortest paths by fewest edges</td>
+          <td>Modify edge lengths to prioritize total cost first and edge count second.</td>
+        </tr>
+        <tr>
+          <td>Vertex-cost path problem</td>
+          <td>Re-express the path objective so vertex costs are absorbed into a standard shortest-path computation.</td>
+        </tr>
+        <tr>
+          <td>Improving-mst / reverse-mst</td>
+          <td>Use cycle and cut logic to argue that repeated local improvements converge to an MST.</td>
+        </tr>
+        <tr>
+          <td>Bandwidth matrix</td>
+          <td>Compute all-pairs bottleneck values in cubic time by dynamic-programming-style reasoning or equivalent graph structure.</td>
+        </tr>
+        <tr>
+          <td>Libraries and roads challenge</td>
+          <td>Model cities as graph vertices and candidate roads as edges, then reason about connected components and connection cost.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">How to review this page well</h2>
+  <p class="section-lead">The three checks are inline on purpose. They live under the subpath property, the weight-transformation comparison, and the MST cut proof so you can repair exactly the right idea instead of re-reading the whole chapter.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial review</h2>
+  <p class="section-lead">Do the tutorial after the study guide. Week 9 becomes much easier once you already know which problems are shortest-path flavored and which ones are MST flavored.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w9">Show review checklist</button>
+  <div class="solution-content" id="sol-w9">
+    <p><strong>Week 9 checklist.</strong> You should be able to explain the relaxation update, state exactly why Dijkstra needs non-negative edges, distinguish shortest-path objectives from MST objectives, compare how scaling or shifting weights affects each problem, and describe why Prim and Kruskal are both safe greedy algorithms for the same MST target.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
