@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 10 — Greedy Algorithms</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 10</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-pattern" class="nav-link" data-section="sec-pattern">Greedy Pattern</a></li>
+    <li><a href="#sec-counter" class="nav-link" data-section="sec-counter">Counterexamples</a></li>
+    <li><a href="#sec-knapsack" class="nav-link" data-section="sec-knapsack">Fractional Knapsack</a></li>
+    <li><a href="#sec-scheduling" class="nav-link" data-section="sec-scheduling">Scheduling</a></li>
+    <li><a href="#sec-huffman" class="nav-link" data-section="sec-huffman">Huffman Coding</a></li>
+    <li><a href="#sec-limits" class="nav-link" data-section="sec-limits">Greedy Limits</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial &amp; Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter10-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter10-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=10" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=10&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 10: Greedy Algorithms</h1>
+    <p class="hero-subtitle">Week 10 studies one of the most attractive and most dangerous design ideas in algorithms: make the best-looking local choice now and never look back. The lecture deliberately shows both success and failure, so the real lesson is not “greedy is fast,” but “greedy is correct only when the problem structure protects your local choices.”</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#9889;</span>
+        <span>Greedy commits early and never revisits earlier choices</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#127873;</span>
+        <span>Fractional knapsack works only with the right rule</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128197;</span>
+        <span>Scheduling depends on matching the ordering to the objective</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128395;</span>
+        <span>Huffman is a full greedy algorithm plus proof story</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Exchange arguments and counterexamples</span>
+      <span>Interval partitioning and weighted scheduling</span>
+      <span>Compression via prefix codes</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter10-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter10-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+      <p style="font-size:0.84rem; color:rgba(var(--sidebar-text-rgb),0.68); margin-top:0.7rem;">A good Week 10 answer never stops at “pick the biggest” or “pick the earliest.” It explains why that local choice is safe, or breaks it with a clean counterexample.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-pattern" class="section" data-track="pattern">
+  <h2 class="section-title">Greedy Pattern: Commit Locally, but Earn the Right to Trust It</h2>
+  <p class="section-lead">The lecture starts with a deliberately broad template. A greedy algorithm initializes a result, decides the order in which to consider candidates, and then keeps adding the next locally best thing whenever it improves the current solution. That template is elegant, but by itself it proves nothing.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Greedy ingredient</th>
+          <th>What it means</th>
+          <th>Why it can go wrong</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Choice rule</td>
+          <td>Define what “best” means at each step.</td>
+          <td>A plausible local score may have nothing to do with global optimality.</td>
+        </tr>
+        <tr>
+          <td>Processing order</td>
+          <td>Sort or scan candidates in a specific sequence.</td>
+          <td>The right order depends completely on the problem objective.</td>
+        </tr>
+        <tr>
+          <td>Irrevocability</td>
+          <td>Earlier decisions are never undone.</td>
+          <td>If the wrong choice is made early, the algorithm has no way to recover.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Why greedy is tempting</h3>
+      <p>Greedy algorithms are often simple to implement and easy to describe, which is why they are such natural first ideas.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why greedy is dangerous</h3>
+      <p>Many problems admit several “reasonable” local rules, and most of them are wrong.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Professor lens</h3>
+      <p>The real skill this week is not inventing a greedy rule. It is deciding whether the rule deserves a proof or deserves a counterexample.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-counter" class="section" data-track="counter">
+  <h2 class="section-title">Counterexamples: A Few Successful Runs Never Prove a Greedy Rule</h2>
+  <p class="section-lead">The lecture pauses on failed knapsack rules for an important reason: algorithm design includes learning how to disprove a bad idea quickly. A rule that works on one instance or even on many natural-looking instances can still be wrong in general.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>How to break a greedy rule cleanly</h3>
+      <p>Make the wrong local choice look attractive, then hide a better overall combination behind it. Small counterexamples are better than large noisy ones because they isolate exactly what goes wrong.</p>
+    </div>
+    <div class="col-card">
+      <h3>Lecture examples</h3>
+      <p>“Highest benefit first” and “smallest weight first” both feel plausible for fractional knapsack, yet the slides show they miss a better solution than the ratio-based rule.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>The tutorial extends this idea nicely: it asks you to show that even wrong greedy rules can succeed on infinite classes of instances. That is the perfect reminder that examples are evidence, not proof.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="A correct counterexample gives one explicit instance where the greedy rule returns a suboptimal solution. That is enough to disprove correctness in general.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is enough to disprove a greedy algorithm's correctness?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Showing it fails on all large inputs</div>
+      <div class="qc-opt" data-idx="1">Showing it is slower than dynamic programming</div>
+      <div class="qc-opt" data-idx="2">One explicit instance where it returns a suboptimal answer</div>
+      <div class="qc-opt" data-idx="3">Showing it is hard to code</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-knapsack" class="section" data-track="knapsack">
+  <h2 class="section-title">Fractional Knapsack: The Ratio Rule Works Because Fractions Are Allowed</h2>
+  <p class="section-lead">The lecture uses fractional knapsack to show both sides of greedy design. Several local rules look reasonable, but only the benefit-to-weight ratio rule is actually safe. The reason it works is structural: once fractions are allowed, exchanging one small amount of weight for another becomes a legal local repair.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Candidate rule</th>
+          <th>Result</th>
+          <th>Main lesson</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Highest benefit first</td>
+          <td>Not always optimal</td>
+          <td>Big reward alone can be misleading if the item is too heavy.</td>
+        </tr>
+        <tr>
+          <td>Smallest weight first</td>
+          <td>Not always optimal</td>
+          <td>Light items are not necessarily dense in value.</td>
+        </tr>
+        <tr>
+          <td>Highest benefit / weight ratio first</td>
+          <td>Optimal for the fractional version</td>
+          <td>Every unit of remaining capacity should go to the densest available value.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week10-knapsack">
+      <span class="toggle-icon">&#9654;</span> Why the ratio rule is safe
+    </button>
+    <div class="proof-content" id="proof-week10-knapsack">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Suppose an optimal solution leaves some capacity assigned to a lower-ratio item while not fully taking a higher-ratio item.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>Swap equal weight from the worse-ratio item into the better-ratio item. Feasibility is preserved because total weight does not change.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Total benefit strictly improves, contradicting optimality. So an optimal solution can always be reshaped to agree with the greedy ratio choice.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Critical word.</strong> This exchange works because the problem is fractional. In 0/1 knapsack, you cannot always swap “a little bit” of an item.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>The lecture's final implementation point is practical: sort items by ratio in descending order, then scan once. That gives \(O(n \log n)\) time because sorting dominates.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="For fractional knapsack, the correct greedy rule is to take as much as possible of the remaining item with highest benefit-to-weight ratio.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which greedy rule is correct for fractional knapsack?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Highest total benefit first</div>
+      <div class="qc-opt" data-idx="1">Highest benefit-to-weight ratio first</div>
+      <div class="qc-opt" data-idx="2">Smallest weight first</div>
+      <div class="qc-opt" data-idx="3">Random order with backtracking</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-scheduling" class="section" data-track="scheduling">
+  <h2 class="section-title">Scheduling: The Right Greedy Order Depends on the Objective</h2>
+  <p class="section-lead">Week 10 uses scheduling to show that “sort by something obvious” only works when that sorting key aligns with the optimization target. The lecture's main scheduling problem is interval partitioning, while the tutorial adds weighted completion-time scheduling with an exchange argument.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Problem</th>
+          <th>Greedy idea</th>
+          <th>Why that order fits</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Interval partitioning</td>
+          <td>Sort lectures by increasing start time, then assign each lecture to any compatible classroom.</td>
+          <td>The algorithm stays ahead of the overlap depth and opens a new classroom only when no existing room can host the lecture.</td>
+        </tr>
+        <tr>
+          <td>Weighted sum of completion times</td>
+          <td>The tutorial's optimal rule comes from comparing adjacent swaps and ordering jobs by the right ratio.</td>
+          <td>This is a good example of a greedy rule that comes from proof, not guesswork.</td>
+        </tr>
+        <tr>
+          <td>Unit-length interval cover</td>
+          <td>Place each interval as far right as possible while still covering the leftmost uncovered point.</td>
+          <td>That greedy placement maximizes future coverage from each interval.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>For interval partitioning, the lecture's lower bound is the depth of the interval set: the maximum number of lectures overlapping at any time. A greedy schedule is optimal when it uses exactly that many rooms.</p>
+  </div>
+</section>
+
+<section id="sec-huffman" class="section" data-track="huffman">
+  <h2 class="section-title">Huffman Coding: Greedy Merging Builds an Optimal Prefix Code</h2>
+  <p class="section-lead">The Huffman section is the capstone of the chapter because it gives the full greedy package: a clean objective, a priority-queue implementation, structural observations, and an inductive correctness proof.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Start with leaves</h3>
+      <p>Each character is a single-node tree weighted by its frequency.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Merge the two lightest trees</h3>
+      <p>Use a min-priority queue to repeatedly combine the least frequent available trees.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Read codes from root-to-leaf paths</h3>
+      <p>Left and right edges define a prefix code once the full tree is built.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Optimization target</h3>
+      <p>Minimize the weighted external path length \(\sum_{c \in C} f(c) \cdot depth_T(c)\).</p>
+    </div>
+    <div class="glance-card">
+      <h3>Key observation</h3>
+      <p>In an optimal tree, deeper leaves should correspond to rarer characters, not common ones.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Runtime</h3>
+      <p>The priority queue dominates, giving \(O(|C|\log |C|)\) after frequencies are known. The lecture also writes the full pipeline as \(O(n + d\log d)\).</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>The lecture's correctness arc is worth remembering in words: there is an optimal tree where the two least frequent symbols are deepest siblings, so you may merge them, solve the smaller problem optimally, and then expand back.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="Huffman's algorithm repeatedly removes the two currently smallest-frequency trees from a priority queue and merges them into a new parent.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is Huffman's greedy step?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Merge the two least frequent available trees</div>
+      <div class="qc-opt" data-idx="1">Merge the two most frequent symbols first</div>
+      <div class="qc-opt" data-idx="2">Sort symbols alphabetically</div>
+      <div class="qc-opt" data-idx="3">Assign all codewords the same length</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-limits" class="section" data-track="limits">
+  <h2 class="section-title">Greedy Limits: Small Changes to the Problem Can Destroy Correctness</h2>
+  <p class="section-lead">The lecture ends with a healthy warning. Even when a greedy algorithm is correct for one problem, tiny-looking changes in the model can make the same idea fail completely.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Correct greedy result</th>
+          <th>Nearby harder variant</th>
+          <th>What changes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Fractional knapsack</td>
+          <td>0/1 knapsack</td>
+          <td>Without fractional exchange, the ratio rule is no longer always safe.</td>
+        </tr>
+        <tr>
+          <td>Interval partitioning</td>
+          <td>Scheduling with richer constraints</td>
+          <td>Compatibility or objective changes can invalidate the simple start-time rule.</td>
+        </tr>
+        <tr>
+          <td>Binary Huffman coding</td>
+          <td>Non-binary or modified encoding settings</td>
+          <td>The classic merge-two-lightest structure is tied to the binary prefix-code model.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>This is one of the most important closing lessons in the course: the success of a greedy algorithm is always a theorem about a specific problem definition, not a transferable personality trait of the idea itself.</p>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial &amp; problem lens: Week 10 is about proof habits as much as algorithms</h2>
+  <p class="section-lead">The tutorial makes the chapter more interesting than a list of classic examples. It asks you to build trees, identify infinite success cases for bad rules, prove and disprove greedy matchings, cover points with unit intervals, derive the right weighted scheduling order, and reason about a florist pricing challenge.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Warm-up and proof habits</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Construct a Huffman tree for a real phrase instead of only reading the algorithm abstractly.</li>
+        <li>Show that wrong knapsack rules can still succeed on infinitely many inputs, which separates “sometimes works” from “always correct.”</li>
+        <li>Practice both proof and disproof on greedy matching algorithms.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Problem-solving extensions</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Cover points on the real line with the fewest unit intervals.</li>
+        <li>Minimize weighted completion time using an adjacent-swap exchange argument.</li>
+        <li>Design a greedy buying order for the florist problem and justify why expensive flowers should be purchased early under increasing multipliers.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>Best way to study the last week</h3>
+    <p>Do not ask only “what is the rule?” Ask “what exact exchange or contradiction would prove this rule safe?” and “what smallest instance would break it if it were wrong?” If you can do both, you have actually learned the greedy chapter.</p>
+  </div>
+
+  <div class="callout">
+    <p>The lecture also points to a fractional-knapsack code-along on Ed. That is useful, but the real exam value is still the correctness logic and the counterexample instinct.</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; spaced review</h2>
+  <p class="section-lead">Use the inline checks to verify the three highest-value habits first: disprove bad greedy rules cleanly, choose the ratio rule for fractional knapsack, and explain Huffman's merge step. Then use the mixed tools to rehearse Week 10 alongside the earlier data-structure weeks.</p>
+  <div class="callout">
+    <p><strong>Recommended sequence.</strong> Do one small counterexample, one fractional-knapsack trace, and one Huffman merge tree by hand, then use the Quiz Hub or flashcards to see whether the proof ideas still feel clear without the lecture scaffolding.</p>
+  </div>
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=10" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=10&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 7</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter7-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 7 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-load" class="toc-link">Load factor</a></li>
+    <li><a href="#sec-m-hash-design" class="toc-link">Hash design</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-deletion" class="toc-link">Deletion invariants</a></li>
+    <li><a href="#sec-m-cuckoo" class="toc-link">Cuckoo guarantees</a></li>
+  </ul>
+  <div class="toc-group">Exam triggers</div>
+  <ul>
+    <li><a href="#sec-m-apps" class="toc-link">Tutorial patterns</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">How to review</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter7-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 7</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 7 foundations turn the hashing lecture into the analysis statements you actually need to say out loud: what load factor measures, what universal hashing guarantees, why DEFUNCT is logically necessary, and how hashing solves one-pass set and counting problems.</p>
+    <div class="chip-list"><span>Expected-time reasoning</span><span>Collision probability</span><span>Deletion correctness</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-load" data-track="load">
+  <h2 class="section-title">Load Factor: The Single Number That Predicts Crowding</h2>
+  <p class="section-lead">The load factor \(\alpha = n/N\) is the lecture's compression of “how crowded is the table?” It is not a decorative symbol. It is the bridge between how much you store and how much extra work collisions force on future operations.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Quantity</th>
+          <th>Meaning</th>
+          <th>Interpretation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>\(n\)</td>
+          <td>Number of stored entries</td>
+          <td>How much actual data the map holds</td>
+        </tr>
+        <tr>
+          <td>\(N\)</td>
+          <td>Table capacity</td>
+          <td>How many base slots the structure owns</td>
+        </tr>
+        <tr>
+          <td>\(\alpha=n/N\)</td>
+          <td>Average occupancy</td>
+          <td>The first diagnostic to inspect when performance degrades</td>
+        </tr>
+        <tr>
+          <td>Chaining cost</td>
+          <td>\(O(1+\alpha)\) expected</td>
+          <td>Average bucket size is the right mental model</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Chaining can tolerate \(\alpha\) above 1 because buckets can hold multiple items. Open addressing is far more fragile: as \(\alpha\) approaches 1, finding an empty slot becomes increasingly expensive and clustering becomes severe.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="Under the lecture's uniform-hashing model, separate chaining has expected operation cost proportional to one bucket access plus the expected bucket length, namely O(1+alpha).">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">For separate chaining, which expression best matches the expected time of a basic hash-table operation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(O(1+\alpha)\)</div>
+      <div class="qc-opt" data-idx="1">\(O(\alpha^2)\)</div>
+      <div class="qc-opt" data-idx="2">\(O(\log n)\)</div>
+      <div class="qc-opt" data-idx="3">\(O(N)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-hash-design" data-track="hash-design">
+  <h2 class="section-title">Hash Design: Good Dispersion Beats Cute Formulas</h2>
+  <p class="section-lead">A good hash function should be deterministic, fast, and resistant to obvious structural patterns in the keys. The lecture's universal-hashing section gives the cleanest formal statement of that idea.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Deterministic</h3>
+      <p>The same key must always land in the same place for the current table and chosen function.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Uniform</h3>
+      <p>Distinct keys should behave as if scattered randomly enough that no slot is repeatedly overloaded.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Efficient</h3>
+      <p>If computing the hash is expensive, you have destroyed the whole point of array-style access.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">2-universal family</div>
+    <p>If \(H\) is 2-universal, then for distinct keys \(i \neq j\), choosing \(h\) uniformly at random from \(H\) guarantees \(\Pr[h(i)=h(j)] \le 1/N\). This is the formal way to say “collisions remain unlikely even against unlucky inputs.”</p>
+  </div>
+
+  <div class="callout">
+    <p>The random linear family \(h(k)=((ak+b)\bmod p)\bmod N\) is the lecture's model example. It is not just another formula to memorize; it is the first place the unit asks you to trust random choice as an analysis tool.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="A 2-universal family guarantees that for any distinct keys, the chance of a collision under a randomly chosen hash function is at most 1/N.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is the defining collision guarantee of a 2-universal family of hash functions with range size \(N\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Every pair of distinct keys collides with probability exactly 0</div>
+      <div class="qc-opt" data-idx="1">Every slot receives exactly the same number of keys</div>
+      <div class="qc-opt" data-idx="2">Any two distinct keys collide with probability at most \(1/N\)</div>
+      <div class="qc-opt" data-idx="3">The hash value is always smaller than the key</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-deletion" data-track="deletion">
+  <h2 class="section-title">Deletion Invariants: Empty and DEFUNCT Mean Different Things</h2>
+  <p class="section-lead">Open-address deletion questions are almost always disguised search-correctness questions. Once the table uses a probe sequence, every future lookup depends on past insertions and deletions leaving the right traces behind.</p>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week7-delete">
+      <span class="toggle-icon">&#9654;</span> The short proof you should be able to say in an exam
+    </button>
+    <div class="proof-content" id="proof-week7-delete">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Lookup in linear probing stops only when it reaches a truly empty cell, because that is the first proof that no later slot in the same probe sequence could contain the key.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>A deleted cell is not genuine evidence that the key is absent; another colliding key may have been pushed past it earlier.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Therefore deletion must mark the slot as DEFUNCT so lookup continues but insertion still knows the slot is reusable.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>High-value habit.</strong> When a data-structure detail looks annoying, ask what future operation would fail if you omitted it. That usually reveals the invariant.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>Rehashing belongs here too. Once the load factor crosses a chosen threshold, the table is rebuilt into a larger array so the probe lengths or bucket lengths do not keep drifting upward.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-m-cuckoo" data-track="cuckoo">
+  <h2 class="section-title">Cuckoo Guarantees: Tiny Lookups, Controlled Insert Risk</h2>
+  <p class="section-lead">Cuckoo hashing gives the cleanest worst-case lookup statement of the week. A key has only two candidate homes, so <code>get</code> and <code>remove</code> inspect at most those two positions. The price is that insertion may trigger a relocation chain and occasionally a rebuild.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Claim</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Worst-case lookup is \(O(1)\)</td>
+          <td>The key can only be in two known places.</td>
+        </tr>
+        <tr>
+          <td>Worst-case removal is \(O(1)\)</td>
+          <td>Removal also only needs to inspect those two candidate positions.</td>
+        </tr>
+        <tr>
+          <td>Insertion is expected \(O(1)\)</td>
+          <td>Most eviction sequences are short, but pathological cycles can still happen and force rehashing.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="sec-m-apps" data-track="apps">
+  <h2 class="section-title">Tutorial Patterns: What Hashing Lets You Do in One Pass</h2>
+  <p class="section-lead">The later tutorial problems are pattern-recognition training. They are asking you to notice when “fast membership” or “fast counting by key” collapses a problem that would otherwise require sorting or repeated scanning.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Problem</th>
+          <th>Hashing pattern</th>
+          <th>Time idea</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Set intersection</td>
+          <td>Hash the smaller side as a set</td>
+          <td>One pass to build, one pass to test membership</td>
+        </tr>
+        <tr>
+          <td>Most frequent value</td>
+          <td>Map value \(\to\) count</td>
+          <td>Every element updates one counter in expected constant time</td>
+        </tr>
+        <tr>
+          <td>Multimap <code>get(k)</code></td>
+          <td>Map key \(\to\) collection of values</td>
+          <td>Lookup cost becomes \(O(1+s)\) where \(s\) is the output size</td>
+        </tr>
+        <tr>
+          <td>Birthday duplicate detection</td>
+          <td>Hash seen birthdays</td>
+          <td>Report the first repeat during a single scan</td>
+        </tr>
+        <tr>
+          <td>k-gram frequencies</td>
+          <td>Map each k-gram \(\to\) count</td>
+          <td>Slide a window and update counts incrementally</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="To keep the extra-space bound at O(min(n,m)), you hash only the smaller array, then scan the larger one and test membership against that set.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">For the tutorial's \(A \cap B\) problem, which choice keeps the extra space at \(O(\min\{n,m\})\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Hash both arrays completely before doing anything else</div>
+      <div class="qc-opt" data-idx="1">Hash the smaller array, then scan the larger array for matches</div>
+      <div class="qc-opt" data-idx="2">Sort both arrays and avoid hashing entirely</div>
+      <div class="qc-opt" data-idx="3">Store every pair of elements to check all possible intersections</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">How to review this page well</h2>
+  <p class="section-lead">The three checks are now inline on purpose. Each one lives directly under the concept it tests: expected cost, collision guarantees, and tutorial-space trade-offs. If one feels shaky, re-read only that section and say the explanation out loud before moving on.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial review</h2>
+  <p class="section-lead">Open the tutorial PDF after finishing the study guide, not before. The point is to make the questions feel like applications of ideas you already own rather than new definitions to decode under time pressure.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w7">Show review checklist</button>
+  <div class="solution-content" id="sol-w7">
+    <p><strong>Tutorial 7 checklist.</strong> You should be able to explain the effect of a weak hash function, compare chaining against probing under bad dispersion, justify DEFUNCT formally, sketch one cycle-detection method for cuckoo insertion, and spot when a set, multiset, or multimap is the intended modeling choice.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter3-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 3 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-growth" class="toc-link">Ordering growth classes</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-space" class="toc-link">Time vs space</a></li>
+  </ul>
+  <div class="toc-group">Exam triggers</div>
+  <ul>
+    <li><a href="#sec-m-invariants" class="toc-link">Queue invariants & augmentation</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">Quick checks</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter3-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 3</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 3 foundations sharpen the technical side of the lecture: how to order growth classes, how to separate time from space, and how the right maintained invariants make stack and queue operations stay fast.</p>
+    <div class="chip-list"><span>Growth-order warm-ups</span><span>Queue design</span><span>ADT augmentation</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-growth" data-track="growth">
+  <h2 class="section-title">Ordering Growth Classes Without Guesswork</h2>
+  <p class="section-lead">Tutorial 3 opens by forcing you to compare expressions like \( \sqrt{n}, n, n \log n, n^2, 2^n, n!, n^n \). The goal is not symbol pushing. The goal is to recognise which families dominate others as \(n\) gets large.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Polynomial growth beats logarithmic growth, exponential growth beats polynomial growth, and factorial growth beats ordinary exponentials. Once you know the family, the rough ordering becomes much easier.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Family</th>
+          <th>Typical examples</th>
+          <th>How to think about it</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sublinear</td>
+          <td>\(\log n, \sqrt{n}\)</td>
+          <td>Grows, but much more slowly than scanning all items.</td>
+        </tr>
+        <tr>
+          <td>Linear / near-linear</td>
+          <td>\(n, n \log n\)</td>
+          <td>The usual territory of efficient algorithms on large inputs.</td>
+        </tr>
+        <tr>
+          <td>Polynomial</td>
+          <td>\(n^2, n^3\)</td>
+          <td>Often acceptable only for moderate input sizes.</td>
+        </tr>
+        <tr>
+          <td>Exponential and beyond</td>
+          <td>\(2^n, n!, n^n\)</td>
+          <td>Explodes quickly; usually means exhaustive combinatorial search.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-card">
+    <h3>Mini example from the tutorial spirit</h3>
+    <pre class="code-block">function printFive(n)
+    for i ← 1 to 5 do
+        print('n')</pre>
+    <p>This is \(O(1)\), not \(O(n)\), because the loop bound is a fixed constant 5 and does not scale with the input parameter.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="The function runs a fixed number of iterations regardless of the value of n, so its running time is constant.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is the asymptotic running time of <code>printFive(n)</code> from the tutorial?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(O(1)\)</div>
+      <div class="qc-opt" data-idx="1">\(O(n)\)</div>
+      <div class="qc-opt" data-idx="2">\(O(\log n)\)</div>
+      <div class="qc-opt" data-idx="3">\(O(n^2)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-space" data-track="space">
+  <h2 class="section-title">Time vs Space: Cost Is Not Only About Speed</h2>
+  <p class="section-lead">The lecture deliberately pairs time-complexity examples with space-complexity examples so you do not fall into the habit of discussing runtime alone.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Time complexity measures how long the work takes. Space complexity measures how much extra information must be stored. Good algorithmic judgment needs both.</p>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Linear space</h3>
+      <p>Storing one extra record per input item, like customer orders or browsing history, usually gives \(O(n)\) extra space.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Quadratic space</h3>
+      <p>Storing pairwise relationships, such as all user-to-user comparisons, can produce \(O(n^2)\) memory growth.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Exponential space</h3>
+      <p>Generating all combinations or candidate passwords can explode to \(O(2^n)\) storage or worse.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Practical lesson:</strong> two algorithms can have similar runtimes but very different memory costs. Week 3 wants you to keep those design axes separate.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="If the algorithm stores a constant-sized extra record for each of the n input items, the extra memory grows linearly.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">If an algorithm stores one helper record for each input element, what is the usual extra-space cost?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(O(1)\)</div>
+      <div class="qc-opt" data-idx="1">\(O(n)\)</div>
+      <div class="qc-opt" data-idx="2">\(O(\log n)\)</div>
+      <div class="qc-opt" data-idx="3">\(O(n^2)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-invariants" data-track="invariants">
+  <h2 class="section-title">Queue Invariants, O(1) Operations, and ADT Augmentation</h2>
+  <p class="section-lead">The best Week 3 tutorial problems ask a design question, not just a coding question: what information should the ADT maintain so that useful operations stay cheap?</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Constant-time operations only stay constant time if the structure keeps the right distinguished references and summary data up to date.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Structure</th>
+          <th>What must be maintained</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Stack on singly linked list</td>
+          <td>Reference to the head / top</td>
+          <td>Push and pop can happen at one end in \(O(1)\).</td>
+        </tr>
+        <tr>
+          <td>Queue on singly linked list</td>
+          <td>References to both front and rear</td>
+          <td>Enqueue and dequeue both avoid a traversal.</td>
+        </tr>
+        <tr>
+          <td>Queue with <code>getAverage()</code></td>
+          <td>Size and running sum</td>
+          <td>The average becomes a constant-time query instead of a full scan.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week3-two-stacks">
+      <span class="toggle-icon">&#9654;</span> Two stacks can still simulate a queue
+    </button>
+    <div class="proof-content" id="proof-week3-two-stacks">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Use one stack for newly enqueued items and one stack for items ready to dequeue.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>When the dequeue stack is empty, pour all items from the enqueue stack into it. This reverses order exactly once.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Each element moves a bounded number of times, which is why the structure can still support efficient queue behaviour.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Why it matters.</strong> Good data-structure design is often about maintaining the right state so the expensive work is rare or controlled.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="If the queue maintains the total sum together with the size, the average can be answered immediately without rescanning all elements.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What extra maintained information makes queue <code>getAverage()</code> a natural \(O(1)\) operation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">A sorted array copy of the queue</div>
+      <div class="qc-opt" data-idx="1">Only the rear pointer</div>
+      <div class="qc-opt" data-idx="2">The running sum together with the current size</div>
+      <div class="qc-opt" data-idx="3">A recursion stack</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">Quick checks</h2>
+  <p class="section-lead">The Week 3 checkpoints now sit directly under the growth, space, and augmentation sections above so you can test each idea right after reading it.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial PDF review</h2>
+  <p class="section-lead">Attempt the tutorial before looking at worked answers. The value of Week 3 is in forcing yourself to justify the representation choice, not just naming the right ADT.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w3">Show review checklist</button>
+  <div class="solution-content" id="sol-w3">
+    <p><strong>Tutorial 3 checklist.</strong> Make sure you can do all of the following without hand-waving:</p>
+    <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.65;">
+      <li><strong>Problems 1–2</strong> — order growth classes and justify the ranking, not just guess it.</li>
+      <li><strong>Problems 3–4</strong> — explain why stack push/pop and queue enqueue/dequeue can be \(O(1)\) on singly linked lists if the right ends are used and the right references are stored.</li>
+      <li><strong>Problems 5–6</strong> — analyse <code>printFive</code> as \(O(1)\) and <code>stars</code> as \(\Theta(n^2)\), giving both upper and lower reasoning for the second.</li>
+      <li><strong>Problem 7</strong> — design <code>getAverage()</code> by storing auxiliary state such as running sum and size, then explain correctness and runtime.</li>
+      <li><strong>Problem 8</strong> — implement a queue with two stacks and explain the time-cost story carefully.</li>
+      <li><strong>Problem 9</strong> — detect a palindrome in a singly linked list in \(O(n)\) time and \(O(1)\) extra space while restoring the list.</li>
+      <li><strong>Problem 10</strong> — write the balanced-parentheses algorithm cleanly using a stack.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

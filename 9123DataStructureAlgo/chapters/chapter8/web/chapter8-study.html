@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 8 — Graphs</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 8</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-model" class="nav-link" data-section="sec-model">Graph Language</a></li>
+    <li><a href="#sec-adt" class="nav-link" data-section="sec-adt">Graph ADT</a></li>
+    <li><a href="#sec-rep" class="nav-link" data-section="sec-rep">Representations</a></li>
+    <li><a href="#sec-dfs" class="nav-link" data-section="sec-dfs">DFS</a></li>
+    <li><a href="#sec-bridge" class="nav-link" data-section="sec-bridge">Cut Edges</a></li>
+    <li><a href="#sec-bfs" class="nav-link" data-section="sec-bfs">BFS</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial &amp; Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter8-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter8-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=8" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=8&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 8: Graphs</h1>
+    <p class="hero-subtitle">Week 8 leaves tree-shaped structure behind and moves into general networks. The lecture first teaches the language of graphs, then shows how the same graph can behave very differently depending on its representation, and finally builds the two traversal workhorses you will use for the rest of the course: DFS and BFS.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128279;</span>
+        <span>Vertices and edges model flexible relationships</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128451;</span>
+        <span>Adjacency lists and matrices trade time for space</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#129504;</span>
+        <span>DFS explores deeply and reveals structure</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128674;</span>
+        <span>BFS explores by layers and exposes shortest paths</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Paths, cycles, trees, and spanning forests</span>
+      <span>Traversal cost depends on representation</span>
+      <span>Cut edges, bipartite tests, and graph modeling</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter8-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter8-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+      <p style="font-size:0.84rem; color:rgba(var(--sidebar-text-rgb),0.68); margin-top:0.7rem;">A strong Week 8 answer explains not just how to traverse a graph, but why that traversal is correct and why the chosen representation makes the asymptotic bound possible.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-model" class="section" data-track="model">
+  <h2 class="section-title">Graph Language: The Vocabulary You Need Before Any Algorithm Makes Sense</h2>
+  <p class="section-lead">Graphs are the right abstraction when objects are connected in ways that are too flexible for arrays, lists, or trees alone. Week 8 begins by making that language precise, because traversal arguments depend on these definitions being automatic in your head.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Concept</th>
+          <th>Meaning</th>
+          <th>Why it matters later</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Vertex / edge</td>
+          <td>Vertices are objects; edges record relationships between them.</td>
+          <td>All later algorithms talk about discovering vertices by examining edges.</td>
+        </tr>
+        <tr>
+          <td>Directed vs undirected</td>
+          <td>A directed edge is ordered; an undirected edge is symmetric.</td>
+          <td>Degree, reachability, and traversal behavior depend on this distinction.</td>
+        </tr>
+        <tr>
+          <td>Path / cycle</td>
+          <td>A path links consecutive vertices by edges; a cycle starts and ends at the same vertex.</td>
+          <td>Cycle detection and bridge reasoning are impossible if this language is fuzzy.</td>
+        </tr>
+        <tr>
+          <td>Connected component</td>
+          <td>A maximal set of vertices that can reach each other.</td>
+          <td>DFS and BFS naturally expose components and spanning forests.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Trees inside graph language</h3>
+      <p>An unrooted tree is just a connected acyclic graph. A forest is an acyclic graph whose components are trees.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Spanning tree</h3>
+      <p>A spanning tree keeps every vertex but throws away enough edges to leave one connected acyclic skeleton.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Foundational fact</h3>
+      <p>Every tree on \(n\) vertices has exactly \(n-1\) edges. That fact keeps reappearing in proofs and sanity checks.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Professor lens:</strong> the lecture is quietly reframing old tree knowledge as a special case of graph structure. That matters because later graph algorithms often detect tree-like substructures rather than working on trees given in advance.</p>
+  </div>
+</section>
+
+<section id="sec-adt" class="section" data-track="adt">
+  <h2 class="section-title">Graph ADT: The Abstraction Is Separate from the Representation</h2>
+  <p class="section-lead">Before choosing adjacency lists or matrices, the lecture inserts a useful abstraction layer: the Graph ADT. That move is the graph analogue of what Weeks 5 to 7 did for trees, maps, and hash tables. We want to talk about graph operations without committing too early to how the graph is stored.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>ADT object</th>
+          <th>Stores</th>
+          <th>Typical operations</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Vertex</td>
+          <td>An associated element, such as an airport code</td>
+          <td><code>getElement()</code></td>
+        </tr>
+        <tr>
+          <td>Edge</td>
+          <td>An associated element, such as route distance or flight number</td>
+          <td><code>getElement()</code>, endpoint queries</td>
+        </tr>
+        <tr>
+          <td>Graph</td>
+          <td>The overall incidence structure</td>
+          <td><code>vertices()</code>, <code>edges()</code>, <code>degree(v)</code>, <code>incidentEdges(v)</code>, <code>getEdge(u,v)</code>, insertion, removal</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Directed and undirected variants</h3>
+      <p>The same ADT story branches into different degree and incident-edge operations once orientation matters. That is why the lecture shows directed and undirected alternatives separately.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why this abstraction matters</h3>
+      <p>Once the ADT is fixed, the representation table becomes meaningful: you can compare adjacency lists and matrices fairly because they support the same interface.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-rep" class="section" data-track="rep">
+  <h2 class="section-title">Representations: Adjacency List, Adjacency Matrix, and the Cost of the Same Query</h2>
+  <p class="section-lead">Week 8 makes one of the course's most important design points: the graph itself is the same, but the representation changes what is cheap. You do not pick a representation because it is “standard.” You pick it because your workload cares more about neighbor iteration, edge lookup, insertion, or memory usage.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Representation</th>
+          <th>Space</th>
+          <th>What it does well</th>
+          <th>Where it hurts</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Adjacency list</td>
+          <td>\(O(n+m)\)</td>
+          <td>Iterating over neighbors, sparse graphs, traversals in \(O(n+m)\)</td>
+          <td><code>getEdge(u,v)</code> is not constant-time in general</td>
+        </tr>
+        <tr>
+          <td>Adjacency matrix</td>
+          <td>\(O(n^2)\)</td>
+          <td>Constant-time edge-existence queries and dense graphs</td>
+          <td>Scanning neighbors costs \(O(n)\) even if very few edges exist</td>
+        </tr>
+        <tr>
+          <td>Edge list</td>
+          <td>\(O(m)\)</td>
+          <td>Very compact and easy to store or sort</td>
+          <td>Neighbor iteration requires filtering through unrelated edges</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>Most graph traversals in this course assume adjacency lists, because the whole \(O(n+m)\) story depends on spending time only on vertices and on edges that actually exist.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="An adjacency matrix stores a direct table entry for every ordered pair or unordered pair position, so edge lookup is O(1), at the cost of O(n^2) space.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which representation is the best fit if your main operation is repeated edge-existence queries on a dense graph?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Adjacency list</div>
+      <div class="qc-opt" data-idx="1">Adjacency matrix</div>
+      <div class="qc-opt" data-idx="2">Edge list only</div>
+      <div class="qc-opt" data-idx="3">A queue of vertices</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-dfs" class="section" data-track="dfs">
+  <h2 class="section-title">DFS: Go Deep, Backtrack, and Build a Spanning Forest as You Go</h2>
+  <p class="section-lead">Depth-first search is the first traversal framework the lecture develops. Operationally it is simple: keep following unexplored edges whenever possible, and backtrack when stuck. Conceptually it is powerful because the parent pointers and recursion stack expose structural information about the graph.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Initialize all vertices</h3>
+      <p>Set <code>visited[u]</code> to false and <code>parent[u]</code> to <code>None</code> so the traversal can restart on new components if needed.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Visit deeply</h3>
+      <p>Whenever DFS reaches an unvisited neighbor, that edge becomes a DFS tree edge and the search continues recursively.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Backtrack with structure</h3>
+      <p>Non-tree edges tell you that there is some alternative connection, which is exactly why DFS becomes the basis for cycle, bridge, and articulation reasoning.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>DFS fact</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>DFS_visit(v)</code> visits the entire connected component of <code>v</code></td>
+          <td>This is why DFS solves connected components and connectivity testing.</td>
+        </tr>
+        <tr>
+          <td>Parent edges in one component form a spanning tree</td>
+          <td>The traversal is not just exploring; it is building a useful subgraph.</td>
+        </tr>
+        <tr>
+          <td>Running the outer loop over all vertices yields a spanning forest</td>
+          <td>Disconnected graphs require restarting the search, which the tutorial explicitly tests.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week8-dfs">
+      <span class="toggle-icon">&#9654;</span> Why adjacency-list DFS runs in \(O(n+m)\)
+    </button>
+    <div class="proof-content" id="proof-week8-dfs">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>The setup loop touches each vertex a constant number of times, which contributes \(O(n)\).</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>Across all recursive calls, each adjacency-list entry is examined at most once, contributing \(O(m)\).</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Adding vertex work and edge work gives total time \(O(n+m)\).</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Transferable idea.</strong> Graph analysis often reduces to “count how many times each vertex and each edge can be touched.”
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>The lecture's applications list is worth memorizing as a family: path finding, cycle finding, connectivity, connected components, spanning trees, and then more advanced algorithms like cut edges and cut vertices built on top.</p>
+  </div>
+</section>
+
+<section id="sec-bridge" class="section" data-track="bridge">
+  <h2 class="section-title">Cut Edges: DFS Is Valuable Because It Can Detect Fragile Connections</h2>
+  <p class="section-lead">A cut edge, or bridge, is an edge whose removal disconnects part of the graph. The lecture first contrasts the naive approach with the real one. Re-running DFS after deleting every edge is far too slow. The whole point is to extract bridge information during one DFS.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Approach</th>
+          <th>Idea</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Naive</td>
+          <td>Delete each edge and test connectivity again</td>
+          <td>Too expensive: \(O(m^2)\) or worse in the lecture's discussion</td>
+        </tr>
+        <tr>
+          <td>DFS-based</td>
+          <td>Compute one DFS tree plus <code>level</code> and <code>down_and_up</code> values</td>
+          <td>Linear time: \(O(n+m)\)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Criterion to remember</div>
+    <p>For a DFS tree edge \((u,v)\) with \(u=\text{parent}[v]\), the lecture states that \((u,v)\) is <em>not</em> a cut edge if and only if <code>down_and_up[v] &le; level[u]</code>. Intuitively, the subtree of <code>v</code> can still climb back to <code>u</code> or above using one back edge.</p>
+  </div>
+
+  <div class="callout">
+    <p>The bridge idea is really about redundancy. If the subtree under <code>v</code> has no route back except through \((u,v)\), then that edge is a single point of failure.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="A DFS tree edge is a bridge exactly when the child subtree has no back-edge route to the parent or any ancestor of the parent. That means removing the edge disconnects that subtree.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">When should you suspect that a DFS tree edge \((u,v)\) is a cut edge?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Whenever \(v\) has degree 2</div>
+      <div class="qc-opt" data-idx="1">Whenever \(u\) is the DFS root</div>
+      <div class="qc-opt" data-idx="2">When the subtree of \(v\) cannot reach \(u\) or an ancestor of \(u\) by a back-edge route</div>
+      <div class="qc-opt" data-idx="3">Whenever the graph is weighted</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-bfs" class="section" data-track="bfs">
+  <h2 class="section-title">BFS: Expand by Layers and Turn Distance into Structure</h2>
+  <p class="section-lead">Breadth-first search explores outward from a start vertex one layer at a time. That single operational difference from DFS changes everything: BFS is the traversal that respects shortest-path distance in unweighted graphs.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Start with \(L_0=\{s\}\)</h3>
+      <p>The start vertex is the whole first layer, at distance 0 from itself.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Process the current frontier</h3>
+      <p>All unseen neighbors of the current layer become the next layer, so distance grows in exact one-edge steps.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Use parent pointers to recover paths</h3>
+      <p>The first time a vertex is discovered is through a shortest unweighted path from the source.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Core BFS facts</h3>
+      <p>If \(v\) lies in layer \(L_i\), then the BFS tree contains a path from the start vertex to \(v\) using exactly \(i\) edges, and no path in the graph can use fewer than \(i\) edges.</p>
+    </div>
+    <div class="col-card">
+      <h3>Tutorial payoff</h3>
+      <p>The bipartite test comes directly from layer reasoning: if an edge stays within one BFS layer, the graph cannot be bipartite under that layering.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>BFS also needs a restart loop for disconnected graphs if the goal is to cover every vertex. The tutorial deliberately checks whether you notice that “run from one source” and “fully traverse the graph” are different tasks.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="BFS explores in nondecreasing distance from the source, so the first time a vertex is discovered we have found a shortest path to it in number of edges.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Why is BFS the right traversal for shortest paths in an unweighted graph?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because it visits vertices layer by layer in increasing edge distance from the source</div>
+      <div class="qc-opt" data-idx="1">Because it always explores the deepest branch first</div>
+      <div class="qc-opt" data-idx="2">Because it makes every graph acyclic before searching</div>
+      <div class="qc-opt" data-idx="3">Because it only works on weighted graphs</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial &amp; problem lens: Week 8 is really about graph thinking, not memorizing one traversal</h2>
+  <p class="section-lead">The tutorial makes Week 8 much richer than a list of definitions. It asks you to use graph models and traversal invariants to solve concrete problems, and that is the mindset you want before moving into shortest paths and greedy graph algorithms later.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Warm-up habits the sheet wants</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Run BFS as layers, not as a vague queue process.</li>
+        <li>Run DFS as a specific visitation order, not just “go deep somehow.”</li>
+        <li>Restart the search on disconnected graphs so every component is covered.</li>
+        <li>Use BFS layer numbers to prove local facts like \(|d(u)-d(v)| \le 1\) for every edge.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Problem-solving patterns</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Bipartite testing via BFS layers and parity.</li>
+        <li>Cycle finding in linear time from adjacency lists.</li>
+        <li><code>small(i)</code> by scanning connected components and propagating a component minimum.</li>
+        <li>A get-stuck vertex in \(O(n)\) from an adjacency matrix by avoiding a full matrix scan.</li>
+        <li>Cut edges and cut vertices from the lecture's DFS machinery.</li>
+        <li>Snakes and Ladders modeled as a shortest-path problem on a graph.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>How to study this week well</h3>
+    <p>Draw small graphs and trace them. Week 8 punishes passive reading because graph algorithms are about state evolution: visited flags, parent links, layers, and back edges. If you can sketch one traversal by hand and narrate why each vertex enters when it does, you actually understand the page.</p>
+  </div>
+
+  <div class="callout">
+    <p>There is no bundled code file this week, but the lecture explicitly points you to an Ed lesson for adjacency-list implementation. That is a hint that representation details still matter even when the tutorial sheet is mostly algorithmic.</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; spaced review</h2>
+  <p class="section-lead">Use the inline checks to make sure you really own three high-value ideas first: representation choice, bridge intuition, and BFS shortest-path layering. Then use the mixed tools to rehearse those ideas out of context.</p>
+  <div class="callout">
+    <p><strong>Recommended sequence.</strong> Do one clean hand-trace of DFS and BFS on a small graph, answer the inline checks without notes, then move to flashcards or the Quiz Hub to see whether the graph vocabulary and traversal guarantees are now automatic.</p>
+  </div>
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=8" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=8&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

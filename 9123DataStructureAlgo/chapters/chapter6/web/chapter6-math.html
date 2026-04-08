@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 6</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter6-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 6 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-heap-index" class="toc-link">Heap indexing</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-build" class="toc-link">Linear build-heap</a></li>
+    <li><a href="#sec-m-sort" class="toc-link">Sorting and inversions</a></li>
+  </ul>
+  <div class="toc-group">Exam triggers</div>
+  <ul>
+    <li><a href="#sec-m-tradeoffs" class="toc-link">PQ choice &amp; heap applications</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">Quick checks</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter6-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 6</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 6 foundations compress the heap lecture into the formulas and arguments you actually need during problem solving: array indexing, why build-heap is linear, how sorting costs arise from a priority-queue viewpoint, and when heaps become the right algorithmic tool.</p>
+    <div class="chip-list"><span>Index formulas</span><span>Linear-time heap construction</span><span>PQ-powered algorithms</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-heap-index" data-track="heap-index">
+  <h2 class="section-title">Heap Indexing: The Array Formulas Are Just Tree Geometry</h2>
+  <p class="section-lead">Heap arrays work because complete binary trees have no gaps except possibly at the far right end of the last level. That fixed geometry is what turns parent and child navigation into arithmetic.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Representation</th>
+          <th>Left child</th>
+          <th>Right child</th>
+          <th>Parent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>0-based indexing</td>
+          <td>\(2i + 1\)</td>
+          <td>\(2i + 2\)</td>
+          <td>\(\left\lfloor \frac{i-1}{2} \right\rfloor\) for \(i &gt; 0\)</td>
+        </tr>
+        <tr>
+          <td>1-based indexing</td>
+          <td>\(2i\)</td>
+          <td>\(2i + 1\)</td>
+          <td>\(\left\lfloor \frac{i}{2} \right\rfloor\)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>The formulas are not properties of all binary trees. They depend completely on the completeness invariant. Without that shape constraint, there is no fixed arithmetic relationship between array positions and tree relatives.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="In a 0-based array heap, the left child of index i is at 2i+1 and the right child is at 2i+2.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">In a 0-based array heap, where is the left child of the node stored at index \(i\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(2i+1\)</div>
+      <div class="qc-opt" data-idx="1">\(2i\)</div>
+      <div class="qc-opt" data-idx="2">\(\lfloor i/2 \rfloor\)</div>
+      <div class="qc-opt" data-idx="3">\(i+1\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-build" data-track="build">
+  <h2 class="section-title">Linear Build-Heap: Why the Naive \(n \log n\) Guess Is Too Pessimistic</h2>
+  <p class="section-lead">The tutorial explicitly contrasts two ways to build a heap. Repeated insertion costs \(O(n \log n)\), but the bottom-up heapify method costs only \(O(n)\). The saving comes from the fact that most nodes start near the leaves and have almost nowhere to move.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Bottom-up build-heap does not pay a full logarithmic repair cost at every node. There are very few nodes high in the tree and very many nodes low in the tree, so the long repairs are rare and the short repairs dominate the total.</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week6-build">
+      <span class="toggle-icon">&#9654;</span> Intuition for why bottom-up heapify is \(O(n)\)
+    </button>
+    <div class="proof-content" id="proof-week6-build">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Nodes near the bottom can only move a few levels when heapified downward.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>There are many more low nodes than high nodes in a complete binary tree.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Summing “many tiny costs” and “few large costs” yields a total proportional to \(n\), not \(n \log n\).</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>What to remember.</strong> The linear bound comes from the distribution of subtree heights, not from a magical faster version of downheap.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-sort" data-track="sort">
+  <h2 class="section-title">Sorting and Inversions: Priority Queues as an Analysis Lens</h2>
+  <p class="section-lead">The tutorial links Week 6 back to earlier sorting ideas. Selection sort and insertion sort can both be seen through priority-queue trade-offs, and insertion sort's running time can be refined using the number of inversions rather than only the worst case.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Algorithm</th>
+          <th>Week 6 viewpoint</th>
+          <th>Cost lesson</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Selection sort</td>
+          <td>Like repeated <code>remove_min()</code> from an unsorted-sequence PQ</td>
+          <td>Cheap insertions, expensive removals.</td>
+        </tr>
+        <tr>
+          <td>Insertion sort</td>
+          <td>Like maintaining a sorted-sequence PQ as you go</td>
+          <td>Expensive insertions, cheap minimum exposure.</td>
+        </tr>
+        <tr>
+          <td>Insertion sort with inversions</td>
+          <td>Shifts correspond to “out of order” pairs</td>
+          <td>Runtime can be written as \(O(n + I)\), where \(I\) is the inversion count.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>The tutorial is training a useful reflex here: when an analysis looks too coarse, ask whether some structural property of the input, like inversions, gives a sharper cost description.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="If the input has few inversions, insertion sort performs only a small amount of shifting beyond the base linear scan, which is why the refined bound is O(n + I).">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What input-sensitive quantity lets the tutorial refine insertion sort's running time to \(O(n + I)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The heap height</div>
+      <div class="qc-opt" data-idx="1">The number of distinct keys only</div>
+      <div class="qc-opt" data-idx="2">The number of inversions in the input</div>
+      <div class="qc-opt" data-idx="3">The number of priority queues used</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tradeoffs" data-track="tradeoffs">
+  <h2 class="section-title">PQ Choice &amp; Heap Applications: Where the Structure Actually Gets Used</h2>
+  <p class="section-lead">The later tutorial problems move from raw heap mechanics to heap-driven algorithms. That is the signal that you should stop seeing heaps as isolated data structures and start seeing them as reusable “keep the best candidate ready” machines.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Problem pattern</th>
+          <th>Heap idea</th>
+          <th>Why it works</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Find the \(k\)-th smallest in \(O(n \log k)\)</td>
+          <td>Maintain only the most relevant \(k\) candidates in a heap</td>
+          <td>The structure prevents you from storing or sorting more than necessary.</td>
+        </tr>
+        <tr>
+          <td>Merge \(k\) sorted lists in \(O(mk \log k)\)</td>
+          <td>Keep one current head from each list in a min-heap</td>
+          <td>The next smallest overall item must be among those \(k\) heads.</td>
+        </tr>
+        <tr>
+          <td>Scheduling / event simulation / graph search</td>
+          <td>Repeatedly remove the next most urgent or smallest-key item</td>
+          <td>The ADT matches the algorithm's repeated decision pattern.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Choose the implementation that matches the operation mix. Use heaps when you need both dynamic insertion and repeated fast access to the current extreme element.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="The lecture's main selling point for heaps is balanced performance: both insertion and remove-min stay logarithmic instead of forcing one side of the workload to become linear.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is the main reason heaps are usually preferred over sorted or unsorted lists for general-purpose priority queues?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">They make every operation constant time</div>
+      <div class="qc-opt" data-idx="1">They keep both insertion and remove-min reasonably cheap</div>
+      <div class="qc-opt" data-idx="2">They are always easier to implement than arrays</div>
+      <div class="qc-opt" data-idx="3">They work only for integer keys</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">Quick checks</h2>
+  <p class="section-lead">The Week 6 foundations checks now sit directly under heap indexing, heap construction, and priority-queue application reasoning above so you can test each idea in context.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial PDF review</h2>
+  <p class="section-lead">Tutorial 6 mixes “run the structure by hand” questions with “use it inside a larger algorithm” questions. That combination is exactly what the week is trying to teach.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w6">Show review checklist</button>
+  <div class="solution-content" id="sol-w6">
+    <p><strong>Tutorial 6 checklist.</strong> You should be able to check whether an array is a valid heap, explain why bottom-up build-heap is linear, connect selection sort and insertion sort to priority-queue trade-offs, use a heap to find the \(k\)-th smallest or merge sorted lists, and explain why heaps are the right ADT for repeated “next best element” problems.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

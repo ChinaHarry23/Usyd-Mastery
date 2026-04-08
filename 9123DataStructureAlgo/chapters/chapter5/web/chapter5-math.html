@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 5</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter5-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 5 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-bst-proof" class="toc-link">Inorder proof</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-global" class="toc-link">Global BST checking</a></li>
+    <li><a href="#sec-m-structure" class="toc-link">Height &amp; node-count facts</a></li>
+  </ul>
+  <div class="toc-group">Exam triggers</div>
+  <ul>
+    <li><a href="#sec-m-augmentation" class="toc-link">Augmentation &amp; order statistics</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">Quick checks</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter5-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 5</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 5 foundations turn the BST and AVL stories into reusable proof templates: why inorder is sorted, why local checks are not enough for BST validation, how height relates to node count, and how augmentation turns a search tree into a statistics data structure.</p>
+    <div class="chip-list"><span>Inorder proofs</span><span>Validation counterexamples</span><span>Height bounds and augmentation</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-bst-proof" data-track="bst-proof">
+  <h2 class="section-title">Inorder Proof: Why BSTs Yield Sorted Output</h2>
+  <p class="section-lead">Tutorial 5 makes you prove the most famous BST fact: inorder traversal always returns keys in ascending order. The point is not just to memorise the claim. The point is to see how the recursive BST invariant becomes a recursive proof.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Assume the left subtree and right subtree already produce sorted inorder sequences. The BST property then guarantees every key in the left sequence is smaller than the root, and every key in the right sequence is larger than the root.</p>
+  </div>
+
+  <div class="algo-card">
+    <h3>The proof skeleton in one line</h3>
+    <pre class="code-block">inorder(T) = inorder(T_left), root, inorder(T_right)</pre>
+    <p>If both subtree outputs are sorted and all left keys are less than the root while all right keys are greater, then the concatenated whole is sorted as well.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>What the proof is really using:</strong> not just the traversal order, but the BST property plus induction on subtree height or tree size.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="The proof works because inorder places the root between the fully sorted left and right subtree outputs, and the BST property guarantees every left key is smaller while every right key is larger.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What extra fact, besides the left-node-right visit order, makes inorder output sorted on a BST?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">That rotations are constant time</div>
+      <div class="qc-opt" data-idx="1">That all left-subtree keys are smaller than the root and all right-subtree keys are larger</div>
+      <div class="qc-opt" data-idx="2">That AVL trees store heights</div>
+      <div class="qc-opt" data-idx="3">That the tree is complete</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-global" data-track="global">
+  <h2 class="section-title">Global BST Checking: Local Parent-Child Tests Are Not Enough</h2>
+  <p class="section-lead">One of the best tutorial questions gives a flawed BST-checking algorithm that compares each node only to its immediate children. That algorithm fails because BST correctness is global, not merely local.</p>
+
+  <div class="def-box">
+    <div class="def-label">Counterexample pattern</div>
+    <p>A node can sit in the right subtree of the root, pass every local parent-child comparison there, and still be smaller than the root, which violates the BST property.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Correct validation idea</h3>
+      <p>Carry a valid key interval down the recursion. Every node must fall within the range implied by all its ancestors, not just by its parent.</p>
+    </div>
+    <div class="col-card">
+      <h3>Related structural queries</h3>
+      <p>The tutorial's <code>largest()</code> and <code>second-largest()</code> problems rely on the same global reasoning: the rightmost path determines where the maximum lives, but the second largest needs case analysis about the maximum node's left subtree and parent.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="A node may satisfy the local comparison with its parent but still violate a key bound inherited from an ancestor. That is why full BST validation needs ancestor-imposed ranges.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Why can a BST checker that compares each node only with its immediate children still be wrong?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because inorder traversal is impossible to compute</div>
+      <div class="qc-opt" data-idx="1">Because every BST must also be an AVL tree</div>
+      <div class="qc-opt" data-idx="2">Because a node can violate an ancestor's bound even if it agrees with its parent</div>
+      <div class="qc-opt" data-idx="3">Because all BSTs must store duplicate keys</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-structure" data-track="structure">
+  <h2 class="section-title">Height &amp; Node-Count Facts: Why Balanced Trees Matter</h2>
+  <p class="section-lead">Tutorial 5 uses induction to make the height story precise. A binary tree of height \(h\) can hold at most \(2^h - 1\) internal nodes in the most compact case, so any BST with \(n\) internal nodes must have height at least \(\log_2 n\).</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Fact</th>
+          <th>Interpretation</th>
+          <th>Why Week 5 cares</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Maximum nodes at height \(h\)</td>
+          <td>\(2^h - 1\) for the fullest binary shape</td>
+          <td>This yields the lower bound \(h \ge \log_2 n\).</td>
+        </tr>
+        <tr>
+          <td>External nodes in a BST with \(n\) internal nodes</td>
+          <td>\(n + 1\)</td>
+          <td>Useful for reasoning about search endpoints and tree structure.</td>
+        </tr>
+        <tr>
+          <td>AVL minimum-size recurrence</td>
+          <td>Minimal AVL trees grow fast enough with height to force logarithmic height</td>
+          <td>This is the proof intuition behind AVL performance.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Performance translation:</strong> plain BSTs can have height anywhere between \(\Theta(\log n)\) and \(\Theta(n)\), while AVL trees are designed to stay in the logarithmic regime.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-m-augmentation" data-track="augmentation">
+  <h2 class="section-title">Augmentation &amp; Order Statistics: Make the Tree Answer Richer Queries</h2>
+  <p class="section-lead">The tutorial goes beyond search and update operations by asking for <code>median()</code>, rank-based sums, and efficient range deletion. The common pattern is augmentation: store small extra summaries at each node so that a root-to-leaf walk can answer much more than membership.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Query</th>
+          <th>Extra information needed</th>
+          <th>How it helps</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Median / select \(k\)-th smallest</td>
+          <td>Subtree size at each node</td>
+          <td>You can decide whether the target rank lies left, at the root, or right in \(O(1)\) work per level.</td>
+        </tr>
+        <tr>
+          <td>Rank sum</td>
+          <td>Subtree sizes plus subtree key sums</td>
+          <td>Prefix information accumulates during one guided descent.</td>
+        </tr>
+        <tr>
+          <td>Weighted median</td>
+          <td>Weight sums over subtrees</td>
+          <td>The root-to-leaf search is driven by cumulative weight instead of element count.</td>
+        </tr>
+        <tr>
+          <td>Remove all in \([k_1, k_2]\)</td>
+          <td>BST order plus careful bulk pruning</td>
+          <td>The target complexity \(O(h+s)\) comes from combining navigation with subtree removal.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Big design habit:</strong> when a query keeps asking about rank, count, sum, or weight, ask whether a small per-node summary field would let each recursive decision skip most of the tree.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="If each node stores the size of its subtree, then a select or median query can compare the target rank with the left-subtree size and move left, stop, or move right in one path down the tree.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which augmentation most directly supports finding the median of a BST in \(O(h)\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Store subtree size at each node</div>
+      <div class="qc-opt" data-idx="1">Store only the maximum key</div>
+      <div class="qc-opt" data-idx="2">Store each node's preorder index</div>
+      <div class="qc-opt" data-idx="3">Store whether the node is a leaf</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">Quick checks</h2>
+  <p class="section-lead">The Week 5 foundations checks now sit directly under the inorder proof, global-validation, and augmentation sections above so you can test each reasoning move where it first appears.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial PDF review</h2>
+  <p class="section-lead">Treat Tutorial 5 as the point where the course stops being satisfied with “I know the data structure” and starts asking “Can you prove it, debug it, and augment it?”</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w5">Show review checklist</button>
+  <div class="solution-content" id="sol-w5">
+    <p><strong>Tutorial 5 checklist.</strong> You should be comfortable proving inorder sortedness by induction, explaining why local child comparisons do not fully validate a BST, finding largest and second-largest in \(O(h)\), deriving the node-count and external-node facts, and explaining why subtree-size augmentation makes median or select queries possible in one root-to-leaf walk.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

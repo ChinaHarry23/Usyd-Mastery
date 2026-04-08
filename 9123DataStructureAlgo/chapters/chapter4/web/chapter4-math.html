@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 4</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter4-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 4 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-induction" class="toc-link">Induction for tree problems</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-counting" class="toc-link">Counting facts &amp; bounds</a></li>
+  </ul>
+  <div class="toc-group">Exam triggers</div>
+  <ul>
+    <li><a href="#sec-m-recursion" class="toc-link">Linear-time tree algorithms</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">Quick checks</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter4-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 4</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 4 foundations sharpen the mathematical side of trees: how induction supports recursive claims, which structural facts are worth memorising, and how to recognise when a tree algorithm is truly linear.</p>
+    <div class="chip-list"><span>Induction refresh</span><span>Tree counting facts</span><span>Tutorial 4 problem-solving patterns</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-induction" data-track="induction">
+  <h2 class="section-title">Induction for Tree Problems</h2>
+  <p class="section-lead">Tutorial 4 opens by reminding you that induction is not optional background material. Recursive data structures and recursive algorithms almost force you to reason inductively.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>Prove the claim for the smallest relevant case, then show that if it holds for smaller instances, it also holds for the next one. For trees, the “smaller instance” is often a subtree or a smaller height.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Tutorial setting</th>
+          <th>Natural induction object</th>
+          <th>Why it fits</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>\(\sum_{i=0}^{n} 2^i = 2^{n+1} - 1\)</td>
+          <td>Integer \(n\)</td>
+          <td>The claim is indexed by input size, so ordinary induction is natural.</td>
+        </tr>
+        <tr>
+          <td>Fibonacci bound \(F(n) &lt; 2^n\)</td>
+          <td>Integer \(n\)</td>
+          <td>The recurrence already relates the current case to smaller cases.</td>
+        </tr>
+        <tr>
+          <td>Traversal correctness on trees</td>
+          <td>Subtree or height</td>
+          <td>The parent result is built from claims about smaller child subtrees.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Useful translation:</strong> when your code says “assume the recursive call works on each child,” the proof version says “assume the claim holds for each smaller subtree.” Those are the same structural idea in different languages.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="An induction proof needs both a verified starting point and a rule showing how correctness extends from smaller cases to the next case.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which pair of ingredients must every valid induction proof provide?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">A recursion stack and a queue</div>
+      <div class="qc-opt" data-idx="1">A diagram and a contradiction</div>
+      <div class="qc-opt" data-idx="2">A base case and an induction step</div>
+      <div class="qc-opt" data-idx="3">A left subtree and a right subtree</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-counting" data-track="counting">
+  <h2 class="section-title">Counting Facts &amp; Binary-Tree Bounds</h2>
+  <p class="section-lead">A few structural facts show up over and over in later design and analysis questions. These are worth knowing cold because they convert a vague tree question into a short derivation.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Fact</th>
+          <th>What it tells you</th>
+          <th>How it is used</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A tree on \(n\) nodes has \(n-1\) edges</td>
+          <td>Trees are connected but cycle-free.</td>
+          <td>Useful whenever the question shifts between counting nodes and counting links.</td>
+        </tr>
+        <tr>
+          <td>A binary tree of height \(h\) has at most \(2^{h+1}-1\) nodes</td>
+          <td>Each level can at most double.</td>
+          <td>Connects height to maximum capacity.</td>
+        </tr>
+        <tr>
+          <td>In a proper binary tree, leaves = internal nodes + 1</td>
+          <td>Full branching creates a tight structural relation.</td>
+          <td>Appears in proof and counting questions about binary shapes.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Why the height bound matters:</strong> if the number of nodes can grow exponentially with height, then balanced trees can keep height logarithmic in the number of stored elements.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="Every tree is connected and acyclic, and that combination forces the number of edges to be exactly one less than the number of nodes.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">How many edges does any tree with \(n\) nodes have?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(n - 1\)</div>
+      <div class="qc-opt" data-idx="1">\(n\)</div>
+      <div class="qc-opt" data-idx="2">\(2n\)</div>
+      <div class="qc-opt" data-idx="3">\(\lfloor \log_2 n \rfloor\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-recursion" data-track="recursion">
+  <h2 class="section-title">Linear-Time Tree Algorithms: What the Tutorial Is Really Training</h2>
+  <p class="section-lead">Most of Tutorial 4 is not about memorising one solution. It is about recognising the recurring pattern behind tree algorithms: compute something for the children, then use those results to answer the question for the parent.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>If your recursive method touches each node a constant number of times and does only constant extra work at that node, the overall running time is linear in the number of nodes.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Tutorial problem</th>
+          <th>Right structural move</th>
+          <th>Complexity intuition</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Subtree size for every node</td>
+          <td>Postorder combine of child sizes</td>
+          <td>Each node is processed once, so total work is \(O(n)\).</td>
+        </tr>
+        <tr>
+          <td>Visit nodes at level \(k\)</td>
+          <td>Traverse while tracking current depth and respecting left-to-right order</td>
+          <td>One pass over the tree is enough, so \(O(n)\) is achievable.</td>
+        </tr>
+        <tr>
+          <td>Balance factor for every node</td>
+          <td>Compute subtree heights bottom-up</td>
+          <td>Reusing child heights prevents repeated recomputation.</td>
+        </tr>
+        <tr>
+          <td>Diameter of a tree</td>
+          <td>Aggregate depth-like information upward</td>
+          <td>The strongest solutions avoid recomputing heights from scratch at each node.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week4-linear">
+      <span class="toggle-icon">&#9654;</span> Why a full traversal with constant local work is \(O(n)\)
+    </button>
+    <div class="proof-content" id="proof-week4-linear">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Associate one small unit of work with each node when the traversal reaches it.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>Observe that preorder, postorder, and similar recursive traversals visit each node a bounded number of times.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Summing constant work over \(n\) nodes gives \(O(n)\) total time.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Slide 55 takeaway.</strong> If the recursion follows all children, think \(O(n)\). If it follows at most one child per level, think \(O(\text{height})\).
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="A traversal that processes every node once and performs only constant extra work per node scales linearly with the number of nodes.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">A recursive tree algorithm visits every node once and does only \(O(1)\) extra work at each node. What is its total running time?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(O(\log n)\)</div>
+      <div class="qc-opt" data-idx="1">\(O(n)\)</div>
+      <div class="qc-opt" data-idx="2">\(O(n^2)\)</div>
+      <div class="qc-opt" data-idx="3">\(O(2^n)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">Quick checks</h2>
+  <p class="section-lead">The Week 4 foundations checks now sit directly under induction, counting, and linear-time reasoning above so you can test each proof move immediately after reading it.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial PDF review</h2>
+  <p class="section-lead">Use the tutorial sheet after the study guide when you want to move from recognition to construction. The best self-test is whether you can design the algorithm before reading any solution.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w4">Show review checklist</button>
+  <div class="solution-content" id="sol-w4">
+    <p><strong>Checklist for Tutorial 4.</strong> You should be able to explain how induction proves the warm-up claims, build preorder or postorder realisations of an array, compute subtree sizes in one bottom-up pass, visit a requested level in natural left-to-right order, reason about preorder successor without building the full traversal, and explain why balance factor or diameter questions reward bottom-up aggregation.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

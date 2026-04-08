@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Hub — COMP9123</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../shared/quiz-hub.css">
+<link rel="stylesheet" href="../../shared/chat-panel.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <a href="../index.html">Home</a>
+  <a href="knowledge-graph.html">Graph</a>
+  <a href="flashcards.html">Cards</a>
+  <span class="nav-title">Quiz Hub</span>
+  <span class="nav-spacer"></span>
+</nav>
+
+<div class="config-panel">
+  <div class="config-toggle open" id="configToggle">
+    <span class="cfg-icon">&#x2699;</span>
+    <span class="cfg-label" id="lbl-configure">Configure Quiz</span>
+    <span class="cfg-summary" id="cfgSummary"></span>
+    <span class="cfg-arrow">&#x25BC;</span>
+  </div>
+  <div class="config-body show" id="configBody">
+    <div class="config-grid">
+      <div class="cfg-card" style="grid-column: 1 / -1;">
+        <h4 id="lbl-chapters">Chapters</h4>
+        <div class="ch-chips" id="chChips">
+          <button class="ch-chip-action" id="btnAllCh">All</button>
+          <button class="ch-chip-action" id="btnNoneCh">None</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4 id="lbl-type">Quiz Type</h4>
+        <div class="seg-ctrl" id="typeFilters">
+          <button class="seg-btn active" data-type="all" id="btnTypeAll">All</button>
+          <button class="seg-btn" data-type="study" id="btnTypeStudy">Study</button>
+          <button class="seg-btn" data-type="math" id="btnTypeMath">Math</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4 id="lbl-mode">Mode</h4>
+        <div class="seg-ctrl">
+          <button class="seg-btn active" data-mode="practice" id="btnPractice">Practice</button>
+          <button class="seg-btn" data-mode="exam" id="btnExam">Exam</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4>Options</h4>
+        <label class="toggle-row">
+          <span class="toggle-label" id="lbl-shuffle">Shuffle Questions</span>
+          <input type="checkbox" id="chkShuffle"><span class="toggle-switch"></span>
+        </label>
+        <label class="toggle-row">
+          <span class="toggle-label" id="lbl-only-missed">Only missed questions</span>
+          <input type="checkbox" id="chkOnlyMissed"><span class="toggle-switch"></span>
+        </label>
+      </div>
+      <div class="cfg-card">
+        <h4 id="lbl-missed-title">Missed Stack</h4>
+        <div style="display:flex;align-items:baseline;gap:0.4rem;margin-bottom:0.4rem;">
+          <span style="font-size:1.6rem;font-weight:800;color:var(--yellow);font-family:var(--mono);" id="missedCount">0</span>
+          <span style="font-size:0.78rem;color:var(--text-dim);" id="lbl-missed-in-stack">in stack</span>
+        </div>
+        <p style="font-size:0.72rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.6rem;" id="missed-hint">Wrong answers are added. Two consecutive correct answers remove a question.</p>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          <button class="btn btn-warn btn-sm" id="btnReviewMissed" disabled>Review missed</button>
+          <button class="btn btn-ghost btn-sm" id="btnClearMissed">Clear stack</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card score-stat">
+      <div class="stat-value" id="scoreDisplay" style="color:var(--accent);">0 / 0</div>
+      <div class="stat-label" id="lbl-score">Score</div>
+    </div>
+    <div class="stat-card progress-stat">
+      <div class="stat-value" id="pctDisplay" style="color:var(--green);">0%</div>
+      <div class="stat-label">Correct</div>
+    </div>
+    <div class="stat-card missed-stat">
+      <div class="stat-value" id="missedDisplay" style="color:var(--yellow);">0</div>
+      <div class="stat-label">Missed</div>
+    </div>
+  </div>
+  <div class="action-row" style="margin-bottom:1.5rem;">
+    <button class="btn btn-primary" id="btnStart">Start Quiz</button>
+    <button class="btn btn-ghost" id="btnReset">Reset</button>
+  </div>
+</div>
+
+<div class="quiz-wrapper" id="mainArea">
+  <div class="empty-hero" id="emptyState">
+    <span class="empty-icon">&#x1F9E0;</span>
+    <h2 id="empty-title">Ready to test your knowledge?</h2>
+    <p id="empty-desc">Configure your quiz above, then hit <strong>Start Quiz</strong>. 50 questions across 10 weeks.</p>
+    <div class="kbd-hints">
+      <span class="kbd"><kbd>1</kbd>–<kbd>4</kbd> Select option</span>
+      <span class="kbd"><kbd>&#x2190;</kbd><kbd>&#x2192;</kbd> Navigate</span>
+    </div>
+  </div>
+  <div id="quizContainer" style="display:none;"></div>
+  <div id="resultsContainer" style="display:none;"></div>
+</div>
+
+<script src="../data/quiz-data-extract.js"></script>
+<script>
+window.QUIZ_CONFIG = {
+  courseCode: "comp9123",
+  numChapters: 10,
+  totalQuestions: 50,
+  progressKey: "comp9123_progress",
+  chapterNames: {
+    1: "Intro & analysis", 2: "Lists", 3: "Stacks / queues / lists", 4: "Trees",
+    5: "BST / AVL", 6: "Maps / heaps", 7: "Hashing", 8: "Graphs",
+    9: "Graph algorithms", 10: "Greedy",
+  },
+};
+</script>
+<script src="../../shared/quiz-hub.js"></script>
+<script src="../../shared/chat-panel.js"></script>
+</body>
+</html>

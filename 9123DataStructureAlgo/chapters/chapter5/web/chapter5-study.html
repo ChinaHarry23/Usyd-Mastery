@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 5 — Binary Search Trees & AVL Trees</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 5</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-bst" class="nav-link" data-section="sec-bst">BST Property</a></li>
+    <li><a href="#sec-search" class="nav-link" data-section="sec-search">Search Paths</a></li>
+    <li><a href="#sec-delete" class="nav-link" data-section="sec-delete">Insert &amp; Delete</a></li>
+    <li><a href="#sec-range" class="nav-link" data-section="sec-range">Range Queries</a></li>
+    <li><a href="#sec-avl" class="nav-link" data-section="sec-avl">AVL Motivation</a></li>
+    <li><a href="#sec-rotation" class="nav-link" data-section="sec-rotation">Rotations &amp; Rebalancing</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial &amp; Code</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter5-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter5-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=5" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=5&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 5: Binary Search Trees &amp; AVL Trees</h1>
+    <p class="hero-subtitle">Week 5 adds order to binary trees and turns them into search structures. The lecture first teaches the BST invariant and the path-based logic behind search, insert, delete, and range queries. Then it makes the deeper point: order alone is not enough, because performance is really controlled by height, which is why AVL balancing matters.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#127795;</span>
+        <span>BST = binary tree + global key-order invariant</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128269;</span>
+        <span>Search and insert follow one root-to-leaf path</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128206;</span>
+        <span>Range queries prune whole subtrees</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128260;</span>
+        <span>AVL rotations repair height before it gets expensive</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Lecture content from slide 13 onward</span>
+      <span>BST operations first, AVL guarantee second</span>
+      <span>Tutorial 5 goes beyond basics into proofs and augmentation</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter5-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter5-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+      <p style="font-size:0.84rem; color:rgba(var(--sidebar-text-rgb),0.68); margin-top:0.7rem;">The central Week 5 lesson is that correctness and speed come from different invariants: BST order gives correct search, while AVL balance keeps that search logarithmic.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-bst" class="section" data-track="bst">
+  <h2 class="section-title">BST Property: Why Inorder Suddenly Becomes Powerful</h2>
+  <p class="section-lead">A binary search tree is not just a binary tree that happens to hold keys. It is a binary tree whose structure must obey a global order rule: every key in the left subtree is smaller than the node, and every key in the right subtree is larger.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Idea</th>
+          <th>What it means</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Left subtree</td>
+          <td>All keys are strictly smaller than the current node's key.</td>
+          <td>One comparison is enough to rule out the whole right side.</td>
+        </tr>
+        <tr>
+          <td>Right subtree</td>
+          <td>All keys are strictly larger than the current node's key.</td>
+          <td>One comparison is enough to rule out the whole left side.</td>
+        </tr>
+        <tr>
+          <td>Recursive property</td>
+          <td>Both subtrees must themselves be BSTs.</td>
+          <td>The invariant holds at every scale, not just near the root.</td>
+        </tr>
+        <tr>
+          <td>Inorder traversal</td>
+          <td>Visit left subtree, node, right subtree.</td>
+          <td>This yields keys in increasing order, which is the signature proof fact for BSTs.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Internal vs external nodes</h3>
+      <p>The slides simplify the implementation by storing keys only at internal nodes. External positions act like search endpoints where insertion can happen.</p>
+    </div>
+    <div class="col-card">
+      <h3>Global, not local</h3>
+      <p>The BST property is stronger than “left child smaller, right child larger.” Every node in the full left subtree must be smaller, and every node in the full right subtree must be larger.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="Inorder visits left subtree, then node, then right subtree, so the BST ordering invariant makes the produced sequence sorted.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which traversal of a BST naturally produces the keys in ascending order?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Preorder</div>
+      <div class="qc-opt" data-idx="1">Postorder</div>
+      <div class="qc-opt" data-idx="2">Inorder</div>
+      <div class="qc-opt" data-idx="3">Level order only</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-search" class="section" data-track="search">
+  <h2 class="section-title">Search Paths: Almost Everything Is a Guided Walk Downward</h2>
+  <p class="section-lead">Once the keys are arranged by order, the core BST operations stop looking like scans. Search is just repeated comparison followed by a left or right decision, so the algorithm follows a single root-to-leaf path instead of touching every node.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>If the target is smaller</h3>
+      <p>Go left. The entire right subtree is guaranteed to be too large to contain the key.</p>
+    </div>
+    <div class="glance-card">
+      <h3>If the target is larger</h3>
+      <p>Go right. The entire left subtree is guaranteed to be too small to contain the key.</p>
+    </div>
+    <div class="glance-card">
+      <h3>If the target matches</h3>
+      <p>Stop. The order invariant means you have found the unique correct position for that key.</p>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>The real runtime story of BST search</h3>
+    <pre class="code-block">def search(k, v):
+    if v is external:
+        return v
+    if k == key(v):
+        return v
+    if k < key(v):
+        return search(k, v.left)
+    return search(k, v.right)</pre>
+    <p>Search time is \(O(h)\), where \(h\) is the height of the tree. That is the key phrase for Week 5. The operation is efficient only if the tree stays shallow.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Professor lens:</strong> do not say BST search is \(O(\log n)\) by default. The correct statement is \(O(h)\), which becomes \(O(\log n)\) only when the tree is balanced well enough.</p>
+  </div>
+</section>
+
+<section id="sec-delete" class="section" data-track="delete">
+  <h2 class="section-title">Insert &amp; Delete: Preserving Order While the Shape Changes</h2>
+  <p class="section-lead">Insertion is conceptually simple because it is just search followed by expansion at the correct external position. Deletion is where the BST invariant starts to feel more delicate, because removing a node can disturb the shape in several different ways.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Operation case</th>
+          <th>What happens</th>
+          <th>Why order is preserved</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Insert key \(k\)</td>
+          <td>Search until the correct external position is reached, then create the new internal node there.</td>
+          <td>The search path guarantees that every ancestor still sees the new key on the correct side.</td>
+        </tr>
+        <tr>
+          <td>Delete with zero or one internal child</td>
+          <td>Remove the node and promote its remaining child.</td>
+          <td>The promoted subtree already fits the same key interval.</td>
+        </tr>
+        <tr>
+          <td>Delete with two internal children</td>
+          <td>Replace the node with its inorder successor from the right subtree, then delete that successor.</td>
+          <td>The successor is the next larger key, so sorted order is preserved.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week5-delete">
+      <span class="toggle-icon">&#9654;</span> Why the inorder successor is the right replacement in the two-child case
+    </button>
+    <div class="proof-content" id="proof-week5-delete">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>The inorder successor is the smallest key in the deleted node's right subtree.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>So it is larger than every key in the left subtree, but no larger than any other key that remains on the right.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Replacing the deleted key with that successor keeps the inorder sequence sorted.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>What to remember.</strong> The successor trick works because it replaces the deleted node with the next key in sorted order, not an arbitrary key from the right subtree.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>Week 5 repeatedly returns to one sentence: search, insert, and delete all take \(O(h)\), so the real performance question is not which of those operations you choose but what the height becomes.</p>
+  </div>
+</section>
+
+<section id="sec-range" class="section" data-track="range">
+  <h2 class="section-title">Range Queries: Using Order to Skip Whole Subtrees</h2>
+  <p class="section-lead">Range search is where BST structure starts paying off beyond single-key lookup. Instead of checking every key against an interval \([k_1, k_2]\), the algorithm uses the BST invariant to prune large parts of the tree instantly.</p>
+
+  <div class="algo-card">
+    <h3>The pruning idea in one block of pseudocode</h3>
+    <pre class="code-block">def range(v, k1, k2):
+    if v is external:
+        return
+    if key(v) > k2:
+        range(v.left, k1, k2)
+    elif key(v) < k1:
+        range(v.right, k1, k2)
+    else:
+        range(v.left, k1, k2)
+        output.add(v)
+        range(v.right, k1, k2)</pre>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>If the current key is...</th>
+          <th>What you can conclude</th>
+          <th>What subtree can be skipped</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Greater than \(k_2\)</td>
+          <td>Everything in the right subtree is also too large.</td>
+          <td>Skip the whole right subtree.</td>
+        </tr>
+        <tr>
+          <td>Smaller than \(k_1\)</td>
+          <td>Everything in the left subtree is also too small.</td>
+          <td>Skip the whole left subtree.</td>
+        </tr>
+        <tr>
+          <td>Inside \([k_1, k_2]\)</td>
+          <td>The current key belongs in the answer.</td>
+          <td>Neither side is immediately skippable, so recurse both ways.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Why this is better than scanning:</strong> the BST invariant turns “not in range” into a structural argument about entire subtrees, not just the current node.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="If the current key is already below the lower bound, then every key in the left subtree is even smaller, so only the right subtree can still contain valid answers.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">During a BST range query for \([k_1, k_2]\), if the current node's key is less than \(k_1\), which side can still contain useful keys?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Only the left subtree</div>
+      <div class="qc-opt" data-idx="1">Only the right subtree</div>
+      <div class="qc-opt" data-idx="2">Neither subtree</div>
+      <div class="qc-opt" data-idx="3">Both subtrees equally</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-avl" class="section" data-track="avl">
+  <h2 class="section-title">AVL Motivation: BST Correctness Is Not Yet a Performance Guarantee</h2>
+  <p class="section-lead">A plain BST can still collapse into a chain, which means height can become \(n-1\) and all the elegant \(O(h)\) operations quietly become linear. AVL trees are the course's answer to that problem: keep the search-tree invariant, but add a balance condition strong enough to force logarithmic height.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>What AVL stores</h3>
+      <p>Each node tracks the height of its subtree, so local balance can be checked without recomputing height from scratch.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Balance condition</h3>
+      <p>The heights of the two child subtrees of every internal node differ by at most 1.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Payoff</h3>
+      <p>If the tree stores \(n\) keys, its height stays \(O(\log n)\), so search, insertion, and deletion stay logarithmic as well.</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Slide 78's key implementation lesson:</strong> height must be maintained incrementally. If you recompute subtree heights from scratch after every update, the balancing overhead would destroy the efficiency you were trying to protect.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>The conceptual split:</strong> BST order tells you where a key belongs. AVL balance tells you the root-to-key path will stay short enough for that search to be fast.</p>
+  </div>
+</section>
+
+<section id="sec-rotation" class="section" data-track="rotation">
+  <h2 class="section-title">Rotations &amp; Rebalancing: Repair the Shape Without Breaking the Order</h2>
+  <p class="section-lead">AVL repair starts after an ordinary BST insertion or deletion. You walk upward, find the first ancestor whose child heights differ by 2, then use the \(x,y,z\) trinode pattern to restructure that local region.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Find \(z\)</h3>
+      <p>\(z\) is the lowest ancestor that has become unbalanced.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Find \(y\)</h3>
+      <p>\(y\) is the taller child of \(z\).</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Find \(x\)</h3>
+      <p>\(x\) is the child of \(y\) that lies on the heavy path.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Heavy pattern</th>
+          <th>Shape intuition</th>
+          <th>Repair</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>LL</td>
+          <td>Outer-heavy on the left</td>
+          <td>Single right rotation</td>
+        </tr>
+        <tr>
+          <td>RR</td>
+          <td>Outer-heavy on the right</td>
+          <td>Single left rotation</td>
+        </tr>
+        <tr>
+          <td>LR</td>
+          <td>Inner-heavy: left then right</td>
+          <td>Double rotation</td>
+        </tr>
+        <tr>
+          <td>RL</td>
+          <td>Inner-heavy: right then left</td>
+          <td>Double rotation</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week5-rotation">
+      <span class="toggle-icon">&#9654;</span> Why a rotation does not destroy BST order
+    </button>
+    <div class="proof-content" id="proof-week5-rotation">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>The affected region can be described as three ordered nodes \(a,b,c\) with four ordered subtrees \(T_0,T_1,T_2,T_3\).</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>Restructuring changes only which of \(a,b,c\) sits on top; it does not change the inorder left-to-right order of the subtrees.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>So the tree becomes shorter locally while the search-tree ordering stays intact.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Deletion detail.</strong> After deletion, fixing one imbalance may expose another higher up, so the lecture keeps checking ancestors all the way to the root.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="3" data-explanation="An inner-heavy pattern such as left-right or right-left cannot be fixed by a single outer rotation; it needs a double rotation to bring the middle key to the top.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">If the imbalance pattern is left-right or right-left, what kind of repair is needed?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">No rotation at all</div>
+      <div class="qc-opt" data-idx="1">Single rotation only</div>
+      <div class="qc-opt" data-idx="2">Full tree rebuild</div>
+      <div class="qc-opt" data-idx="3">Double rotation</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial &amp; Code: The Course Starts Asking Design Questions</h2>
+  <p class="section-lead">Tutorial 5 does more than rehearse BST operations. It asks you to prove inorder sortedness, spot flawed BST validation logic, find largest and second-largest keys in \(O(h)\), support median with subtree-size augmentation, and reason about range deletion in \(O(h+s)\).</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Tutorial / code item</th>
+          <th>Main idea it is testing</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Problem 2</td>
+          <td>Inorder traversal of a BST is sorted</td>
+          <td>This is the proof fact behind many BST arguments.</td>
+        </tr>
+        <tr>
+          <td>Problem 6</td>
+          <td>Local child comparisons are not enough to validate a BST</td>
+          <td>You must reason with key ranges, not just immediate edges.</td>
+        </tr>
+        <tr>
+          <td>Problems 7 and 8</td>
+          <td>Largest / second-largest in \(O(h)\)</td>
+          <td>Good practice in structural case analysis.</td>
+        </tr>
+        <tr>
+          <td>Problems 9 and 10</td>
+          <td>Augmentation and range deletion</td>
+          <td>The course starts turning trees into query data structures, not just storage shapes.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-card">
+    <h3>What the AVL code skeleton is really about</h3>
+    <pre class="code-block">class AVL(Generic[T]):
+    def restructure(self, p):
+        # restore local balance
+
+    def search(self, k, p):
+        # follow one path based on comparisons
+
+    def insert(self, k):
+        # BST insert first, then rebalance
+
+    def remove(self, k):
+        # BST remove first, then rebalance
+
+    def range_search(self, lower, upper):
+        # prune by interval using BST order</pre>
+    <p>The skeleton is reinforcing the lecture's main architecture: order controls navigation, metadata controls balance, and rotations are the local repair mechanism.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Best Week 5 checkpoint:</strong> you should be able to explain why a correct BST can still be slow, and why an AVL tree fixes that without changing the fundamental search-tree ordering.</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; Revision Targets</h2>
+  <p class="section-lead">Use mixed practice only after you can already explain the two central invariants in plain language: BST order and AVL balance. If those are fuzzy, the algorithm details will keep feeling arbitrary.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>You should be able to explain</h3>
+      <p>Why inorder of a BST is sorted, and why search, insert, and delete are path-based rather than full scans.</p>
+    </div>
+    <div class="glance-card">
+      <h3>You should be able to distinguish</h3>
+      <p>BST correctness from AVL performance guarantees, and single from double rotation cases.</p>
+    </div>
+    <div class="glance-card">
+      <h3>You should be able to design</h3>
+      <p>A range-search or augmented-BST method that uses the invariant to skip work instead of brute-forcing the whole tree.</p>
+    </div>
+  </div>
+
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=5" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=5&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+
+  <div class="callout">
+    <p><strong>Suggested sequence:</strong> finish the foundations page next for the proof toolkit, then come back for mixed practice once the logic behind rotations, inorder, and subtree-size augmentation feels stable.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

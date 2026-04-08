@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6 — Maps, Priority Queues & Heaps</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 6</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-map" class="nav-link" data-section="sec-map">Map ADT</a></li>
+    <li><a href="#sec-sorted" class="nav-link" data-section="sec-sorted">Sorted Maps</a></li>
+    <li><a href="#sec-pq" class="nav-link" data-section="sec-pq">Priority Queue ADT</a></li>
+    <li><a href="#sec-sequence" class="nav-link" data-section="sec-sequence">Sequence Trade-offs</a></li>
+    <li><a href="#sec-heap" class="nav-link" data-section="sec-heap">Heap Structure</a></li>
+    <li><a href="#sec-array" class="nav-link" data-section="sec-array">Array Heaps</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial &amp; Code</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter6-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter6-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=6" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=6&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 6: Maps, Priority Queues &amp; Heaps</h1>
+    <p class="hero-subtitle">Week 6 compares abstract data types by what operations they promise, not by how they happen to be implemented. The lecture first frames maps as key-value storage, then narrows the interface to priority queues, and finally shows that heaps are the right structural compromise when you want fast inserts and fast remove-min together.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128451;</span>
+        <span>Map = retrieve or update by key</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#11015;</span>
+        <span>Priority queue = repeatedly expose the smallest key</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#127807;</span>
+        <span>Heap = complete tree plus local order</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128290;</span>
+        <span>Upheap and downheap repair order in logarithmic time</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Map ADT and sorted-map extras</span>
+      <span>Sequence PQ trade-offs via sorting analogies</span>
+      <span>Heap arrays and build-heap intuition</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter6-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter6-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+      <p style="font-size:0.84rem; color:rgba(var(--sidebar-text-rgb),0.68); margin-top:0.7rem;">The big Week 6 question is not “what is a heap?” but “what workload are we optimizing for, and which invariants buy that speed?”</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-map" class="section" data-track="map">
+  <h2 class="section-title">Map ADT: Key-Value Access as an Interface, Not a Structure</h2>
+  <p class="section-lead">The lecture begins with the map ADT because it separates what users want from how the data is stored. A map promises lookup, insertion, replacement, and removal by key. It does not yet commit to lists, trees, hashes, or anything else.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Map operation</th>
+          <th>Meaning</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>get(k)</code></td>
+          <td>Return the value associated with key <code>k</code> if it exists.</td>
+          <td>The ADT is centered on key-based retrieval.</td>
+        </tr>
+        <tr>
+          <td><code>put(k, v)</code></td>
+          <td>Insert a new key-value pair or replace the old value for the same key.</td>
+          <td>Maps combine lookup and update in the same abstraction.</td>
+        </tr>
+        <tr>
+          <td><code>remove(k)</code></td>
+          <td>Delete the entry with key <code>k</code> if present.</td>
+          <td>The structure must support dynamic change, not just search.</td>
+        </tr>
+        <tr>
+          <td><code>entrySet()</code>, <code>keySet()</code>, <code>values()</code></td>
+          <td>Iterate through stored associations.</td>
+          <td>The lecture is reminding you that a map is also a collection, not only a query interface.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Unsorted list map</h3>
+      <p>Very cheap to append or insert, but expensive for repeated key lookups because the whole list may need to be scanned.</p>
+    </div>
+    <div class="glance-card">
+      <h3>When it is still useful</h3>
+      <p>The slides explicitly call out small maps or append-heavy scenarios like logs, where fast insertion matters more than fast search.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why the ADT framing matters</h3>
+      <p>Next week, hashing will be another map implementation. The abstraction lets you compare them fairly.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="The map ADT is defined by key-based retrieval and update operations. The implementation can be a list, tree, hash table, or something else.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What is the best reason the lecture starts with the map ADT instead of jumping straight to one structure?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because maps can only be implemented with lists</div>
+      <div class="qc-opt" data-idx="1">Because the ADT describes required behavior independently of the implementation</div>
+      <div class="qc-opt" data-idx="2">Because maps never support deletion</div>
+      <div class="qc-opt" data-idx="3">Because maps are always sorted</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-sorted" class="section" data-track="sorted">
+  <h2 class="section-title">Sorted Maps: Extra Order Gives Extra Queries</h2>
+  <p class="section-lead">A plain map only cares about matching a key exactly. A sorted map does more because the keys live in a total order. That extra structure unlocks operations like first key, last key, floor, ceiling, predecessor, successor, and submap queries.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Sorted-map method</th>
+          <th>Question it answers</th>
+          <th>What plain unsorted maps cannot do efficiently</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>firstEntry()</code>, <code>lastEntry()</code></td>
+          <td>What is the smallest or largest stored key?</td>
+          <td>Without order, you'd need a full scan.</td>
+        </tr>
+        <tr>
+          <td><code>floorEntry(k)</code>, <code>ceilingEntry(k)</code></td>
+          <td>Which key is just below or just above the target?</td>
+          <td>These are inherently order-based queries.</td>
+        </tr>
+        <tr>
+          <td><code>subMap(k1, k2)</code></td>
+          <td>Which entries lie inside a key interval?</td>
+          <td>This is the map analogue of BST range queries.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>The lecture uses AVL trees as the natural sorted-map implementation because Week 5 already gave you logarithmic search on ordered keys. Week 6 is connecting that older tree material to a more general ADT story.</p>
+  </div>
+</section>
+
+<section id="sec-pq" class="section" data-track="pq">
+  <h2 class="section-title">Priority Queue ADT: Deliberately Less General Than a Map</h2>
+  <p class="section-lead">A priority queue also stores key-value items, but the interface is much narrower. You are not allowed arbitrary key lookup. The only privileged key is the smallest one, because many algorithms only ever need “give me the next most urgent item.”</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Priority-queue operation</th>
+          <th>Meaning</th>
+          <th>Algorithmic use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>insert(k, v)</code></td>
+          <td>Add a new item with priority key <code>k</code>.</td>
+          <td>Tasks, events, candidates, and frontier nodes enter dynamically.</td>
+        </tr>
+        <tr>
+          <td><code>min()</code></td>
+          <td>Peek at the smallest key without removing it.</td>
+          <td>Useful when you need to inspect the current best choice.</td>
+        </tr>
+        <tr>
+          <td><code>remove_min()</code></td>
+          <td>Remove and return the smallest-key item.</td>
+          <td>This is the central operation in greedy methods and shortest-path algorithms.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why the restriction is useful</h3>
+      <p>By promising only what many algorithms actually need, the structure can be optimized around that one extreme element instead of arbitrary search.</p>
+    </div>
+    <div class="col-card">
+      <h3>Lecture application</h3>
+      <p>The stock-matching example uses two priority queues at once: one for best buy offers and one for best sell offers.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Professor lens:</strong> good ADT design often means refusing to promise operations you do not need. A priority queue is powerful precisely because it is narrower than a full map.</p>
+  </div>
+</section>
+
+<section id="sec-sequence" class="section" data-track="sequence">
+  <h2 class="section-title">Sequence Trade-offs: Unsorted List, Sorted List, and the Sorting Analogy</h2>
+  <p class="section-lead">Before heaps appear, the lecture compares two simple sequence implementations of a priority queue. This is not filler. It trains the exact design instinct the heap is supposed to solve.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Implementation</th>
+          <th>Insert</th>
+          <th><code>min()</code> / <code>remove_min()</code></th>
+          <th>Best when...</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Unsorted list</td>
+          <td>\(O(1)\)</td>
+          <td>\(O(n)\)</td>
+          <td>You insert constantly and rarely remove the minimum.</td>
+        </tr>
+        <tr>
+          <td>Sorted list</td>
+          <td>\(O(n)\)</td>
+          <td>\(O(1)\)</td>
+          <td>You want the smallest item ready immediately.</td>
+        </tr>
+        <tr>
+          <td>Heap</td>
+          <td>\(O(\log n)\)</td>
+          <td>\(O(\log n)\) for <code>remove_min()</code></td>
+          <td>You want neither side of the trade-off to become terrible.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Selection-sort viewpoint</h3>
+      <p>An unsorted-list priority queue mirrors the logic of selection sort: cheap insertion, expensive repeated extract-min.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Insertion-sort viewpoint</h3>
+      <p>A sorted-list priority queue mirrors insertion sort: expensive insertion into a maintained order, cheap removal from the front.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why this matters</h3>
+      <p>The heap will be introduced as the balanced middle ground rather than a magical totally-best structure.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="If you keep the whole sequence sorted, the minimum is always at the front, so peeking or removing it is immediate while insertion pays the ordering cost.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which implementation makes <code>min()</code> and <code>remove_min()</code> cheap by paying the price during insertion?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Unsorted list</div>
+      <div class="qc-opt" data-idx="1">Array-backed map</div>
+      <div class="qc-opt" data-idx="2">Sorted list</div>
+      <div class="qc-opt" data-idx="3">Randomized BST</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-heap" class="section" data-track="heap">
+  <h2 class="section-title">Heap Structure: The Right Local Invariants for Global Remove-Min</h2>
+  <p class="section-lead">A min-heap is defined by two invariants together, not one. Heap order alone is not enough, and tree shape alone is not enough. The lecture needs both to make the data structure fast.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Heap invariant</th>
+          <th>Meaning</th>
+          <th>What it buys</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Heap-order property</td>
+          <td>Every non-root node has key at least as large as its parent's key.</td>
+          <td>The global minimum must be at the root.</td>
+        </tr>
+        <tr>
+          <td>Complete binary tree property</td>
+          <td>All levels are full except possibly the last, which is filled left to right.</td>
+          <td>The height stays \(O(\log n)\), and the array representation becomes possible.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h3>Insert</h3>
+      <p>Add the new node at the next available complete-tree position, then restore order by bubbling upward.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h3>Upheap</h3>
+      <p>Swap with the parent while the new key is smaller. Only one ancestor path is ever touched.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h3>Remove-min</h3>
+      <p>Move the last node to the root, delete the old last position, then repair the violated order by moving downward.</p>
+    </div>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week6-heap">
+      <span class="toggle-icon">&#9654;</span> Why upheap and downheap are logarithmic
+    </button>
+    <div class="proof-content" id="proof-week6-heap">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Each repair step swaps only along a single vertical path, never across the whole tree.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>A complete binary tree with \(n\) nodes has height \(O(\log n)\).</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>So the number of swaps is bounded by the height, giving \(O(\log n)\) total time.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Why heaps work.</strong> The tree is not globally sorted. It is only locally ordered in exactly the way needed to keep the minimum easy to find and reasonably cheap to maintain.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-array" class="section" data-track="array">
+  <h2 class="section-title">Array Heaps: Completeness Turns Pointers into Formulas</h2>
+  <p class="section-lead">Once the tree is always complete, you no longer need explicit pointers to navigate the structure. The array position already tells you where the parent and children must be.</p>
+
+  <div class="algo-card">
+    <h3>0-based heap indexing from the slides</h3>
+    <pre class="code-block">root index = 0
+last index = n - 1
+left child(i)  = 2i + 1
+right child(i) = 2i + 2
+parent(i)      = floor((i - 1) / 2)</pre>
+    <p>These formulas are not arbitrary memorisation. They are the arithmetic shadow of the complete-tree shape.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Build-heap refinement</h3>
+      <p>The lecture notes that a heap can be built from an unsorted array in \(O(n)\) time using a bottom-up strategy, even though \(n\) repeated insertions would cost \(O(n \log n)\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Comparator warning</h3>
+      <p>The code and slides both remind you that ordering may come from a comparator, not just numeric keys. Good implementations should not assume comparisons return only \(-1, 0, 1\).</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p>The patient-triage example at the end of the lecture is there to show that the key itself can be composite, like severity first and age as a tiebreaker. Once you understand that, heaps stop being toy integer structures and become a real modelling tool.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="The complete-tree property keeps the heap shallow and guarantees the index relationships, so both navigation formulas and logarithmic repairs depend on it.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Which heap property is the reason array indices can determine parents and children so directly?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The complete binary tree property</div>
+      <div class="qc-opt" data-idx="1">The ability to hash keys</div>
+      <div class="qc-opt" data-idx="2">The BST inorder property</div>
+      <div class="qc-opt" data-idx="3">The existence of duplicate keys</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial &amp; Code: Move Between By-Hand Heap Work and Algorithm Design</h2>
+  <p class="section-lead">Tutorial 6 starts with heap fundamentals, then quickly broadens into analysis and heap-powered algorithms. You are expected to be comfortable both with manual heapify steps and with using a priority queue as a subroutine in larger problems.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Tutorial / code item</th>
+          <th>Main idea it is testing</th>
+          <th>Why it matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Warm-up 1</td>
+          <td>Check whether an array really is a valid heap</td>
+          <td>You need to verify both structure and order, not just spot the largest or smallest value.</td>
+        </tr>
+        <tr>
+          <td>Warm-up 2</td>
+          <td>Explain why build-heap is linear</td>
+          <td>This is the lecture's first “surprising but true” heap analysis.</td>
+        </tr>
+        <tr>
+          <td>Problem 6</td>
+          <td>Use a heap to find the \(k\)-th smallest in \(O(n \log k)\)</td>
+          <td>The structure becomes an algorithmic tool, not just a stored collection.</td>
+        </tr>
+        <tr>
+          <td>Problem 7</td>
+          <td>Merge \(k\) sorted lists with a min-heap</td>
+          <td>This is the standard pattern for repeated “next smallest among many streams.”</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-card">
+    <h3>What the code bundle is trying to make you implement</h3>
+    <pre class="code-block">class Node():
+    def up_heap(self): ...
+    def down_heap(self): ...
+
+class PriorityQueue():
+    def insert(self, k, v): ...
+    def min(self): ...
+    def remove_min(self): ...</pre>
+    <p>The split across <code>priority_queue_list.py</code>, <code>priority_queue_heap.py</code>, and <code>node.py</code> is intentional. The course wants you to compare whole-queue trade-offs while also understanding the tiny local swap logic that makes heap repair work.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Best Week 6 checkpoint:</strong> you should be able to explain why a heap is not just a sorted array in disguise, and why that partial order is exactly what makes it efficient.</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; Revision Targets</h2>
+  <p class="section-lead">Use practice tools after the ADT comparison is already clear in your head. If you cannot yet explain when you would choose an unsorted list, a sorted list, or a heap, then more drilling on operations alone will not stick.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>You should be able to explain</h3>
+      <p>How maps, sorted maps, and priority queues differ in the operations they promise and why those promises shape implementation choice.</p>
+    </div>
+    <div class="glance-card">
+      <h3>You should be able to distinguish</h3>
+      <p>Heap order from full sorting, and complete-tree structure from BST ordering.</p>
+    </div>
+    <div class="glance-card">
+      <h3>You should be able to design</h3>
+      <p>A heap-based solution for a repeated “next smallest” problem such as merging sorted lists or processing tasks by urgency.</p>
+    </div>
+  </div>
+
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=6" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=6&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+
+  <div class="callout">
+    <p><strong>Suggested sequence:</strong> finish the foundations page next for the index formulas and build-heap reasoning, then come back for mixed practice once the trade-off table feels natural.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

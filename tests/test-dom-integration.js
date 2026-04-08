@@ -155,6 +155,41 @@ test("Progress tracker: detects 5318 from URL", function() {
   dom.window.close();
 });
 
+test("Progress tracker: detects COMP9123 hub path", function() {
+  var dom = makeDOM(
+    '<div class="section" data-track="hero" id="hero">Intro</div>',
+    "/9123DataStructureAlgo/chapters/chapter1/web/chapter1-study.html"
+  );
+  dom.window.eval(readModule("shared/progress-tracker.js"));
+  var stored = dom.window.localStorage.getItem("comp9123_progress");
+  assert.ok(stored, "should use comp9123_progress key");
+  dom.window.close();
+});
+
+test("Progress tracker: COMP9123 quick checks are enhanced and visible", function() {
+  var dom = makeDOM(
+    '<div class="section" data-track="hero" id="hero">Intro</div>' +
+    '<div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Because it scales better.">' +
+      '<div class="qc-options">' +
+        '<div class="qc-opt" data-idx="0">Wrong</div>' +
+        '<div class="qc-opt" data-idx="1">Right</div>' +
+      '</div>' +
+      '<div class="qc-feedback"></div>' +
+    '</div>',
+    "/9123DataStructureAlgo/chapters/chapter1/web/chapter1-study.html"
+  );
+  dom.window.eval(readModule("shared/progress-tracker.js"));
+  var correct = dom.window.document.querySelector('.qc-opt[data-idx="1"]');
+  correct.click();
+  var feedback = dom.window.document.querySelector(".qc-feedback");
+  var data = JSON.parse(dom.window.localStorage.getItem("comp9123_progress"));
+  assert.ok(feedback.className.indexOf("show") !== -1, "feedback should become visible");
+  assert.ok(feedback.textContent.indexOf("Correct!") !== -1, "enhanced mode should render correctness feedback");
+  assert.strictEqual(data.ch1.quickChecksStudy, 1, "study quick checks should track in split mode");
+  assert.strictEqual(data.ch1.quickChecks, 1, "combined quickChecks should still be maintained");
+  dom.window.close();
+});
+
 test("Progress tracker: detects COMP9001 from URL and creates compat shim", function() {
   var dom = makeDOM(
     '<div class="section" data-track="sec-py" id="sec-py">Python</div>',
@@ -396,7 +431,7 @@ test("Progress + SRS: quiz score and SRS data coexist in localStorage", function
 console.log("\n\u2500\u2500 HTML Structure Validation \u2500\u2500");
 
 test("All hub index.html files exist and are valid HTML", function() {
-  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py"];
+  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py", "9123DataStructureAlgo"];
   hubs.forEach(function(hub) {
     var filePath = path.join(ROOT, hub, "index.html");
     assert.ok(fs.existsSync(filePath), hub + "/index.html should exist");
@@ -427,7 +462,7 @@ test("Chapter pages reference root shared/ not hub shared/", function() {
 });
 
 test("No stale hub copies of canonical shared files", function() {
-  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py"];
+  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py", "9123DataStructureAlgo"];
   var canonical = ["chat-panel.js", "chat-panel.css", "mindmap.js", "mindmap.css", "flashcard-srs.js", "progress-tracker.js", "lang-toggle.js"];
   hubs.forEach(function(hub) {
     canonical.forEach(function(file) {

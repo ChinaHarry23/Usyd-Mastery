@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter1-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 1 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div><ul><li><a href="#sec-m-summation" class="toc-link">Summations & arithmetic series</a></li></ul><div class="toc-group">Proof moves</div><ul><li><a href="#sec-m-discrete" class="toc-link">Logs, floors, ceilings & proof templates</a></li></ul><div class="toc-group">Exam triggers</div><ul><li><a href="#sec-m-asymptotic" class="toc-link">Loop models & recurrence intuition</a></li></ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">Quick checks</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter1-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 1</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 1 foundations unpack the notation and proof moves hidden inside the first lecture and tutorial: series, logarithms, floors and ceilings, proof templates, and loop / recurrence models.</p>
+<div class="chip-list"><span>Short derivations</span><span>Exam-style proof cues</span><span>Linked directly to this week's lecture and tutorial</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-summation" data-track="summation"><h2 class="section-title">Summations & arithmetic series</h2><p class="section-lead">These are the first formulas the course assumes you can deploy without pausing the algorithmic story.</p><div class="def-box"><div class="def-label">Core idea</div><p>Whenever a loop body costs constant time and runs through values (1,2,dots,n), you should immediately think of triangular sums and the idea of a dominant term.</p></div><div class="callout"><p>Later on, amortised analysis, heap levels, and graph traversals all recycle the same summation habits you start here.</p></div><p class="section-lead">Tutorial&nbsp;1 opens with <strong>summation notation</strong> and standard closed forms. These appear constantly when you count loop iterations, analyse resize costs, or expand recurrences.</p>
+
+<p>Key identity (given on the sheet):</p>
+\[
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}.
+\]
+
+<p><strong>Warm-up uses:</strong></p>
+<ul style="margin:0.75rem 0 0 1.1rem;line-height:1.65;">
+  <li>Evaluate \(\sum_{i=1}^{20} i\) by substituting \(n=20\).</li>
+  <li>Derive \(\sum_{i=m}^{n} i\) by subtracting \(\sum_{i=1}^{m-1} i\) from \(\sum_{i=1}^{n} i\).</li>
+  <li>Express \(\sum_{i=n}^{2n} i\) in terms of \(n\) and plug in a value (e.g. \(n=20\)).</li>
+</ul>
+
+<p style="margin-top:1rem;"><strong>Bonus sheet</strong> adds:</p>
+\[
+\sum_{i=1}^{n} i^2 = \frac{n(n+1)(2n+1)}{6}, \qquad
+\sum_{i=1}^{n} i^3 = \left(\frac{n(n+1)}{2}\right)^2.
+\]
+
+<p style="margin-top:0.85rem;">Use these to evaluate partial sums such as \(\sum_{i=5}^{10} i^2\) or \(\sum_{i=n}^{2n} i^3\) by splitting ranges.</p>
+</section><section class="section" id="sec-m-discrete" data-track="discrete"><h2 class="section-title">Logs, floors, ceilings & proof templates</h2><p class="section-lead">Tutorial 1 is really a compact toolkit for arguing cleanly about discrete objects.</p><div class="def-box"><div class="def-label">Core idea</div><p>Logs measure repeated halving, floors / ceilings help convert continuous reasoning back to integer indices, and proof templates stop 'hand-wavy correctness' from creeping into your answers.</p></div><p class="section-lead">Tutorial&nbsp;1 lists discrete-math topics that support proofs and analyses later in the unit (Goodrich &amp; Tamassia sections 1.2.1–1.2.3). You should be comfortable with each bullet <em>before</em> heavier data-structure proofs (trees, heaps, graphs).</p>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:0;">Logarithms &amp; exponents</h3>
+<p>Know identities such as \(\log(ab)=\log a + \log b\) (for a fixed base) and \(a^{m+n}=a^m\cdot a^n\). Be able to simplify expressions like \(\log_{10}(1000)\), \(2^3\cdot 2^4\), and \(8^{2/3}\), and to solve simple equations such as \(3^x=81\).</p>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:1.1rem;">Floor &amp; ceiling</h3>
+<p>\(\lfloor x\rfloor\) is the greatest integer \(\le x\); \(\lceil x\rceil\) is the smallest integer \(\ge x\). They appear when halving subproblems (\(\lfloor n/2\rfloor\)), counting levels of a recursion tree, or translating real-valued bounds to integer indices.</p>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:1.1rem;">Proof patterns</h3>
+<ul style="margin:0.75rem 0 0 1.1rem;line-height:1.65;">
+  <li><strong>Counterexample</strong> — disprove a universal claim by one concrete instance.</li>
+  <li><strong>Contrapositive</strong> — prove \(P\Rightarrow Q\) via \(\neg Q\Rightarrow \neg P\).</li>
+  <li><strong>Contradiction</strong> — assume the negation of what you want and derive an impossible statement.</li>
+  <li><strong>Induction</strong> — treated more fully when we study trees (Week&nbsp;4 in this hub); base case + inductive step.</li>
+</ul>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:1.1rem;">Sets &amp; logic (basics)</h3>
+<p>Notation \(x\in S\), \(x\notin S\), unions, intersections, Cartesian products, and power sets (Tutorial problems 2–4). These underpin formal specification of inputs and invariants.</p>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:1.1rem;">Probability (preview)</h3>
+<p>Sample spaces, events, \(\Pr(A)=\frac{\text{favourable outcomes}}{\text{total outcomes}}\) when equally likely; independence and conditional probability — used in randomized algorithms and average-case analysis later.</p>
+<div class="proof-block"><button class="proof-toggle" data-target="proof-week1-discrete"><span class="toggle-icon">&#9654;</span> How to decide when induction is the right move</button><div class="proof-content" id="proof-week1-discrete"><div class="proof-step"><div class="step-num">1</div><div class="step-body"><p>Use induction when the claim is indexed by a natural number such as array length, number of nodes, or height of a tree.</p></div></div><div class="proof-step"><div class="step-num">2</div><div class="step-body"><p>State the base case clearly, then assume the claim for smaller instances and prove it for the next one.</p></div></div><div class="proof-step"><div class="step-num">3</div><div class="step-body"><p>Check that the inductive step matches the recursive structure of the algorithm or data structure instead of introducing unrelated algebra.</p></div></div><div class="insight-box"><strong>Why it matters.</strong> Week 4 subtree proofs and Week 5 BST / AVL arguments both depend on this exact habit.</div></div></div></section><section class="section" id="sec-m-asymptotic" data-track="asymptotic"><h2 class="section-title">Loop models & recurrence intuition</h2><p class="section-lead">Before the course starts proving big theorems, it wants you comfortable turning pseudocode into growth estimates.</p><div class="def-box"><div class="def-label">Core idea</div><p>Nested loops create sums. Divide-and-conquer patterns create recurrences. The mathematical task is to map code structure to a cost expression and simplify it correctly.</p></div><div class="callout"><p>If you can move fluently between code, summation, and asymptotic notation, later chapters feel much lighter.</p></div><p class="section-lead">Connect Tutorial&nbsp;1’s algebra with <strong>growth rates</strong> and simple <strong>loop models</strong>. This complements the Big-O section on the main study page.</p>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:0;">Recurrence intuition (preview)</h3>
+<ul style="margin:0.75rem 0 0 1.1rem;line-height:1.65;">
+  <li><strong>Balanced divide &amp; conquer</strong> — e.g. \(T(n)=2T(n/2)+O(n)\) often yields <strong>\(O(n\log n)\)</strong> (think: linear work per level, \(\log n\) levels).</li>
+  <li><strong>Linear decrease</strong> — e.g. \(T(n)=T(n-1)+O(n)\) often yields <strong>\(O(n^2)\)</strong> (triangle sum).</li>
+</ul>
+<p style="margin-top:0.75rem;">When unsure, sketch a <strong>recursion tree</strong>: track total work per level and the number of levels.</p>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:1.25rem;">Nested loops &amp; \(\Theta(n^2)\)</h3>
+<p>A common pattern:</p>
+<pre style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem 1rem;font-size:0.82rem;overflow:auto;margin-top:0.5rem;"><code>for i in range(n):
+    for j in range(i):   # j = 0 .. i-1
+        ... O(1) work ...</code></pre>
+<p style="margin-top:0.65rem;">The inner bound depends on \(i\); total iterations behave like \(\sum_{i=0}^{n-1} O(i)=\Theta(n^2)\). Match this with the summation formulas on the Foundations page.</p>
+
+<h3 class="h3-section" style="font-size:1.05rem;margin-top:1.25rem;">Limits of asymptotic notation</h3>
+<p>Big-O suppresses constants and lower-order terms — two algorithms with the same big-O class can differ by large factors. Use asymptotics for <em>scalability</em>; combine with measurement for tuning.</p>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">Quick checks</h2>
+  <p class="section-lead">These are short retrieval questions. Use them after reading the sections above so the explanations tell you exactly where your understanding still needs repair.</p>
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="Balanced divide with linear combine typically yields \(n\log n\)."><div class="qc-h">Quick check</div><div class="qc-question">What is the solution class of \(T(n)=2T(n/2)+cn\) with \(T(1)=O(1)\)?</div><div class="qc-options"><div class="qc-opt" data-idx="0">\(O(n\log n)\)</div><div class="qc-opt" data-idx="1">\(O(n^2)\)</div><div class="qc-opt" data-idx="2">\(O(\log n)\)</div><div class="qc-opt" data-idx="3">\(O(1)\)</div></div><div class="qc-feedback"></div></div><div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="\(\Theta\) means asymptotically sandwiched between two multiples."><div class="qc-h">Quick check</div><div class="qc-question">Which is true of \(\Theta\) notation?</div><div class="qc-options"><div class="qc-opt" data-idx="0">Tight bound: same growth upper and lower (within constants)</div><div class="qc-opt" data-idx="1">Only lower bounds</div><div class="qc-opt" data-idx="2">Only memory</div><div class="qc-opt" data-idx="3">Ignores \(n\)</div></div><div class="qc-feedback"></div></div><div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="Triangular double loop \(\sum_{i&lt;n} i=\Theta(n^2)\)."><div class="qc-h">Quick check</div><div class="qc-question">Loop with \(i=0..n-1\) and inner \(j=0..i\) runs in:</div><div class="qc-options"><div class="qc-opt" data-idx="0">\(O(n^2)\)</div><div class="qc-opt" data-idx="1">\(O(n)\)</div><div class="qc-opt" data-idx="2">\(O(n\log n)\)</div><div class="qc-opt" data-idx="3">\(O(1)\)</div></div><div class="qc-feedback"></div></div>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial PDF review</h2>
+  <p class="section-lead">Open the tutorial PDF in <code>Materials/</code>, attempt the problems first, then use the checklist below to self-audit whether you really understand the intended reasoning moves.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w1">Show review checklist</button>
+  <div class="solution-content" id="sol-w1">
+    <p><strong>Before opening posted solutions</strong>, work from <em>Tutorial 1 Comp9123.pdf</em> and the optional <em>Tutorial_01_Bonus_Sheet.pdf</em>. Tick items as you complete them:</p>
+<ul style="margin:0.75rem 0 1rem 1.1rem;line-height:1.65;">
+  <li><strong>Warm-up 1–6</strong> — summations (\(\sum i\), \(\sum i^2\), \(\sum i^3\)), set descriptions, unions/intersections/products, power sets, exponent/log drills, array insert/remove/sort/reverse sequence on a concrete array.</li>
+  <li><strong>Problem 7</strong> — leap-year decision rules; state time and space complexity of your algorithm.</li>
+  <li><strong>Problem 8</strong> — reverse an array <em>in place</em>; pseudocode; time and extra-space analysis.</li>
+  <li><strong>Problem 9</strong> — detect duplicates in an array of \(n\) integers; analyse worst-case time (think about sorting vs hashing vs brute force).</li>
+  <li><strong>Problem 10</strong> — primality test; time and space.</li>
+</ul>
+<p><strong>Bonus sheet</strong> — extra practice on sums of squares/cubes, simple array statistics, cumulative sums, and small “algorithm + complexity” tasks (even test, max sales day, pass/fail counts, coin change — last is a stretch).</p>
+<p style="margin-top:0.85rem;color:var(--text-muted);font-size:0.92rem;">Tutorial text references the semester <strong>s2&nbsp;2025</strong> PDF naming; your semester’s numbering may differ, but the mathematical content matches the Week&nbsp;1 brief.</p>
+
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

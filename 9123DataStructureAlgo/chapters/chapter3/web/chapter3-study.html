@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3 — Stacks, Queues & Algorithm Analysis</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 3</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-analysis" class="nav-link" data-section="sec-analysis">Why Analyze Algorithms?</a></li>
+    <li><a href="#sec-growth" class="nav-link" data-section="sec-growth">Growth Classes</a></li>
+    <li><a href="#sec-stack" class="nav-link" data-section="sec-stack">Stack ADT</a></li>
+    <li><a href="#sec-method-stack" class="nav-link" data-section="sec-method-stack">Method Stacks</a></li>
+    <li><a href="#sec-parentheses" class="nav-link" data-section="sec-parentheses">Balanced Parentheses</a></li>
+    <li><a href="#sec-queue" class="nav-link" data-section="sec-queue">Queue ADT</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial & Code</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter3-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter3-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=3" class="nav-link" style="color:var(--accent);">&#128376; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=3&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 3: Stacks, Queues &amp; Algorithm Analysis</h1>
+    <p class="hero-subtitle">Week 3 has two teaching jobs. First it sharpens the language of algorithm analysis so you can compare solutions reliably. Then it introduces stacks and queues as restricted ADTs whose power comes from matching the logical shape of real problems.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128200;</span>
+        <span>Why Big-O beats raw timing</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128230;</span>
+        <span>Stack = LIFO thinking</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128228;</span>
+        <span>Queue = FIFO service</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#128269;</span>
+        <span>Balanced-parentheses algorithm</span>
+      </div>
+    </div>
+    <div class="chip-list">
+      <span>Lecture content from slide 6 onward</span>
+      <span>Recap and admin skipped</span>
+      <span>First ADTs with strict access rules</span>
+      <span>Built for revision</span>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter3-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#128208; Foundations &rarr;
+      </a>
+      <a href="chapter3-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#128506; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.82rem; color: rgba(var(--sidebar-text-rgb), 0.7); margin-top: 0.7rem;">Week 3 starts by asking how algorithms scale, then shows why restricted data structures can be more useful than general ones when the access pattern is exactly right.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-analysis" class="section" data-track="analysis">
+  <h2 class="section-title">Why Analyze Algorithms Instead of Just Timing Them?</h2>
+  <p class="section-lead">The lecture begins by slowing down and asking a foundational question: if there are many ways to solve the same problem, how should we compare them fairly?</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Execution time is noisy</h3>
+      <p>Raw runtime depends on hardware, memory, compiler choices, programming language, and system load. That makes it a poor theoretical comparison tool.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Input size matters</h3>
+      <p>A method can look fast on tiny examples and then collapse badly at scale. The lecture wants you to focus on how performance changes as \(n\) grows.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Worst case gives guarantees</h3>
+      <p>Worst-case analysis matters because it tells you what performance ceiling you can rely on, even when the input is adversarial or unlucky.</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Big-O idea:</strong> describe growth rather than exact runtime. That means suppressing machine-specific details and asking how the algorithm scales conceptually.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Professor mindset:</strong> when someone says one algorithm is “faster,” ask “for what input size, on what model, and by what kind of bound?” Week 3 is training that reflex.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Big-O is useful because it focuses on scaling with input size rather than machine-specific timing noise.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">Why does the lecture prefer Big-O to raw execution time as the main comparison language?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because Big-O gives exact runtime in seconds</div>
+      <div class="qc-opt" data-idx="1">Because it focuses on growth with input size and avoids hardware-specific noise</div>
+      <div class="qc-opt" data-idx="2">Because it only applies to recursive code</div>
+      <div class="qc-opt" data-idx="3">Because it always proves an algorithm is optimal</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-growth" class="section" data-track="growth">
+  <h2 class="section-title">Growth Classes: Turning Intuition into a Scale</h2>
+  <p class="section-lead">The middle analysis slides use real-world analogies to make the common growth classes feel concrete instead of symbolic.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Complexity</th>
+          <th>Lecture analogy</th>
+          <th>What behaviour it captures</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>\(O(1)\)</td>
+          <td>Direct access by known shelf number</td>
+          <td>Work stays effectively fixed as input grows.</td>
+        </tr>
+        <tr>
+          <td>\(O(\log n)\)</td>
+          <td>Finding a word in a physical dictionary</td>
+          <td>Each step shrinks the remaining search space dramatically.</td>
+        </tr>
+        <tr>
+          <td>\(O(n)\)</td>
+          <td>Scanning supermarket items one by one</td>
+          <td>Each input item causes another similar unit of work.</td>
+        </tr>
+        <tr>
+          <td>\(O(n^2)\)</td>
+          <td>Checking for duplicate transactions pairwise</td>
+          <td>Nested comparison structure makes work grow like pairs.</td>
+        </tr>
+        <tr>
+          <td>\(O(2^n)\)</td>
+          <td>Generating all possible passwords or feature subsets</td>
+          <td>The number of possibilities explodes combinatorially.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Time complexity</h3>
+      <p>Measures how execution time grows with input size. This is the main language used when comparing algorithms on the slides.</p>
+    </div>
+    <div class="col-card">
+      <h3>Space complexity</h3>
+      <p>Measures how much extra memory an algorithm or data structure needs as input grows. Week 3 explicitly treats this as a separate design cost.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>The important habit:</strong> do not memorise symbols in isolation. Tie each class to a code shape or process shape: scan, halve, nest, or enumerate choices.</p>
+  </div>
+</section>
+
+<section id="sec-stack" class="section" data-track="stack">
+  <h2 class="section-title">Stack ADT: LIFO Structure and the Meaning of “Top”</h2>
+  <p class="section-lead">A stack is a restricted List ADT where both insertion and removal happen at the same end. That restriction is exactly what gives stacks their clarity.</p>
+
+  <div class="concept-box">
+    <p><strong>Stack rule:</strong> last in, first out. The most recently pushed item is the next one that can be popped or observed with <code>top()</code>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Meaning</th>
+          <th>What changes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>push(e)</code></td>
+          <td>Add a new top element.</td>
+          <td>The stack becomes one element taller.</td>
+        </tr>
+        <tr>
+          <td><code>pop()</code></td>
+          <td>Remove and return the current top.</td>
+          <td>The previous element becomes the new top.</td>
+        </tr>
+        <tr>
+          <td><code>top()</code></td>
+          <td>Inspect the current top without removing it.</td>
+          <td>The stack itself stays unchanged.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-card">
+    <h3>Operation sequence from the slides</h3>
+    <p>Starting from stack <code>[6, 9, 3]</code> with <code>3</code> on top:</p>
+    <pre class="code-block">push(5)  -> [6, 9, 3, 5]
+pop()    -> [6, 9, 3]
+top()    -> 3
+push(8)  -> [6, 9, 3, 8]
+isEmpty()-> false
+pop()    -> [6, 9, 3]
+top()    -> 3</pre>
+  </div>
+
+  <div class="callout">
+    <p><strong>Why restricted ADTs matter:</strong> stacks are less general than lists, but that restriction matches many real problems perfectly. The lecture is making the point that “less general” can mean “more useful.”</p>
+  </div>
+</section>
+
+<section id="sec-method-stack" class="section" data-track="method-stack">
+  <h2 class="section-title">Method Stacks: Why Recursion Already Uses a Stack</h2>
+  <p class="section-lead">One of the most important applications in the lecture is invisible during everyday coding: the runtime itself uses a stack to manage active method calls.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Call frame</h3>
+      <p>Each method call pushes a frame containing local variables, control state, and the return position.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Return behaviour</h3>
+      <p>When a method finishes, the most recently called unfinished method is the one that resumes first. That is pure LIFO behaviour.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why recursion works</h3>
+      <p>Recursive calls do not need special magic. They rely on the same stack discipline as any other nested call sequence.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Translation:</strong> even if your code never declares a stack object, the runtime environment may still be using a stack on your behalf.</p>
+  </div>
+</section>
+
+<section id="sec-parentheses" class="section" data-track="parentheses">
+  <h2 class="section-title">Balanced Parentheses: a Stack Matching the Shape of Nesting</h2>
+  <p class="section-lead">This is the canonical Week 3 algorithmic application. The key insight is that the next closing bracket must match the most recent unmatched opener.</p>
+
+  <div class="concept-box">
+    <p><strong>Core idea:</strong> push opening delimiters as they appear. When a closing delimiter arrives, compare it with the top of the stack. If it mismatches or the stack is empty, the expression is unbalanced.</p>
+  </div>
+
+  <div class="algo-card">
+    <h3>Algorithm sketch</h3>
+    <pre class="code-block">create empty stack S
+for each character c in expression:
+    if c is an opening bracket:
+        push c onto S
+    else if c is a closing bracket:
+        if S is empty:
+            return false
+        open = pop from S
+        if open does not match c:
+            return false
+return S is empty</pre>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Balanced example</h3>
+      <p><code>( w * [ x + y ] / z )</code> works because every closer matches the most recent unmatched opener, and the stack ends empty.</p>
+    </div>
+    <div class="col-card">
+      <h3>Unbalanced example</h3>
+      <p><code>{ [ x + y ) ] - z }</code> fails because <code>)</code> tries to close <code>[</code>. The top-of-stack mismatch immediately exposes the error.</p>
+    </div>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week3-parens">
+      <span class="toggle-icon">&#9654;</span> Why a stack is the natural structure here
+    </button>
+    <div class="proof-content" id="proof-week3-parens">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>Nesting means the last opener you saw is the first one that must be matched before earlier openers can close.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>That “last unresolved item must be handled first” rule is exactly LIFO.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>If the process ends with leftover openers on the stack, the expression still has unresolved structure and is therefore unbalanced.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>Memory hook:</strong> nesting depth is stack depth.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="A closing delimiter must match the most recent unmatched opening delimiter, which is exactly the top element of the stack.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">When the algorithm reads a closing bracket, which opener is the only valid one to compare against first?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The earliest opener in the expression</div>
+      <div class="qc-opt" data-idx="1">Any opener of the same type</div>
+      <div class="qc-opt" data-idx="2">The most recent unmatched opener on the stack</div>
+      <div class="qc-opt" data-idx="3">The smallest bracket by ASCII code</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-queue" class="section" data-track="queue">
+  <h2 class="section-title">Queue ADT: FIFO Service, Scheduling, and Buffering</h2>
+  <p class="section-lead">Queues reverse the access rule from stacks. The oldest waiting item leaves first, which is why queues appear wherever order-of-arrival matters.</p>
+
+  <div class="concept-box">
+    <p><strong>Queue rule:</strong> first in, first out. New items join at the rear with <code>enqueue</code>, and the oldest item leaves from the front with <code>dequeue</code>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>ADT</th>
+          <th>Access rule</th>
+          <th>Typical examples</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Stack</td>
+          <td>LIFO</td>
+          <td>Undo history, recursion, delimiter matching</td>
+        </tr>
+        <tr>
+          <td>Queue</td>
+          <td>FIFO</td>
+          <td>Waiting lines, packet buffering, shared-resource scheduling</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-card">
+    <h3>Queue sequence from the slides</h3>
+    <p>Starting from queue <code>[6, 9, 3]</code> with <code>6</code> at the front:</p>
+    <pre class="code-block">enqueue(5) -> [6, 9, 3, 5]
+dequeue()  -> [9, 3, 5]
+first()    -> 9
+enqueue(8) -> [9, 3, 5, 8]
+size()     -> 4
+dequeue()  -> [3, 5, 8]
+first()    -> 3</pre>
+  </div>
+
+  <div class="callout">
+    <p><strong>Forward bridge:</strong> queues become the engine of breadth-first processing later in the course because layer-by-layer exploration is naturally FIFO.</p>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial 3 and the Code Bundle: From Basic ADTs to Better Design</h2>
+  <p class="section-lead">The tutorial pushes beyond definitions. It asks you to compare growth rates, reason about the best linked-list implementations of stacks and queues, and then improve an ADT by storing the right extra information.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Tutorial problem cluster</th>
+          <th>What it is really testing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ordering asymptotic growth classes</td>
+          <td>Whether you can compare \( \sqrt{n}, n, n \log n, n^2, 2^n, n!, n^n \) without confusing syntax for growth.</td>
+        </tr>
+        <tr>
+          <td>Stack / queue on singly linked lists</td>
+          <td>Whether you know which end to treat as front or top so operations stay \(O(1)\).</td>
+        </tr>
+        <tr>
+          <td><code>getAverage()</code> for a queue</td>
+          <td>Whether you can augment an ADT with extra maintained state instead of recomputing from scratch.</td>
+        </tr>
+        <tr>
+          <td>Queue using two stacks</td>
+          <td>Whether you can simulate one ADT with another and still reason about operation costs carefully.</td>
+        </tr>
+        <tr>
+          <td>Palindrome and parentheses problems</td>
+          <td>Whether you can connect structural properties of data to algorithm design choices.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why linked-list skeletons are bundled here</h3>
+      <p>The included files [Node.py](/Users/chinaharry/Desktop/Workspace/Usyd%20Mastery/9123DataStructureAlgo/chapters/chapter3/Codes/Node.py), [single_ll.py](/Users/chinaharry/Desktop/Workspace/Usyd%20Mastery/9123DataStructureAlgo/chapters/chapter3/Codes/single_ll.py), and [DoublyLinkedList.py](/Users/chinaharry/Desktop/Workspace/Usyd%20Mastery/9123DataStructureAlgo/chapters/chapter3/Codes/DoublyLinkedList.py) remind you that stacks and queues are often implemented on top of simpler list primitives rather than as magical standalone structures.</p>
+    </div>
+    <div class="col-card">
+      <h3>What the queue-augmentation question is teaching</h3>
+      <p>Do not rescan the queue every time <code>getAverage()</code> is called. Store a running sum and update it during enqueue / dequeue so the new operation becomes cheap while the original operations remain cheap too.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Great Week 3 answer style:</strong> specify the data you store, explain how each operation updates it, and then justify the running time from those updates.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="To answer getAverage() in O(1), the queue should maintain enough information to avoid a full rescan, typically the running sum together with the size.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What extra state is the cleanest way to support <code>getAverage()</code> in \(O(1)\) time for a queue?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">A sorted copy of all queue elements</div>
+      <div class="qc-opt" data-idx="1">A running sum together with the queue size</div>
+      <div class="qc-opt" data-idx="2">A binary search tree of elements only</div>
+      <div class="qc-opt" data-idx="3">No extra information at all</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Chapter Quizzes</h2>
+  <p class="section-lead">Use the embedded checks above while reading, then switch to the Quiz Hub and flashcards for mixed recall across Week 3.</p>
+  <div class="callout">
+    <p><strong>Best rhythm:</strong> test each concept right after learning it, then finish with mixed practice so stacks, queues, and analysis language start to feel automatic.</p>
+  </div>
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=3" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=3&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function tryRender() {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    } else {
+      setTimeout(tryRender, 200);
+    }
+  }
+  tryRender();
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

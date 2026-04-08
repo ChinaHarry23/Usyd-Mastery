@@ -21,6 +21,7 @@ HUBS=(
   "5318ML"
   "5046NLP"
   "9001Py"
+  "9123DataStructureAlgo"
 )
 
 # Files that should ONLY live in root /shared/, never in hub /shared/

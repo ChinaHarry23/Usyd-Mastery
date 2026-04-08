@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 10</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter10-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 10 Foundations</h2>
+  </div>
+  <div class="toc-group">Toolkit</div>
+  <ul>
+    <li><a href="#sec-m-exchange" class="toc-link">Exchange arguments</a></li>
+    <li><a href="#sec-m-counterexamples" class="toc-link">Counterexamples</a></li>
+  </ul>
+  <div class="toc-group">Proof moves</div>
+  <ul>
+    <li><a href="#sec-m-intervals" class="toc-link">Interval depth</a></li>
+    <li><a href="#sec-m-weighted" class="toc-link">Weighted scheduling</a></li>
+    <li><a href="#sec-m-huffman" class="toc-link">Huffman objective</a></li>
+  </ul>
+  <div class="toc-group">Review</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">How to review</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial review</a></li>
+  </ul>
+  <a href="chapter10-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent" data-progress-study-qc="0" data-progress-math-qc="3">
+
+<section class="section hero-section" id="sec-m-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Week 10</p>
+    <h1>Foundations &amp; proof moves</h1>
+    <p class="hero-subtitle">Week 10 foundations are really proof foundations. The technical core of the week is learning when exchange arguments work, how to build sharp counterexamples, how interval depth gives a lower bound, and why Huffman's weighted path-length objective matches its merge rule.</p>
+    <div class="chip-list"><span>Exchange arguments</span><span>Lower bounds</span><span>Weighted tree cost</span></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-exchange" data-track="exchange">
+  <h2 class="section-title">Exchange Arguments: Show an Optimum Can Be Reshaped to Match Greedy</h2>
+  <p class="section-lead">The standard greedy proof is not usually “the greedy solution is obviously best.” It is: take any optimal solution that disagrees with the greedy choice, modify it locally so it agrees, and show the objective does not get worse.</p>
+
+  <div class="def-box">
+    <div class="def-label">Template</div>
+    <p>Assume an optimal solution differs from the greedy one at the first disagreement. Swap in the greedy choice, preserve feasibility, and prove total objective value stays at least as good. Repeating this eventually transforms some optimum into the greedy solution.</p>
+  </div>
+
+  <div class="callout">
+    <p>This is exactly the logic behind the lecture's fractional-knapsack proof and the tutorial's weighted scheduling problem, where an adjacent swap tells you which local order is safe.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="An exchange argument proves greedy correctness by showing that any optimal solution can be modified to agree with the greedy choice without worsening the objective.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What does an exchange argument try to prove?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">That greedy is always unique</div>
+      <div class="qc-opt" data-idx="1">That an optimal solution can be transformed to agree with the greedy step</div>
+      <div class="qc-opt" data-idx="2">That brute force is impossible</div>
+      <div class="qc-opt" data-idx="3">That all counterexamples are large</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-counterexamples" data-track="counterexamples">
+  <h2 class="section-title">Counterexamples: The Fastest Way to Reject a Bad Rule</h2>
+  <p class="section-lead">A counterexample is not just “an input where the algorithm does something odd.” It is a smallest clear witness that the greedy rule's local preference can block a better global outcome.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Make the wrong move tempting</h3>
+      <p>Give one option exactly the feature the bad rule values most.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Hide a better combination</h3>
+      <p>Arrange the remaining options so that the greedy first move blocks a stronger overall solution.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Keep it tiny</h3>
+      <p>A three- or four-item instance is usually better than a huge one because the failure mode stays visible.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Useful mindset</div>
+    <p>The tutorial's “infinite classes where a wrong rule still works” is a great caution: many supporting examples do not prove correctness, because the one instance that fails is enough to destroy the theorem.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-m-intervals" data-track="intervals">
+  <h2 class="section-title">Interval Depth: Why the Classroom Lower Bound Is Immediate</h2>
+  <p class="section-lead">The interval-partitioning lecture introduces a very clean lower bound. If some time point lies inside \(d\) open intervals, then any valid schedule needs at least \(d\) classrooms, because those \(d\) lectures overlap and cannot share a room.</p>
+
+  <div class="def-box">
+    <div class="def-label">Depth</div>
+    <p>The depth of a set of intervals is the maximum number of intervals containing any one time. This is a lower bound on the number of classrooms required.</p>
+  </div>
+
+  <div class="callout">
+    <p>The lecture's optimality proof for interval partitioning says the greedy algorithm never uses more classrooms than this lower bound forces. Once it matches the depth, the proof is done.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="0" data-explanation="If d intervals overlap at one time, they must all occupy different classrooms, so any schedule needs at least d rooms.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What does the depth of an interval set tell you?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">A lower bound on the number of classrooms needed</div>
+      <div class="qc-opt" data-idx="1">The exact number of lectures</div>
+      <div class="qc-opt" data-idx="2">The maximum lecture duration</div>
+      <div class="qc-opt" data-idx="3">The number of incompatible algorithms</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-weighted" data-track="weighted">
+  <h2 class="section-title">Weighted Scheduling: Adjacent Swaps Reveal the Right Ratio</h2>
+  <p class="section-lead">The tutorial's weighted completion-time problem is a classic place where exchange arguments become algebra. You compare two jobs in the wrong order, swap them, and inspect how the weighted objective changes.</p>
+
+  <div class="def-box">
+    <div class="def-label">Core idea</div>
+    <p>For two adjacent jobs \(i\) and \(j\), compare the cost of ordering \(i\) before \(j\) versus \(j\) before \(i\). The sign of that difference reveals which local ordering is globally preferable, leading to a sorting rule by the appropriate ratio.</p>
+  </div>
+
+  <div class="callout">
+    <p>The tutorial writes the ratio as \(t_j / w_j\), but it is the same priority idea you may know as Smith's rule: jobs with smaller processing-time-to-weight ratio should go earlier.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-m-huffman" data-track="huffman">
+  <h2 class="section-title">Huffman Objective: Weighted Path Length Is Why the Merge Rule Works</h2>
+  <p class="section-lead">Huffman coding is not optimizing tree height. It is optimizing weighted external path length: frequent symbols should be shallow because every extra level charges their frequency again.</p>
+
+  <div class="def-box">
+    <div class="def-label">Objective</div>
+    <p>Minimize \(\sum_{c \in C} f(c)\cdot depth_T(c)\). Every extra bit in the codeword for \(c\) costs \(f(c)\) more total bits in the encoded text.</p>
+  </div>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-week10-huffman">
+      <span class="toggle-icon">&#9654;</span> Why the two least frequent symbols may be merged first
+    </button>
+    <div class="proof-content" id="proof-week10-huffman">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p>In an optimal prefix tree, the deepest sibling leaves can be assigned to the least frequent symbols.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p>Merge that sibling pair into one contracted symbol whose frequency is the sum of the two.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p>Solve the smaller contracted problem optimally, then expand the merged symbol back into the sibling pair. This gives an optimal full tree.</p>
+        </div>
+      </div>
+      <div class="insight-box">
+        <strong>What to remember.</strong> Huffman is greedy at one level and inductive at the next. The merge step is safe because the optimal tree can be normalized to make it so.
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="2" data-explanation="Every extra bit on a codeword is paid once for every occurrence of that symbol, which is why Huffman's objective is the sum of frequency times depth.">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">What quantity does Huffman coding minimize?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Only the number of leaves</div>
+      <div class="qc-opt" data-idx="1">Only the maximum codeword length</div>
+      <div class="qc-opt" data-idx="2">The sum of frequency times codeword depth</div>
+      <div class="qc-opt" data-idx="3">The number of merges performed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks" data-track="checks">
+  <h2 class="section-title">How to review this page well</h2>
+  <p class="section-lead">The three quick checks are anchored to the core proof habits: exchange arguments, interval depth, and Huffman's weighted objective. If one feels weak, redraw the smallest relevant example and narrate the proof move out loud.</p>
+</section>
+
+<section class="section" id="sec-m-tutorial" data-track="tutorial">
+  <h2 class="section-title">Tutorial review</h2>
+  <p class="section-lead">Open the tutorial after the study guide. Week 10 works best when you already know which rule you are trying to prove or disprove before you look at the instance.</p>
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w10">Show review checklist</button>
+  <div class="solution-content" id="sol-w10">
+    <p><strong>Week 10 checklist.</strong> You should be able to state the generic greedy template, build a tiny counterexample to a bad local rule, explain why ratio ordering solves fractional knapsack, justify interval partitioning with the depth lower bound, derive the right weighted scheduling order from an adjacent swap, and describe Huffman's merge step using weighted path length rather than vague intuition.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\(", right: "\\)", display: false }
+      ],
+      throwOnError: false
+    });
+  }
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.section[id^="sec-m-"]'));
+  if (typeof IntersectionObserver === 'function') {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.getAttribute('id');
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function(section) { obs.observe(section); });
+  }
+});
+</script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
