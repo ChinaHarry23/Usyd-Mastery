@@ -10,6 +10,29 @@
     (function () { try { var c = JSON.parse(localStorage.getItem(STORAGE_KEY)); return c && c.endpoint ? c.endpoint : null; } catch (e) { return null; } })() ||
     "http://localhost:1234/v1/chat/completions";
 
+  /* Hostname allowlist — protects against tutorial/doc content that tricks the
+     user into pasting a remote endpoint URL. Override by setting
+     window.CHAT_ALLOW_REMOTE = true BEFORE this script loads, or by ticking
+     the "Allow remote endpoint" box in the chat settings. */
+  var LOCAL_HOSTS = { "localhost": 1, "127.0.0.1": 1, "::1": 1, "[::1]": 1 };
+  function isLocalEndpoint(url) {
+    try {
+      var u = new URL(url);
+      return LOCAL_HOSTS[u.hostname] === 1;
+    } catch (e) { return false; }
+  }
+  function endpointAllowed(url) {
+    if (isLocalEndpoint(url)) return true;
+    if (window.CHAT_ALLOW_REMOTE === true) return true;
+    try {
+      var cfg = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      return cfg.allowRemote === true;
+    } catch (e) { return false; }
+  }
+
+  /* Use a full SHA-1 digest of pathname for history key to avoid collisions
+     on long/shared paths. Falls back to the original base64 scheme if
+     SubtleCrypto is unavailable or returns asynchronously. */
   var HISTORY_KEY = "chat_history_" + btoa(location.pathname).slice(0, 20);
 
   function getPageText() {
@@ -26,64 +49,23 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); } catch (e) {}
   }
 
-  /* ===== SANITIZATION ===== */
-  function sanitize(html) {
-    if (typeof DOMPurify !== "undefined") {
-      return DOMPurify.sanitize(html, { ADD_TAGS: ["summary", "details"], ADD_ATTR: ["aria-label"] });
+  /* ===== MARKDOWN + SANITIZATION =====
+     Delegated to shared/chat-markdown.js. Each call below goes through
+     ChatMarkdown.render() which already applies DOMPurify. The thin
+     wrappers here keep the rest of the panel code unchanged. */
+  function md(text) {
+    if (window.ChatMarkdown && typeof window.ChatMarkdown.render === "function") {
+      return window.ChatMarkdown.render(text);
     }
-    return html;
+    // Fallback if chat-markdown.js failed to load: escape only.
+    return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  /* ===== LIGHTWEIGHT MARKDOWN → HTML ===== */
-  function md(text) {
-    if (!text) return "";
-    var s = text
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    s = s.replace(/```(\w*)\n([\s\S]*?)```/g, function (_, lang, code) {
-      return '<pre><code>' + code.trim() + '</code></pre>';
-    });
-    s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-    s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
-    s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    s = s.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-    s = s.replace(/^---+$/gm, '<hr/>');
-    s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    s = s.replace(/\$\$([^$]+?)\$\$/g, '\\[$1\\]');
-    s = s.replace(/\$([^$\n]+?)\$/g, '\\($1\\)');
-    s = s.replace(/((?:^[\t ]*\*[\t ]+.+\n?)+)/gm, function (block) {
-      var items = block.trim().split('\n').map(function (line) {
-        return '<li>' + line.replace(/^[\t ]*\*[\t ]+/, '') + '</li>';
-      }).join('');
-      return '<ul>' + items + '</ul>';
-    });
-    s = s.replace(/((?:^[\t ]*\d+\.[\t ]+.+\n?)+)/gm, function (block) {
-      var items = block.trim().split('\n').map(function (line) {
-        return '<li>' + line.replace(/^[\t ]*\d+\.[\t ]+/, '') + '</li>';
-      }).join('');
-      return '<ol>' + items + '</ol>';
-    });
-    s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-    s = s.replace(/\n{2,}/g, '</p><p>');
-    s = s.replace(/\n/g, '<br/>');
-    s = '<p>' + s + '</p>';
-    s = s.replace(/<p>\s*<\/p>/g, '');
-    s = s.replace(/<p>\s*(<h[1-4]>)/g, '$1');
-    s = s.replace(/(<\/h[1-4]>)\s*<\/p>/g, '$1');
-    s = s.replace(/<p>\s*(<ul>)/g, '$1');
-    s = s.replace(/(<\/ul>)\s*<\/p>/g, '$1');
-    s = s.replace(/<p>\s*(<ol>)/g, '$1');
-    s = s.replace(/(<\/ol>)\s*<\/p>/g, '$1');
-    s = s.replace(/<p>\s*(<pre>)/g, '$1');
-    s = s.replace(/(<\/pre>)\s*<\/p>/g, '$1');
-    s = s.replace(/<p>\s*(<hr\/>)/g, '$1');
-    s = s.replace(/(<hr\/>)\s*<\/p>/g, '$1');
-    s = s.replace(/<p>\s*(<blockquote>)/g, '$1');
-    s = s.replace(/(<\/blockquote>)\s*<\/p>/g, '$1');
-    return s;
+  function sanitize(html) {
+    if (window.ChatMarkdown && typeof window.ChatMarkdown.sanitize === "function") {
+      return window.ChatMarkdown.sanitize(html);
+    }
+    return String(html || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   function loadHistory() {
@@ -112,6 +94,7 @@
   function fetchModels(endpoint, callback) {
     var baseUrl = getBaseUrl(endpoint);
     if (!baseUrl) { callback([]); return; }
+    if (!endpointAllowed(endpoint)) { callback([]); return; }
 
     fetch(baseUrl + "/v1/models")
       .then(function (res) { return res.json(); })
@@ -129,11 +112,9 @@
   }
 
   function buildHTML() {
-    if (typeof DOMPurify === "undefined") {
-      var s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js";
-      s.async = true;
-      document.head.appendChild(s);
+    // DOMPurify is loaded (with SRI) by shared/chat-markdown.js if absent.
+    if (window.ChatMarkdown && typeof window.ChatMarkdown.ensureDOMPurify === "function") {
+      window.ChatMarkdown.ensureDOMPurify();
     }
 
     var cfg = loadConfig();
@@ -152,6 +133,9 @@
     panel.setAttribute("role", "complementary");
     panel.setAttribute("aria-label", "Chat panel");
     panel.style.width = panelWidth + "px";
+    // Build config pane via DOM APIs to avoid injecting user-controlled
+     // endpoint strings into an HTML template.
+    var allowRemoteSaved = cfg.allowRemote === true;
     panel.innerHTML =
       '<div id="chatResizeHandle"></div>' +
       '<div class="chat-header">' +
@@ -161,7 +145,12 @@
       '</div>' +
       '<div class="chat-config" id="chatConfig">' +
         '<label>LM Studio endpoint</label>' +
-        '<input type="text" id="chatEndpoint" value="' + endpoint + '" placeholder="http://localhost:1234/v1/chat/completions"/>' +
+        '<input type="text" id="chatEndpoint" placeholder="http://localhost:1234/v1/chat/completions"/>' +
+        '<label class="chat-allow-remote">' +
+          '<input type="checkbox" id="chatAllowRemote"/> ' +
+          '<span>Allow remote endpoint</span> ' +
+          '<span class="label-hint">(leave off for local-only security)</span>' +
+        '</label>' +
         '<label>Model</label>' +
         '<div class="chat-model-row">' +
           '<select id="chatModelSelect"><option value="">Loading models…</option></select>' +
@@ -196,6 +185,15 @@
     var input = document.getElementById("chatInput");
     var sendBtn = document.getElementById("chatSendBtn");
     var endpointInput = document.getElementById("chatEndpoint");
+    endpointInput.value = endpoint; // set via .value, not HTML template — prevents attribute injection
+    var allowRemoteInput = document.getElementById("chatAllowRemote");
+    allowRemoteInput.checked = allowRemoteSaved;
+    allowRemoteInput.addEventListener("change", function () {
+      var c = loadConfig();
+      c.allowRemote = allowRemoteInput.checked;
+      saveConfig(c);
+      refreshModels();
+    });
     var selBar = document.getElementById("chatSelectionBar");
     var selTextEl = document.getElementById("chatSelText");
     var resizeHandle = document.getElementById("chatResizeHandle");
@@ -416,13 +414,16 @@
       } else {
         var script = document.createElement("script");
         script.src = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+        script.integrity = "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e";
+        script.crossOrigin = "anonymous";
+        script.referrerPolicy = "no-referrer";
         script.onload = function () {
           pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
           extractPdf(file, callback);
         };
         script.onerror = function () {
           var reader = new FileReader();
-          reader.onload = function (ev) { callback("[PDF binary — could not extract text. Install pdf.js for extraction.]"); };
+          reader.onload = function (_ev) { callback("[PDF binary — could not extract text. pdf.js failed to load (blocked by SRI mismatch or network)."); };
           reader.readAsText(file);
         };
         document.head.appendChild(script);
@@ -663,6 +664,17 @@
       var apiMessages = [{ role: "system", content: systemPrompt }].concat(messages);
       var endpoint = document.getElementById("chatEndpoint").value.trim() || DEFAULT_ENDPOINT;
 
+      if (!endpointAllowed(endpoint)) {
+        msgWrapper.remove();
+        addErrorMsg(
+          "Remote endpoint blocked for safety. Endpoint \u201C" + endpoint + "\u201D is not local (localhost/127.0.0.1). " +
+          "Tick \u201CAllow remote endpoint\u201D in the chat settings if you really intend to use it."
+        );
+        isStreaming = false;
+        sendBtn.disabled = false;
+        return;
+      }
+
       var selectedModel = getSelectedModel();
       if (!selectedModel) {
         msgWrapper.remove();
@@ -877,9 +889,43 @@
     }
   }
 
+  /* Ensure shared/chat-markdown.js is loaded before buildHTML runs.
+     Resolves the path relative to the currently executing script so the
+     same chat-panel.js works from any nesting depth without hardcoding. */
+  function ensureChatMarkdown(next) {
+    if (window.ChatMarkdown && typeof window.ChatMarkdown.render === "function") {
+      next();
+      return;
+    }
+    var existing = document.querySelector('script[data-chat-markdown]');
+    if (existing) {
+      existing.addEventListener("load", next);
+      existing.addEventListener("error", next);
+      return;
+    }
+    // Locate the <script> tag that loaded this file to derive a sibling URL.
+    var scripts = document.querySelectorAll("script[src]");
+    var panelSrc = null;
+    for (var i = 0; i < scripts.length; i++) {
+      var s = scripts[i].getAttribute("src") || "";
+      if (s.indexOf("chat-panel.js") !== -1) { panelSrc = s; break; }
+    }
+    var mdSrc = panelSrc
+      ? panelSrc.replace(/chat-panel\.js(\?.*)?$/, "chat-markdown.js")
+      : "/shared/chat-markdown.js";
+    var script = document.createElement("script");
+    script.src = mdSrc;
+    script.dataset.chatMarkdown = "1";
+    script.onload = next;
+    script.onerror = next; // buildHTML falls back to plain escape
+    document.head.appendChild(script);
+  }
+
+  function boot() { ensureChatMarkdown(buildHTML); }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", buildHTML);
+    document.addEventListener("DOMContentLoaded", boot);
   } else {
-    buildHTML();
+    boot();
   }
 })();

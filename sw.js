@@ -1,14 +1,25 @@
-var CACHE_NAME = "usyd-mastery-v1";
+// Bump the version whenever canonical shared assets change — activate() will
+// purge old named caches.
+var CACHE_NAME = "usyd-mastery-v3";
 var PRECACHE_URLS = [
   "/",
   "/index.html",
+  "/manifest.webmanifest",
+  "/shared/root-portal.css",
+  "/shared/root-portal.js",
   "/shared/home.css",
+  "/shared/study-base.css",
   "/shared/mission-control.js",
   "/shared/chat-panel.js",
+  "/shared/chat-markdown.js",
   "/shared/chat-panel.css",
   "/shared/mindmap.js",
   "/shared/mindmap.css",
-  "/shared/flashcard-srs.js"
+  "/shared/flashcard-srs.js",
+  "/shared/lang-toggle.js",
+  "/shared/progress-tracker.js",
+  "/shared/katex-loader.js",
+  "/shared/storage.js"
 ];
 
 self.addEventListener("install", function(event) {

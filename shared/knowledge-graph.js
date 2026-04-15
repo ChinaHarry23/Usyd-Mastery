@@ -475,7 +475,11 @@ window.addEventListener("storage", function (e) {
 applyChromeLang();
 updateStats();
 
-function tick() { simulate(); draw(); requestAnimationFrame(tick); }
+/* Pause animation when tab is hidden — saves battery/CPU on mobile. */
+function tick() {
+  if (!document.hidden) { simulate(); draw(); }
+  requestAnimationFrame(tick);
+}
 tick();
 
 })();
