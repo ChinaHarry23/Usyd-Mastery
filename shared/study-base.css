@@ -1617,6 +1617,35 @@ body::after {
   fill: none;
 }
 
+/* ===== COURSE ASSET HOOKS =====
+   Each course's shared/study.css declares these tokens with its own
+   `url(assets/<course>-hero.png)` etc. Courses without matching assets
+   (5318, 9123) leave them undefined and the fallbacks evaluate to `none`,
+   so the selectors are inert. This replaces 18 lines of duplicated CSS
+   across three course files with a single definition here. */
+body::after {
+  background-image: var(--course-hero-bg, none);
+  background-position: var(--course-hero-bg-position, right top);
+  background-size: var(--course-hero-bg-size, cover);
+  background-repeat: no-repeat;
+}
+.section + .section::before {
+  display: var(--course-divider-display, none);
+  background-image: var(--course-divider-bg, none);
+}
+.concept-box::after { background-image: var(--course-accent-bg, none); }
+.callout::after      { background-image: var(--course-divider-bg, none); }
+.sim-container::after { background-image: var(--course-accent-bg, none); }
+
+/* Hero background layers radial gradients over the course hero image.
+   The `rgba(var(--accent-rgb), …)` calls resolve against per-course tokens. */
+.hero-section::before {
+  background-image:
+    radial-gradient(circle at 14% 16%, rgba(var(--accent-rgb), 0.22), transparent 22%),
+    radial-gradient(circle at 88% 14%, rgba(var(--secondary-rgb), 0.18), transparent 24%),
+    var(--course-hero-bg, none);
+}
+
 /* ===== KNOWLEDGE GRAPH HIGHLIGHT ===== */
 @keyframes kgPulse {
   0%   { box-shadow: 0 0 0 0 rgba(var(--accent-strong-rgb), 0.45); }
@@ -1629,4 +1658,85 @@ body::after {
   border-radius: var(--radius);
   animation: kgPulse 1.2s ease-in-out 3;
   scroll-margin-top: 80px;
+}
+
+/* ===== REDUCED MOTION =====
+   Respect user preference: kill animations, transitions, and smooth-scroll. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  html { scroll-behavior: auto; }
+  .kg-highlight { animation: none; }
+}
+
+/* ===== PRINT STYLES =====
+   Strip UI chrome, force high-contrast text, expand solutions/proofs so the
+   printed chapter is legible and self-contained. */
+@media print {
+  :root {
+    --bg: #fff;
+    --bg-card: #fff;
+    --text: #000;
+    --text-muted: #333;
+    --text-dim: #555;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+    line-height: 1.55;
+  }
+  body::before,
+  body::after { display: none !important; }
+
+  #sidebar,
+  #sidebarToggle,
+  #chatPanel,
+  #chatToggleBtn,
+  #langToggle,
+  #langToggleHome,
+  .progress-container,
+  .nav-links,
+  .skip-link { display: none !important; }
+
+  #mainContent {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .hero-section,
+  .section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 0.5rem 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Force proofs, solutions, and tutorial content open in print. */
+  .solution-content,
+  .proof-content,
+  .details-content {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .solution-toggle,
+  .proof-toggle,
+  .toolkit-card .flip-back { display: none !important; }
+
+  /* Inline link URLs for print. */
+  a[href]:not([href^="#"]):not([href^="javascript:"])::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #555;
+    word-break: break-all;
+  }
+
+  img, svg, canvas { max-width: 100% !important; }
 }

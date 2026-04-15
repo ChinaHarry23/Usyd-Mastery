@@ -1,6 +1,6 @@
 export default [
   {
-    files: ["shared/**/*.js", "scripts/**/*.js", "tests/**/*.js", "sw.js"],
+    files: ["shared/**/*.js", "scripts/**/*.js", "tests/**/*.js", "sw.js", "**/chapter*-*.js"],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: "script",
@@ -8,6 +8,7 @@ export default [
         // Browser APIs
         window: "readonly",
         document: "readonly",
+        getComputedStyle: "readonly",
         localStorage: "readonly",
         indexedDB: "readonly",
         fetch: "readonly",

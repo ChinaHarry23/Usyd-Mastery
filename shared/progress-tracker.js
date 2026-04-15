@@ -10,7 +10,7 @@ function detectProgressTrackerConfig() {
       storageKey: "comp5318_progress",
       splitQuickChecks: true,
       enhancedQuickChecks: true,
-      accessibilityQuickChecks: false,
+      accessibilityQuickChecks: true,
       progressUpdateEvent: "comp5318-progress-update",
       contentRefreshEvent: "comp5318-content-refresh",
       chapterProgressGetterName: "getComp5318ChapterProgress"
@@ -21,7 +21,7 @@ function detectProgressTrackerConfig() {
       storageKey: "comp5270_progress",
       splitQuickChecks: false,
       enhancedQuickChecks: false,
-      accessibilityQuickChecks: false,
+      accessibilityQuickChecks: true,
       progressUpdateEvent: null,
       contentRefreshEvent: null,
       chapterProgressGetterName: null
@@ -48,7 +48,7 @@ function detectProgressTrackerConfig() {
       storageKey: "comp9001_progress",
       splitQuickChecks: false,
       enhancedQuickChecks: false,
-      accessibilityQuickChecks: false,
+      accessibilityQuickChecks: true,
       progressUpdateEvent: null,
       contentRefreshEvent: null,
       chapterProgressGetterName: null
@@ -62,7 +62,7 @@ function detectProgressTrackerConfig() {
       storageKey: "comp9123_progress",
       splitQuickChecks: true,
       enhancedQuickChecks: true,
-      accessibilityQuickChecks: false,
+      accessibilityQuickChecks: true,
       progressUpdateEvent: null,
       contentRefreshEvent: null,
       chapterProgressGetterName: null
@@ -72,7 +72,7 @@ function detectProgressTrackerConfig() {
     storageKey: "studyhub_progress",
     splitQuickChecks: false,
     enhancedQuickChecks: false,
-    accessibilityQuickChecks: false,
+    accessibilityQuickChecks: true,
     progressUpdateEvent: null,
     contentRefreshEvent: null,
     chapterProgressGetterName: null
@@ -261,12 +261,15 @@ function bindQuickChecksEnhanced() {
   document.querySelectorAll(".quick-check").forEach(function(qc) {
     if (qc.dataset.qcBound) return;
     qc.dataset.qcBound = "1";
+    qc.setAttribute("role", "listbox");
     var correctIdx = parseInt(qc.dataset.answer, 10);
     var feedback = qc.querySelector(".qc-feedback");
     if (isNaN(correctIdx) || !feedback) return;
     var tracked = false;
     qc.querySelectorAll(".qc-opt").forEach(function(opt) {
-      opt.addEventListener("click", function() {
+      opt.setAttribute("role", "option");
+      opt.setAttribute("tabindex", "0");
+      function onPick() {
         if (!tracked) {
           tracked = true;
           var ctx = qc.getAttribute("data-qc-context") || "study";
@@ -290,13 +293,25 @@ function bindQuickChecksEnhanced() {
           feedback.className = "qc-feedback show wrong-fb";
         }
         renderMathInDoc();
+      }
+      opt.addEventListener("click", onPick);
+      opt.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPick();
+        }
       });
     });
   });
 }
 
 function bindQuickChecksSimple() {
+  document.querySelectorAll(".quick-check").forEach(function(container) {
+    container.setAttribute("role", "listbox");
+  });
   document.querySelectorAll(".quick-check .qc-opt").forEach(function(btn) {
+    btn.setAttribute("role", "option");
+    btn.setAttribute("tabindex", "0");
     btn.addEventListener(
       "click",
       function handler() {
@@ -305,6 +320,12 @@ function bindQuickChecksSimple() {
       },
       { once: true }
     );
+    btn.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        btn.click();
+      }
+    });
   });
 }
 
