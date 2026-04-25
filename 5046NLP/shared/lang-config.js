@@ -24,6 +24,10 @@
   window.LANG_CONFIG = {
     storageKey: "comp5046_lang",
     translations: hasTranslations ? T : undefined,
+    sectionTranslations:
+      typeof COMP5046_SECTION_TRANSLATIONS !== "undefined"
+        ? COMP5046_SECTION_TRANSLATIONS
+        : undefined,
     mindmapTranslations: typeof MINDMAP_UI !== "undefined" ? MINDMAP_UI : undefined
   };
 })();

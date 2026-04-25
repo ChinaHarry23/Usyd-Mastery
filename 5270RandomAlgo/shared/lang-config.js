@@ -32,7 +32,11 @@
 
   window.LANG_CONFIG = {
     storageKey: "comp5270_lang",
-    selectorTranslations: arrays
+    selectorTranslations: arrays,
+    sectionTranslations:
+      typeof COMP5270_SECTION_TRANSLATIONS !== "undefined"
+        ? COMP5270_SECTION_TRANSLATIONS
+        : undefined
   };
 
   /* Knowledge-graph highlight (from=kg query param) — 5270-specific feature */

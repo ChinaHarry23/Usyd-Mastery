@@ -1,0 +1,107 @@
+/**
+ * COMP9123 — data-i18n key translations + per-chapter labels.
+ */
+var COMMON = {
+  nav_home: "&larr; 课程主页",
+  progress_label: "学习进度",
+  link_math: "&#x1F4D0; 数学基础",
+  link_mindmap: "&#x1F5FA; 思维导图",
+  link_kg: "&#x1F578; 知识图谱",
+  link_quiz: "&#x1F4DD; 测验中心",
+  link_fc: "&#x1F4E6; 闪卡",
+  hero_course: "COMP9123 — 数据结构与算法",
+  math_back_study: "&larr; 返回学习指南",
+  math_back_home: "&larr; 课程主页",
+
+  /* Homepage (index.html) keys — hyphen-cased */
+  "skip-link": "跳到正文",
+  "home-title": "数据结构与算法",
+  "home-subtitle": "与讲义 PDF、习题和参考代码相配套的学习指南——涵盖测验、闪卡、概念图谱与学习进度追踪。基于 Usyd Mastery 静态学习站模式（共享模块位于 <code>/shared/</code>）。",
+
+  "hero-coverage-label": "覆盖范围",
+  "hero-coverage-value": "10 个每周主题",
+  "hero-toolkit-label": "工具集",
+  "hero-toolkit-value": "指南、基础、测验与闪卡",
+  "hero-materials-label": "学习资料",
+  "hero-materials-value": "讲义 PDF + Python 参考代码",
+
+  "link-kg-home": "&#x1F578; 知识图谱 &rarr;",
+  "link-quiz-home": "&#x1F4DD; 测验中心 &rarr;",
+  "link-flashcards-home": "&#x1F4E6; 闪卡 &rarr;",
+  "link-progress-home": "&#x1F4CA; 学习进度 &rarr;",
+
+  "pipeline-label": "学习流程",
+  "pipeline-1-title": "讲义 PDF",
+  "pipeline-1-desc": "每周讲义中的定义、证明与复杂度分析。",
+  "pipeline-2-title": "习题与演练",
+  "pipeline-2-desc": "例题讲解——先独立尝试，再对照答案。",
+  "pipeline-3-title": "参考代码",
+  "pipeline-3-desc": "可读的 Python 实现位于 <code>Codes/</code>（包括 ADT、堆、哈希等）。",
+  "pipeline-4-title": "记忆巩固",
+  "pipeline-4-desc": "知识图谱、测验、闪卡与学习进度面板。",
+
+  "visual-1": "已整理周次",
+  "visual-2": "配套工具",
+  "visual-3": "测验题目",
+
+  "mission-kicker": "任务中控",
+  "mission-title": "把学习站变成掌握度循环：阅读指南、完成检查、看着进度推进。",
+  "mission-pill-default": "等待首次行动",
+  "mission-overall-label": "总体掌握度",
+  "mission-overall-note": "打开任一周，开始积累你的学习轨迹。",
+  "mission-streak-label": "连续节奏",
+  "mission-streak-note": "还没有学习连击——完成一次快速检查即可开始。",
+  "mission-clear-label": "已通关周次",
+  "mission-clear-note": "当阅读、检查与测验都较完整时，该周就算通关。",
+  "mission-next-label": "下一任务",
+  "mission-next-note": "先读学习指南，再进入基础与练习工具。",
+  "mission-next-link": "启动 &rarr;",
+
+  "section-kicker": "每周地图",
+  "section-title": "选择一周——每张卡片都链接到学习指南、基础页与思维导图。",
+
+  "tag-ready": "就绪",
+  "tag-pdf-tutorial": "讲义 + 习题",
+  "tag-code": "代码",
+
+  "link-study": "学习指南 &rarr;",
+  "link-foundations": "数学基础 &rarr;",
+  "link-mindmap-home": "思维导图 &rarr;",
+
+  "ch1-num": "第 1 周",
+  "ch1-title": "导论与复杂度分析",
+  "ch1-desc": "算法、伪代码、数据结构、大 O 记号、查找与数组模型。",
+  "ch2-num": "第 2 周",
+  "ch2-title": "列表与序列",
+  "ch2-desc": "列表 ADT、基于数组的列表、链式节点，以及插入/删除背后的指针重连模式。",
+  "ch3-num": "第 3 周",
+  "ch3-title": "栈、队列与链表",
+  "ch3-desc": "算法分析、栈、队列、方法调用栈、括号匹配与 ADT 设计问题。",
+  "ch4-num": "第 4 周",
+  "ch4-title": "树",
+  "ch4-desc": "树的术语、树 ADT、遍历、二叉树、中序遍历、欧拉巡游与递归树算法。",
+  "ch5-num": "第 5 周",
+  "ch5-title": "BST 与 AVL 树",
+  "ch5-desc": "BST 次序、沿路径的查找/更新、范围查询、AVL 平衡、旋转与增强树推理。",
+  "ch6-num": "第 6 周",
+  "ch6-title": "映射、堆与优先队列",
+  "ch6-desc": "映射 ADT、有序映射查询、优先队列权衡、堆不变式、数组堆与建堆分析。",
+  "ch7-num": "第 7 周",
+  "ch7-title": "哈希",
+  "ch7-desc": "直接寻址、哈希函数设计、装载因子、链地址法、线性探测、布谷鸟哈希与集合/映射复用。",
+  "ch8-num": "第 8 周",
+  "ch8-title": "图",
+  "ch8-desc": "图的术语、邻接表与邻接矩阵、DFS 生成森林与割边、BFS 层次以及二分图判定。",
+  "ch9-num": "第 9 周",
+  "ch9-title": "图算法",
+  "ch9-desc": "带权最短路径、松弛操作、Dijkstra、MST 割/环性质、Prim、Kruskal 与并查集。",
+  "ch10-num": "第 10 周",
+  "ch10-title": "贪心算法",
+  "ch10-desc": "贪心范式、反例、分数背包、区间划分、Huffman 编码与交换论证。",
+
+  "footer": "COMP9123 交互式学习中心 · 悉尼大学 · 2026",
+  "footer-note": "讲义 PDF 与代码样例仅限个人学习，请遵守单元的版权规定。本站只在结构与练习上辅助——并不替代 Canvas 或官方课程大纲。",
+};
+
+var CH = {};
+var MINDMAP_UI = {};
