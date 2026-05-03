@@ -48,7 +48,7 @@ const CSP_CONTENT = [
   "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'",
   "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
-  "connect-src 'self' http://localhost:* http://127.0.0.1:*",
+  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
