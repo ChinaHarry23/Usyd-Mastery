@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 7 - Feedforward Neural Networks</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 7 introduces deep learning through perceptrons and multi-layer feedforward neural networks. The lecture covers the perceptron learning rule and its linear-separability limit (no XOR), the backpropagation algorithm, weight-update derivations for sigmoid neurons, and modern training techniques: ReLU, dropout, softmax, and cross-entropy.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 7 - Feedforward Neural Networks">
+<meta property="og:description" content="Week 7 introduces deep learning through perceptrons and multi-layer feedforward neural networks: perceptron rule and linear-separability, backpropagation, ReLU, dropout, softmax, cross-entropy.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F9E0;</span>
+    <h2 data-i18n="sidebar_h2">Week 7</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-perceptron" class="nav-link" data-section="sec-perceptron" data-i18n="nav_perceptron">Perceptron</a></li>
+    <li><a href="#sec-mlp-bp" class="nav-link" data-section="sec-mlp-bp" data-i18n="nav_mlp_bp">MLP &amp; Backprop</a></li>
+    <li><a href="#sec-design" class="nav-link" data-section="sec-design" data-i18n="nav_design">Design choices</a></li>
+    <li><a href="#sec-modern" class="nav-link" data-section="sec-modern" data-i18n="nav_modern">Modern techniques</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter7-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter7-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=7" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=7" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=7&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="6">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 7: Feedforward Neural Networks</h1>
+    <p class="hero-subtitle">The first deep-learning week shifts from classical models to neural networks. It starts from the perceptron and its linear-separability limit, then builds up the multi-layer perceptron and the backpropagation algorithm, then explains the modern engineering moves that make deep networks trainable in practice: ReLU activations, dropout, softmax outputs, and cross-entropy loss.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F539;</span><span>Perceptron rule</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F501;</span><span>Backpropagation</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4C9;</span><span>Gradient descent</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x26A1;</span><span>ReLU &amp; dropout</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Linear separability</span>
+      <span>Forward / backward pass</span>
+      <span>Sigmoid derivative</span>
+      <span>Learning rate &amp; momentum</span>
+      <span>Softmax + cross-entropy</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter7-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter7-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">The Week 7 lecture is dense: it covers the perceptron and the full backpropagation derivation in one go, and finishes with the modern techniques that turn small networks into deep ones. Read the slides alongside this guide, and re-trace the numerical backprop example by hand.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What you should learn from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../Materials/ml7.pdf">ml7.pdf</a></td><td>Perceptron model and rule, AND/OR/NAND/XOR analysis, multi-layer perceptron architecture, forward and backward pass, worked backprop example, learning rate / momentum / weight init, vanishing gradients, ReLU, dropout, softmax, cross-entropy.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-perceptron" class="section" data-track="perceptron">
+  <h2 class="section-title">The perceptron: a single neuron with a step decision</h2>
+  <p class="section-lead">A perceptron is one neuron with a step transfer function: it sums weighted inputs plus a bias and emits 0 or 1. It is the simplest neural network and the conceptual base for everything that follows.</p>
+
+  <div class="def-box">
+    <div class="def-label">Perceptron model</div>
+    <p style="margin:0; color:var(--text-muted);">Given input \(x\), weights \(w\), and bias \(b\), the perceptron computes \(n = w \cdot x + b\) and outputs \(a = \text{step}(n)\): 1 if \(n \ge 0\), else 0. The slide's worked example: \(x=(0.2,0.3)\), \(w=(2,1)\), \(b=-1.5\) gives \(a = \text{step}(-0.8) = 0\).</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Perceptron learning rule</h3>
+      <p>Define the error \(e = t - a\) between the target and the actual output. Then update in matrix form:</p>
+      <p>\(w^{\text{new}} = w^{\text{old}} + e\,x^\top\) and \(b^{\text{new}} = b^{\text{old}} + e\).</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">If \(e=0\) the weights do not move; if \(e=+1\) the weights grow towards \(x\); if \(e=-1\) they shrink away from it.</p>
+    </div>
+    <div class="col-card">
+      <h3>One epoch</h3>
+      <p>An epoch is one full pass through the training set where weights are updated after every example. The end-of-epoch check (all examples correctly classified, or max epochs reached) does not itself change weights.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">The lecture is precise about this: the check pass does not count as another epoch.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>AND / OR / NAND</h3>
+      <p>Linearly separable in 2D: a single line can separate the positive corner(s) from the negatives. A perceptron solves all three.</p>
+    </div>
+    <div class="glance-card">
+      <h3>XOR</h3>
+      <p>The positives \((0,1)\) and \((1,0)\) sit on opposite sides of the diagonal; no single line separates the classes. A single perceptron cannot represent XOR.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Two layers fix XOR</h3>
+      <p>XOR factors as a combination of NAND, OR, and AND gates. A 2-layer perceptron expresses that combination and solves XOR.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Convergence:</strong> if the data are linearly separable, the perceptron rule is guaranteed to find a separating hyperplane in a finite number of steps. It does not try to maximise the margin; it just stops as soon as a separator is found. This is the key reason real-world problems need multi-layer networks.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="A single-layer perceptron can only realise linearly separable functions. XOR is not linearly separable; AND, OR and NAND all are.">
+    <div class="qc-h">Quick check - Perceptron</div>
+    <div class="qc-question">Which Boolean function cannot be implemented by a single perceptron?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">AND</div>
+      <div class="qc-opt" data-idx="1">OR</div>
+      <div class="qc-opt" data-idx="2">XOR</div>
+      <div class="qc-opt" data-idx="3">NAND</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-mlp-bp" class="section" data-track="mlp-bp">
+  <h2 class="section-title">Multi-layer perceptron and backpropagation</h2>
+  <p class="section-lead">A multi-layer perceptron stacks layers of neurons with smooth activation functions so that gradients can flow. The backpropagation algorithm trains the network: one forward pass to produce a prediction, one backward pass to push the error back through the layers, layer by layer.</p>
+
+  <div class="def-box">
+    <div class="def-label">Network architecture</div>
+    <p style="margin:0; color:var(--text-muted);">Layers: input, one or more hidden, output. <strong>Feedforward</strong> means each neuron only takes input from the previous layer. <strong>Fully connected</strong> means every neuron in the current layer is connected to every neuron in the previous one.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Sigmoid transfer</h3>
+      <p>For backpropagation to work the activation must be differentiable. The classical choice is the sigmoid \(f(z) = 1/(1+e^{-z})\), whose derivative \(f'(z) = f(z)\,(1-f(z))\) is convenient for hand calculation.</p>
+    </div>
+    <div class="col-card">
+      <h3>Two passes</h3>
+      <p><strong>Forward:</strong> compute every neuron's output. <strong>Backward:</strong> compute output \(\delta\) from the target, propagate \(\delta\) into the hidden layers, then update each weight as \(\Delta w_{pq} = \eta\,\delta_q\,o_p\).</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Output-neuron error</h3>
+      <p>For a sigmoid output neuron: \(\delta_q = (t_q - o_q)\,o_q\,(1-o_q)\). The first factor pulls the prediction toward the target; the second factor vanishes when the unit saturates.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Hidden-neuron error</h3>
+      <p>\(\delta_q = o_q\,(1-o_q)\,\sum_i w_{qi}\,\delta_i\), summed over neurons \(i\) in the layer above. The earlier layers inherit their gradient from the layer that follows them.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Weight update</h3>
+      <p>\(w_{pq}^{\text{new}} = w_{pq}^{\text{old}} + \eta\,\delta_q\,o_p\). The bias updates as \(\theta_q^{\text{new}} = \theta_q^{\text{old}} + \eta\,\delta_q\).</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Why "back"-propagation?</strong> The output layer is the only place where you actually know the target. Backprop reuses each layer's \(\delta\) to compute the previous layer's \(\delta\) via the weights between them, so the gradient is calculated once per weight rather than re-derived from scratch.</p>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>SGD</h3>
+      <p>Stochastic gradient descent updates weights after every single training example. This is the variant the worked lecture example uses.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Mini-batch</h3>
+      <p>Sum the gradients over a small batch, then update once. Smooths SGD noise and uses vectorised hardware efficiently.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Full-batch</h3>
+      <p>Sum over all examples before each update. Stable but slow; rare in practice for large datasets.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Universal approximator</h3>
+      <p>One hidden layer suffices to approximate any continuous function (Cybenko 1989, Hornik et al. 1989). This is an existence theorem, not a construction.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Local minima are a real risk:</strong> backprop performs gradient descent on a non-convex error surface, so it may converge to a local rather than global minimum. The starting weights, learning rate, and momentum all change which basin you end up in.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="The factor o_q(1 − o_q) is the derivative of the sigmoid. When a unit's output saturates near 0 or 1, this factor is tiny, the delta is tiny, and the weights barely move.">
+    <div class="qc-h">Quick check - Saturation</div>
+    <div class="qc-question">Why does a sigmoid unit whose output is very close to 1 learn slowly under backpropagation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because the target is unreachable</div>
+      <div class="qc-opt" data-idx="1">Because \(o\,(1-o)\) is near zero, so \(\delta\) and the weight update are tiny</div>
+      <div class="qc-opt" data-idx="2">Because the learning rate becomes negative</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-design" class="section" data-track="design">
+  <h2 class="section-title">Design choices and hyperparameters</h2>
+  <p class="section-lead">Once the architecture is fixed, performance lives or dies by a few hyperparameters. The lecture walks through each one and gives practical tuning advice.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Layer sizing</h3>
+      <p>Input neurons: one per numerical feature; for a k-valued categorical attribute use one-hot encoding with k binary inputs. Output neurons: one per class for k-class problems (one-hot), or a single sigmoid neuron for binary.</p>
+    </div>
+    <div class="col-card">
+      <h3>Hidden layers</h3>
+      <p>Tuned by trial and error: too few neurons under-fit, too many over-fit. The lecture suggests growing the hidden layer — start small, train until error plateaus, then add neurons.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Learning rate \(\eta\)</h3>
+      <p>Too small &rarr; slow convergence. Too large &rarr; oscillation and overshoot. There is no single optimal value; the lecture warns you cannot pick it before training because the error surface changes as you go.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Decay schedules</h3>
+      <p>Time-based: \(\eta_n = \eta_{n-1}/(1+d\,n)\). Exponential: \(\eta_n = \eta_0 e^{-d n}\). Start high to escape shallow regions, decay to settle near a minimum.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Momentum</h3>
+      <p>\(\Delta w_{pq}(t) = \eta\,\delta_q\,o_p + \mu\,(w_{pq}(t) - w_{pq}(t-1))\). The momentum term \(\mu\) carries the previous step forward, damping oscillations and allowing slightly larger \(\eta\).</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Weights initialisation</div>
+    <p style="margin:0; color:var(--text-muted);">Random small values in e.g. \([-1,1]\) is the classical default. <strong>Xavier initialisation</strong> samples from \(\mathcal{N}(0,\sigma^2)\) with \(\sigma = \sqrt{2/(N_\text{in}+N_\text{out})}\), where \(N_\text{in}\) and \(N_\text{out}\) are the fan-in and fan-out of the current neuron. The aim is to keep the variance of activations and gradients stable across layers.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="A learning rate that is too large causes the optimiser to overshoot minima and oscillate. Too small simply slows convergence; it does not produce oscillation.">
+    <div class="qc-h">Quick check - Learning rate</div>
+    <div class="qc-question">What is the typical symptom of a learning rate that is set too high?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Oscillation and overshooting of the minimum</div>
+      <div class="qc-opt" data-idx="1">Very slow but smooth convergence</div>
+      <div class="qc-opt" data-idx="2">A perfectly linear decision boundary</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-modern" class="section" data-track="modern">
+  <h2 class="section-title">Modern techniques that make deep networks trainable</h2>
+  <p class="section-lead">Deep networks suffered from the vanishing-gradient problem for decades. The combination of better activations, regularisation, output transformations and loss functions made depth practical.</p>
+
+  <div class="concept-box">
+    <p><strong>Vanishing gradient:</strong> with sigmoid, when a hidden output approaches 0 or 1 the factor \(o\,(1-o)\) is near zero. As gradients are multiplied through many layers, the product collapses to near zero. The early layers receive almost no signal and learn extremely slowly.</p>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>ReLU</h3>
+      <p>\(y = \max(0, x)\). Gradient is 1 for \(x &gt; 0\), so positive activations do not saturate. The default for hidden layers in modern deep networks.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Leaky ReLU</h3>
+      <p>\(y = \max(\alpha x, x)\) with small \(\alpha\) (e.g. 0.01). Keeps a non-zero gradient on the negative side so units do not "die".</p>
+    </div>
+    <div class="metric-card">
+      <h3>Dropout</h3>
+      <p>During training, randomly disable a fraction \(p\) of neurons each iteration. The remaining sub-network is forced to be robust; spurious features that depend on specific units are penalised.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Test-time dropout</h3>
+      <p>At inference no neurons are dropped, but the weights are scaled to compensate for the higher expected sum. The result behaves like an ensemble of thinned sub-networks.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Softmax outputs</h3>
+      <p>To interpret the output layer as a probability distribution use \(p_i = e^{o_i}/\sum_j e^{o_j}\). Example from the lecture: outputs \((0.3,0.8,0.2)\) become probabilities approximately \((0.28,0.46,0.26)\), which sum to 1.</p>
+    </div>
+    <div class="col-card">
+      <h3>Cross-entropy loss</h3>
+      <p>For one-hot labels \(y_i\) and softmax predictions \(\hat{y}_i\) the categorical cross entropy is \(\text{CCE}_i = -\sum_j y_{ij}\,\log \hat{y}_{ij}\). It replaces MSE for classification and penalises confidently wrong predictions much more.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why now and not before?</strong> The lecture lists three enabling factors: 1) compute, especially GPUs; 2) massive labelled datasets such as ImageNet (15M images, 20K categories); 3) algorithmic advances — ReLU, dropout, smarter initialisation, and convolutions with shared weights (covered next week).
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Softmax exponentiates and normalises the outputs so they are non-negative and sum to 1 — i.e. they form a valid probability distribution over the classes.">
+    <div class="qc-h">Quick check - Softmax</div>
+    <div class="qc-question">Why apply softmax to the output layer of a multi-class classifier?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">To make the network linear again</div>
+      <div class="qc-opt" data-idx="1">To turn the outputs into a probability distribution over classes</div>
+      <div class="qc-opt" data-idx="2">To remove the bias from the network</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Study questions to answer before moving on</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 1</div>
+      <div class="problem-tag warm-up">Perceptron reasoning</div>
+    </div>
+    <div class="problem-body">
+      <p>Train a perceptron by hand on the data \((x_1,x_2,x_3) \to t\): \((1,0,0) \to 0\), \((1,0,1) \to 1\), \((1,1,0) \to 0\). Initial weights \(w=(0.3,0.2,0.4)\), bias \(b=0.1\). What weights does the rule produce after one epoch?</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w7-perceptron">Show Solution</button>
+      <div class="solution-content" id="sol-w7-perceptron">
+        <p><strong>Ex.1</strong> \(a=\text{step}(0.4)=1\), \(e=-1\), so \(w \leftarrow w - x = (-0.7,0.2,0.4)\), \(b \leftarrow b - 1 = -0.9\).</p>
+        <p><strong>Ex.2</strong> \(a=\text{step}(-1.2)=0\), \(e=1\), so \(w \leftarrow w + x = (0.3,0.2,1.4)\), \(b \leftarrow -0.9 + 1 = 0.1\).</p>
+        <p><strong>Ex.3</strong> \(a=\text{step}(0.6)=1\), \(e=-1\), so \(w \leftarrow w - x = (-0.7,-0.8,1.4)\), \(b \leftarrow 0.1 - 1 = -0.9\).</p>
+        <p>End of epoch 1: \(w = (-0.7,-0.8,1.4)\), \(b=-0.9\). A check pass shows Example 2 is still wrong, so training continues.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 2</div>
+      <div class="problem-tag problem-solving">Backprop intuition</div>
+    </div>
+    <div class="problem-body">
+      <p>In the lecture's worked example a forward pass gives hidden outputs \(o_4 = 0.332\), \(o_5 = 0.525\) and output \(o_6 = 0.474\) with target \(t=1\) and \(\eta=0.9\). What is \(\delta_6\) and the new weight \(w_{46}\) from old value \(-0.3\)?</p>
+      <p style="color:var(--text-muted);">\(\delta_6 = (1 - 0.474) \cdot 0.474 \cdot (1 - 0.474) \approx 0.1311\). \(\Delta w_{46} = 0.9 \cdot 0.1311 \cdot 0.332 \approx 0.039\), so \(w_{46}^{\text{new}} \approx -0.261\). The output bias updates to \(\theta_6 \approx 0.218\).</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 3</div>
+      <div class="problem-tag advanced">Why ReLU?</div>
+    </div>
+    <div class="problem-body">
+      <p>Explain why replacing sigmoid hidden activations with ReLU helps train deeper networks. Reference both the gradient formula and the multiplicative chain through layers.</p>
+      <p style="color:var(--text-muted);">Sigmoid's derivative \(o(1-o)\) is at most \(0.25\), and is close to 0 whenever a unit saturates. Multiplying many such factors across deep layers shrinks the gradient toward zero (the vanishing-gradient problem), so early layers barely learn. ReLU's gradient is exactly 1 for \(x &gt; 0\), so positive paths preserve gradient magnitude through depth.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=7" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=7&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

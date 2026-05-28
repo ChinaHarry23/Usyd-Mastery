@@ -120,6 +120,23 @@ var CH = {
     nav_pca: "PCA",
     nav_tutorial: "思考题",
   },
+  "7": {
+    math_hero: "COMP5318 — 第7周数学补充",
+    math_h1: "数学基础（第7周）",
+    math_sub: "感知机规则、Sigmoid 导数、反向传播 δ、权重更新、动量、Xavier 初始化、Softmax 与交叉熵。",
+    hero_course: "COMP5318 — 应用机器学习",
+    hero_title: "第7周：前馈神经网络",
+    hero_subtitle:
+      "从感知机出发，到多层感知机与反向传播，再到 ReLU、Dropout、Softmax、交叉熵等现代训练技巧。",
+    sidebar_h2: "第7周",
+    nav_overview: "概览",
+    nav_materials: "课程资料",
+    nav_perceptron: "感知机",
+    nav_mlp_bp: "MLP 与反向传播",
+    nav_design: "设计与超参数",
+    nav_modern: "现代技巧",
+    nav_tutorial: "思考题",
+  },
 };
 
 var MINDMAP_UI = {
@@ -167,6 +184,14 @@ var MINDMAP_UI = {
   },
   "6": {
     title: "第6周思维导图",
+    study: "← 学习指南",
+    math: "数学基础",
+    home: "🏠 主页",
+    expand: "全部展开",
+    collapse: "全部收起",
+  },
+  "7": {
+    title: "第7周思维导图",
     study: "← 学习指南",
     math: "数学基础",
     home: "🏠 主页",
