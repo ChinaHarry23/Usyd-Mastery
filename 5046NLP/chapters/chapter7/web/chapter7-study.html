@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 7 — Language Models</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Language models · n-gram &amp; Markov · smoothing · perplexity · neural LMs · tasks framed as LM.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lecture 7 — Language Models">
+<meta property="og:description" content="Language models · n-gram &amp; Markov · smoothing · perplexity · neural LMs · tasks framed as LM.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x26A1;</span>
+    <h2>Lecture 7</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-what" class="nav-link" data-section="sec-what">What is an LM</a></li>
+    <li><a href="#sec-ngram" class="nav-link" data-section="sec-ngram">N-gram &amp; Markov</a></li>
+    <li><a href="#sec-mle" class="nav-link" data-section="sec-mle">Count-based MLE</a></li>
+    <li><a href="#sec-edges" class="nav-link" data-section="sec-edges">Start / end &amp; log-probs</a></li>
+    <li><a href="#sec-smooth" class="nav-link" data-section="sec-smooth">Smoothing</a></li>
+    <li><a href="#sec-perplexity" class="nav-link" data-section="sec-perplexity">Perplexity</a></li>
+    <li><a href="#sec-neural" class="nav-link" data-section="sec-neural">Neural LMs</a></li>
+    <li><a href="#sec-tasks" class="nav-link" data-section="sec-tasks">Tasks as LM</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Lab &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter7-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter7-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=7" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=7" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 11</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 7: Models &mdash; Language Models</h1>
+    <p class="hero-subtitle">P(w<sub>1..N</sub>) · n-gram Markov approximation · count-based MLE · smoothing · perplexity · neural LMs · tasks framed as LM.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use:</strong> trace each formula’s estimator and what it predicts · close the page and answer <strong>Recall</strong> lines.</p>
+  </div>
+</section>
+
+<section id="sec-what" class="section" data-track="sec-what">
+  <p class="section-kicker">Definition</p>
+  <h2 class="section-title">What is a language model?</h2>
+  <ul class="kp-list tight">
+    <li>An LM assigns a probability \(P(w_1, w_2, \dots, w_N)\) to any string of tokens.</li>
+    <li>From a joint, we can predict the next word: \(\arg\max_t P(w_1\dots w_N, t)\) — pick the continuation with the highest score.</li>
+    <li>Example: \(P(\text{“We are at The University of Sydney”}) &gt; P(\text{“We are at The University of chocolate”})\).</li>
+    <li>The same probability supports completion, scoring candidates in translation/ASR, and generation by sampling.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What is the single object an LM defines, and what task does it directly enable?</p>
+</section>
+
+<section id="sec-ngram" class="section" data-track="sec-ngram">
+  <p class="section-kicker">Approximation</p>
+  <h2 class="section-title">N-gram language models &amp; the Markov assumption</h2>
+  <ul class="kp-list tight">
+    <li>Chain rule: \(P(w_{1..N}) = \prod_i P(w_i \mid w_{1..i-1})\) — exact but exponentially many contexts.</li>
+    <li><strong>Markov assumption:</strong> future is independent of the past given the present few tokens. With order \(n\), \(P(w_i \mid w_{1..i-1}) \approx P(w_i \mid w_{i-n+1..i-1})\).</li>
+    <li><strong>Unigram</strong> (\(n=1\)): \(P(w_i)\) — ignores context entirely.</li>
+    <li><strong>Bigram</strong> (\(n=2\)): \(P(w_i \mid w_{i-1})\) — only previous token matters.</li>
+    <li><strong>Trigram</strong> (\(n=3\)): \(P(w_i \mid w_{i-2}, w_{i-1})\); 4-gram extends further.</li>
+    <li>Why not push \(n\) very high? <em>Sparsity</em> — long contexts rarely repeat; <em>storage</em> — table grows like \(|V|^n\).</li>
+    <li>Strong: a bigram model assigns equal probability to permutations that share the same bigrams (cannot capture long-distance dependencies like coreference or agreement).</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 480 160" width="480" height="160">
+      <defs><marker id="a7n" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <text x="240" y="16" class="node-label" style="font-size:11px">Bigram approximation of P(University of Sydney)</text>
+      <rect x="20" y="40" width="100" height="28" class="node-box" rx="6"/><text x="70" y="58" class="node-label" style="font-size:10px">P(University|The)</text>
+      <rect x="150" y="40" width="100" height="28" class="node-box" rx="6"/><text x="200" y="58" class="node-label" style="font-size:10px">P(of|University)</text>
+      <rect x="280" y="40" width="100" height="28" class="node-box" rx="6"/><text x="330" y="58" class="node-label" style="font-size:10px">P(Sydney|of)</text>
+      <rect x="120" y="100" width="240" height="28" class="node-box-green" rx="6"/><text x="240" y="118" class="node-label" style="font-size:10px;fill:var(--green)">Product → joint approximation</text>
+      <line x1="70" y1="68" x2="200" y2="100" class="arrow-line" marker-end="url(#a7n)"/>
+      <line x1="200" y1="68" x2="240" y2="100" class="arrow-line" marker-end="url(#a7n)"/>
+      <line x1="330" y1="68" x2="280" y2="100" class="arrow-line" marker-end="url(#a7n)"/>
+    </svg>
+    <div class="arch-caption">Bigram model: replace each P(w<sub>i</sub> | history) with P(w<sub>i</sub> | w<sub>i-1</sub>); multiply across positions.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why is increasing \(n\) not always better? Name the two failure modes.</p>
+</section>
+
+<section id="sec-mle" class="section" data-track="sec-mle">
+  <p class="section-kicker">Estimator</p>
+  <h2 class="section-title">Count-based maximum likelihood</h2>
+  <ul class="kp-list tight">
+    <li>Estimate each conditional by ratios of corpus counts: \(P(w_i \mid w_{i-1}) = \dfrac{\text{Count}(w_{i-1}, w_i)}{\sum_{w} \text{Count}(w_{i-1}, w)} = \dfrac{\text{Count}(w_{i-1}, w_i)}{\text{Count}(w_{i-1})}\).</li>
+    <li>This is the <strong>MLE</strong> under a multinomial model — proportions match observed frequencies.</li>
+    <li>Cheap to compute (one pass for counts), interpretable, no gradient descent needed.</li>
+    <li>Fails brittlely on unseen events: if Count(bird opened) = 0 then \(P(\text{opened}\mid\text{bird}) = 0\), zeroing the whole joint. Worse, if Count(history) = 0 we get \(0/0\).</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Write the bigram MLE in words and identify the two ways it can produce a problematic 0.</p>
+</section>
+
+<section id="sec-edges" class="section" data-track="sec-edges">
+  <p class="section-kicker">Boundaries</p>
+  <h2 class="section-title">Sequence start, end, and log-probabilities</h2>
+  <ul class="kp-list tight">
+    <li>The first token has no history — pad the left with <code>&lt;start&gt;</code> tokens (one for bigram, two for trigram, etc.) so the same conditional template applies.</li>
+    <li>Add an explicit <code>&lt;end&gt;</code> token at the right so the model assigns probability mass to <em>stopping</em>; otherwise a model can prefer arbitrarily long strings.</li>
+    <li>Multiplying many small probabilities underflows: with vocab 10<sup>5</sup>, mean next-word probability \(10^{-5}\), 100 tokens give \(10^{-500}\) — below smallest positive float (\(\approx 10^{-307}\)).</li>
+    <li>Work in <strong>log-space:</strong> \(\log P(w_{1..N}) = \sum_i \log P(w_i \mid \text{history})\). Sums add cleanly; numbers stay bounded.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Two structural fixes for the ends of sequences, and one numerical fix during scoring.</p>
+</section>
+
+<section id="sec-smooth" class="section" data-track="sec-smooth">
+  <p class="section-kicker">Zero counts</p>
+  <h2 class="section-title">Smoothing: Laplace, add-k, Kneser-Ney</h2>
+  <ul class="kp-list tight">
+    <li><strong>Laplace (add-1):</strong> \(P(w_i\mid w_{i-1}) = \dfrac{\text{Count}(w_{i-1}, w_i) + 1}{\text{Count}(w_{i-1}) + |V|}\). Pretend every bigram was seen once. Eliminates zeros; over-smooths frequent events.</li>
+    <li><strong>Add-k:</strong> same idea with a smaller pseudocount \(k &lt; 1\) — tune on a validation set.</li>
+    <li><strong>Kneser-Ney</strong> (intuition): instead of "how often did <em>w</em> appear", ask "in how many <em>different contexts</em> did <em>w</em> appear?" — a word like "Francisco" appears often but in few contexts, so it should be a poor unigram fallback. KN combines absolute discounting with this <em>continuation probability</em>.</li>
+    <li>All smoothing methods steal mass from observed events and redistribute it to unobserved ones; they differ in <em>how</em>.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Write add-1 smoothing for a bigram and explain in one sentence what Kneser-Ney measures that add-1 ignores.</p>
+</section>
+
+<section id="sec-perplexity" class="section" data-track="sec-perplexity">
+  <p class="section-kicker">Intrinsic metric</p>
+  <h2 class="section-title">Perplexity</h2>
+  <ul class="kp-list tight">
+    <li>Perplexity rescales the joint probability by sequence length so models can be compared on different test sets:
+    \(\text{PP}(W) = P(w_1\dots w_N)^{-1/N} = \sqrt[N]{1/P(w_1\dots w_N)}\).</li>
+    <li>Equivalently, \(\text{PP}(W) = \exp\bigl(-\tfrac{1}{N}\sum_i \log P(w_i\mid\text{history})\bigr) = \exp(\text{cross-entropy})\) — perplexity is the exponentiated per-token cross-entropy.</li>
+    <li>Lower is better; minimum is \(1\) (perfect prediction); no upper limit.</li>
+    <li>Intuition: "effective branching factor" — the LM behaves as if choosing uniformly among PP options at each step.</li>
+    <li>Depends on tokenisation: \(N\) counts <em>your</em> tokens, so a model with smaller pieces is not directly comparable to one with larger pieces.</li>
+    <li>Sanity check: uniform over a 10-symbol alphabet ⇒ PP = 10. A model that puts 50% on the true symbol and splits the rest does better.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>State perplexity two ways (probability and cross-entropy). Which direction is better — lower or higher?</p>
+</section>
+
+<section id="sec-neural" class="section" data-track="sec-neural">
+  <p class="section-kicker">From counts to vectors</p>
+  <h2 class="section-title">Neural language models</h2>
+  <ul class="kp-list tight">
+    <li>Replace the count table with a network that maps a context window into a distribution over the vocabulary.</li>
+    <li>Pipeline: <strong>embedding lookup</strong> for each context token → concatenate or pool → one or more <strong>hidden layers</strong> → linear projection to \(|V|\) logits → <strong>softmax</strong>.</li>
+    <li>Train by maximum likelihood: minimise cross-entropy of the next token (gradient descent, backpropagation).</li>
+    <li>Generalises across unseen contexts because similar contexts share embeddings — no zero-count problem (smoothing built in by the smooth function class).</li>
+    <li>Recurrent (RNN) and self-attention (Transformer) variants extend the context arbitrarily; large pretrained Transformers are today's dominant LMs.</li>
+  </ul>
+  <div class="diagram-flow" style="margin-top:1rem;">
+    <div class="flow-node">tokens \(w_{i-n+1..i-1}\)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">embed lookup \(E\)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">hidden \(h\)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">linear \(Wh+b\)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node flow-highlight">softmax over \(|V|\)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">\(P(w_i \mid \text{context})\)</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Walk a single token through a neural LM: which layer produces the distribution and via what nonlinearity?</p>
+</section>
+
+<section id="sec-tasks" class="section" data-track="sec-tasks">
+  <p class="section-kicker">Applications</p>
+  <h2 class="section-title">Tasks framed as language modelling</h2>
+  <ul class="kp-list tight">
+    <li><strong>Completion / next-word:</strong> directly \(\arg\max_t P(t \mid \text{context})\) — keyboard suggest, search query completion.</li>
+    <li><strong>Translation:</strong> noisy-channel or seq2seq view — score \(P(\text{target} \mid \text{source})\); generation = beam search over target LM conditioned on source.</li>
+    <li><strong>Speech recognition / OCR:</strong> combine acoustic/visual model with LM to favour fluent transcripts.</li>
+    <li><strong>Spelling / grammar correction:</strong> rank candidates by their LM probability.</li>
+    <li><strong>Classification &amp; QA via prompting:</strong> insert the input into a template ("Review: ... Sentiment: ____") and let an LM fill in the answer.</li>
+    <li>Common thread: anywhere we need to score, rank, or generate text, an LM provides a prior over strings.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Give the conditional probability that translation, speech recognition, and completion each maximise.</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop &amp; materials</h2>
+  <ul class="kp-list tight">
+    <li><code>chapters/chapter7/materials/lecture-7.pdf</code> — full slide handout.</li>
+    <li>Workshop note from the lecture: <em>"Pre-work: none this week. In-class: spaCy."</em> Bring a Python environment with <code>spacy</code> installed.</li>
+  </ul>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="2" data-explanation="A bigram model uses the Markov assumption that P(w_i | history) ≈ P(w_i | w_{i-1}) — only the immediately preceding token matters. It cannot capture long-range structure like coreference.">
+    <div class="qc-question">A bigram language model approximates \(P(w_i \mid w_1, \dots, w_{i-1})\) by:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(P(w_i)\) — ignore all context</div>
+      <div class="qc-opt" data-idx="1">\(P(w_i \mid w_{i-2}, w_{i-1})\) — last two tokens</div>
+      <div class="qc-opt" data-idx="2">\(P(w_i \mid w_{i-1})\) — only the previous token</div>
+      <div class="qc-opt" data-idx="3">\(P(w_i \mid w_{i+1})\) — only the following token</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="Without smoothing, an unseen bigram has Count(w_{i-1}, w_i) = 0, so MLE assigns probability 0 and the entire joint becomes 0. Add-1 (Laplace) gives every bigram a pseudocount of 1, eliminating zeros.">
+    <div class="qc-question">The main reason to apply Laplace (add-1) smoothing is to:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Speed up training</div>
+      <div class="qc-opt" data-idx="1">Avoid assigning zero probability to bigrams unseen in the training data</div>
+      <div class="qc-opt" data-idx="2">Lower the perplexity on training data</div>
+      <div class="qc-opt" data-idx="3">Remove the need for an &lt;end&gt; token</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="Perplexity is the exponentiated per-token cross-entropy: PP(W) = exp(-(1/N) Σ log P(w_i | context)). Equivalently, it is the inverse joint probability raised to the 1/N power. Lower perplexity = better model.">
+    <div class="qc-question">Which expression for perplexity is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\text{PP}(W) = P(w_1\dots w_N)^{-1/N} = \exp(\text{cross-entropy})\)</div>
+      <div class="qc-opt" data-idx="1">\(\text{PP}(W) = P(w_1\dots w_N) \cdot N\)</div>
+      <div class="qc-opt" data-idx="2">\(\text{PP}(W) = \log P(w_1\dots w_N)\)</div>
+      <div class="qc-opt" data-idx="3">\(\text{PP}(W) = 1 - P(w_1\dots w_N)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice for this lecture.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=7" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=7&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="chapter7-study.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

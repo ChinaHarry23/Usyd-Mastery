@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 8 — Data, Annotation, Crowdsourcing</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Data sources · cleaning · annotation · crowdsourcing · agreement metrics · dataset risks.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lecture 8 — Data, Annotation, Crowdsourcing">
+<meta property="og:description" content="Data sources · cleaning · annotation · crowdsourcing · agreement metrics · dataset risks.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x26A1;</span>
+    <h2>Lecture 8</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-sources" class="nav-link" data-section="sec-sources">Data sources</a></li>
+    <li><a href="#sec-cleaning" class="nav-link" data-section="sec-cleaning">Quality &amp; cleaning</a></li>
+    <li><a href="#sec-good-data" class="nav-link" data-section="sec-good-data">What makes a good dataset</a></li>
+    <li><a href="#sec-annotate" class="nav-link" data-section="sec-annotate">Annotation pipeline</a></li>
+    <li><a href="#sec-resources" class="nav-link" data-section="sec-resources">Linguistic resources</a></li>
+    <li><a href="#sec-agreement" class="nav-link" data-section="sec-agreement">Inter-annotator agreement</a></li>
+    <li><a href="#sec-crowd" class="nav-link" data-section="sec-crowd">Crowdsourcing</a></li>
+    <li><a href="#sec-risks" class="nav-link" data-section="sec-risks">Risks &amp; ethics</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Lab &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter8-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter8-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=8" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=8" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 11</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 8: Data &mdash; Sources, Annotation, Crowdsourcing</h1>
+    <p class="hero-subtitle">Where text comes from · how to clean it · how to label it · how to measure agreement · ethics &amp; risks.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use:</strong> for each section, name one concrete dataset or metric · close the page and answer <strong>Recall</strong> lines.</p>
+  </div>
+</section>
+
+<section id="sec-sources" class="section" data-track="sec-sources">
+  <p class="section-kicker">Where data comes from</p>
+  <h2 class="section-title">Sources of NLP data</h2>
+  <ul class="kp-list tight">
+    <li><strong>Web crawl:</strong> Common Crawl (~250B pages over 17 years), <strong>FineWeb</strong> derives a cleaned subset by varying filters and measuring downstream model accuracy.</li>
+    <li><strong>Curated corpora:</strong> Wikipedia, news, scientific papers, books — smaller but higher signal-to-noise. "Textbooks Are All You Need" (2023) argues curated data can beat scale.</li>
+    <li><strong>Specialised text:</strong> code (StackOverflow, GitHub), social media, parliamentary proceedings (Canadian Hansards, European Parliament, UN — naturally parallel for translation).</li>
+    <li><strong>Annotated datasets</strong> (NER, coreference, parsing, sentiment) usually require explicit human labelling — not free off the web.</li>
+    <li>Dataset choices have huge downstream impact: BERT used 16&nbsp;GB of books, RoBERTa scaled to 160&nbsp;GB and gained accuracy mainly from more data.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Name two trade-offs between web-scale crawl data and curated high-quality data.</p>
+</section>
+
+<section id="sec-cleaning" class="section" data-track="sec-cleaning">
+  <p class="section-kicker">Pre-processing</p>
+  <h2 class="section-title">Quality, filtering, and cleaning</h2>
+  <ul class="kp-list tight">
+    <li><strong>Language ID</strong> — keep only documents in the target language (fastText, CLD3).</li>
+    <li><strong>Deduplication</strong> — exact and near-duplicate (MinHash/LSH) document removal; duplicates inflate loss curves and memorisation.</li>
+    <li><strong>Quality filters</strong> — heuristics (sentence length, symbol-to-word ratio, repetition) or model-based scorers (caveat: a bad scorer bakes in its bias).</li>
+    <li><strong>PII &amp; toxicity</strong> — remove personal data, hate speech, NSFW boilerplate.</li>
+    <li><strong>FineWeb innovation:</strong> choose filters by training 1.8B-param models with each filter on/off and measuring task accuracy — empirical, not hand-wavy.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why deduplicate before training, and what does FineWeb do differently from naive heuristic filtering?</p>
+</section>
+
+<section id="sec-good-data" class="section" data-track="sec-good-data">
+  <p class="section-kicker">Six properties</p>
+  <h2 class="section-title">What makes a good dataset?</h2>
+  <ul class="kp-list tight">
+    <li><strong>Validity</strong> — models that perform well on the task perform well in the real world (no "Clever Hans" shortcuts).</li>
+    <li><strong>Reliability</strong> — labels are accurate and consistent.</li>
+    <li><strong>Statistical power</strong> — enough examples, including <em>hard</em> ones, to discriminate between models.</li>
+    <li><strong>Testable</strong> — clear evaluation protocol with a held-out test set.</li>
+    <li><strong>Publicly licensed</strong> — others can reproduce and build on the work.</li>
+    <li><strong>Avoids social bias</strong> — represents people fairly across gender, ethnicity, dialect, geography.</li>
+  </ul>
+  <div class="callout" style="border-color:var(--yellow); background:rgba(245,196,75,0.05);">
+    <strong>Shortcut example (SNLI):</strong> a model that sees only the hypothesis (no premise) still scored well — annotators had stylistic tells for each label. Always sanity-check whether the model can "cheat" without the input.
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What is a "Clever Hans" shortcut, and how would you probe for one in an NLI dataset?</p>
+</section>
+
+<section id="sec-annotate" class="section" data-track="sec-annotate">
+  <p class="section-kicker">Pipeline</p>
+  <h2 class="section-title">Annotation pipeline</h2>
+  <ul class="kp-list tight">
+    <li><strong>1. Collect data</strong> (previous section).</li>
+    <li><strong>2. Annotation guidelines</strong> — simple, clear, concise, consistent, generalisable; include common <em>and</em> rare cases. Refine over time.</li>
+    <li><strong>3. Pilot annotation</strong> — small sample, then compare, discuss, update the guidelines.</li>
+    <li><strong>4. Train annotators</strong> — read instructions → annotate → compare with gold → discuss → re-train.</li>
+    <li><strong>5. Full annotation</strong> — training data usually <em>one label per example</em>; test data often <em>multiple labels + adjudication</em>.</li>
+    <li><strong>6. Quality control</strong> — <em>attention checks</em> (e.g. "ignore the rest of this paragraph") and <em>consistency checks</em> (re-do a fraction with a different annotator).</li>
+    <li><strong>7. Adjudication</strong> — filter to disagreements, look together, assign a final label.</li>
+    <li><strong>8. Release</strong> — choose a hosting platform (GitHub, HuggingFace Datasets) and a licence.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 520 130" width="520" height="130">
+      <defs><marker id="a8" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <rect x="10"  y="50" width="78" height="28" class="node-box" rx="6"/><text x="49"  y="68" class="node-label" style="font-size:10px">Collect</text>
+      <rect x="100" y="50" width="78" height="28" class="node-box" rx="6"/><text x="139" y="68" class="node-label" style="font-size:10px">Guidelines</text>
+      <rect x="190" y="50" width="78" height="28" class="node-box-yellow" rx="6"/><text x="229" y="68" class="node-label" style="font-size:10px">Pilot</text>
+      <rect x="280" y="50" width="78" height="28" class="node-box" rx="6"/><text x="319" y="68" class="node-label" style="font-size:10px">Annotate</text>
+      <rect x="370" y="50" width="78" height="28" class="node-box-purple" rx="6"/><text x="409" y="68" class="node-label" style="font-size:10px">Adjudicate</text>
+      <rect x="450" y="50" width="60" height="28" class="node-box-green" rx="6"/><text x="480" y="68" class="node-label" style="font-size:10px;fill:var(--green)">Release</text>
+      <line x1="88"  y1="64" x2="100" y2="64" class="arrow-line" marker-end="url(#a8)"/>
+      <line x1="178" y1="64" x2="190" y2="64" class="arrow-line" marker-end="url(#a8)"/>
+      <line x1="268" y1="64" x2="280" y2="64" class="arrow-line" marker-end="url(#a8)"/>
+      <line x1="358" y1="64" x2="370" y2="64" class="arrow-line" marker-end="url(#a8)"/>
+      <line x1="448" y1="64" x2="450" y2="64" class="arrow-line" marker-end="url(#a8)"/>
+      <!-- Feedback loop -->
+      <path d="M 229 50 Q 229 18 139 18 Q 50 18 49 50" fill="none" stroke="#9299ac" stroke-dasharray="3 3" stroke-width="1"/>
+      <text x="140" y="14" class="node-label-sm" style="font-size:9px;fill:var(--text-muted)">refine guidelines</text>
+    </svg>
+    <div class="arch-caption">Annotation flow: pilot &amp; adjudication feed back into the guidelines before full release.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why is pilot annotation done before full annotation? What does adjudication produce?</p>
+</section>
+
+<section id="sec-resources" class="section" data-track="sec-resources">
+  <p class="section-kicker">Gold standards</p>
+  <h2 class="section-title">Linguistic resources &amp; landmark datasets</h2>
+  <ul class="kp-list tight">
+    <li><strong>Penn Treebank</strong> — syntactic constituency &amp; POS annotation; ~11,000 citations, defined the field for decades.</li>
+    <li><strong>OntoNotes</strong> — coreference, NER, sense tags across genres (~2,000 citations across two papers).</li>
+    <li><strong>WordNet</strong> — hand-built lexical database: senses, synsets, hypernym/hyponym relations.</li>
+    <li><strong>SQuAD</strong> — extractive question answering on Wikipedia (~11,000 citations).</li>
+    <li><strong>Stanford Sentiment Treebank</strong> — parse-tree-level sentiment (~11,000 citations).</li>
+    <li><strong>GLUE / SuperGLUE</strong> — benchmark <em>suites</em> bundling many tasks (CoLA, SST-2, MRPC, STS-B, QQP, MultiNLI, QNLI, RTE, WNLI) → evaluate on many tasks at once to avoid overfitting to a single benchmark.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What is the purpose of a benchmark <em>suite</em> like GLUE, compared to a single dataset?</p>
+</section>
+
+<section id="sec-agreement" class="section" data-track="sec-agreement">
+  <p class="section-kicker">How consistent?</p>
+  <h2 class="section-title">Inter-annotator agreement</h2>
+  <ul class="kp-list tight">
+    <li><strong>Cohen's kappa</strong> (two annotators, categorical): \(\kappa = \dfrac{p_o - p_e}{1 - p_e}\) — \(p_o\) is observed agreement, \(p_e\) is chance agreement.</li>
+    <li><strong>Fleiss' kappa</strong> — generalises Cohen's to \(>2\) annotators per item.</li>
+    <li><strong>Krippendorff's alpha</strong> — handles ordinal, interval, ratio data and missing values.</li>
+    <li>Raw agreement \(p_o\) can be misleading when classes are imbalanced — high \(p_o\) but \(\kappa\) near 0 means annotators are just guessing the majority class.</li>
+    <li><em>Consistent</em> \(\neq\) <em>correct</em> \(\neq\) <em>useful</em> — two annotators can agree on a wrong label, and reliable labels can still encode a biased schema.</li>
+    <li>If \(\kappa\) is low, investigate: unclear guidelines? careless annotators? genuinely ambiguous cases? subjective task?</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why subtract \(p_e\) instead of just reporting \(p_o\)? Give an imbalanced-class scenario where \(p_o\) is high but \(\kappa\) is low.</p>
+</section>
+
+<section id="sec-crowd" class="section" data-track="sec-crowd">
+  <p class="section-kicker">Many hands</p>
+  <h2 class="section-title">Crowdsourcing</h2>
+  <ul class="kp-list tight">
+    <li><strong>Microwork</strong> — paid small tasks: Amazon Mechanical Turk, Prolific, Scale AI. Scales fast but raises wage and exploitation concerns.</li>
+    <li><strong>Games with a purpose</strong> — unpaid, fun: ESP Game (image labels), Foldit (protein folding).</li>
+    <li><strong>Prize competitions</strong> — Kaggle, ImageNet Challenge — money for top performers, free labour for the long tail.</li>
+    <li><strong>Citizen science / collaboration</strong> — Wikipedia, OpenStreetMap — unpaid, satisfying.</li>
+    <li><strong>Implicit work</strong> — reCAPTCHA labels scanned book text and street numbers as a side effect.</li>
+    <li><strong>Qualifications:</strong> approval rate (e.g. 95%+), prior HITs approved (100 / 1,000 / 5,000 / 10,000), country, custom screening tasks — control quality before paying.</li>
+    <li><strong>Wisdom of crowds:</strong> Galton's 1906 ox-weighing fair — 800 guesses, mean 1197&nbsp;lb, true 1198&nbsp;lb. Aggregation can beat any individual.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>List two qualifications you would require for an MTurk NER annotation HIT, and explain why.</p>
+</section>
+
+<section id="sec-risks" class="section" data-track="sec-risks">
+  <p class="section-kicker">Ethics</p>
+  <h2 class="section-title">Risks, ethics, and documentation</h2>
+  <ul class="kp-list tight">
+    <li><strong>Social bias</strong> — OntoNotes: 80% of gendered pronouns are male; male mentions twice as likely to contain a job title (Zhao et al. 2018). Models learn and amplify this.</li>
+    <li><strong>Shortcuts &amp; validity</strong> — annotators leak stylistic patterns; hard cases must be constructed deliberately (minimal edits, distractors with high word overlap).</li>
+    <li><strong>Statistical power</strong> — benchmarks where humans and models saturate quickly stop being informative.</li>
+    <li><strong>Tasks that shouldn't exist</strong> — predicting "criminality" from a face has no scientific basis and serious ethical concerns; refuse to build it.</li>
+    <li><strong>Privacy &amp; consent</strong> — anonymise PII; obtain consent; comply with GDPR / Australian Privacy Principles.</li>
+    <li><strong>Copyright &amp; licensing</strong> — confirm you have the right to redistribute; pick a licence (CC-BY, CC0, MIT, custom).</li>
+    <li><strong>Human subjects</strong> — annotation is human subjects research → university IRB / ethics approval; company guidelines for industry.</li>
+    <li><strong>Documentation:</strong> <em>Datasheets for Datasets</em> (Gebru et al.) and <em>Model Cards</em> (Mitchell et al.) record collection process, demographics, intended use, and known limitations.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Name two items a datasheet should record. Why is annotation considered human subjects research?</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop preview &amp; materials</h2>
+  <ul class="kp-list tight">
+    <li>Pre-work: set up two annotation tools locally (e.g. <code>doccano</code> and <code>brat</code> or <code>Label Studio</code>).</li>
+    <li>In-class: annotate a small dataset with each tool, compare ergonomics; valuable preparation for Assignment 4.</li>
+    <li><a href="../materials/lecture-8.pdf">Lecture 8 handout (PDF)</a> — full slide deck.</li>
+  </ul>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="1" data-explanation="Cohen's kappa corrects observed agreement p_o by subtracting the agreement we would expect by chance p_e. With heavy class imbalance, two annotators can both guess the majority class and look agreeable without any real signal.">
+    <div class="qc-question">Two annotators label 100 emails as spam / not-spam. \(p_o = 0.98\), \(p_e = 0.961\). What does Cohen's kappa tell you?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Excellent agreement (raw 98%)</div>
+      <div class="qc-opt" data-idx="1">\(\kappa \approx 0.49\) — agreement is only moderate once chance is removed, because the class is heavily imbalanced</div>
+      <div class="qc-opt" data-idx="2">Annotators disagree on every example</div>
+      <div class="qc-opt" data-idx="3">Kappa cannot be computed for binary tasks</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="Pilot annotation is small-scale and feeds back into the guidelines. Once guidelines are refined, full annotation proceeds with quality controls (attention checks, consistency checks) and adjudication for disagreements.">
+    <div class="qc-question">Which step should happen <em>before</em> launching full annotation on thousands of items?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Releasing the dataset</div>
+      <div class="qc-opt" data-idx="1">Filing for a software patent</div>
+      <div class="qc-opt" data-idx="2">A pilot annotation round to discover ambiguous cases and refine the guidelines</div>
+      <div class="qc-opt" data-idx="3">Computing the final test-set metric</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="FineWeb chose filters by training 1.8B-parameter models with each filter on or off and measuring downstream task accuracy. This is empirical rather than relying on hand-chosen heuristics alone.">
+    <div class="qc-question">What was FineWeb's innovation in deciding which web-crawl filters to apply?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Train small LLMs with each candidate filter on/off and pick filters by measured downstream accuracy</div>
+      <div class="qc-opt" data-idx="1">Copy the filters used by Common Crawl</div>
+      <div class="qc-opt" data-idx="2">Use a regex blocklist of bad words</div>
+      <div class="qc-opt" data-idx="3">Crowd-vote each document</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice for this lecture.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=8" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=8&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="chapter8-study.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

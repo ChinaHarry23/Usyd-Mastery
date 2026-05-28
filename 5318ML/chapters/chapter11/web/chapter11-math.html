@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 11</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Formal Markov property, HMM notation lambda = (A, B, pi), Forward recurrence alpha_t(i), Viterbi recurrence delta_t(i) with backpointer, and a worked numerical example on a tiny 2-state HMM.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Math Foundations — Week 11">
+<meta property="og:description" content="Markov property, HMM notation, Forward and Viterbi recurrences with a worked example.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter11-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 11 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Formal Markov property, HMM notation \(\lambda = (A, B, \pi)\), the Forward and Viterbi recurrences with backpointer, and a fully worked numerical example on a tiny two-state HMM.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">M</span><strong>Markov</strong><span>\(P(\pi_t \mid \pi_{1:t-1}) = P(\pi_t \mid \pi_{t-1})\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&lambda;</span><strong>HMM</strong><span>\(\lambda = (A, B, \pi)\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&alpha;</span><strong>Forward</strong><span>\(\alpha_t(i) = \bigl[\sum_j \alpha_{t-1}(j) a_{ji}\bigr] b_i(o_t)\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&delta;</span><strong>Viterbi</strong><span>\(\delta_t(i) = \max_j \delta_{t-1}(j) a_{ji}\, b_i(o_t)\)</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-markov-math" data-track="markov-math">
+  <h2 class="section-title">Markov property and chain probability</h2>
+  <p class="section-lead">Let \(\pi_1, \pi_2, \ldots, \pi_T\) be a sequence drawn from a finite state set \(S = \{s_1, \ldots, s_N\}\). The chain is first-order Markov if the conditional distribution of the next state depends only on the current state.</p>
+  <div class="theorem-box">
+    <h3>Markov property (first order)</h3>
+    <p>\[
+      P(\pi_t = s_j \mid \pi_1, \ldots, \pi_{t-1}) \;=\; P(\pi_t = s_j \mid \pi_{t-1})
+    \]</p>
+    <p style="margin-top:0.6rem;">Equivalently, the joint factorises as \(P(\pi_1, \ldots, \pi_T) = P(\pi_1) \prod_{t=2}^T P(\pi_t \mid \pi_{t-1})\).</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Transition matrix \(A\) and initial vector \(\pi\)</h3>
+    <p>\[
+      a_{ij} = P(\pi_t = s_j \mid \pi_{t-1} = s_i), \qquad \sum_{j=1}^N a_{ij} = 1 \text{ for all } i
+    \]</p>
+    <p style="margin-top:0.5rem;">\[
+      \pi_i = P(\pi_1 = s_i), \qquad \sum_{i=1}^N \pi_i = 1
+    \]</p>
+    <p style="margin-top:0.5rem;">(Slides use \(A_0\) for the initial distribution; we follow the textbook convention and call it \(\pi\). Be careful: \(\pi\) is also used for the state variable in the slides &mdash; here we reserve \(\pi\) for the initial distribution and use \(q_t\) for the state at time \(t\) when disambiguation is needed.)</p>
+  </div>
+</section>
+
+<section class="section" id="sec-hmm-math" data-track="hmm-math">
+  <h2 class="section-title">HMM specification \(\lambda = (A, B, \pi)\)</h2>
+  <p class="section-lead">An HMM extends a Markov chain with an observation layer. At each time \(t\) the hidden state \(q_t\) emits an observation \(o_t\) according to an emission distribution.</p>
+  <div class="theorem-box">
+    <h3>Emission matrix \(B\)</h3>
+    <p>\[
+      b_i(v_k) \;=\; P(o_t = v_k \mid q_t = s_i), \qquad \sum_{k=1}^K b_i(v_k) = 1
+    \]</p>
+    <p style="margin-top:0.6rem;">\(K\) is the number of observation symbols. \(B\) is sometimes written \(E\) or \(X\).</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Joint probability of a path and observations</h3>
+    <p>\[
+      P(O, Q \mid \lambda) \;=\; \pi_{q_1}\, b_{q_1}(o_1)\, \prod_{t=2}^T a_{q_{t-1}\,q_t}\, b_{q_t}(o_t)
+    \]</p>
+    <p style="margin-top:0.6rem;">Direct evaluation of \(P(O \mid \lambda) = \sum_Q P(O, Q \mid \lambda)\) by enumerating all \(N^T\) paths costs \(\mathcal{O}(2T\,N^T)\) operations &mdash; intractable for realistic \(T\).</p>
+  </div>
+</section>
+
+<section class="section" id="sec-forward-math" data-track="forward-math">
+  <h2 class="section-title">Forward algorithm</h2>
+  <p class="section-lead">Define the forward variable \(\alpha_t(i) = P(o_1, \ldots, o_t,\ q_t = s_i \mid \lambda)\). It can be computed by a dynamic-programming recurrence in \(\mathcal{O}(N^2 T)\) time.</p>
+  <div class="theorem-box">
+    <h3>Forward recurrence</h3>
+    <p>Initialisation \((t = 1)\): \[
+      \alpha_1(i) \;=\; \pi_i\, b_i(o_1), \qquad i = 1, \ldots, N
+    \]</p>
+    <p style="margin-top:0.5rem;">Induction \((t = 2, \ldots, T)\): \[
+      \alpha_t(i) \;=\; \left[\sum_{j=1}^N \alpha_{t-1}(j)\, a_{ji}\right] b_i(o_t)
+    \]</p>
+    <p style="margin-top:0.5rem;">Termination: \[
+      P(O \mid \lambda) \;=\; \sum_{i=1}^N \alpha_T(i)
+    \]</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Reading the recurrence</div>
+    <p>The bracket \(\sum_j \alpha_{t-1}(j)\, a_{ji}\) is the total probability of arriving in state \(s_i\) at time \(t\) from any predecessor. Multiplying by \(b_i(o_t)\) accounts for emitting the observation at time \(t\) from state \(s_i\).</p>
+  </div>
+</section>
+
+<section class="section" id="sec-viterbi-math" data-track="viterbi-math">
+  <h2 class="section-title">Viterbi algorithm</h2>
+  <p class="section-lead">Define the Viterbi variable \(\delta_t(i)\) as the probability of the most likely path that ends in state \(s_i\) at time \(t\) and produces observations \(o_1, \ldots, o_t\). The companion backpointer \(\psi_t(i)\) stores the predecessor that achieves the maximum.</p>
+  <div class="theorem-box">
+    <h3>Viterbi recurrence</h3>
+    <p>Initialisation \((t = 1)\): \[
+      \delta_1(i) \;=\; \pi_i\, b_i(o_1), \qquad \psi_1(i) = 0
+    \]</p>
+    <p style="margin-top:0.5rem;">Induction \((t = 2, \ldots, T)\): \[
+      \delta_t(i) \;=\; \max_{1 \le j \le N}\, \bigl[\delta_{t-1}(j)\, a_{ji}\bigr]\, b_i(o_t)
+    \]</p>
+    <p style="margin-top:0.5rem;">\[
+      \psi_t(i) \;=\; \arg\max_{1 \le j \le N}\, \delta_{t-1}(j)\, a_{ji}
+    \]</p>
+    <p style="margin-top:0.5rem;">Termination and back-trace: \[
+      P^\star \;=\; \max_i \delta_T(i), \qquad q^\star_T = \arg\max_i \delta_T(i), \qquad q^\star_{t-1} = \psi_t(q^\star_t)
+    \]</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Forward vs Viterbi at a glance</div>
+    <p>Replace the \(\sum\) in the Forward recurrence with \(\max\) and add a backpointer: that is essentially the entire algorithmic difference. Both run on the same \(N \times T\) trellis in \(\mathcal{O}(N^2 T)\) time.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example" data-track="example">
+  <h2 class="section-title">Worked Example: Forward on a 2-state HMM</h2>
+  <p class="section-lead">Consider an HMM with two hidden states \(\{H, L\}\) (High / Low activity) and two observation symbols \(\{A, B\}\). Parameters:</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Model parameters</h3>
+      <p>\(\pi = (0.6, 0.4)\) for \((H, L)\).</p>
+      <p>Transitions: \(a_{HH} = 0.7,\ a_{HL} = 0.3,\ a_{LH} = 0.4,\ a_{LL} = 0.6\).</p>
+      <p>Emissions: \(b_H(A) = 0.5,\ b_H(B) = 0.5,\ b_L(A) = 0.2,\ b_L(B) = 0.8\).</p>
+      <p>Observation sequence: \(O = (A, B)\), so \(T = 2\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Goal</h3>
+      <p>Compute \(P(O \mid \lambda) = P(A, B \mid \lambda)\) using the Forward algorithm and verify against direct enumeration of the four hidden paths \(HH, HL, LH, LL\).</p>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 1 &mdash; initialisation</h3>
+    <p>\(\alpha_1(H) = \pi_H\, b_H(A) = 0.6 \cdot 0.5 = 0.30\).</p>
+    <p>\(\alpha_1(L) = \pi_L\, b_L(A) = 0.4 \cdot 0.2 = 0.08\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 2 &mdash; induction at \(t = 2\)</h3>
+    <p>\(\alpha_2(H) = \bigl[\alpha_1(H)\, a_{HH} + \alpha_1(L)\, a_{LH}\bigr]\, b_H(B)\)<br>
+    \(= (0.30 \cdot 0.7 + 0.08 \cdot 0.4) \cdot 0.5 = (0.21 + 0.032) \cdot 0.5 = 0.242 \cdot 0.5 = 0.121\).</p>
+    <p style="margin-top:0.5rem;">\(\alpha_2(L) = \bigl[\alpha_1(H)\, a_{HL} + \alpha_1(L)\, a_{LL}\bigr]\, b_L(B)\)<br>
+    \(= (0.30 \cdot 0.3 + 0.08 \cdot 0.6) \cdot 0.8 = (0.09 + 0.048) \cdot 0.8 = 0.138 \cdot 0.8 = 0.1104\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 3 &mdash; termination</h3>
+    <p>\(P(O \mid \lambda) = \alpha_2(H) + \alpha_2(L) = 0.121 + 0.1104 = 0.2314\).</p>
+    <p style="margin-top:0.5rem;">Cross-check by enumeration: \(P(O, HH) = 0.6 \cdot 0.5 \cdot 0.7 \cdot 0.5 = 0.105\); \(P(O, HL) = 0.6 \cdot 0.5 \cdot 0.3 \cdot 0.8 = 0.072\); \(P(O, LH) = 0.4 \cdot 0.2 \cdot 0.4 \cdot 0.5 = 0.016\); \(P(O, LL) = 0.4 \cdot 0.2 \cdot 0.6 \cdot 0.8 = 0.0384\). Sum: \(0.105 + 0.072 + 0.016 + 0.0384 = 0.2314\). The two methods agree.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Take-away:</strong> the Forward algorithm reproduces the marginal probability without enumerating paths. Here we had only four; for \(T = 50\) and \(N = 10\) we would otherwise sum \(10^{50}\) terms instead of \(\sim 5000\).
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="The forward variable alpha_t(i) is the JOINT probability of having seen o_1..o_t AND being in state s_i at time t. Marginalising over the final state at time T yields P(O | lambda)." data-explanation-zh="前向变量 alpha_t(i) 表示已观测到 o_1..o_t 且 t 时刻处于状态 s_i 的联合概率；对终态求和即得 P(O | lambda)。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Which quantity does the forward variable \(\alpha_t(i)\) represent?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">The conditional probability \(P(q_t = s_i \mid o_1, \ldots, o_t)\)</div><div class="qc-opt" data-idx="1">The joint probability \(P(o_1, \ldots, o_t,\ q_t = s_i \mid \lambda)\)</div><div class="qc-opt" data-idx="2">The probability of the most likely path ending at \(s_i\) at time \(t\)</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=11" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
