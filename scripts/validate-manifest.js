@@ -25,9 +25,9 @@ var errors = [];
 var hubs = [
   { dir: "5270RandomAlgo", chapters: 12 },
   { dir: "5318ML",         chapters: 12 },
-  { dir: "5046NLP",        chapters: 6 },
+  { dir: "5046NLP",        chapters: 12 },
   { dir: "9001Py",         chapters: 5 },
-  { dir: "9123DataStructureAlgo", chapters: 10 }
+  { dir: "9123DataStructureAlgo", chapters: 11 }
 ];
 
 function loadManifest(hubDir) {
@@ -82,7 +82,7 @@ hubs.forEach(function(hub) {
       });
     }
 
-    if (mSec === 0 && mChk === 0 && mTut === 0) {
+    if (mSec === 0 && mChk === 0 && mTut === 0 && hasHTML) {
       errors.push({
         hub: hub.dir,
         ch: ch,

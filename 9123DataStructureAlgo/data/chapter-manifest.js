@@ -16,6 +16,7 @@ window.CHAPTER_MANIFEST = {
     8: 9,
     9: 9,
     10: 9,
+    11: 9,
   },
   checks: {
     1: 6,
@@ -28,6 +29,7 @@ window.CHAPTER_MANIFEST = {
     8: 6,
     9: 6,
     10: 6,
+    11: 4,
   },
   tutorials: {
     1: 1,
@@ -40,5 +42,6 @@ window.CHAPTER_MANIFEST = {
     8: 1,
     9: 1,
     10: 1,
+    11: 1,
   },
 };

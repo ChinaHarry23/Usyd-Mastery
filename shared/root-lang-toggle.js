@@ -38,7 +38,7 @@
     "card-5046-desc":
       "文本预处理、词向量、序列模型、Transformer、注意力机制与语言生成 —— 基于 2026 年讲义构建。",
     "card-5046-stat-chapters-label": "章节",
-    "card-5046-stat-chapters-value": "6 个引导模块",
+    "card-5046-stat-chapters-value": "11 个引导模块",
     "card-5046-stat-toolkit-label": "工具箱",
     "card-5046-stat-toolkit-value": "指南、数学、图谱",
     "card-5046-stat-language-label": "语言",
@@ -71,7 +71,7 @@
     "card-9123-desc":
       "数组、链表、树、图、哈希表、堆、排序、查找与复杂度分析 —— 配有每周指南、测验、闪卡与概念图谱。",
     "card-9123-stat-coverage-label": "覆盖范围",
-    "card-9123-stat-coverage-value": "10 个每周模块",
+    "card-9123-stat-coverage-value": "11 个每周模块",
     "card-9123-stat-toolkit-label": "工具箱",
     "card-9123-stat-toolkit-value": "图谱、测验、闪卡",
     "card-9123-stat-materials-label": "材料",
