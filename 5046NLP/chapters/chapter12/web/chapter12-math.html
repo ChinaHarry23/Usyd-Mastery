@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Lecture 12</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<meta name="description" content="Foundations — Lecture 12 — Retrieval pipeline, Chain-of-Thought formalism, dense vs sparse retrieval.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Lecture 12">
+<meta property="og:description" content="Foundations — Lecture 12 — Retrieval pipeline, Chain-of-Thought formalism, dense vs sparse retrieval.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter12-study.html">&larr; Study Guide</a>
+  <a href="chapter12-mindmap.html">Mind Map</a>
+  <a href="../../../index.html">Home</a>
+</div>
+
+<main id="mainContent">
+
+<h1 style="font-size:1.6rem; margin-bottom:0.25rem;">Math Foundations — Lecture 12</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">Light on math: retrieval scoring (cosine similarity over embeddings), Chain-of-Thought formalism, and a comparison of dense vs sparse retrieval.</p>
+
+<!-- ========== Chain-of-Thought formalism ========== -->
+<section class="math-section" id="sec-cot">
+  <h2>Chain-of-Thought as conditional generation</h2>
+  <p>A plain LM directly samples an answer \(y\) given a prompt \(x\):</p>
+  <div class="formula-block">
+    \[p(y \mid x) = \prod_{t=1}^{|y|} p(y_t \mid x, y_{<t})\]
+  </div>
+  <p>A <strong>Chain-of-Thought</strong> prompt introduces an intermediate reasoning trace \(z\):</p>
+  <div class="formula-block">
+    \[p(y \mid x) = \sum_{z}\, p(z \mid x)\, p(y \mid x, z)\]
+  </div>
+  <p>In practice we do not marginalise — we sample one trace \(\hat{z}\sim p(z\mid x)\) and read off \(\hat{y}=\arg\max p(y\mid x,\hat{z})\). The trace acts as <em>scratch memory</em>: extra tokens that condition the answer.</p>
+
+  <h3>Self-consistency</h3>
+  <p>Sample \(K\) reasoning traces, then majority-vote over the extracted answers:</p>
+  <div class="formula-block">
+    \[\hat{y} \;=\; \arg\max_{y}\;\sum_{k=1}^{K} \mathbf{1}\!\left[\,\mathrm{extract}(z^{(k)},y^{(k)})=y\,\right],\quad (z^{(k)},y^{(k)})\sim p(\cdot\mid x)\]
+  </div>
+  <p>This Monte-Carlo estimate of the marginal \(p(y\mid x)\) often beats greedy CoT.</p>
+</section>
+
+<!-- ========== Retrieval scoring ========== -->
+<section class="math-section" id="sec-retrieval">
+  <h2>Retrieval scoring for RAG</h2>
+  <p>Given a query \(q\) and a corpus of documents \(\{d_1,\dots,d_N\}\), we return the top-\(k\) by some score \(s(q,d_i)\).</p>
+
+  <h3>Dense retrieval (cosine similarity)</h3>
+  <p>Encode query and documents with an embedding model \(E_q,E_d:\text{text}\to\mathbb{R}^{D}\):</p>
+  <div class="formula-block">
+    \[\mathbf{q} = E_q(q),\quad \mathbf{d}_i = E_d(d_i)\]
+  </div>
+  <div class="formula-block">
+    \[s_{\text{dense}}(q,d_i) \;=\; \cos(\mathbf{q},\mathbf{d}_i) \;=\; \frac{\mathbf{q}^\top \mathbf{d}_i}{\lVert\mathbf{q}\rVert\,\lVert\mathbf{d}_i\rVert}\]
+  </div>
+  <p>If the embeddings are L2-normalised (\(\lVert\mathbf{q}\rVert=\lVert\mathbf{d}_i\rVert=1\)) this reduces to the dot product. Top-\(k\) retrieval is then an <em>approximate nearest-neighbour</em> lookup in a vector store.</p>
+
+  <h3>Sparse retrieval (BM25)</h3>
+  <p>BM25 is a tf–idf variant over bag-of-words:</p>
+  <div class="formula-block">
+    \[s_{\text{BM25}}(q,d) \;=\; \sum_{t \in q} \mathrm{IDF}(t)\,\cdot\,\frac{f(t,d)\,(k_1+1)}{f(t,d) + k_1\!\left(1-b+b\,\frac{|d|}{\bar{|d|}}\right)}\]
+  </div>
+  <p>where \(f(t,d)\) is term frequency, \(|d|/\bar{|d|}\) the length normaliser, and \(k_1,b\) are hyperparameters. Pure lexical match — fast and strong baseline, but blind to paraphrase.</p>
+
+  <h3>Dense vs sparse: when to use what?</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:0.92rem;margin:0.5rem 0 0.25rem;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left;padding:4px 6px;">Aspect</th>
+        <th style="text-align:left;padding:4px 6px;">Sparse (BM25)</th>
+        <th style="text-align:left;padding:4px 6px;">Dense (cosine)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:4px 6px;">Match type</td><td style="padding:4px 6px;">exact lexical</td><td style="padding:4px 6px;">semantic / paraphrase</td></tr>
+      <tr><td style="padding:4px 6px;">Cold start</td><td style="padding:4px 6px;">works out-of-the-box</td><td style="padding:4px 6px;">needs an embedding model</td></tr>
+      <tr><td style="padding:4px 6px;">Rare names / IDs</td><td style="padding:4px 6px;">strong</td><td style="padding:4px 6px;">can miss</td></tr>
+      <tr><td style="padding:4px 6px;">Synonyms</td><td style="padding:4px 6px;">misses</td><td style="padding:4px 6px;">handles</td></tr>
+      <tr><td style="padding:4px 6px;">Index</td><td style="padding:4px 6px;">inverted index</td><td style="padding:4px 6px;">ANN vector store</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:0.5rem;">In practice, RAG systems often combine the two (hybrid retrieval) and re-rank the union with a cross-encoder.</p>
+
+  <div class="quick-check" id="qc-cos" data-answer="0" data-explanation="With L2-normalised embeddings, ‖q‖=‖d‖=1, so cosine similarity collapses to a plain inner product qᵀd. That makes top-k ranking equivalent to inner-product search, which is what most vector stores accelerate.">
+    <div class="qc-question">Quick Check: If query and document embeddings are L2-normalised, cosine similarity reduces to:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The dot product \(\mathbf{q}^\top\mathbf{d}\)</div>
+      <div class="qc-opt" data-idx="1">The Euclidean distance \(\lVert\mathbf{q}-\mathbf{d}\rVert\)</div>
+      <div class="qc-opt" data-idx="2">A BM25 score</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== ReAct loop pseudo-formalism ========== -->
+<section class="math-section" id="sec-react-loop">
+  <h2>ReAct loop (pseudo-formal)</h2>
+  <p>At step \(t\) the agent has a history \(h_t = (x, \tau_1, a_1, o_1, \dots, \tau_{t-1}, a_{t-1}, o_{t-1})\) of thoughts \(\tau\), actions \(a\), observations \(o\). It samples the next thought-action pair from a single LM:</p>
+  <div class="formula-block">
+    \[(\tau_t, a_t) \;\sim\; p_{\mathrm{LM}}(\cdot \mid h_t)\]
+  </div>
+  <div class="formula-block">
+    \[o_t \;=\; \mathrm{Env}(a_t)\]
+  </div>
+  <p>The loop terminates when \(a_t\) is a special <code>Finish[y]</code> action; the agent returns \(y\). No parameters are learned — the entire behaviour is induced from few-shot demonstrations of \((\tau, a, o)\) traces.</p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, { delimiters: [{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}], throwOnError: false });
+  }
+});
+</script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

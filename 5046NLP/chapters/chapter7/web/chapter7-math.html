@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Lecture 7</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<meta name="description" content="Foundations — Lecture 7 — Joint probability, chain rule, n-gram MLE, smoothing, perplexity, neural LM.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Lecture 7">
+<meta property="og:description" content="Foundations — Lecture 7 — Joint probability, chain rule, n-gram MLE, smoothing, perplexity, neural LM.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter7-study.html">&larr; Study Guide</a>
+  <a href="chapter7-mindmap.html">Mind Map</a>
+  <a href="../../../index.html">Home</a>
+</div>
+
+<main id="mainContent">
+
+<h1 style="font-size:1.6rem; margin-bottom:0.25rem;">Math Foundations — Lecture 7</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">Joint probability of a string, chain rule, Markov approximations, count-based MLE, Laplace smoothing, perplexity, neural LM softmax.</p>
+
+<!-- ========== Joint probability ========== -->
+<section class="math-section" id="sec-joint">
+  <h2>Joint probability of a string</h2>
+  <p>A language model is a probability distribution over finite strings:</p>
+  <div class="formula-block">
+    \[P(w_1, w_2, \dots, w_N) \in [0, 1], \qquad \sum_{w_{1..N}} P(w_{1..N}) = 1\]
+  </div>
+  <p>From the joint we can compute conditionals, sample continuations, and rank candidate sentences.</p>
+</section>
+
+<!-- ========== Chain rule ========== -->
+<section class="math-section" id="sec-chain">
+  <h2>Chain rule (exact factorisation)</h2>
+  <div class="formula-block">
+    \[P(w_1, w_2, \dots, w_N) = \prod_{i=1}^{N} P\bigl(w_i \mid w_1, \dots, w_{i-1}\bigr)\]
+  </div>
+  <p>Exact for any joint distribution. The number of distinct histories \(w_1\dots w_{i-1}\) grows exponentially in length, so we cannot store all of them explicitly.</p>
+</section>
+
+<!-- ========== Markov approximation / n-gram ========== -->
+<section class="math-section" id="sec-markov">
+  <h2>Markov approximation &amp; n-gram models</h2>
+  <p>Truncate the history to the last \(n-1\) tokens:</p>
+  <div class="formula-block">
+    \[P\bigl(w_i \mid w_1, \dots, w_{i-1}\bigr) \;\approx\; P\bigl(w_i \mid w_{i-n+1}, \dots, w_{i-1}\bigr)\]
+  </div>
+  <p>Special cases:</p>
+  <div class="def-row"><span class="sym">Unigram</span><span>\(P(w_i)\) — no context.</span></div>
+  <div class="def-row"><span class="sym">Bigram</span><span>\(P(w_i \mid w_{i-1})\) — last token only.</span></div>
+  <div class="def-row"><span class="sym">Trigram</span><span>\(P(w_i \mid w_{i-2}, w_{i-1})\) — last two tokens.</span></div>
+  <p>Bigram approximation in full:</p>
+  <div class="formula-block">
+    \[P(w_1, \dots, w_N) \;\approx\; \prod_{i=1}^{N} P(w_i \mid w_{i-1})\]
+  </div>
+  <p>with \(w_0 = \langle s \rangle\) by convention.</p>
+</section>
+
+<!-- ========== Count-based MLE ========== -->
+<section class="math-section" id="sec-mle">
+  <h2>Count-based maximum likelihood</h2>
+  <p>For an n-gram model the MLE is the empirical conditional frequency:</p>
+  <div class="formula-block">
+    \[\widehat{P}_\text{MLE}\!\left(w_i \mid w_{i-n+1}, \dots, w_{i-1}\right) \;=\; \frac{\text{Count}(w_{i-n+1}, \dots, w_i)}{\text{Count}(w_{i-n+1}, \dots, w_{i-1})}\]
+  </div>
+  <p>For bigrams:</p>
+  <div class="formula-block">
+    \[\widehat{P}(w_i \mid w_{i-1}) \;=\; \frac{\text{Count}(w_{i-1}, w_i)}{\sum_{w} \text{Count}(w_{i-1}, w)} \;=\; \frac{\text{Count}(w_{i-1}, w_i)}{\text{Count}(w_{i-1})}\]
+  </div>
+  <p>Properties: unbiased on the training corpus, but assigns zero probability to any bigram unseen during training.</p>
+</section>
+
+<!-- ========== Smoothing ========== -->
+<section class="math-section" id="sec-smooth">
+  <h2>Laplace (add-1) and add-k smoothing</h2>
+  <p>Laplace pretends each bigram was seen once before counting:</p>
+  <div class="formula-block">
+    \[\widehat{P}_\text{Lap}(w_i \mid w_{i-1}) \;=\; \frac{\text{Count}(w_{i-1}, w_i) + 1}{\text{Count}(w_{i-1}) + |V|}\]
+  </div>
+  <p>The \(+|V|\) in the denominator keeps the distribution normalised (one pseudocount for each of the \(|V|\) vocabulary items).</p>
+
+  <p>Add-k generalises with a smaller pseudocount \(k \in (0, 1]\) tuned on a validation set:</p>
+  <div class="formula-block">
+    \[\widehat{P}_{k}(w_i \mid w_{i-1}) \;=\; \frac{\text{Count}(w_{i-1}, w_i) + k}{\text{Count}(w_{i-1}) + k\,|V|}\]
+  </div>
+
+  <h3>Kneser-Ney (intuition)</h3>
+  <p>Two ideas: <em>absolute discounting</em> subtracts a constant \(d\) from each observed count, freeing mass for unseen events; <em>continuation probability</em> backs off using the <strong>number of distinct contexts</strong> a word appears in, not its raw frequency. Words appearing in many contexts (e.g. "York" in many bigrams) are better fallbacks than common but context-narrow words (e.g. "Francisco" mostly follows "San").</p>
+  <div class="formula-block">
+    \[P_\text{cont}(w) \;\propto\; \bigl|\{ v : \text{Count}(v, w) &gt; 0 \}\bigr|\]
+  </div>
+</section>
+
+<!-- ========== Perplexity ========== -->
+<section class="math-section" id="sec-perp">
+  <h2>Perplexity</h2>
+  <p>Length-normalised inverse joint probability of a test sequence \(W = w_1\dots w_N\):</p>
+  <div class="formula-block">
+    \[\text{PP}(W) \;=\; P(w_1, \dots, w_N)^{-1/N} \;=\; \sqrt[N]{\frac{1}{P(w_1, \dots, w_N)}}\]
+  </div>
+  <p>Equivalently, the exponentiated per-token cross-entropy:</p>
+  <div class="formula-block">
+    \[\text{PP}(W) \;=\; \exp\!\Bigl(-\tfrac{1}{N}\sum_{i=1}^{N} \log P\bigl(w_i \mid \text{history}\bigr)\Bigr) \;=\; \exp(H(W))\]
+  </div>
+  <div class="def-row"><span class="sym">Lower bound</span><span>\(\text{PP}(W) \geq 1\); equality only when the LM assigns probability 1 to the test sequence.</span></div>
+  <div class="def-row"><span class="sym">Intuition</span><span>"effective branching factor" — uniform over \(K\) symbols gives \(\text{PP} = K\).</span></div>
+  <div class="def-row"><span class="sym">Caveat</span><span>\(N\) is in the chosen tokenisation, so PP across different tokenisers is not directly comparable.</span></div>
+
+  <div class="quick-check" id="qc-perp" data-answer="0" data-explanation="With N = 2 tokens and per-token probability 1/10, the joint is (1/10)(1/10) = 1/100. Perplexity = (1/100)^(-1/2) = 10. Intuitively this is the size of the uniform alphabet the LM behaves like.">
+    <div class="qc-question">Quick Check: A bigram LM assigns probability \(\tfrac{1}{10}\) to each of two test tokens. The perplexity is:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(10\)</div>
+      <div class="qc-opt" data-idx="1">\(100\)</div>
+      <div class="qc-opt" data-idx="2">\(0.01\)</div>
+      <div class="qc-opt" data-idx="3">\(2\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== Neural LM ========== -->
+<section class="math-section" id="sec-neural">
+  <h2>Neural language model (feed-forward sketch)</h2>
+  <p>Given a context window of \(n-1\) tokens, the neural LM computes a distribution over the vocabulary as follows.</p>
+
+  <h3>Embedding lookup</h3>
+  <div class="formula-block">
+    \[\mathbf{e}_j \;=\; E\,\mathbf{1}_{w_j}, \qquad E \in \mathbb{R}^{d \times |V|}\]
+  </div>
+  <p>Each context token is replaced by its column of the embedding matrix \(E\).</p>
+
+  <h3>Hidden layer</h3>
+  <div class="formula-block">
+    \[\mathbf{h} \;=\; \tanh\!\bigl(W_h\,[\mathbf{e}_{i-n+1};\,\dots;\,\mathbf{e}_{i-1}] + \mathbf{b}_h\bigr)\]
+  </div>
+
+  <h3>Output (softmax over vocabulary)</h3>
+  <div class="formula-block">
+    \[P(w_i = v \mid \text{context}) \;=\; \frac{\exp\!\bigl(\mathbf{u}_v^\top \mathbf{h} + b_v\bigr)}{\sum_{v' \in V} \exp\!\bigl(\mathbf{u}_{v'}^\top \mathbf{h} + b_{v'}\bigr)}\]
+  </div>
+
+  <h3>Training objective</h3>
+  <p>Maximise log-likelihood (equivalently, minimise cross-entropy per token):</p>
+  <div class="formula-block">
+    \[\mathcal{L} \;=\; -\frac{1}{N}\sum_{i=1}^{N} \log P\bigl(w_i \mid w_{i-n+1}, \dots, w_{i-1}\bigr)\]
+  </div>
+  <p>By construction the softmax output is positive and sums to 1, so the model never produces a zero — smoothing is built into the function class. RNN and Transformer LMs replace the hidden-layer construction but keep the same softmax-over-vocab output and cross-entropy objective.</p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, { delimiters: [{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}], throwOnError: false });
+  }
+});
+</script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

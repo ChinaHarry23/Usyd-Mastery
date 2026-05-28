@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Lecture 9</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind Map — Lecture 9 — Pretraining, full FT, PEFT idea, LoRA / QLoRA, adapters &amp; prompt tuning.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind Map — Lecture 9">
+<meta property="og:description" content="Mind Map — Lecture 9 — Pretraining, full FT, PEFT idea, LoRA / QLoRA, adapters &amp; prompt tuning.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter9-study.html">← Study Guide</a>
+  <a href="chapter9-math.html">Foundations</a>
+  <a href="../../../index.html">🏠 Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Lecture 9 Mind Map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand All</button>
+    <button id="btnCollapseAll">Collapse All</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Concepts</span>
+  <span><span class="dot" style="background:var(--green)"></span> Tasks</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Challenges</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Lecture 9: Pretraining, Finetuning & PEFT",
+  label_zh: "第9讲：预训练、微调与PEFT",
+  children: [
+    {
+      label: "Pretraining (Foundation models)",
+      label_zh: "预训练（基础模型）",
+      color: "blue",
+      children: [
+        { label: "Huge unlabelled text + next-token prediction", label_zh: "海量无标注文本 + 下一个token预测" },
+        { label: "Objective: $-\\sum \\log p_\\theta(x_t | x_{<t})$", label_zh: "目标：$-\\sum \\log p_\\theta(x_t | x_{<t})$" },
+        { label: "Trillions of tokens, $10^3$–$10^7$ GPU-hours", label_zh: "万亿token，$10^3$–$10^7$ GPU小时" },
+        { label: "Public checkpoints: Llama, Mistral, BERT, GPT-2", label_zh: "公开检查点：Llama、Mistral、BERT、GPT-2" },
+        { label: "Learns broad linguistic & world knowledge", label_zh: "学习广泛的语言与世界知识" }
+      ]
+    },
+    {
+      label: "Full Finetuning",
+      label_zh: "完整微调",
+      color: "yellow",
+      children: [
+        { label: "Update ALL parameters on task data", label_zh: "在任务数据上更新所有参数" },
+        { label: "Adam state: ~16 bytes/param → 7B ≈ 112 GB", label_zh: "Adam状态：约16字节/参数 → 7B ≈ 112 GB" },
+        { label: "Fresh checkpoint per task → storage blow-up", label_zh: "每个任务都要新检查点 → 存储爆炸" },
+        { label: "Catastrophic forgetting risk", label_zh: "灾难性遗忘风险" },
+        { label: "Best ceiling when data + GPUs are abundant", label_zh: "数据和GPU充足时上限最高" }
+      ]
+    },
+    {
+      label: "PEFT Idea",
+      label_zh: "PEFT思想",
+      color: "green",
+      children: [
+        { label: "Freeze base, train <1% of parameters", label_zh: "冻结底座，训练<1%的参数" },
+        { label: "Empirical: FT update has low intrinsic rank", label_zh: "经验观察：微调更新具有低内在秩" },
+        { label: "Small checkpoints → swap per task", label_zh: "小检查点 → 按任务切换" },
+        { label: "Less memory, less forgetting, faster training", label_zh: "内存更省、遗忘更少、训练更快" },
+        { label: "Families: LoRA, adapters, prompt/prefix tuning", label_zh: "家族：LoRA、适配器、提示/前缀微调" }
+      ]
+    },
+    {
+      label: "LoRA / QLoRA",
+      label_zh: "LoRA / QLoRA",
+      color: "purple",
+      children: [
+        { label: "$\\Delta W = B A$, $B \\in \\mathbb{R}^{d\\times r}$, $A \\in \\mathbb{R}^{r\\times d}$", label_zh: "$\\Delta W = B A$，$B \\in \\mathbb{R}^{d\\times r}$，$A \\in \\mathbb{R}^{r\\times d}$" },
+        { label: "Rank $r \\ll d$ (typically 4–16)", label_zh: "秩 $r \\ll d$（通常4–16）" },
+        { label: "Params: $2dr$ vs $d^2$ → ~250× fewer", label_zh: "参数：$2dr$ vs $d^2$ → 约减少250倍" },
+        { label: "Init $B=0$ → starts from pretrained model", label_zh: "初始化 $B=0$ → 从预训练模型开始" },
+        { label: "Merge $W_0 + BA$ at inference → no extra latency", label_zh: "推理时合并 $W_0 + BA$ → 无额外延迟" },
+        { label: "QLoRA: 4-bit NF4 base + LoRA in bf16", label_zh: "QLoRA：4-bit NF4底座 + bf16 LoRA" },
+        { label: "QLoRA tricks: double-quant, paged Adam", label_zh: "QLoRA技巧：双量化、分页Adam" },
+        { label: "65B model finetunes on a single 48 GB GPU", label_zh: "65B模型可在单张48 GB GPU上微调" }
+      ]
+    },
+    {
+      label: "Adapters & Prompt Tuning",
+      label_zh: "适配器与提示微调",
+      color: "blue",
+      children: [
+        { label: "Adapters: bottleneck MLPs inside each block", label_zh: "适配器：每个块内的瓶颈MLP" },
+        { label: "Adapters add inference latency (extra layers)", label_zh: "适配器增加推理延迟（额外层）" },
+        { label: "Prompt tuning: learn input embeddings only", label_zh: "提示微调：只学习输入嵌入" },
+        { label: "Prefix tuning: learnable K/V at every layer", label_zh: "前缀微调：每层可学习的K/V" },
+        { label: "Trade-off: where to inject capacity", label_zh: "权衡：在何处注入容量" }
+      ]
+    },
+    {
+      label: "When to Use What",
+      label_zh: "何时使用何种方法",
+      color: "green",
+      children: [
+        { label: "Lots of data + GPUs → full FT", label_zh: "数据多 + GPU多 → 完整微调" },
+        { label: "Tight GPU, fp16 fits → LoRA ($r$=4–16)", label_zh: "GPU紧张，fp16能装下 → LoRA（$r$=4–16）" },
+        { label: "Base too big for fp16 → QLoRA", label_zh: "底座放不进fp16 → QLoRA" },
+        { label: "Many tasks, hot-swap → LoRA/adapters", label_zh: "多任务、热切换 → LoRA/适配器" },
+        { label: "Latency-critical → LoRA (merge)", label_zh: "延迟敏感 → LoRA（合并）" },
+        { label: "Very little data → prompting first, PEFT later", label_zh: "数据极少 → 先提示，必要时再PEFT" }
+      ]
+    }
+  ]
+};
+renderMindmap("mindmapCanvas", data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
