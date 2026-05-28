@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 10 - Clustering</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 10 covers unsupervised clustering: distance measures and distance between clusters; K-means and K-means++; Gaussian Mixture Models trained with EM; agglomerative and divisive hierarchical clustering with dendrograms; DBSCAN with core/border/noise points; and evaluation via silhouette and other internal/external measures.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 10 - Clustering">
+<meta property="og:description" content="Week 10: K-means, GMM/EM, hierarchical (agglomerative/divisive), DBSCAN, and clustering evaluation.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4F7;</span>
+    <h2 data-i18n="sidebar_h2">Week 10</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-basics" class="nav-link" data-section="sec-basics" data-i18n="nav_basics">Basics &amp; distance</a></li>
+    <li><a href="#sec-kmeans" class="nav-link" data-section="sec-kmeans" data-i18n="nav_kmeans">K-means</a></li>
+    <li><a href="#sec-gmm" class="nav-link" data-section="sec-gmm" data-i18n="nav_gmm">GMM &amp; EM</a></li>
+    <li><a href="#sec-hier" class="nav-link" data-section="sec-hier" data-i18n="nav_hier">Hierarchical</a></li>
+    <li><a href="#sec-dbscan" class="nav-link" data-section="sec-dbscan" data-i18n="nav_dbscan">DBSCAN</a></li>
+    <li><a href="#sec-eval" class="nav-link" data-section="sec-eval" data-i18n="nav_eval">Evaluation</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter10-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter10-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=10" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=10" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=10&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 10</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="6">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 10: Clustering</h1>
+    <p class="hero-subtitle">Clustering is unsupervised learning: there are no labels, only data, and the goal is to discover groups of similar items. This week works through four families of clustering algorithms — partitional K-means, model-based GMM with EM, hierarchical (agglomerative/divisive) clustering, and density-based DBSCAN — and finishes with internal and external ways to evaluate cluster quality.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x25CF;</span><span>K-means</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x223F;</span><span>GMM / EM</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F333;</span><span>Hierarchical</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x25C7;</span><span>DBSCAN</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Distance measures</span>
+      <span>Cohesion &amp; separation</span>
+      <span>K-means++</span>
+      <span>Dendrogram</span>
+      <span>Core / border / noise</span>
+      <span>Silhouette coefficient</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter10-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter10-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">Week 10 surveys clustering as a family of related algorithms rather than a single method. Read the slides in order — distance measures first, then K-means, then GMM, hierarchical, DBSCAN, evaluation — and try to identify, for each algorithm, the assumptions about cluster shape and the parameters that must be specified up front.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What you should learn from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../Materials/ml10.pdf">ml10.pdf</a></td><td>Clustering definition and applications; Euclidean / Manhattan / cosine distance; centroid vs medoid; distance between clusters (single, complete, average link); K-means algorithm and sensitivity to initialisation; K-means++; GMM clustering and the EM intuition; agglomerative and divisive hierarchical clustering and dendrograms; DBSCAN with Eps and MinPts, core / border / noise points; clustering evaluation with cohesion, separation, silhouette coefficient, and the elbow method.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-basics" class="section" data-track="basics">
+  <h2 class="section-title">What clustering is and how we measure similarity</h2>
+  <p class="section-lead">Clustering partitions a set of unlabelled examples into groups so that items in the same cluster are similar to each other and items in different clusters are dissimilar. Everything downstream depends on how we define "similar" — i.e. on the choice of distance measure.</p>
+
+  <div class="def-box">
+    <div class="def-label">Clustering</div>
+    <p style="margin:0; color:var(--text-muted);">An <strong>unsupervised</strong> task. Given a set of input vectors and (often) a desired number of clusters \(k\), produce a grouping with <strong>high cohesion</strong> (small intra-cluster distances) and <strong>high separation</strong> (large inter-cluster distances).</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Distances between points</h3>
+      <p><strong>Euclidean:</strong> \(D(A,B) = \sqrt{\sum_i (a_i - b_i)^2}\). <strong>Manhattan:</strong> \(D(A,B) = \sum_i |a_i - b_i|\). <strong>Cosine similarity:</strong> \(\cos(A,B) = \frac{A\cdot B}{\|A\|\,\|B\|}\); high cosine = small angle = similar.</p>
+    </div>
+    <div class="col-card">
+      <h3>Centroid vs medoid</h3>
+      <p>For a cluster of \(N\) points, the <strong>centroid</strong> is the mean \(\tfrac{1}{N}\sum_i p_i\) — usually not an actual point. The <strong>medoid</strong> is the most centrally located actual data point.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Single link (MIN)</h3>
+      <p>Distance between two clusters = the <em>smallest</em> pairwise distance across them. Sensitive to chains of close points.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Complete link (MAX)</h3>
+      <p>Distance = the <em>largest</em> pairwise distance. Tends to produce compact, tight clusters.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Average link</h3>
+      <p>Distance = the average pairwise distance between elements of the two clusters. A compromise between single and complete link.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Taxonomy:</strong> the lecture groups algorithms into four families &mdash; <em>partitional</em> (K-means, K-medoids), <em>model-based</em> (GMM), <em>hierarchical</em> (agglomerative, divisive), and <em>density-based</em> (DBSCAN). Each makes different assumptions about cluster shape and density.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Cosine similarity measures the angle between two vectors and is invariant to magnitude, so it is the natural choice when documents differ in length but share topic words.">
+    <div class="qc-h">Quick check - choosing a distance</div>
+    <div class="qc-question">For comparing two text documents represented as bag-of-words vectors, which similarity is typically preferred?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Manhattan distance</div>
+      <div class="qc-opt" data-idx="1">Cosine similarity</div>
+      <div class="qc-opt" data-idx="2">Euclidean distance on raw counts</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-kmeans" class="section" data-track="kmeans">
+  <h2 class="section-title">K-means: the workhorse partitional algorithm</h2>
+  <p class="section-lead">K-means is the most widely used clustering algorithm. It requires \(k\) to be specified in advance, then iteratively refines \(k\) centroids so that each point is assigned to its closest centroid.</p>
+
+  <div class="def-box">
+    <div class="def-label">K-means algorithm</div>
+    <p style="margin:0; color:var(--text-muted);">
+      <strong>1.</strong> Choose \(k\) initial centroids (typically random data points). <strong>2.</strong> Assign every example to the cluster of the closest centroid. <strong>3.</strong> Recompute each centroid as the mean of its assigned points. <strong>4.</strong> Repeat steps 2&ndash;3 until centroids stop changing (or until very few points change cluster).
+    </p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Sum of Squared Error (SSE)</h3>
+      <p>K-means minimises \(\text{SSE} = \sum_{i=1}^k \sum_{x\in K_i} d(c_i, x)^2\). Different random initialisations give different local minima, so the standard recipe is to run K-means many times and keep the run with the smallest SSE.</p>
+    </div>
+    <div class="col-card">
+      <h3>K-means++ initialisation</h3>
+      <p>Pick the first centroid uniformly at random. For each subsequent centroid, sample a point with probability proportional to the <em>square of its distance</em> to the nearest already-chosen centroid. Tends to spread centroids out, reducing the chance of poor local minima.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Complexity</h3>
+      <p>\(O(n\,k\,i\,d)\): \(n\) points, \(k\) clusters, \(i\) iterations, \(d\) attributes. Most of the convergence happens in the first few iterations.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Empty clusters</h3>
+      <p>If a cluster ends up empty, restart that centroid &mdash; e.g. the point furthest from any current centroid, or a point from the cluster with the highest SSE.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Where K-means fails</h3>
+      <p>Non-spherical clusters, clusters with very different sizes or densities, and data with outliers. K-means implicitly assumes equally-sized round clusters.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Bisecting K-means:</strong> a variant that starts with one cluster and repeatedly splits the largest (or highest-SSE) cluster into two with K-means until \(k\) clusters are reached. Less sensitive to initialisation than vanilla K-means.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="K-means++ samples each new centroid with probability proportional to the squared distance to the nearest already-chosen centroid, so far-away points are favoured and the initial centroids spread out across the data.">
+    <div class="qc-h">Quick check - K-means++</div>
+    <div class="qc-question">In K-means++, the probability of picking a point as the next centroid is proportional to:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The number of points in its current cluster</div>
+      <div class="qc-opt" data-idx="1">A uniform constant (i.e. uniformly at random)</div>
+      <div class="qc-opt" data-idx="2">The squared distance to the nearest already-chosen centroid</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-gmm" class="section" data-track="gmm">
+  <h2 class="section-title">Gaussian Mixture Models and the EM algorithm</h2>
+  <p class="section-lead">A GMM is a probabilistic clustering model that assumes the data was generated by a mixture of \(k\) Gaussian distributions, one per cluster. Instead of a hard assignment, each point has a probability of belonging to each cluster.</p>
+
+  <div class="def-box">
+    <div class="def-label">GMM generative story</div>
+    <p style="margin:0; color:var(--text-muted);">For each point: first pick cluster \(j\) with probability \(w_j\) (mixing weight, \(\sum_j w_j = 1\)), then sample the point from \(\mathcal{N}(\mu_j, \sigma_j^2)\). The unknowns are the means, variances (or covariance matrices) and mixing weights.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>E-step (Expectation)</h3>
+      <p>Given current parameters, compute the responsibility \(P(\text{cluster } j \mid x_i, \theta) = \dfrac{w_j\,P(x_i\mid\theta_j)}{\sum_{j'} w_{j'}\,P(x_i\mid\theta_{j'})}\). This is the soft assignment of each point to each cluster.</p>
+    </div>
+    <div class="col-card">
+      <h3>M-step (Maximization)</h3>
+      <p>Re-estimate each cluster's parameters using the responsibilities as weights: \(\mu_j = \dfrac{\sum_i x_i\,P(j\mid x_i)}{\sum_i P(j\mid x_i)}\). Update \(\sigma_j\) and \(w_j\) similarly.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>GMM vs K-means</h3>
+      <p>K-means' assign step \(\leftrightarrow\) GMM's E-step (crisp vs soft). K-means' update step \(\leftrightarrow\) GMM's M-step (centroid vs distribution parameters).</p>
+    </div>
+    <div class="glance-card">
+      <h3>Elliptical clusters</h3>
+      <p>With full covariance matrices, GMM can fit elliptical or rotated clusters, whereas K-means can only produce roughly spherical Voronoi cells.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Convergence</h3>
+      <p>EM monotonically increases the data log-likelihood. It still finds local optima, so multiple restarts are common.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Hard at the end:</strong> after EM converges, each point can be assigned to the cluster with the largest responsibility &mdash; recovering a hard clustering from the probabilistic model.
+  </div>
+</section>
+
+<section id="sec-hier" class="section" data-track="hier">
+  <h2 class="section-title">Hierarchical clustering: dendrograms instead of \(k\)</h2>
+  <p class="section-lead">Hierarchical clustering produces a nested family of clusterings rather than a single partition. It is visualised as a <strong>dendrogram</strong> &mdash; a tree that records each merge or split.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Agglomerative (bottom-up)</h3>
+      <p>Start with each point as its own cluster. Repeatedly merge the two closest clusters until a single cluster remains. The choice of inter-cluster distance (single / complete / average / Ward's) defines the variant.</p>
+    </div>
+    <div class="col-card">
+      <h3>Divisive (top-down)</h3>
+      <p>Start with all points in one cluster, recursively split clusters until each point is alone. Less common in practice; can be implemented via a minimum spanning tree.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>No \(k\) up front</h3>
+      <p>You can "cut" the dendrogram at any height to recover the clustering with that many clusters.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Ward's method</h3>
+      <p>Distance between two clusters = the increase in SSE when they are merged. Tends to produce roughly equal-sized clusters; sensitive to outliers.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Complexity</h3>
+      <p>Time \(O(n^3)\), space \(O(n^2)\). Not incremental &mdash; assumes all data is available, and does not scale to very large \(n\).</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>When to use it:</strong> tasks with natural nesting (taxonomies, biological hierarchies). The dendrogram itself is often the deliverable, not just the partition you would get by cutting it.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="Agglomerative clustering builds the dendrogram bottom-up: each item starts as its own cluster, and at each step the two closest clusters are merged into one.">
+    <div class="qc-h">Quick check - agglomerative</div>
+    <div class="qc-question">In agglomerative hierarchical clustering, each iteration:</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Merges the two closest clusters</div>
+      <div class="qc-opt" data-idx="1">Splits the largest cluster into two</div>
+      <div class="qc-opt" data-idx="2">Reassigns points to the nearest centroid</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-dbscan" class="section" data-track="dbscan">
+  <h2 class="section-title">DBSCAN: density-based clustering</h2>
+  <p class="section-lead">DBSCAN (Density-Based Spatial Clustering of Applications with Noise) defines a cluster as a connected region of high density. It can find clusters of arbitrary shape and identifies outliers as noise.</p>
+
+  <div class="def-box">
+    <div class="def-label">Two parameters: Eps and MinPts</div>
+    <p style="margin:0; color:var(--text-muted);"><strong>Eps</strong> is the radius of a point's neighbourhood. <strong>MinPts</strong> is the minimum number of points (including the point itself) required inside that neighbourhood for it to be considered dense.</p>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Core point</h3>
+      <p>Has at least \(\text{MinPts}\) points within distance \(\text{Eps}\). Forms the interior of a cluster.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Border point</h3>
+      <p>Not core, but lies within Eps of at least one core point. Belongs to a cluster but is on its edge.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Noise point</h3>
+      <p>Neither core nor border &mdash; discarded as an outlier. DBSCAN's robustness to noise is one of its main strengths.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Cluster formation</h3>
+      <p>Any two core points within Eps go in the same cluster. Each border point joins the cluster of an adjacent core point.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Choosing Eps:</strong> plot the sorted \(k\)-distance graph &mdash; the distance from every point to its \(k\)-th nearest neighbour, in increasing order. A "knee" in the curve suggests a good Eps, and MinPts is then set to \(k\).
+  </div>
+
+  <div class="insight-box">
+    <strong>Strengths and limits:</strong> DBSCAN finds arbitrary-shape clusters and labels noise, and does not need \(k\). It struggles when clusters have very different densities (one Eps cannot fit all) and on high-dimensional data, where density becomes hard to define.
+  </div>
+</section>
+
+<section id="sec-eval" class="section" data-track="eval">
+  <h2 class="section-title">Evaluating clustering quality</h2>
+  <p class="section-lead">All clustering algorithms will return clusters even on random data, so we need ways to judge whether the clusters are actually meaningful.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Unsupervised (internal)</h3>
+      <p>Use the data alone. <strong>Cohesion</strong> = sum of distances inside clusters; <strong>Separation</strong> = distance between cluster centroids and the overall centroid. The <strong>Silhouette coefficient</strong> \(s_i = \frac{b_i - a_i}{\max(a_i, b_i)}\) combines both into one score in \([-1, 1]\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Supervised (external)</h3>
+      <p>Compare the clustering with a known ground-truth labelling. Metrics include the Adjusted Rand Index (ARI) and Normalised Mutual Information (NMI). Used when labels are available for benchmarking.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Correlation of similarity matrices</h3>
+      <p>Build a "ideal" matrix from the cluster labels (1 if same cluster, 0 otherwise) and correlate it with the data's similarity matrix. High correlation = similar items end up together.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Visual inspection</h3>
+      <p>Reorder the similarity matrix so points in the same cluster are adjacent. Block-diagonal structure indicates good clustering.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Elbow method for \(k\)</h3>
+      <p>Plot SSE (or another internal score) against \(k\). Look for a "knee" where the curve flattens &mdash; a good trade-off between \(k\) and within-cluster cohesion.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Study questions to answer before moving on</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 1</div>
+      <div class="problem-tag warm-up">K-means by hand</div>
+    </div>
+    <div class="problem-body">
+      <p>Five items have pairwise distances given in the lecture table; with initial centroids \(A\) and \(B\), assign \(C, D, E\) to clusters in the first epoch of K-means.</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w10-kmeans">Show Solution</button>
+      <div class="solution-content" id="sol-w10-kmeans">
+        <p>\(C\): \(d(C,A)=7,\,d(C,B)=3\) &rArr; cluster 2. \(D\): \(d(D,A)=10,\,d(D,B)=4\) &rArr; cluster 2. \(E\): \(d(E,A)=1,\,d(E,B)=6\) &rArr; cluster 1.</p>
+        <p>End of epoch 1: \(\{A, E\}\) and \(\{B, C, D\}\).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 2</div>
+      <div class="problem-tag problem-solving">DBSCAN labels</div>
+    </div>
+    <div class="problem-body">
+      <p>Given the lecture's 5-point distance matrix and parameters \(\text{Eps}=1\), \(\text{MinPts}=2\), label every point as core / border / noise and list the resulting clusters.</p>
+      <p style="color:var(--text-muted);">Neighbourhoods: \(N(A)=\{A,B\}\), \(N(B)=\{B,A\}\), \(N(C)=\{C\}\), \(N(D)=\{D,E\}\), \(N(E)=\{E,D\}\). With \(\text{MinPts}\ge 2\), \(A, B, D, E\) are <em>core</em>; \(C\) is <em>noise</em> (no neighbour within Eps). Clusters: \(\{A,B\}\) and \(\{D,E\}\).</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 3</div>
+      <div class="problem-tag advanced">Choosing an algorithm</div>
+    </div>
+    <div class="problem-body">
+      <p>You have a 2D dataset shaped like two interlocking moons, with a small amount of background noise. Which clustering algorithm would you choose &mdash; K-means, GMM, agglomerative with average link, or DBSCAN &mdash; and why?</p>
+      <p style="color:var(--text-muted);"><strong>DBSCAN.</strong> Both K-means and GMM assume convex (spherical or elliptical) clusters and cannot recover crescent shapes. Agglomerative with average link is also poor for elongated, curved clusters. DBSCAN follows density along the moons regardless of shape and labels the background as noise.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=10" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=10&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

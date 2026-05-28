@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 9 - Attention and Transformers</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 9 builds from sequence-to-sequence RNN encoder-decoders to attention and the Transformer. Topics: RNN applications, seq2seq bottleneck, attention mechanism, self-attention with Query/Key/Value, scaled dot-product attention, multi-head attention, positional encoding, and the full encoder-decoder Transformer stack of Vaswani et al. (2017).">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 9 - Attention and Transformers">
+<meta property="og:description" content="Week 9: seq2seq, attention, self-attention (Q,K,V), multi-head, positional encoding, and the Transformer encoder-decoder stack.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4F7;</span>
+    <h2 data-i18n="sidebar_h2">Week 9</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-attention" class="nav-link" data-section="sec-attention" data-i18n="nav_attention">Seq2seq &amp; attention</a></li>
+    <li><a href="#sec-transformer" class="nav-link" data-section="sec-transformer" data-i18n="nav_transformer">Transformer</a></li>
+    <li><a href="#sec-self-attn" class="nav-link" data-section="sec-self-attn" data-i18n="nav_self_attn">Self-attention</a></li>
+    <li><a href="#sec-multihead" class="nav-link" data-section="sec-multihead" data-i18n="nav_multihead">Multi-head &amp; positions</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter9-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter9-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=9" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=9" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=9&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="1">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 9: Attention and Transformers</h1>
+    <p class="hero-subtitle">Sequence-to-sequence RNN encoder-decoders compress an entire sentence into one context vector — a bottleneck. The attention mechanism removes that bottleneck by letting the decoder look back at every encoder state. The Transformer (Vaswani et al., 2017) takes attention to its logical conclusion: drop recurrence entirely and build the whole network from self-attention and feed-forward layers, with positional encoding to inject word order.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F501;</span><span>Seq2seq</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F441;</span><span>Attention</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F9E9;</span><span>Q, K, V</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F517;</span><span>Multi-head</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Encoder-decoder</span>
+      <span>Context vector</span>
+      <span>Scaled dot-product</span>
+      <span>Softmax weights</span>
+      <span>Positional encoding</span>
+      <span>Vaswani 2017</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter9-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter9-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">Week 9 layers attention on top of the seq2seq RNN from last week and then replaces recurrence entirely with the Transformer. The slides follow Jay Alammar's "Illustrated Transformer" — read the Q/K/V figure carefully, then the multi-head and positional-encoding figures, and finally the full encoder-decoder stack.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What you should learn from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../Materials/ml9.pdf">ml9.pdf</a></td><td>RNN applications (VQA, reading comprehension, seq2seq for translation and chat); the seq2seq encoder-decoder with attention; the Transformer (Vaswani et al., 2017): self-attention with Query/Key/Value, scaled dot-product attention, multi-head attention, positional encoding, residual connections, and the full encoder-decoder stack; why Transformers beat RNNs (parallelism, long-range dependencies).</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-attention" class="section" data-track="attention">
+  <h2 class="section-title">From seq2seq to attention</h2>
+  <p class="section-lead">Recurrent networks shine on sequences but struggle to translate long sentences. The classical fix is an <strong>encoder-decoder</strong>: one RNN reads the source, another generates the target. Attention then removes the bottleneck of squeezing all source information into one vector.</p>
+
+  <div class="def-box">
+    <div class="def-label">Sequence-to-sequence (seq2seq)</div>
+    <p style="margin:0; color:var(--text-muted);">Two RNNs in series. The <strong>encoder</strong> reads the source sentence and emits a final hidden state — a <em>context vector</em> meant to summarise the whole input. The <strong>decoder</strong> starts from that context and generates the target one token at a time, feeding its own previous output back as the next input.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>RNN applications</h3>
+      <p>The same encoder-decoder template covers many sequence tasks:</p>
+      <ul style="margin:0.4rem 0 0 1.1rem; color:var(--text-muted);">
+        <li><strong>Language translation</strong> ("&#25105;&#26159;&#19968;&#20010;&#23398;&#29983;" &rarr; "I am a student")</li>
+        <li><strong>Chat / dialogue</strong> (reply generation)</li>
+        <li><strong>Visual Question Answering</strong> (image + question &rarr; word answer)</li>
+        <li><strong>Reading comprehension</strong> (facts + query &rarr; answer)</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>The bottleneck problem</h3>
+      <p>The encoder must compress an entire variable-length sentence into one fixed-size vector. For long sentences this loses information — the decoder gets only a blurred summary. Translation quality drops with input length.</p>
+    </div>
+  </div>
+
+  <div class="def-box" style="border-color:var(--accent);">
+    <div class="def-label">Attention</div>
+    <p style="margin:0; color:var(--text-muted);">Instead of relying on one context vector, the decoder at each step computes a <strong>weighted combination</strong> of <em>every</em> encoder hidden state. A learned scoring function decides how much to attend to each source position. The weights change at every decoder step, so different output words can focus on different source words.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Word alignment for free:</strong> the attention weights act as a soft alignment between source and target tokens. Visualising them recovers the kind of word-to-word correspondence that earlier statistical MT systems had to learn explicitly.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="A vanilla seq2seq encoder must squeeze the whole source sentence into one fixed-length context vector. Long sentences overflow that capacity. Attention sidesteps this by letting the decoder revisit every encoder state directly.">
+    <div class="qc-h">Quick check &mdash; Why attention</div>
+    <div class="qc-question">What problem in plain seq2seq translation does the attention mechanism address?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">RNNs cannot be trained with backpropagation</div>
+      <div class="qc-opt" data-idx="1">A single fixed-length context vector cannot hold all the information of a long input sentence</div>
+      <div class="qc-opt" data-idx="2">Softmax is too expensive at the output</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-transformer" class="section" data-track="transformer">
+  <h2 class="section-title">The Transformer architecture</h2>
+  <p class="section-lead">Vaswani et al. (2017), "Attention Is All You Need", asked: if attention is the key ingredient, do we need RNNs at all? The Transformer replaces recurrence entirely with stacked self-attention and feed-forward layers — both inside the encoder and the decoder.</p>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Encoder stack</h3>
+      <p>A stack of \(N\) identical encoder layers. Each layer has two sub-layers: <strong>multi-head self-attention</strong> and a position-wise <strong>feed-forward</strong> network. Each sub-layer has a residual connection and layer norm.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Decoder stack</h3>
+      <p>A stack of \(N\) identical decoder layers. Each has three sub-layers: <strong>masked self-attention</strong> (so position \(t\) cannot peek at future tokens), <strong>encoder-decoder attention</strong>, and a feed-forward block.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Embeddings + positions</h3>
+      <p>Words are turned into vectors by an embedding lookup, then a <strong>positional encoding</strong> is added so the otherwise position-agnostic self-attention layer can use word order.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Linear + softmax</h3>
+      <p>The top of the decoder is projected to a vocabulary-sized vector by a final linear layer and softmaxed to produce next-token probabilities. Training uses cross-entropy / KL.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why it wins:</strong> attention is computed in parallel for all positions, so the Transformer trains far faster on modern hardware than an RNN that must process tokens one after another. Long-range dependencies are also easier to capture: any pair of positions is one attention hop apart.
+  </div>
+
+  <div class="insight-box">
+    <strong>Trade-off:</strong> self-attention costs \(O(n^2)\) in sequence length because every position attends to every other. RNNs are \(O(n)\) per step but cannot parallelise across time. In practice the Transformer's parallelism and quality win out for typical sentence lengths.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="The Transformer drops recurrence entirely and relies on stacked self-attention. Because attention itself is order-agnostic, positional encodings are added to the input embeddings to re-inject word order.">
+    <div class="qc-h">Quick check &mdash; Transformer essentials</div>
+    <div class="qc-question">Which statement best characterises the Transformer architecture compared with a seq2seq RNN?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It uses an LSTM inside both the encoder and the decoder</div>
+      <div class="qc-opt" data-idx="1">It removes attention and relies on deeper convolutions</div>
+      <div class="qc-opt" data-idx="2">It removes recurrence, relies on self-attention, and adds positional encodings for word order</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-self-attn" class="section" data-track="self-attn">
+  <h2 class="section-title">Self-attention: Query, Key, Value</h2>
+  <p class="section-lead">Self-attention lets each word in a sentence look at every other word and decide which ones are relevant for encoding it. In the sentence "The animal didn't cross the street because <em>it</em> was too tired", self-attention learns that "it" should attend to "animal".</p>
+
+  <div class="def-box">
+    <div class="def-label">Q, K, V vectors</div>
+    <p style="margin:0; color:var(--text-muted);">For each input embedding \(x_i\) we produce three vectors by learned linear projections: \(q_i = x_i W^Q\), \(k_i = x_i W^K\), \(v_i = x_i W^V\). The matrices \(W^Q, W^K, W^V\) are the only new parameters.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Six steps of self-attention</h3>
+      <ol style="margin:0.3rem 0 0 1.1rem; color:var(--text-muted);">
+        <li>Project each input to a Query, Key, Value vector.</li>
+        <li>Score \(s_{ij} = q_i \cdot k_j\) — how relevant word \(j\) is to word \(i\).</li>
+        <li>Scale by \(\sqrt{d_k}\) for stable gradients.</li>
+        <li>Softmax along \(j\) to get weights that sum to 1.</li>
+        <li>Multiply each \(v_j\) by its softmax weight.</li>
+        <li>Sum the weighted values &rarr; output for position \(i\).</li>
+      </ol>
+    </div>
+    <div class="col-card">
+      <h3>Matrix form</h3>
+      <p>Pack all embeddings into a matrix \(X\). Then \(Q = XW^Q\), \(K = XW^K\), \(V = XW^V\), and the entire self-attention output is computed in one go:</p>
+      <p style="margin-top:0.4rem; text-align:center;">\(\text{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\dfrac{QK^\top}{\sqrt{d_k}}\right) V\)</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Why scale by \(\sqrt{d_k}\)?</h3>
+      <p>For large key dimension \(d_k\), the dot products \(q \cdot k\) have large variance, pushing softmax into saturated regions where gradients vanish. Dividing by \(\sqrt{d_k}\) keeps the variance bounded.</p>
+    </div>
+    <div class="glance-card">
+      <h3>What softmax does</h3>
+      <p>Turns the row of scores into a probability distribution over source positions, so the output is a convex combination of the value vectors — focused on the relevant words, drowning out the rest.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Self vs. cross-attention</h3>
+      <p>In <strong>self-attention</strong>, Q, K, V come from the same sequence. In <strong>encoder-decoder attention</strong>, Q comes from the decoder and K, V come from the encoder output — so the decoder queries the encoder.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="The dot product Q&middot;K^T scores how well each query matches each key. Softmaxing the scaled scores gives a row of weights, which then re-weight the value vectors V to form the output.">
+    <div class="qc-h">Quick check &mdash; What does \(QK^\top\) compute?</div>
+    <div class="qc-question">In the scaled dot-product attention formula, what is the role of \(QK^\top\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It is the residual connection</div>
+      <div class="qc-opt" data-idx="1">A matrix of similarity scores between every query and every key, later softmaxed into attention weights</div>
+      <div class="qc-opt" data-idx="2">A positional encoding</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-multihead" class="section" data-track="multihead">
+  <h2 class="section-title">Multi-head attention and positional encoding</h2>
+  <p class="section-lead">One self-attention layer can only pay attention in one way. Multi-head attention runs several attention "heads" in parallel, each with its own \(W^Q, W^K, W^V\), so the model can attend to different things at once.</p>
+
+  <div class="def-box">
+    <div class="def-label">Multi-head attention</div>
+    <p style="margin:0; color:var(--text-muted);">Run \(h\) parallel attention heads with independent projections, producing outputs \(\text{head}_1, \ldots, \text{head}_h\). Concatenate them and project through a final matrix \(W^O\):</p>
+    <p style="text-align:center; margin-top:0.5rem;">\(\text{MultiHead}(Q,K,V) = \mathrm{Concat}(\text{head}_1, \ldots, \text{head}_h)\,W^O\)</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why multiple heads?</h3>
+      <p>Each head learns a different "representation subspace". One head might track syntactic dependencies (subject &mdash; verb), another co-reference ("it" &mdash; "animal"), a third long-range topical similarity. Concatenation gives the next layer access to all of them.</p>
+    </div>
+    <div class="col-card">
+      <h3>Dimensions add up</h3>
+      <p>With model dimension \(d_{\text{model}}\) and \(h\) heads, each head usually uses \(d_k = d_v = d_{\text{model}}/h\) so the total parameter count matches a single-head layer of width \(d_{\text{model}}\).</p>
+    </div>
+  </div>
+
+  <div class="def-box" style="border-color:var(--purple);">
+    <div class="def-label">Positional encoding</div>
+    <p style="margin:0; color:var(--text-muted);">Self-attention is permutation-equivariant: shuffle the input tokens and the output shuffles the same way. To inject word order, a <strong>positional encoding</strong> vector is <em>added</em> to each input embedding before the first encoder layer. Vaswani et al. use fixed sinusoids of different frequencies so the model can attend to relative positions.</p>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Residuals &amp; layer norm</h3>
+      <p>Each sub-layer in the encoder/decoder is wrapped in a residual connection followed by layer normalisation: \(\text{LayerNorm}(x + \text{Sublayer}(x))\). Helps optimisation in deep stacks.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Masked decoder attention</h3>
+      <p>During training, the decoder self-attention is masked so position \(t\) sees only positions \(\le t\). This preserves the autoregressive property while still letting the whole sequence be processed in parallel.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Loss function</h3>
+      <p>The decoder emits a probability distribution over the vocabulary at each step. Training minimises cross-entropy (equivalently KL divergence) against the one-hot target distribution.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="Pure self-attention is order-agnostic: permuting the tokens permutes the outputs the same way. Positional encodings are added to the input embeddings so the network has access to word order.">
+    <div class="qc-h">Quick check &mdash; Positional encoding</div>
+    <div class="qc-question">Why does a Transformer add positional encodings to its input embeddings?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">To make the network bigger</div>
+      <div class="qc-opt" data-idx="1">To replace the softmax in attention</div>
+      <div class="qc-opt" data-idx="2">Because self-attention by itself has no notion of token order</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Study questions to answer before moving on</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 1</div>
+      <div class="problem-tag warm-up">Attention vs. seq2seq</div>
+    </div>
+    <div class="problem-body">
+      <p>Explain in one or two sentences why attention helps translation quality on long sentences, where a plain seq2seq encoder-decoder struggles.</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w9-attn-vs-seq2seq">Show Solution</button>
+      <div class="solution-content" id="sol-w9-attn-vs-seq2seq">
+        <p>Plain seq2seq compresses the whole input into one fixed-length context vector — for long sentences this loses information. Attention lets the decoder at every output step query <em>all</em> encoder hidden states, so detail from any source position can flow directly into the relevant target word without going through the bottleneck.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 2</div>
+      <div class="problem-tag problem-solving">Self-attention computation</div>
+    </div>
+    <div class="problem-body">
+      <p>Given embeddings packed into \(X\), write down the scaled dot-product self-attention output and explain what each matrix does.</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w9-self-attn">Show Solution</button>
+      <div class="solution-content" id="sol-w9-self-attn">
+        <p>Project: \(Q = XW^Q\), \(K = XW^K\), \(V = XW^V\). Then
+        \[
+          \text{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V.
+        \]
+        \(QK^\top\) is the matrix of query-key similarity scores; dividing by \(\sqrt{d_k}\) keeps the variance bounded so softmax doesn't saturate; softmax turns each row into a distribution over source positions; multiplying by \(V\) returns a weighted combination of value vectors.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 3</div>
+      <div class="problem-tag advanced">Why multi-head and positions</div>
+    </div>
+    <div class="problem-body">
+      <p>(a) Why use multiple attention heads instead of one with a larger \(d_k\)? (b) Why are positional encodings necessary in a Transformer but not in an RNN?</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w9-mh-pos">Show Solution</button>
+      <div class="solution-content" id="sol-w9-mh-pos">
+        <p><strong>(a)</strong> Each head can attend in a different way — syntactic dependencies, co-reference, topical similarity, etc. Concatenating gives the next layer access to all "representation subspaces" simultaneously, whereas a single bigger head can only produce one weighted sum per position.</p>
+        <p><strong>(b)</strong> An RNN processes tokens sequentially, so order is implicit in the order of computation. A Transformer processes all tokens in parallel and pure self-attention is permutation-equivariant, so it has no built-in notion of position. Adding a positional encoding to each token embedding restores that signal.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=9" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=9&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
