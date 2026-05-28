@@ -99,4 +99,52 @@ var ALL_FLASHCARD_DATA = [
   { ch: 8, front: "LSTM input gate role.", back: "Decides which entries of the cell state to update; paired with a tanh candidate that proposes new content.", front_zh: "LSTM 输入门的作用？", back_zh: "决定要更新细胞状态的哪些分量；与 tanh 候选配对，提出新内容。" },
   { ch: 8, front: "LSTM cell-state update.", back: "\\(C_t = f_t \\odot C_{t-1} + i_t \\odot \\tilde C_t\\): attenuate old, add gated new.", front_zh: "LSTM 细胞状态更新？", back_zh: "\\(C_t = f_t \\odot C_{t-1} + i_t \\odot \\tilde C_t\\)：旧状态衰减 + 门控新内容。" },
   { ch: 8, front: "How LSTMs mitigate vanishing gradient.", back: "Gates near 1 give a near-identity additive pathway for the cell state, so gradients survive across many steps.", front_zh: "LSTM 如何缓解梯度消失？", back_zh: "门接近 1 时，细胞状态近似恒等的加法通路，使梯度能跨多步保留。" },
+
+  // —— Ch9 ——
+  { ch: 9, front: "Why attention in seq2seq?", back: "Removes the fixed-length context-vector bottleneck — the decoder can look at every encoder hidden state.", front_zh: "Seq2seq 为何用注意力？", back_zh: "消除固定长度上下文向量瓶颈——解码端可关注每个编码隐状态。" },
+  { ch: 9, front: "Self-attention output formula.", back: "\\(\\text{softmax}(QK^\\top/\\sqrt{d_k})\\,V\\) where Q, K, V are learned projections of the same input.", front_zh: "自注意力公式？", back_zh: "\\(\\text{softmax}(QK^\\top/\\sqrt{d_k})\\,V\\)；Q/K/V 为同一输入的可学习投影。" },
+  { ch: 9, front: "Why divide by sqrt(d_k)?", back: "Without scaling, dot products grow with d_k and push softmax into low-gradient regions.", front_zh: "为何除以 \\(\\sqrt{d_k}\\)？", back_zh: "不缩放时点积随 d_k 增大，softmax 进入低梯度区。" },
+  { ch: 9, front: "Multi-head attention idea.", back: "Run h parallel attentions in different subspaces (each of dim d/h), concatenate, then linearly project.", front_zh: "多头注意力？", back_zh: "在不同子空间并行 h 个注意力（每头维度 d/h），拼接后线性投影。" },
+  { ch: 9, front: "Positional encoding purpose.", back: "Self-attention is order-invariant; positional encoding injects sequence position information.", front_zh: "位置编码作用？", back_zh: "自注意力对顺序不敏感；位置编码注入序列位置信息。" },
+  { ch: 9, front: "Transformer reference.", back: "Vaswani et al. (2017), \"Attention is All You Need\".", front_zh: "Transformer 出处？", back_zh: "Vaswani 等 2017《Attention is All You Need》。" },
+  { ch: 9, front: "Self-attention complexity.", back: "O(n^2 d) time and O(n^2) memory for sequence length n, feature dim d.", front_zh: "自注意力复杂度？", back_zh: "序列长度 n、特征维 d：时间 O(n^2 d)，内存 O(n^2)。" },
+  { ch: 9, front: "Sinusoidal positional encoding.", back: "Even dims: \\(\\sin(p/10000^{2i/d})\\); odd dims: \\(\\cos(p/10000^{2i/d})\\).", front_zh: "正弦位置编码？", back_zh: "偶维 \\(\\sin(p/10000^{2i/d})\\)；奇维 \\(\\cos\\)。" },
+  { ch: 9, front: "Encoder-decoder attention vs self-attention.", back: "Encoder-decoder attention has Q from decoder, K/V from encoder; self-attention has all three from the same sequence.", front_zh: "编码-解码注意力与自注意力？", back_zh: "编码-解码：Q 来自解码端，K/V 来自编码端；自注意力三者同源。" },
+  { ch: 9, front: "Why residuals + LayerNorm in a Transformer block?", back: "Stabilise training of deep stacks: residual paths preserve gradient, LayerNorm normalises across features.", front_zh: "Transformer 为何用残差 + LayerNorm？", back_zh: "稳定深层训练：残差保护梯度，LayerNorm 跨特征归一化。" },
+
+  // —— Ch10 ——
+  { ch: 10, front: "K-means objective.", back: "Minimise \\(\\sum_i \\|x_i - \\mu_{c_i}\\|^2\\) — total within-cluster squared distance.", front_zh: "K-means 目标？", back_zh: "最小化 \\(\\sum_i \\|x_i - \\mu_{c_i}\\|^2\\)。" },
+  { ch: 10, front: "K-means is sensitive to:", back: "Initial centroids and outliers; randomise restarts or use k-means++.", front_zh: "K-means 的敏感性？", back_zh: "对初始中心与异常点敏感；可多次重启或用 k-means++。" },
+  { ch: 10, front: "GMM is trained via:", back: "EM — E-step computes responsibilities, M-step updates means/covariances/mixing weights.", front_zh: "GMM 训练方法？", back_zh: "EM——E 步计算责任度，M 步更新均值/协方差/混合权重。" },
+  { ch: 10, front: "Agglomerative vs divisive clustering.", back: "Agglomerative builds the dendrogram bottom-up by merging; divisive splits top-down.", front_zh: "凝聚 vs 分裂层次聚类？", back_zh: "凝聚自底向上合并；分裂自顶向下拆分。" },
+  { ch: 10, front: "Single-link vs complete-link.", back: "Single uses min distance between clusters (chain effect); complete uses max (tight clusters).", front_zh: "单链 vs 全链？", back_zh: "单链取簇间最小距离（链效应）；全链取最大距离（紧致簇）。" },
+  { ch: 10, front: "DBSCAN parameters.", back: "eps (neighbourhood radius) and minPts (density threshold); points are core, border, or noise.", front_zh: "DBSCAN 参数？", back_zh: "eps（邻域半径）与 minPts（密度阈值）；点分为核心、边界、噪声。" },
+  { ch: 10, front: "Silhouette score.", back: "\\(s(i) = (b - a) / \\max(a, b) \\in [-1, 1]\\); higher is better-clustered.", front_zh: "轮廓系数？", back_zh: "\\(s(i) = (b - a) / \\max(a, b) \\in [-1, 1]\\)；越大越好。" },
+  { ch: 10, front: "Choosing k for k-means.", back: "Elbow on within-cluster sum of squares vs k, or silhouette / gap statistic / cross-validation on downstream task.", front_zh: "K-means 选 k？", back_zh: "WCSS 拐点图、轮廓系数、Gap 统计或下游任务交叉验证。" },
+  { ch: 10, front: "External cluster-eval metric example.", back: "Adjusted Rand Index (ARI) or Normalised Mutual Information (NMI) compare to ground-truth labels.", front_zh: "外部聚类评估指标？", back_zh: "ARI 或 NMI 与真实标签比较。" },
+  { ch: 10, front: "When does k-means fail?", back: "Non-spherical clusters, very different sizes, or noise; consider GMM or DBSCAN instead.", front_zh: "K-means 何时失效？", back_zh: "簇非球形、规模差异大或含噪声；可改用 GMM 或 DBSCAN。" },
+
+  // —— Ch11 ——
+  { ch: 11, front: "Markov property (1st order).", back: "Next state depends only on the current state, not on earlier history.", front_zh: "一阶马尔可夫性？", back_zh: "下一状态仅依赖当前状态，与更早历史无关。" },
+  { ch: 11, front: "HMM parameters.", back: "λ = (A, B, π): transition matrix A, emission distributions B, initial distribution π.", front_zh: "HMM 参数？", back_zh: "λ = (A, B, π)：转移 A、发射 B、初始 π。" },
+  { ch: 11, front: "HMM problem 1 — Evaluation.", back: "Compute P(O | λ); solved by the forward algorithm in O(N^2 T).", front_zh: "HMM 问题 1：评估？", back_zh: "求 P(O | λ)；前向算法 O(N^2 T)。" },
+  { ch: 11, front: "HMM problem 2 — Decoding.", back: "Most likely state sequence given O; Viterbi DP with max instead of sum.", front_zh: "HMM 问题 2：解码？", back_zh: "给定 O 的最可能状态序列；Viterbi（用 max 取代 sum）。" },
+  { ch: 11, front: "HMM problem 3 — Learning.", back: "Estimate λ from observations only; Baum-Welch (a specific EM algorithm).", front_zh: "HMM 问题 3：学习？", back_zh: "仅由观测估计 λ；Baum-Welch（EM 的具体化）。" },
+  { ch: 11, front: "Forward recurrence.", back: "\\(\\alpha_t(i) = [\\sum_j \\alpha_{t-1}(j)\\,a_{ji}]\\, b_i(o_t)\\); init \\(\\alpha_1(i) = \\pi_i b_i(o_1)\\).", front_zh: "前向递推？", back_zh: "\\(\\alpha_t(i) = [\\sum_j \\alpha_{t-1}(j)\\,a_{ji}]\\, b_i(o_t)\\)；初始 \\(\\alpha_1(i) = \\pi_i b_i(o_1)\\)。" },
+  { ch: 11, front: "Viterbi recurrence.", back: "\\(\\delta_t(i) = [\\max_j \\delta_{t-1}(j)\\,a_{ji}]\\, b_i(o_t)\\); track backpointers ψ.", front_zh: "Viterbi 递推？", back_zh: "\\(\\delta_t(i) = [\\max_j \\delta_{t-1}(j)\\,a_{ji}]\\, b_i(o_t)\\)；记录回溯指针 ψ。" },
+  { ch: 11, front: "HMM applications.", back: "Speech recognition, POS tagging, gene-finding, gesture recognition.", front_zh: "HMM 应用？", back_zh: "语音识别、词性标注、基因检测、手势识别。" },
+  { ch: 11, front: "Why DP for HMM?", back: "Brute force over N^T state sequences is intractable; DP collapses it to O(N^2 T).", front_zh: "HMM 为何用 DP？", back_zh: "暴力枚举 N^T 状态序列不可行；DP 降至 O(N^2 T)。" },
+  { ch: 11, front: "Emission probability b_i(o).", back: "Probability of observing o given the hidden state is i; one row per state.", front_zh: "发射概率 b_i(o)？", back_zh: "处于隐状态 i 时观测到 o 的概率；每个状态一行。" },
+
+  // —— Ch12 ——
+  { ch: 12, front: "MDP tuple.", back: "⟨S, A, P, R, γ⟩: states, actions, transition probabilities, reward function, discount factor.", front_zh: "MDP 五元组？", back_zh: "⟨S, A, P, R, γ⟩：状态、动作、转移概率、奖励、折扣因子。" },
+  { ch: 12, front: "Discounted return G_t.", back: "\\(G_t = \\sum_{k=0}^\\infty \\gamma^k r_{t+k+1}\\); discount controls farsightedness.", front_zh: "折扣回报 G_t？", back_zh: "\\(G_t = \\sum_{k=0}^\\infty \\gamma^k r_{t+k+1}\\)；折扣控制远见程度。" },
+  { ch: 12, front: "V^π vs Q^π.", back: "V^π(s): expected return from s under π. Q^π(s,a): expected return from s, action a, then π.", front_zh: "V^π 与 Q^π？", back_zh: "V^π(s)：从 s 按 π 行动的期望回报；Q^π(s,a)：从 s 取 a 后按 π 的期望回报。" },
+  { ch: 12, front: "Bellman optimality (Q).", back: "\\(Q^*(s,a) = r + \\gamma \\max_{a'} Q^*(s', a')\\) — immediate reward plus discounted best next.", front_zh: "Q 的贝尔曼最优？", back_zh: "\\(Q^*(s,a) = r + \\gamma \\max_{a'} Q^*(s', a')\\)：即时奖励 + 折扣最佳后继。" },
+  { ch: 12, front: "Q-Learning update.", back: "\\(Q(s,a) \\leftarrow Q(s,a) + \\alpha[r + \\gamma \\max_{a'} Q(s', a') - Q(s,a)]\\); off-policy TD.", front_zh: "Q-Learning 更新？", back_zh: "\\(Q(s,a) \\leftarrow Q(s,a) + \\alpha[r + \\gamma \\max_{a'} Q(s', a') - Q(s,a)]\\)；离策略 TD。" },
+  { ch: 12, front: "ε-greedy exploration.", back: "With prob ε take a random action, else greedy w.r.t. current Q; balance exploration / exploitation.", front_zh: "ε-贪心？", back_zh: "以 ε 随机动作，否则按当前 Q 贪心；平衡探索与利用。" },
+  { ch: 12, front: "DQN: experience replay.", back: "Buffer past transitions and sample mini-batches; breaks correlation, reuses data.", front_zh: "DQN 经验回放？", back_zh: "缓存历史转移并按小批量采样；打破相关性、复用数据。" },
+  { ch: 12, front: "DQN: target network.", back: "Hold a slowly-updated copy of Q for the bootstrap target; reduces non-stationarity.", front_zh: "DQN 目标网络？", back_zh: "对自举目标使用缓慢更新的 Q 副本，缓解非平稳性。" },
+  { ch: 12, front: "DQN loss.", back: "\\(L = (r + \\gamma \\max_{a'} Q_{\\bar\\theta}(s', a') - Q_\\theta(s, a))^2\\) — squared TD error vs target net.", front_zh: "DQN 损失？", back_zh: "\\(L = (r + \\gamma \\max_{a'} Q_{\\bar\\theta}(s', a') - Q_\\theta(s, a))^2\\)：相对目标网的 TD 误差平方。" },
+  { ch: 12, front: "RL applications.", back: "Atari games, robotic control, AlphaGo, recommender exploration; game-changing where supervised data is hard.", front_zh: "RL 应用？", back_zh: "Atari 游戏、机器人控制、AlphaGo、推荐探索；在难有监督数据处见长。" },
 ];

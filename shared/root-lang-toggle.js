@@ -49,7 +49,7 @@
     "card-5318-desc":
       "监督与非监督学习、神经网络、SVM、决策树、集成方法与评估 —— 配有任务中心和进度游戏化系统。",
     "card-5318-stat-coverage-label": "覆盖范围",
-    "card-5318-stat-coverage-value": "8 个系统周次",
+    "card-5318-stat-coverage-value": "12 个系统周次",
     "card-5318-stat-source-label": "来源",
     "card-5318-stat-source-value": "讲座 + 实验 + 习题",
     "card-5318-stat-language-label": "语言",
