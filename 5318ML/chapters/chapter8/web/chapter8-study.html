@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 8 - Convolutional and Recurrent Networks</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 introduces convolutional neural networks for images and recurrent networks for sequences. Topics: convolution, filters, stride, padding, pooling, full CNN architecture; simple RNN, unrolling over time, backpropagation through time, and LSTM cells with forget, input, and output gates.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 8 - Convolutional and Recurrent Networks">
+<meta property="og:description" content="Week 8: CNN convolution/pooling/filters and RNN/LSTM for sequences with backpropagation through time.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4F7;</span>
+    <h2 data-i18n="sidebar_h2">Week 8</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-cnn" class="nav-link" data-section="sec-cnn" data-i18n="nav_cnn">CNN core</a></li>
+    <li><a href="#sec-cnn-arch" class="nav-link" data-section="sec-cnn-arch" data-i18n="nav_cnn_arch">CNN architecture</a></li>
+    <li><a href="#sec-rnn" class="nav-link" data-section="sec-rnn" data-i18n="nav_rnn">RNN basics</a></li>
+    <li><a href="#sec-lstm" class="nav-link" data-section="sec-lstm" data-i18n="nav_lstm">LSTM</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter8-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter8-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=8" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=8" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=8&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="6">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 8: Convolutional and Recurrent Networks</h1>
+    <p class="hero-subtitle">Two specialised neural-network families. Convolutional networks exploit the 2D spatial structure of images with learned filters, strides, and pooling. Recurrent networks unroll over time to handle sequences, training via backpropagation through time, and LSTM cells use gated memory to preserve long-range information.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F5BC;</span><span>Convolution</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F50D;</span><span>Pooling</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F501;</span><span>Recurrent loop</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F9F4;</span><span>LSTM gates</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Filters &amp; feature maps</span>
+      <span>Stride &amp; padding</span>
+      <span>Max / avg pooling</span>
+      <span>BPTT</span>
+      <span>Forget / input / output gates</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter8-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter8-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">Week 8 bundles two large topics. Read the CNN half with image examples in mind; read the RNN half thinking about sequences such as text and time series. The LSTM cell diagram is the densest figure in the slides — re-draw it from memory before moving on.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What you should learn from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../Materials/ml8.pdf">ml8.pdf</a></td><td>CNN motivation, convolution with filters, stride and padding, pooling, full CNN architecture (alternating conv + pool + FC layers), multi-channel filters; RNN motivation for sequences, simple Elman RNN, unrolling, backpropagation through time, character/word prediction; LSTM cell with forget/input/output gates and cell-state update.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-cnn" class="section" data-track="cnn">
+  <h2 class="section-title">Convolutional networks: filters, stride, and pooling</h2>
+  <p class="section-lead">A CNN is a feedforward neural network trained with backpropagation, but designed to exploit the spatial structure of images. Pixels nearby are usually related; a CNN encodes that prior with small, learnable filters that slide across the image.</p>
+
+  <div class="def-box">
+    <div class="def-label">Convolution</div>
+    <p style="margin:0; color:var(--text-muted);">A small <strong>filter</strong> (also called kernel, e.g. 3&times;3) slides across the input image. At each position the filter is multiplied element-wise with the underlying pixels and the products are summed (plus a bias). The result is a single value in the <strong>feature map</strong>. The region under the filter is the <strong>receptive field</strong>.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Filters as feature detectors</h3>
+      <p>A hand-designed filter could detect a curve, an edge, or a corner. In a CNN the filter values are <strong>learned</strong> by backpropagation — the network discovers the features it needs from data.</p>
+      <p style="color:var(--text-muted); font-size:0.9rem;">One feature map per filter; many filters produce many feature maps, each highlighting a different pattern.</p>
+    </div>
+    <div class="col-card">
+      <h3>Stride and padding</h3>
+      <p><strong>Stride</strong> \((s_h, s_v)\): how many pixels the filter shifts each step. Bigger strides &rarr; smaller feature maps. <strong>Padding</strong>: add zero pixels around the border so the filter can reach the edge without going off the image.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Pooling</h3>
+      <p>A sub-sampling layer that summarises a region with one value. <strong>Max pooling</strong> takes the maximum; <strong>average pooling</strong> takes the mean. Reduces spatial size and adds robustness to small translations.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Multi-channel input</h3>
+      <p>Colour images have three channels (R, G, B). The filter becomes 3D: its third dimension matches the channel count, so the dot product is over both space and channels.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why not a plain MLP?</h3>
+      <p>A fully connected layer flattens the image into a vector and loses spatial structure. CNNs preserve spatial locality, share weights via filter reuse, and have far fewer parameters than an equivalently expressive MLP.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>AlexNet 2012:</strong> the lecture marks AlexNet's ImageNet win (error from 26% &rarr; 15%) as the moment CNNs went mainstream. The pieces were known by 1989 (LeCun); the missing factors were GPUs and large labelled datasets.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="Convolutional filters share their weights as they slide across the image, so the same feature detector applies everywhere. That's why CNNs have far fewer parameters than equivalent fully connected layers.">
+    <div class="qc-h">Quick check - CNN advantage</div>
+    <div class="qc-question">Why does a convolutional layer usually have far fewer parameters than a fully connected one of comparable receptive field?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Because images are smaller than vectors</div>
+      <div class="qc-opt" data-idx="1">Because backpropagation does not apply to convolutions</div>
+      <div class="qc-opt" data-idx="2">Because the filter weights are shared across spatial positions</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-cnn-arch" class="section" data-track="cnn-arch">
+  <h2 class="section-title">Putting a CNN together</h2>
+  <p class="section-lead">A typical CNN alternates convolutional layers (often with ReLU) and pooling layers to extract a hierarchy of features, then ends with one or two fully connected layers and a softmax over classes.</p>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Conv layer</h3>
+      <p>Many learnable filters produce a stack of feature maps. Often followed by a non-linear activation such as ReLU.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Pool layer</h3>
+      <p>Downsamples each feature map, usually with max pooling and a 2&times;2 window.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Fully connected</h3>
+      <p>Flattens the final feature maps into a vector and applies one or two dense layers.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Softmax output</h3>
+      <p>Turns logits into class probabilities. Trained with categorical cross-entropy.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Same training algorithm:</strong> a CNN is still trained with backpropagation — the only differences are the local connectivity, the weight sharing, and the pooling operations. The gradient still flows through each filter via the chain rule.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Max pooling reports the strongest activation in a small region, which makes the response robust to small translations of the input.">
+    <div class="qc-h">Quick check - Pooling</div>
+    <div class="qc-question">What is one motivation for max pooling in a CNN?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It increases the number of parameters</div>
+      <div class="qc-opt" data-idx="1">It reduces spatial size and adds invariance to small translations</div>
+      <div class="qc-opt" data-idx="2">It replaces softmax at the output</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-rnn" class="section" data-track="rnn">
+  <h2 class="section-title">Recurrent networks for sequences</h2>
+  <p class="section-lead">A recurrent network processes a sequence one element at a time, carrying a hidden state from one step to the next. Past inputs influence future outputs through that state — this is the network's memory.</p>
+
+  <div class="def-box">
+    <div class="def-label">Simple RNN (Elman)</div>
+    <p style="margin:0; color:var(--text-muted);">At each step \(t\), the hidden state \(h_t = \tanh(W_{xh} x_t + W_{hh} h_{t-1} + b_h)\) and the output \(y_t = W_{hy} h_t + b_y\). The cyclic dependence \(h_t \leftarrow h_{t-1}\) makes the computation graph cyclic rather than feedforward.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Unrolling over time</h3>
+      <p>For analysis and training, the RNN is "unrolled" along the sequence so each time-step is a copy of the same cell with shared parameters \(W_{xh}, W_{hh}, W_{hy}\). With 3 time-steps you get 3 instances of the cell — but only one set of weights.</p>
+    </div>
+    <div class="col-card">
+      <h3>Backpropagation through time (BPTT)</h3>
+      <p>Apply standard backprop to the unrolled graph. Gradients accumulate over time steps, and the shared weights receive the sum of contributions from every step where they appeared.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Use cases</h3>
+      <p>Sentences (one word after another), audio, time series, character prediction. The lecture's worked example predicts the next character given the previous characters.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Vanishing / exploding</h3>
+      <p>Repeated multiplication through many time-steps shrinks or blows up the gradient. Simple RNNs struggle with long-range dependencies for this reason.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Why LSTM</h3>
+      <p>LSTM introduces gated memory cells that can hold information for many time-steps without saturation, mitigating vanishing gradients.</p>
+    </div>
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="The hidden state carries information from earlier inputs forward, so the current output depends on the past — this is what gives an RNN memory.">
+    <div class="qc-h">Quick check - RNN memory</div>
+    <div class="qc-question">What gives a recurrent network its memory of past inputs?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">An external database</div>
+      <div class="qc-opt" data-idx="1">A hidden state passed from one time-step to the next</div>
+      <div class="qc-opt" data-idx="2">The bias term</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-lstm" class="section" data-track="lstm">
+  <h2 class="section-title">LSTM cells: gated long-term memory</h2>
+  <p class="section-lead">The LSTM cell keeps a <strong>cell state</strong> \(C_t\) that runs along the sequence, and three gates that decide what to forget, what to add, and what to output. Each gate is a sigmoid producing values in \([0,1]\) used as element-wise multipliers.</p>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Forget gate</h3>
+      <p>\(f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)\). Decides what fraction of the previous cell state to keep. Output close to 0 means "forget"; close to 1 means "keep".</p>
+    </div>
+    <div class="metric-card">
+      <h3>Input gate</h3>
+      <p>\(i_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i)\) decides which entries to update, paired with a candidate \(\tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C)\) that proposes the new content.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Cell-state update</h3>
+      <p>\(C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t\). Old state attenuated by forget, plus new candidate scaled by input gate.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Output gate</h3>
+      <p>\(o_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o)\), then \(h_t = o_t \odot \tanh(C_t)\). The hidden state is a filtered, squashed view of the cell state.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why the gates help:</strong> when a gate is open (value \(\approx 1\)) the cell state can carry information unchanged across many time-steps, so the gradient does not vanish. When a gate is closed (\(\approx 0\)) the corresponding stream of information is suppressed.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="The forget gate produces values in [0,1] and is multiplied element-wise with the previous cell state, choosing which components to drop and which to retain.">
+    <div class="qc-h">Quick check - Forget gate</div>
+    <div class="qc-question">What does the forget gate control inside an LSTM cell?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The learning rate of the cell</div>
+      <div class="qc-opt" data-idx="1">The output of the entire network</div>
+      <div class="qc-opt" data-idx="2">How much of the previous cell state is retained at this step</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Study questions to answer before moving on</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 1</div>
+      <div class="problem-tag warm-up">Output size</div>
+    </div>
+    <div class="problem-body">
+      <p>An input image is \(28 \times 28\). A convolutional layer with filter \(5 \times 5\), stride 1, and no padding is applied. What is the output feature-map size?</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w8-conv-size">Show Solution</button>
+      <div class="solution-content" id="sol-w8-conv-size">
+        <p>Output dimension \(= (W - F)/S + 1 = (28 - 5)/1 + 1 = 24\). So the output is \(24 \times 24\).</p>
+        <p style="color:var(--text-muted);">With padding 2 and the same filter and stride, the output would stay at \(28 \times 28\) ("same" padding).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 2</div>
+      <div class="problem-tag problem-solving">Weight sharing</div>
+    </div>
+    <div class="problem-body">
+      <p>Why does an RNN that processes a sentence of length \(T\) still have only one set of weights, despite being unrolled into \(T\) time-step copies?</p>
+      <p style="color:var(--text-muted);">Because the unrolled diagram repeats the <em>same</em> cell at each time-step — the parameters \(W_{xh}, W_{hh}, W_{hy}\) are shared. During BPTT, each parameter receives the sum of gradient contributions from every time-step.</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 3</div>
+      <div class="problem-tag advanced">LSTM intuition</div>
+    </div>
+    <div class="problem-body">
+      <p>Explain how an LSTM can remember information from time-step 1 at time-step 50 even when a vanilla RNN cannot.</p>
+      <p style="color:var(--text-muted);">The cell-state pathway \(C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t\) lets information flow with multiplicative gates near 1, so the gradient does not necessarily shrink each step. A vanilla RNN passes everything through \(\tanh\) and a dense matrix, which causes repeated saturation and vanishing gradient.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=8" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=8&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

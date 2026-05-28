@@ -24,7 +24,7 @@ var errors = [];
 
 var hubs = [
   { dir: "5270RandomAlgo", chapters: 12 },
-  { dir: "5318ML",         chapters: 7  },
+  { dir: "5318ML",         chapters: 8  },
   { dir: "5046NLP",        chapters: 6 },
   { dir: "9001Py",         chapters: 5 },
   { dir: "9123DataStructureAlgo", chapters: 10 }

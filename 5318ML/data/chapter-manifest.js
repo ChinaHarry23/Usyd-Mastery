@@ -6,7 +6,7 @@
  * tutorials — solution-toggle / self-assessment count per chapter
  */
 window.CHAPTER_MANIFEST = {
-  sections:  { 1: 8, 2: 8, 3: 7, 4: 7, 5: 6, 6: 6, 7: 8 },
-  checks:    { 1: 11, 2: 7, 3: 9, 4: 9, 5: 8, 6: 9, 7: 5 },
-  tutorials: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 }
+  sections:  { 1: 8, 2: 8, 3: 7, 4: 7, 5: 6, 6: 6, 7: 8, 8: 8 },
+  checks:    { 1: 11, 2: 7, 3: 9, 4: 9, 5: 8, 6: 9, 7: 5, 8: 6 },
+  tutorials: { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1 }
 };

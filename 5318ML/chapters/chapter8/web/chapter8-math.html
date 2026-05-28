@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 8</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Discrete 2D convolution formula, output-size arithmetic, pooling, RNN recurrence, BPTT idea, and LSTM gate equations.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Math Foundations — Week 8">
+<meta property="og:description" content="2D convolution and output sizing, pooling, RNN recurrence, BPTT, and LSTM gates.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter8-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 8 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Discrete 2D convolution, feature-map size arithmetic, pooling, RNN recurrence, backpropagation through time, and the gate equations of an LSTM cell.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">*</span><strong>Convolution</strong><span>\((I*K)(i,j) = \sum_{u,v} I(i+u, j+v)\,K(u,v)\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">size</span><strong>Output size</strong><span>\(\lfloor (W - F + 2P)/S \rfloor + 1\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">h</span><strong>RNN state</strong><span>\(h_t = \tanh(W_{xh}x_t + W_{hh}h_{t-1} + b)\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">C</span><strong>LSTM</strong><span>\(C_t = f_t \odot C_{t-1} + i_t \odot \tilde C_t\)</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-conv" data-track="conv">
+  <h2 class="section-title">2D convolution and feature-map size</h2>
+  <p class="section-lead">Convolution slides a filter \(K\) of size \(F \times F\) across an input \(I\) of size \(W \times W\), producing one output value per position. With stride \(S\) and padding \(P\) the output has size</p>
+  <div class="theorem-box">
+    <h3>Output dimension</h3>
+    <p>\[
+      \text{out} = \left\lfloor \frac{W - F + 2P}{S} \right\rfloor + 1
+    \]</p>
+    <p style="margin-top:0.6rem;">The same formula applies independently to height and width.</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Discrete 2D convolution</h3>
+    <p>\[
+      (I * K)(i, j) = \sum_{u=0}^{F-1}\sum_{v=0}^{F-1} I(i+u,\, j+v)\,K(u,v) + b
+    \]</p>
+    <p style="margin-top:0.6rem;">For \(C\) input channels, the filter becomes \(F \times F \times C\) and the sum extends over channels.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: convolution output size</h2>
+  <p>Image \(28 \times 28\), filter \(5 \times 5\), stride 1, padding 0.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>No padding</h3>
+      <p>\(\text{out} = (28 - 5 + 0)/1 + 1 = 24\). Output feature map: \(24 \times 24\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Same padding</h3>
+      <p>With \(P = 2\): \(\text{out} = (28 - 5 + 4)/1 + 1 = 28\). The feature map keeps the input size.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Stride doubles down:</strong> if the stride were 2 instead, the no-padding output drops to \(\lfloor (28-5)/2 \rfloor + 1 = 12\). Stride and padding together control how aggressively the network downsamples.
+  </div>
+</section>
+
+<section class="section" id="sec-rnn-math" data-track="rnn-math">
+  <h2 class="section-title">RNN recurrence and BPTT</h2>
+  <div class="theorem-box">
+    <h3>Simple RNN equations</h3>
+    <p>\[
+      h_t = \tanh\!\bigl(W_{xh}\,x_t + W_{hh}\,h_{t-1} + b_h\bigr)
+    \]</p>
+    <p style="margin-top:0.5rem;">\[
+      y_t = W_{hy}\,h_t + b_y
+    \]</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Backpropagation through time</div>
+    <p>Unroll the recurrence \(T\) steps and treat the resulting graph as a feedforward network with shared weights. Gradients of \(W_{xh}, W_{hh}, W_{hy}\) are sums of their contributions across every time-step where they are used.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Vanishing-gradient mechanism</div>
+    <p>The gradient of \(h_t\) with respect to \(h_0\) involves a product of Jacobians of \(\tanh\) and \(W_{hh}\). Repeated multiplication of small singular values shrinks the gradient exponentially in \(T\), which is why vanilla RNNs struggle with long-range dependencies.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-lstm-math" data-track="lstm-math">
+  <h2 class="section-title">LSTM gate equations</h2>
+  <p>An LSTM cell stores a cell state \(C_t\) alongside the hidden state \(h_t\). At each step three gates \(f_t, i_t, o_t \in [0,1]^d\) regulate information flow.</p>
+  <div class="theorem-box">
+    <h3>Gates</h3>
+    <p>\[
+      f_t = \sigma(W_f [h_{t-1}, x_t] + b_f), \quad
+      i_t = \sigma(W_i [h_{t-1}, x_t] + b_i), \quad
+      o_t = \sigma(W_o [h_{t-1}, x_t] + b_o)
+    \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Candidate and state update</h3>
+    <p>\[
+      \tilde{C}_t = \tanh(W_C [h_{t-1}, x_t] + b_C), \qquad
+      C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t
+    \]</p>
+    <p style="margin-top:0.5rem;">\(\odot\) is element-wise multiplication.</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Hidden output</h3>
+    <p>\[
+      h_t = o_t \odot \tanh(C_t)
+    \]</p>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="With sigmoid gates at 1, the cell state update reduces to C_t = C_{t-1} + new content. Information can pass through many time-steps without attenuation, so gradients do not necessarily vanish." data-explanation-zh="当 sigmoid 门接近 1 时，C_t = C_{t-1} + 新内容，可在多时间步保持信息，梯度不必然消失。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Which property of LSTMs most directly addresses the vanishing-gradient problem?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">Replacing tanh with sigmoid throughout</div><div class="qc-opt" data-idx="1">Element-wise gated additive updates to the cell state</div><div class="qc-opt" data-idx="2">Sharing weights across time-steps</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=8" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

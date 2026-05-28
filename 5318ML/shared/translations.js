@@ -137,6 +137,23 @@ var CH = {
     nav_modern: "现代技巧",
     nav_tutorial: "思考题",
   },
+  "8": {
+    math_hero: "COMP5318 — 第8周数学补充",
+    math_h1: "数学基础（第8周）",
+    math_sub: "二维卷积公式、特征图尺寸、池化、RNN 递推、BPTT 与 LSTM 门控方程。",
+    hero_course: "COMP5318 — 应用机器学习",
+    hero_title: "第8周：卷积网络与循环网络",
+    hero_subtitle:
+      "CNN 用滤波器、步长、填充与池化捕获空间结构；RNN 在时间上展开，使用 BPTT 训练，LSTM 通过门控记忆解决长程依赖。",
+    sidebar_h2: "第8周",
+    nav_overview: "概览",
+    nav_materials: "课程资料",
+    nav_cnn: "CNN 核心",
+    nav_cnn_arch: "CNN 架构",
+    nav_rnn: "RNN 基础",
+    nav_lstm: "LSTM",
+    nav_tutorial: "思考题",
+  },
 };
 
 var MINDMAP_UI = {
@@ -192,6 +209,14 @@ var MINDMAP_UI = {
   },
   "7": {
     title: "第7周思维导图",
+    study: "← 学习指南",
+    math: "数学基础",
+    home: "🏠 主页",
+    expand: "全部展开",
+    collapse: "全部收起",
+  },
+  "8": {
+    title: "第8周思维导图",
     study: "← 学习指南",
     math: "数学基础",
     home: "🏠 主页",
