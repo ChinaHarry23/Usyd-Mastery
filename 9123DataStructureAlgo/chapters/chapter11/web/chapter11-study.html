@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 11 — Divide and Conquer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.quick-check .qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.9rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.92rem; }
+.qc-opt:hover { border-color: var(--accent); }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; background: rgba(255,255,255,0.65); }
+.qc-feedback.show { display: block; }
+</style>
+<meta name="description" content="Week 11 introduces the divide-and-conquer design paradigm: break a problem into smaller subproblems, recurse, and combine. Examples include binary search, merge sort, and quicksort. The lecture also teaches the recurrence-relation toolkit and the master theorem for analysing divide-and-conquer running times.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 11 — Divide and Conquer">
+<meta property="og:description" content="Week 11 introduces divide-and-conquer with binary search, merge sort, and the master theorem for analysing recurrences.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html">&larr; Course Home</a>
+    <span class="sidebar-icon">&#128218;</span>
+    <h2>Week 11</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-paradigm" class="nav-link" data-section="sec-paradigm">D&amp;C Paradigm</a></li>
+    <li><a href="#sec-binsearch" class="nav-link" data-section="sec-binsearch">Binary Search</a></li>
+    <li><a href="#sec-mergesort" class="nav-link" data-section="sec-mergesort">Merge Sort</a></li>
+    <li><a href="#sec-recurrence" class="nav-link" data-section="sec-recurrence">Recurrences</a></li>
+    <li><a href="#sec-master" class="nav-link" data-section="sec-master">Master Theorem</a></li>
+    <li><a href="#sec-more" class="nav-link" data-section="sec-more">Other D&amp;C examples</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial">Tutorial &amp; Problems</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><a href="chapter11-math.html" class="nav-link" style="color:var(--purple);">&#128208; Foundations</a></li>
+    <li><a href="chapter11-mindmap.html" class="nav-link" style="color:var(--green);">&#128506; Mind map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=11" class="nav-link" style="color:var(--accent);">&#128376; Knowledge graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=11&amp;start=1" class="nav-link" style="color:#f97316;">&#128230; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="3">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 &mdash; Data Structures &amp; Algorithms</p>
+    <h1>Week 11: Divide and Conquer</h1>
+    <p class="hero-subtitle">Week 11 introduces a powerful design paradigm: split a problem into smaller versions of itself, solve them recursively, and combine. The lecture connects this idea to binary search, merge sort, and the family of recurrences that quantify divide-and-conquer running time, ending with the master theorem as a fast classification tool.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#9986;</span><span>Divide the input, recurse, combine</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#128270;</span><span>Binary search hits \(O(\log n)\) by halving</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#129035;</span><span>Merge sort is \(O(n \log n)\) in every case</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#9874;</span><span>Master theorem classifies T(n) = aT(n/b) + f(n)</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Recurrence relations</span>
+      <span>Recursion-tree intuition</span>
+      <span>Master theorem cases 1, 2, 3</span>
+      <span>Quicksort and beyond</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter11-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem;">&#128208; Foundations &rarr;</a>
+      <a href="chapter11-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 2rem; font-size:1rem; margin-left:0.75rem;">&#128506; Mind map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-paradigm" class="section" data-track="paradigm">
+  <h2 class="section-title">The divide-and-conquer recipe</h2>
+  <p class="section-lead">Every divide-and-conquer algorithm in this lecture follows the same three-step skeleton. Recognising the skeleton makes new algorithms feel familiar and makes correctness arguments routine.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>1. Divide</h3>
+      <p>If the input is a base case (typically size 0 or 1), solve directly. Otherwise split it into several smaller parts.</p>
+    </div>
+    <div class="col-card">
+      <h3>2. Recur / Delegate</h3>
+      <p>Solve each smaller part by recursively applying the same algorithm.</p>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>3. Conquer (Combine)</h3>
+      <p>Stitch the sub-solutions together into a full solution. The combine step is where most algorithms do their interesting work.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why this template?</h3>
+      <p>Recursion gives a clean correctness story (induction on input size), and a clean cost story: total cost = divide + recurse + combine, captured by a recurrence.</p>
+    </div>
+  </div>
+  <div class="quick-check" data-qc-context="study" data-answer="2">
+    <div class="qc-h">Quick check &mdash; Paradigm</div>
+    <p>Which step of divide and conquer is typically where the algorithm-specific insight lives?</p>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Divide</div>
+      <div class="qc-opt" data-idx="1">Recur</div>
+      <div class="qc-opt" data-idx="2">Conquer (combine)</div>
+    </div>
+    <div class="qc-feedback">The combine step is where the sub-solutions are turned into a full solution &mdash; that's where most of the interesting algorithmic work happens (e.g. the merge in merge sort).</div>
+  </div>
+</section>
+
+<section id="sec-binsearch" class="section" data-track="binsearch">
+  <h2 class="section-title">Binary search: halving the work each call</h2>
+  <p class="section-lead">Binary search is the smallest divide-and-conquer algorithm in the unit. It searches a sorted array \(A[0\ldots n-1]\) for a target by repeatedly comparing the target to the middle element and recursing on one half.</p>
+  <pre class="code-block"><code>function binarySearch(A, left, right, target):
+    if left &gt; right:
+        return -1                  # base case: not found
+    mid = (left + right) // 2
+    if A[mid] == target:
+        return mid
+    if target &lt; A[mid]:
+        return binarySearch(A, left, mid - 1, target)
+    else:
+        return binarySearch(A, mid + 1, right, target)</code></pre>
+  <div class="callout">
+    <p><strong>Recurrence:</strong> \(T(n) = T(n/2) + O(1)\), giving \(T(n) \in O(\log n)\). Each recursive call halves the search interval and does constant work; \(\log_2 n\) levels of halving exhaust an array of size \(n\).</p>
+  </div>
+  <div class="quick-check" data-qc-context="study" data-answer="1">
+    <div class="qc-h">Quick check &mdash; Binary search</div>
+    <p>Binary search requires the input array to be:</p>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Hashable</div>
+      <div class="qc-opt" data-idx="1">Sorted</div>
+      <div class="qc-opt" data-idx="2">Unique-valued</div>
+    </div>
+    <div class="qc-feedback">The algorithm decides which half to recurse on by comparing the target to the middle element, which is only valid when the array is sorted.</div>
+  </div>
+</section>
+
+<section id="sec-mergesort" class="section" data-track="mergesort">
+  <h2 class="section-title">Merge sort: divide, recurse, merge</h2>
+  <p class="section-lead">Merge sort is the canonical divide-and-conquer sorting algorithm. Split the array in half, sort each half recursively, then merge the two sorted halves into one sorted output.</p>
+  <pre class="code-block"><code>function mergeSort(A):
+    if length(A) &lt;= 1:
+        return A                    # base case
+    mid = length(A) // 2
+    L = mergeSort(A[0 .. mid - 1])
+    R = mergeSort(A[mid .. end])
+    return merge(L, R)              # linear-time merge of sorted lists</code></pre>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Merge step</h3>
+      <p>Walk two pointers through the two sorted halves; at each step take the smaller front element. Linear time \(O(n)\) and uses extra \(O(n)\) workspace.</p>
+    </div>
+    <div class="col-card">
+      <h3>Recurrence</h3>
+      <p>\(T(n) = 2T(n/2) + O(n)\). The recursion tree has \(\log_2 n\) levels, each doing \(O(n)\) total work &rarr; \(O(n \log n)\) in every case.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <p><strong>Stable and not in-place.</strong> Merge sort preserves the order of equal keys (stable) but uses extra memory for the merged buffer. Compare to quicksort, which is in-place but unstable and worst-case \(O(n^2)\).</p>
+  </div>
+</section>
+
+<section id="sec-recurrence" class="section" data-track="recurrence">
+  <h2 class="section-title">Recurrences: cost of a divide-and-conquer algorithm</h2>
+  <p class="section-lead">Once you've written the algorithm, the running time is described by a recurrence \(T(n) = \text{divide}(n) + \text{recursive work} + \text{combine}(n)\). Solving the recurrence gives the asymptotic running time.</p>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Binary search</h3>
+      <p>\(T(n) = T(n/2) + O(1) \Rightarrow O(\log n)\). One subcall, constant combine.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Merge sort</h3>
+      <p>\(T(n) = 2T(n/2) + O(n) \Rightarrow O(n \log n)\). Two subcalls of half size, linear combine.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Tree-traverse style</h3>
+      <p>\(T(n) = 2T(n/2) + O(1) \Rightarrow O(n)\). Two subcalls of half size, constant combine (e.g. tree height computation).</p>
+    </div>
+    <div class="metric-card">
+      <h3>Quicksort (best case)</h3>
+      <p>\(T(n) = 2T(n/2) + O(n) \Rightarrow O(n \log n)\), with a worst case of \(O(n^2)\) when the pivot is bad.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <p>A common technique is the <strong>recursion tree</strong>: draw the recurrence as a tree, sum the work per level, and multiply by the number of levels. This makes the asymptotic answer visible and gives intuition for the master theorem cases.</p>
+  </div>
+</section>
+
+<section id="sec-master" class="section" data-track="master">
+  <h2 class="section-title">Master theorem: classify recurrences at a glance</h2>
+  <p class="section-lead">The master theorem applies to recurrences of the form \(T(n) = a\,T(n/b) + f(n)\) with \(a \ge 1\), \(b &gt; 1\). It compares the combine cost \(f(n)\) to the watershed function \(n^{\log_b a}\) and reads off the solution in one of three cases.</p>
+  <div class="theorem-box">
+    <h3>The three cases</h3>
+    <p><strong>Case 1.</strong> If \(f(n) \in O(n^{\log_b a - \varepsilon})\) for some \(\varepsilon &gt; 0\), then \(T(n) \in \Theta(n^{\log_b a})\).</p>
+    <p><strong>Case 2.</strong> If \(f(n) \in \Theta(n^{\log_b a})\), then \(T(n) \in \Theta(n^{\log_b a} \log n)\).</p>
+    <p><strong>Case 3.</strong> If \(f(n) \in \Omega(n^{\log_b a + \varepsilon})\) and a regularity condition holds, then \(T(n) \in \Theta(f(n))\).</p>
+  </div>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Merge sort &rarr; Case 2</h3>
+      <p>\(a=2, b=2, f(n)=n\). Watershed \(n^{\log_2 2}=n\); since \(f(n)=\Theta(n)\) we are in Case 2 and \(T(n)\in\Theta(n\log n)\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Binary search &rarr; Case 2 (degenerate)</h3>
+      <p>\(a=1, b=2, f(n)=1\). Watershed \(n^0 = 1\); \(f = \Theta(1)\) so \(T(n)\in\Theta(\log n)\).</p>
+    </div>
+  </div>
+  <div class="quick-check" data-qc-context="study" data-answer="0">
+    <div class="qc-h">Quick check &mdash; Master theorem</div>
+    <p>For the recurrence \(T(n) = 2T(n/2) + n\), the master theorem classification is:</p>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Case 2: \(\Theta(n \log n)\)</div>
+      <div class="qc-opt" data-idx="1">Case 1: \(\Theta(n)\)</div>
+      <div class="qc-opt" data-idx="2">Case 3: \(\Theta(n)\)</div>
+    </div>
+    <div class="qc-feedback">\(n^{\log_2 2} = n\), and \(f(n) = n\) matches up to a constant, so we are in Case 2: \(T(n) \in \Theta(n \log n)\).</div>
+  </div>
+</section>
+
+<section id="sec-more" class="section" data-track="more">
+  <h2 class="section-title">Other classic divide-and-conquer algorithms</h2>
+  <p class="section-lead">The paradigm scales well beyond binary search and merge sort. The lecture mentions several more (some only by name) to show the breadth of the technique.</p>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Quicksort</h3>
+      <p>Pick a pivot, partition, recurse on each side. Average-case \(O(n \log n)\), worst-case \(O(n^2)\) on bad pivots. Randomisation makes the average-case the practical case.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Closest pair of points</h3>
+      <p>Sort by x, split, recurse, then merge with a strip check around the midline. \(O(n \log n)\) compared with the naive \(O(n^2)\).</p>
+    </div>
+    <div class="metric-card">
+      <h3>Strassen matrix multiplication</h3>
+      <p>Multiplies two \(n \times n\) matrices in \(O(n^{\log_2 7}) \approx O(n^{2.81})\) by exploiting clever recursive combinations. Beats the naive \(O(n^3)\).</p>
+    </div>
+    <div class="metric-card">
+      <h3>Counting inversions</h3>
+      <p>Modify merge sort to count out-of-order pairs during the merge step. Still \(O(n \log n)\).</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial &amp; problem lens: how to apply the paradigm</h2>
+  <p class="section-lead">Knowing the master theorem is not enough &mdash; the skill is matching new problems to the divide-and-conquer template and writing the recurrence cleanly.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Setting up a recurrence</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Count how many recursive calls happen (\(a\)) and how the input size shrinks (\(b\)).</li>
+        <li>Estimate the divide and combine work in terms of \(n\) to get \(f(n)\).</li>
+        <li>Apply the master theorem or draw the recursion tree.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Common traps</h3>
+      <ul style="margin:0.75rem 0 0 1.1rem; line-height:1.7;">
+        <li>Forgetting the base case, which makes the recurrence undefined.</li>
+        <li>Confusing \(\log_b\) with \(\log_2\) in the watershed term.</li>
+        <li>Believing every recurrence fits one of the three master cases &mdash; some need substitution or recursion-tree analysis.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="algo-card">
+    <h3>Worked exam question</h3>
+    <p>Given \(T(n) = 3T(n/2) + n^2\), classify using the master theorem.</p>
+    <p style="color:var(--text-muted);">Watershed: \(n^{\log_2 3} \approx n^{1.585}\). Since \(f(n) = n^2 = \Omega(n^{1.585 + \varepsilon})\), we are in Case 3 and \(T(n) \in \Theta(n^2)\) (the combine work dominates).</p>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <h2 class="section-title">Quiz Hub &amp; spaced review</h2>
+  <p class="section-lead">Practise the recurrence setup and master-theorem case selection &mdash; that is where most exam mistakes happen. Use the flashcards for the four classic D&amp;C running times until you can recite them without effort.</p>
+  <p style="margin:0 0 1rem;">
+    <a href="../../../tools/quiz-hub.html?ch=11" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Open Quiz Hub</a>
+    <a href="../../../tools/flashcards.html?ch=11&amp;start=1" class="btn btn-secondary" style="text-decoration:none;display:inline-block;margin-left:0.5rem;">Flashcards</a>
+  </p>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
