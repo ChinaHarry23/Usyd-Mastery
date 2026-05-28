@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 12</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="MDP tuple, discounted return, Bellman optimality equations for V and Q, the tabular Q-Learning update rule, and the squared-TD-error DQN loss with a target network.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Math Foundations — Week 12">
+<meta property="og:description" content="MDP, return, Bellman optimality, Q-Learning update, and DQN loss.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter12-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 12 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">The MDP tuple, discounted return, Bellman optimality equations, the tabular Q-Learning update, and the squared-TD-error DQN loss with a frozen target network.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">M</span><strong>MDP</strong><span>\(\langle S, A, P, R, \gamma \rangle\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">G</span><strong>Return</strong><span>\(G_t = \sum_{k\ge 0} \gamma^k r_{t+k+1}\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">Q*</span><strong>Bellman</strong><span>\(Q^*(s,a) = \mathbb{E}[r + \gamma \max_{a'} Q^*(s',a')]\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">L</span><strong>DQN loss</strong><span>\(L = (r + \gamma \max_{a'} Q_{\bar\theta}(s',a') - Q_\theta(s,a))^2\)</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-mdp-math" data-track="mdp-math">
+  <h2 class="section-title">Markov decision process and return</h2>
+  <p class="section-lead">An MDP formalises sequential decision making. At every step the agent picks an action, the environment emits a reward and a next state, and we want to maximise the expected discounted sum of rewards.</p>
+  <div class="theorem-box">
+    <h3>MDP tuple</h3>
+    <p>\[
+      \mathcal{M} \;=\; \langle\, S,\; A,\; P,\; R,\; \gamma\,\rangle
+    \]</p>
+    <p style="margin-top:0.5rem;">\(S\) states, \(A\) actions, transition kernel \(P(s' \mid s, a)\), reward \(R(s, a, s')\), discount \(\gamma \in [0, 1]\). The Markov property says \(P(s_{t+1} \mid s_t, a_t) = P(s_{t+1} \mid H_t, a_t)\) — the past beyond \(s_t\) is irrelevant.</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Discounted return</h3>
+    <p>\[
+      G_t \;=\; \sum_{k=0}^{\infty} \gamma^k\, r_{t+k+1}
+      \;=\; r_{t+1} + \gamma\, r_{t+2} + \gamma^2\, r_{t+3} + \cdots
+    \]</p>
+    <p style="margin-top:0.5rem;">With \(\gamma &lt; 1\) the sum converges for bounded rewards. The agent's objective is \(\pi^* = \arg\max_\pi \mathbb{E}_\pi[G_0]\).</p>
+  </div>
+</section>
+
+<section class="section" id="sec-bellman" data-track="bellman">
+  <h2 class="section-title">Bellman optimality equations</h2>
+  <p class="section-lead">Value functions decompose into a one-step reward plus the discounted value of the successor. For the optimal value the recursion picks the best action.</p>
+  <div class="theorem-box">
+    <h3>State-value and action-value (under policy \(\pi\))</h3>
+    <p>\[
+      V^\pi(s) = \mathbb{E}_\pi[\, G_t \mid s_t = s\,], \qquad
+      Q^\pi(s, a) = \mathbb{E}_\pi[\, G_t \mid s_t = s,\, a_t = a\,]
+    \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Bellman optimality for \(Q^*\)</h3>
+    <p>\[
+      Q^*(s, a) \;=\; \mathbb{E}_{s' \sim P(\cdot \mid s, a)}\!\Bigl[\, R(s, a, s') + \gamma\, \max_{a'} Q^*(s', a')\,\Bigr]
+    \]</p>
+    <p style="margin-top:0.5rem;">The corresponding optimal policy is greedy: \(\pi^*(s) = \arg\max_a Q^*(s, a)\).</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Bellman optimality for \(V^*\)</h3>
+    <p>\[
+      V^*(s) \;=\; \max_a\, \mathbb{E}_{s'}\!\Bigl[\, R(s, a, s') + \gamma\, V^*(s')\,\Bigr]
+    \]</p>
+  </div>
+</section>
+
+<section class="section" id="sec-qupdate" data-track="qupdate">
+  <h2 class="section-title">Tabular Q-Learning update</h2>
+  <p class="section-lead">Q-Learning solves the Bellman optimality equation by sampling. It needs no knowledge of \(P\) — only experience tuples \((s, a, r, s')\) collected by acting.</p>
+  <div class="theorem-box">
+    <h3>Update rule</h3>
+    <p>\[
+      Q(s, a) \;\leftarrow\; Q(s, a) + \alpha\,\underbrace{\Bigl[\, r + \gamma\, \max_{a'} Q(s', a') - Q(s, a)\,\Bigr]}_{\text{TD error}\;\delta}
+    \]</p>
+    <p style="margin-top:0.5rem;">\(\alpha \in (0, 1]\) is the learning rate. Behaviour is typically \(\epsilon\)-greedy: with probability \(1-\epsilon\) act greedily and with probability \(\epsilon\) act uniformly at random.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Off-policy</div>
+    <p>The target \(r + \gamma \max_{a'} Q(s', a')\) evaluates the greedy policy at \(s'\), even though the behaviour policy collecting data is \(\epsilon\)-greedy. That separation is what makes Q-Learning <em>off-policy</em> — and why convergence holds under appropriate \(\alpha\) schedules as long as every \((s,a)\) is visited infinitely often.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example: one Q-Learning update on a 1&times;3 grid</h2>
+  <p>A tiny world has three cells: <em>start</em> (\(s_1\)) &mdash; <em>middle</em> (\(s_2\)) &mdash; <em>goal</em> (\(s_3\)). Actions are <strong>Right</strong> (R) and <strong>Left</strong> (L). Stepping right from \(s_2\) to \(s_3\) gives reward \(r = +1\); any other transition gives \(r = 0\). Take \(\alpha = 0.5\), \(\gamma = 0.9\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Before the step</h3>
+      <p>Initialise all Q-values to zero. Suppose after some earlier exploration we already have \(Q(s_3, R) = 1.5\), \(Q(s_3, L) = 0.7\), and \(Q(s_2, R) = 0.4\). The agent is now in \(s_2\) and takes action R.</p>
+    </div>
+    <div class="col-card">
+      <h3>Compute the TD target</h3>
+      <p>It receives reward \(r = 1\) and transitions to \(s_3\). The greedy next-state value is \(\max_{a'} Q(s_3, a') = \max(1.5, 0.7) = 1.5\). So the target is \(1 + 0.9 \cdot 1.5 = 2.35\).</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Apply the update.</strong> TD error \(\delta = 2.35 - 0.4 = 1.95\). The new estimate is
+    \[
+      Q(s_2, R) \;\leftarrow\; 0.4 + 0.5 \cdot 1.95 \;=\; 1.375.
+    \]
+    Just one transition has moved \(Q(s_2, R)\) from 0.4 to 1.375, much closer to its true value of \(1 + 0.9 \cdot Q^*(s_3, \cdot)\).
+  </div>
+</section>
+
+<section class="section" id="sec-dqn-math" data-track="dqn-math">
+  <h2 class="section-title">Deep Q-Network loss</h2>
+  <p class="section-lead">When \(|S|\) is too large for a table, parametrise \(Q\) with a neural network \(Q_\theta(s, a)\). Train by minimising the squared TD error using a frozen <em>target network</em> \(Q_{\bar\theta}\) and sampling transitions from a replay buffer \(\mathcal{D}\).</p>
+  <div class="theorem-box">
+    <h3>DQN loss</h3>
+    <p>\[
+      L(\theta) \;=\; \mathbb{E}_{(s, a, r, s') \sim \mathcal{D}}\!\left[\,\Bigl(\, r + \gamma\, \max_{a'} Q_{\bar\theta}(s', a') \;-\; Q_\theta(s, a)\,\Bigr)^2\,\right]
+    \]</p>
+    <p style="margin-top:0.5rem;">Gradients are taken only through the predicted \(Q_\theta(s, a)\); the target uses frozen parameters \(\bar\theta\) that are periodically copied from \(\theta\). Without this freezing the target moves with each update and training diverges.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Two stabilising tricks</div>
+    <p><strong>Experience replay</strong> stores past \((s, a, r, s')\) and samples uniform minibatches, breaking the strong temporal correlation of consecutive transitions. <strong>Target network</strong> keeps the bootstrapped target stationary for many gradient steps.</p>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="DQN trains with a squared TD error: target r + gamma max_{a'} Q_target(s', a') minus prediction Q_theta(s, a). Gradients flow only through the prediction; the target uses frozen parameters." data-explanation-zh="DQN 损失为 TD 误差的平方：目标 r + gamma·max Q_target(s', a') 减去预测 Q_theta(s, a)。梯度只回传到预测端，目标端使用冻结参数。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Which expression is the DQN loss (per transition)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\bigl|r - Q_\theta(s, a)\bigr|\)</div>
+      <div class="qc-opt" data-idx="1">\(\bigl(r + \gamma \max_{a'} Q_{\bar\theta}(s', a') - Q_\theta(s, a)\bigr)^2\)</div>
+      <div class="qc-opt" data-idx="2">\(-\log Q_\theta(s, a)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=12" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
