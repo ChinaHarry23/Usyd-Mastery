@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Lecture 10</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind Map — Lecture 10 — Hierarchical mind map of RLHF, reward models, PPO, DPO, and alignment risks.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind Map — Lecture 10">
+<meta property="og:description" content="Mind Map — Lecture 10 — Hierarchical mind map of RLHF, reward models, PPO, DPO, and alignment risks.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter10-study.html">← Study Guide</a>
+  <a href="chapter10-math.html">Foundations</a>
+  <a href="../../../index.html">🏠 Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Lecture 10 Mind Map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand All</button>
+    <button id="btnCollapseAll">Collapse All</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Concepts</span>
+  <span><span class="dot" style="background:var(--green)"></span> Tasks</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Challenges</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Lecture 10: RLHF & Alignment",
+  label_zh: "第10讲：RLHF与对齐",
+  children: [
+    {
+      label: "Why RLHF (the gap after SFT)",
+      label_zh: "为什么需要RLHF（SFT之后的差距）",
+      color: "blue",
+      children: [
+        { label: "SFT = imitate tokens, not preferences", label_zh: "SFT = 模仿token，不是偏好" },
+        { label: "Token-level loss misses task success", label_zh: "token级损失无法衡量任务成功" },
+        { label: "Many tasks have no single best answer", label_zh: "许多任务没有唯一最佳答案" },
+        { label: "Helpful vs honest / harmless gap", label_zh: "有用 vs 诚实/无害的差距" }
+      ]
+    },
+    {
+      label: "Preference Data",
+      label_zh: "偏好数据",
+      color: "green",
+      children: [
+        { label: "Pairs $(y_w, y_l)$ — 'A or B?'", label_zh: "成对$(y_w, y_l)$ — 'A还是B？'" },
+        { label: "Easier for humans than writing gold answers", label_zh: "比人工写标准答案更容易" },
+        { label: "Sources: plain, few-shot, user-based prompts", label_zh: "来源：普通、少样本、基于用户的提示" },
+        { label: "Llama-2 used ~1M+ comparisons", label_zh: "Llama-2使用了约100万+对比" },
+        { label: "Who labels? bakes-in biases", label_zh: "谁来标注？会引入偏见" }
+      ]
+    },
+    {
+      label: "Reward Model (Bradley–Terry)",
+      label_zh: "奖励模型（Bradley–Terry）",
+      color: "purple",
+      children: [
+        { label: "$P(y_w \\succ y_l) = \\sigma(r(y_w) - r(y_l))$", label_zh: "$P(y_w \\succ y_l) = \\sigma(r(y_w) - r(y_l))$" },
+        { label: "NLL loss on preference pairs", label_zh: "在偏好对上的负对数似然损失" },
+        { label: "Small LLM with scalar head", label_zh: "带标量输出头的小LLM" },
+        { label: "Identified only up to a constant", label_zh: "仅在常数项之外可识别" }
+      ]
+    },
+    {
+      label: "RL Fine-Tune (PPO)",
+      label_zh: "RL微调（PPO）",
+      color: "yellow",
+      children: [
+        { label: "Objective: $\\mathbb{E}[r(y) - \\beta\\,\\mathrm{KL}(\\pi\\|\\pi_{\\text{SFT}})]$", label_zh: "目标：$\\mathbb{E}[r(y) - \\beta\\,\\mathrm{KL}(\\pi\\|\\pi_{\\text{SFT}})]$" },
+        { label: "Clipped surrogate $L^{\\text{CLIP}}$", label_zh: "裁剪代理目标$L^{\\text{CLIP}}$" },
+        { label: "Importance ratio $\\rho_t$ clipped to $[1-\\epsilon, 1+\\epsilon]$", label_zh: "重要性比$\\rho_t$裁剪到$[1-\\epsilon, 1+\\epsilon]$" },
+        { label: "KL anchor against frozen $\\pi_{\\text{SFT}}$", label_zh: "对冻结的$\\pi_{\\text{SFT}}$的KL锚定" },
+        { label: "Not classical env-based RL", label_zh: "不是经典的基于环境的RL" }
+      ]
+    },
+    {
+      label: "Why the KL Penalty",
+      label_zh: "为什么需要KL惩罚",
+      color: "blue",
+      children: [
+        { label: "Stops reward hacking", label_zh: "防止奖励欺骗" },
+        { label: "Stops mode collapse", label_zh: "防止模式崩溃" },
+        { label: "Keeps language fluent (SFT anchor)", label_zh: "保持语言流畅（SFT锚点）" },
+        { label: "$\\beta$ controls fluency vs reward trade-off", label_zh: "$\\beta$控制流畅性与奖励的权衡" }
+      ]
+    },
+    {
+      label: "DPO (Direct Preference Optimisation)",
+      label_zh: "DPO（直接偏好优化）",
+      color: "green",
+      children: [
+        { label: "Closed-form $r$ in terms of $\\pi^*/\\pi_{\\text{SFT}}$", label_zh: "$r$的闭式表达式（用$\\pi^*/\\pi_{\\text{SFT}}$）" },
+        { label: "Substitute into Bradley–Terry → loss", label_zh: "代入Bradley–Terry → 损失" },
+        { label: "No reward model, no PPO loop", label_zh: "无需奖励模型，无需PPO循环" },
+        { label: "Classification-style training on pairs", label_zh: "在偏好对上的分类式训练" },
+        { label: "Off-policy → no on-policy exploration", label_zh: "离策略 → 无在线探索" }
+      ]
+    },
+    {
+      label: "Risks & Failure Modes",
+      label_zh: "风险与失败模式",
+      color: "yellow",
+      children: [
+        { label: "Reward hacking (exploit imperfect RM)", label_zh: "奖励欺骗（利用不完美的RM）" },
+        { label: "Sycophancy (RM rewards agreement)", label_zh: "谄媚（RM奖励附和）" },
+        { label: "Mode collapse (low diversity)", label_zh: "模式崩溃（多样性下降）" },
+        { label: "Labeller demographics → bias", label_zh: "标注者人口学 → 偏见" },
+        { label: "Brittle alignment: toxic vectors persist (Lee 2024)", label_zh: "脆弱对齐：有毒向量仍存在（Lee 2024）" },
+        { label: "RLVR ≠ ground truth; hard beyond code/math", label_zh: "RLVR ≠ 真实标签；难以超越代码/数学" }
+      ]
+    },
+    {
+      label: "Big Picture",
+      label_zh: "整体图景",
+      color: "purple",
+      children: [
+        { label: "Stage 1: SFT (Lecture 9)", label_zh: "阶段1：SFT（第9讲）" },
+        { label: "Stage 2: Train reward model", label_zh: "阶段2：训练奖励模型" },
+        { label: "Stage 3: PPO / DPO with KL anchor", label_zh: "阶段3：带KL锚的PPO / DPO" },
+        { label: "Result: ChatGPT-style aligned assistant", label_zh: "结果：类ChatGPT的对齐助手" }
+      ]
+    }
+  ]
+};
+renderMindmap("mindmapCanvas", data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

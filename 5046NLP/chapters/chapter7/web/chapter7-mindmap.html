@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Lecture 7</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind Map — Lecture 7 — Hierarchical mind map of language model concepts with expand/collapse navigation.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind Map — Lecture 7">
+<meta property="og:description" content="Mind Map — Lecture 7 — Hierarchical mind map of language model concepts with expand/collapse navigation.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter7-study.html">← Study Guide</a>
+  <a href="chapter7-math.html">Foundations</a>
+  <a href="../../../index.html">🏠 Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Lecture 7 Mind Map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand All</button>
+    <button id="btnCollapseAll">Collapse All</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Concepts</span>
+  <span><span class="dot" style="background:var(--green)"></span> Tasks</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Challenges</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Lecture 7: Language Models",
+  label_zh: "第7讲：语言模型",
+  children: [
+    {
+      label: "What is a Language Model",
+      label_zh: "什么是语言模型",
+      color: "blue",
+      children: [
+        { label: "Assigns $P(w_1, \\dots, w_N)$ to a string", label_zh: "为字符串分配概率 $P(w_1, \\dots, w_N)$" },
+        { label: "Next-word prediction: $\\arg\\max_t P(\\dots, t)$", label_zh: "下一词预测：$\\arg\\max_t P(\\dots, t)$" },
+        { label: "Chain rule: $\\prod_i P(w_i \\mid w_{<i})$", label_zh: "链式法则：$\\prod_i P(w_i \\mid w_{<i})$" },
+        { label: "Too many histories → need approximation", label_zh: "历史过多 → 需要近似" }
+      ]
+    },
+    {
+      label: "N-gram & Markov Approximation",
+      label_zh: "N元语法与马尔可夫近似",
+      color: "blue",
+      children: [
+        { label: "Markov: future ⟂ past | present", label_zh: "马尔可夫：未来 ⟂ 过去 | 当前" },
+        { label: "Unigram: $P(w_i)$", label_zh: "一元：$P(w_i)$" },
+        { label: "Bigram: $P(w_i \\mid w_{i-1})$", label_zh: "二元：$P(w_i \\mid w_{i-1})$" },
+        { label: "Trigram: $P(w_i \\mid w_{i-2}, w_{i-1})$", label_zh: "三元：$P(w_i \\mid w_{i-2}, w_{i-1})$" },
+        { label: "Sparsity & storage grow with $n$", label_zh: "稀疏性与存储随 $n$ 增长" },
+        { label: "Bigrams miss long-range deps", label_zh: "二元模型无法捕捉长距离依赖" }
+      ]
+    },
+    {
+      label: "Count-based MLE",
+      label_zh: "基于计数的最大似然",
+      color: "purple",
+      children: [
+        { label: "$\\widehat{P}(w_i\\mid w_{i-1}) = \\frac{C(w_{i-1}, w_i)}{C(w_{i-1})}$", label_zh: "$\\widehat{P}(w_i\\mid w_{i-1}) = \\frac{C(w_{i-1}, w_i)}{C(w_{i-1})}$" },
+        { label: "Empirical frequency estimator", label_zh: "经验频率估计" },
+        { label: "Unseen bigrams → probability 0", label_zh: "未见二元 → 概率为零" },
+        { label: "Boundary tokens: <s>, </s>", label_zh: "边界标记：<s>, </s>" },
+        { label: "Log probs to avoid underflow", label_zh: "对数概率避免下溢" }
+      ]
+    },
+    {
+      label: "Smoothing",
+      label_zh: "平滑",
+      color: "yellow",
+      children: [
+        { label: "Laplace add-1: $\\frac{C+1}{C(h)+|V|}$", label_zh: "拉普拉斯加一：$\\frac{C+1}{C(h)+|V|}$" },
+        { label: "Add-k: tune $k$ on validation", label_zh: "加k：在验证集上调 $k$" },
+        { label: "Kneser-Ney: continuation probability", label_zh: "Kneser-Ney：延续概率" },
+        { label: "Absolute discount + backoff", label_zh: "绝对折扣 + 回退" },
+        { label: "Goal: redistribute mass to unseen events", label_zh: "目标：将概率质量重新分配给未见事件" }
+      ]
+    },
+    {
+      label: "Perplexity (Evaluation)",
+      label_zh: "困惑度（评估）",
+      color: "green",
+      children: [
+        { label: "$\\text{PP}(W) = P(w_{1..N})^{-1/N}$", label_zh: "$\\text{PP}(W) = P(w_{1..N})^{-1/N}$" },
+        { label: "$= \\exp(\\text{cross-entropy})$", label_zh: "$= \\exp(\\text{交叉熵})$" },
+        { label: "Lower is better; min = 1", label_zh: "越低越好；最小值 = 1" },
+        { label: "Effective branching factor intuition", label_zh: "有效分支因子直觉" },
+        { label: "Depends on tokenisation", label_zh: "依赖于分词方式" }
+      ]
+    },
+    {
+      label: "Neural Language Models",
+      label_zh: "神经语言模型",
+      color: "purple",
+      children: [
+        { label: "Embedding lookup $E$", label_zh: "嵌入查找 $E$" },
+        { label: "Hidden layer: $\\tanh(W_h[\\dots] + b)$", label_zh: "隐藏层：$\\tanh(W_h[\\dots] + b)$" },
+        { label: "Softmax over $|V|$", label_zh: "在 $|V|$ 上的 softmax" },
+        { label: "Cross-entropy training", label_zh: "交叉熵训练" },
+        { label: "Generalises across similar contexts", label_zh: "在相似上下文间泛化" },
+        { label: "RNN / Transformer extensions", label_zh: "RNN / Transformer 扩展" }
+      ]
+    },
+    {
+      label: "Tasks framed as LM",
+      label_zh: "用语言模型框定的任务",
+      color: "green",
+      children: [
+        { label: "Completion: $\\arg\\max_t P(t \\mid \\text{ctx})$", label_zh: "补全：$\\arg\\max_t P(t \\mid \\text{ctx})$" },
+        { label: "Translation: $P(\\text{tgt} \\mid \\text{src})$", label_zh: "翻译：$P(\\text{目标} \\mid \\text{源})$" },
+        { label: "ASR / OCR: LM + acoustic/visual", label_zh: "ASR / OCR：语言模型 + 声学/视觉模型" },
+        { label: "Spelling / grammar ranking", label_zh: "拼写 / 语法排序" },
+        { label: "Prompting for classification & QA", label_zh: "用提示词做分类与问答" }
+      ]
+    }
+  ]
+};
+renderMindmap("mindmapCanvas", data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
