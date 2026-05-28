@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 10 — Training: RLHF, Reward Models, Alignment</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="RLHF · reward model · PPO · KL penalty · DPO · alignment risks.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lecture 10 — Training: RLHF, Reward Models, Alignment">
+<meta property="og:description" content="RLHF · reward model · PPO · KL penalty · DPO · alignment risks.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x26A1;</span>
+    <h2>Lecture 10</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-motivation" class="nav-link" data-section="sec-motivation">Why RLHF</a></li>
+    <li><a href="#sec-pipeline" class="nav-link" data-section="sec-pipeline">RLHF pipeline</a></li>
+    <li><a href="#sec-prefdata" class="nav-link" data-section="sec-prefdata">Preference data</a></li>
+    <li><a href="#sec-reward" class="nav-link" data-section="sec-reward">Reward model</a></li>
+    <li><a href="#sec-ppo" class="nav-link" data-section="sec-ppo">PPO &amp; KL penalty</a></li>
+    <li><a href="#sec-dpo" class="nav-link" data-section="sec-dpo">DPO alternative</a></li>
+    <li><a href="#sec-risks" class="nav-link" data-section="sec-risks">Risks &amp; brittleness</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Lab &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter10-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter10-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=10" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=10" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 10</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 10: Training &mdash; RLHF, Reward Models, Alignment</h1>
+    <p class="hero-subtitle">Why preference learning · reward model · PPO with KL penalty · DPO · alignment risks.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use:</strong> walk the pipeline once, then close the page and answer each <strong>Recall</strong> in your own words before reopening.</p>
+  </div>
+</section>
+
+<section id="sec-motivation" class="section" data-track="sec-motivation">
+  <p class="section-kicker">The gap</p>
+  <h2 class="section-title">Why SFT alone is not enough</h2>
+  <ul class="kp-list tight">
+    <li><strong>SFT objective</strong> = imitate reference tokens: next-token cross-entropy on instruction/response pairs.</li>
+    <li>Token-level prediction does <strong>not measure task success</strong>: "very delicious" and "somewhat delicious" get similar scores even if one is much better.</li>
+    <li>Many useful tasks have <strong>no single best answer</strong> (open-ended writing, advice, summarisation) — graders only know which of two outputs they prefer.</li>
+    <li>SFT models may stay <strong>helpful</strong> but drift from being <strong>honest / harmless</strong> — that gap is "alignment".</li>
+    <li>Solution: optimise directly against <strong>human preferences</strong> via reinforcement learning (RLHF).</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Name two reasons next-token loss is a poor stand-in for "human-preferred output".</p>
+</section>
+
+<section id="sec-pipeline" class="section" data-track="sec-pipeline">
+  <p class="section-kicker">Three stages</p>
+  <h2 class="section-title">The RLHF pipeline</h2>
+  <ul class="kp-list tight">
+    <li><strong>(1) Instruction tuning (SFT):</strong> supervised fine-tune base LLM on (prompt, response) pairs — gives a competent starting policy \(\pi_{\text{SFT}}\).</li>
+    <li><strong>(2) Reward model (RM):</strong> collect preference pairs \((y_w, y_l)\) (winner / loser) ranked by human labellers; train a small model \(r_\phi\) that scores completions.</li>
+    <li><strong>(3) RL fine-tune:</strong> optimise \(\pi_\theta\) with PPO to maximise \(r_\phi\) <em>while</em> staying close to \(\pi_{\text{SFT}}\) via a KL penalty.</li>
+    <li>This is what InstructGPT / ChatGPT (Ouyang et al., 2022) and Llama-2 chat (Touvron et al., 2023) actually use.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 520 150" width="520" height="150">
+      <defs><marker id="a10p" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Stage 1 SFT -->
+      <rect x="10" y="50" width="120" height="50" class="node-box" rx="8"/>
+      <text x="70" y="70" class="node-label" style="font-size:11px">1. SFT</text>
+      <text x="70" y="86" class="node-label-sm">prompt → response</text>
+      <!-- Stage 2 RM -->
+      <rect x="170" y="50" width="140" height="50" class="node-box-yellow" rx="8"/>
+      <text x="240" y="70" class="node-label" style="font-size:11px">2. Reward Model</text>
+      <text x="240" y="86" class="node-label-sm">pairs (y_w &gt; y_l)</text>
+      <!-- Stage 3 PPO -->
+      <rect x="350" y="50" width="160" height="50" class="node-box-green" rx="8"/>
+      <text x="430" y="70" class="node-label" style="font-size:11px;fill:var(--green)">3. RL fine-tune (PPO)</text>
+      <text x="430" y="86" class="node-label-sm">max r − β KL(π‖π_SFT)</text>
+      <!-- Arrows -->
+      <line x1="130" y1="75" x2="170" y2="75" class="arrow-line" marker-end="url(#a10p)"/>
+      <line x1="310" y1="75" x2="350" y2="75" class="arrow-line" marker-end="url(#a10p)"/>
+      <text x="100" y="30" class="node-label-sm">policy \(\pi_{\text{SFT}}\)</text>
+      <text x="280" y="30" class="node-label-sm">reward \(r_\phi\)</text>
+      <text x="450" y="30" class="node-label-sm">final \(\pi_\theta\)</text>
+    </svg>
+    <div class="arch-caption">Three-stage RLHF: supervised fine-tune → train reward model on preferences → RL fine-tune policy to maximise reward minus KL drift.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>List the three stages in order and what artefact each one produces.</p>
+</section>
+
+<section id="sec-prefdata" class="section" data-track="sec-prefdata">
+  <p class="section-kicker">Easier for humans</p>
+  <h2 class="section-title">Collecting preference data</h2>
+  <ul class="kp-list tight">
+    <li>Sample two completions \(y_A, y_B\) from \(\pi_{\text{SFT}}\) for the same prompt \(x\); ask a labeller "which is better?". This is much easier than asking them to <em>write</em> the gold answer.</li>
+    <li>OpenAI sourcing: <em>plain</em> (labeller-invented tasks), <em>few-shot</em> (labeller writes an instruction + example pairs), <em>user-based</em> (real waitlist use-cases).</li>
+    <li>Llama-2 collected on the order of <strong>1M+</strong> human preference comparisons across multiple rounds.</li>
+    <li>Data quality dominates quantity — but who the labellers are (demographics, training, instructions) bakes biases into the final model.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why ask "A or B?" instead of "write the ideal answer"?</p>
+</section>
+
+<section id="sec-reward" class="section" data-track="sec-reward">
+  <p class="section-kicker">Bradley–Terry</p>
+  <h2 class="section-title">Training the reward model</h2>
+  <ul class="kp-list tight">
+    <li>Architecture: a small LLM with a scalar head; \(r_\phi(x,y)\in\mathbb{R}\) scores a completion \(y\) under prompt \(x\).</li>
+    <li><strong>Bradley–Terry preference model:</strong>
+      \[P(y_w \succ y_l \mid x) = \sigma\!\bigl(r_\phi(x,y_w) - r_\phi(x,y_l)\bigr).\]
+    </li>
+    <li><strong>Loss:</strong> negative log-likelihood of observed preferences,
+      \[\mathcal{L}_{\text{RM}}(\phi) = -\mathbb{E}_{(x,y_w,y_l)}\!\left[\log\sigma\bigl(r_\phi(x,y_w) - r_\phi(x,y_l)\bigr)\right].\]
+    </li>
+    <li>Only <strong>differences</strong> matter — reward is identified up to an additive constant.</li>
+    <li>Outputs are scalars, not probabilities of "correct"; the RM tells PPO <em>relative</em> quality.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why is the reward model defined only up to a constant?</p>
+</section>
+
+<section id="sec-ppo" class="section" data-track="sec-ppo">
+  <p class="section-kicker">RL step</p>
+  <h2 class="section-title">PPO fine-tuning with a KL anchor</h2>
+  <ul class="kp-list tight">
+    <li>Treat each generated token as an RL action; the <strong>reward</strong> for a full response \(y\) is \(r_\phi(x,y)\), distributed back to tokens.</li>
+    <li><strong>Objective:</strong>
+      \[\max_\theta\;\mathbb{E}_{x\sim\mathcal{D},\,y\sim\pi_\theta}\!\left[r_\phi(x,y) - \beta\,\mathrm{KL}\!\bigl(\pi_\theta(\cdot\mid x)\,\|\,\pi_{\text{SFT}}(\cdot\mid x)\bigr)\right].\]
+    </li>
+    <li><strong>PPO clipped surrogate:</strong> let \(\rho_t(\theta)=\pi_\theta(a_t\mid s_t)/\pi_{\theta_{\text{old}}}(a_t\mid s_t)\); update with
+      \[L^{\text{CLIP}}(\theta)=\mathbb{E}\!\left[\min\bigl(\rho_t \hat A_t,\;\mathrm{clip}(\rho_t,1-\epsilon,1+\epsilon)\hat A_t\bigr)\right].\]
+      Clipping stops over-large policy updates that could collapse the policy.</li>
+    <li><strong>Why the KL penalty</strong> against \(\pi_{\text{SFT}}\)?
+      <ul>
+        <li>Prevents <strong>reward hacking</strong> — drifting into high-reward gibberish the RM mis-scores.</li>
+        <li>Prevents <strong>mode collapse</strong> — the policy starving its output distribution onto one answer.</li>
+        <li>Keeps language fluent — \(\pi_{\text{SFT}}\) is the linguistic anchor.</li>
+      </ul>
+    </li>
+    <li>Note: this is not the textbook RL loop with an environment; the "environment" is just the prompt distribution and a frozen RM.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 480 170" width="480" height="170">
+      <defs><marker id="a10ppo" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <rect x="20" y="60" width="100" height="40" class="node-box" rx="6"/>
+      <text x="70" y="78" class="node-label" style="font-size:10px">prompt \(x\)</text>
+      <text x="70" y="92" class="node-label-sm">from \(\mathcal{D}\)</text>
+      <rect x="160" y="60" width="100" height="40" class="node-box-purple" rx="6"/>
+      <text x="210" y="78" class="node-label" style="font-size:10px">policy \(\pi_\theta\)</text>
+      <text x="210" y="92" class="node-label-sm">samples \(y\)</text>
+      <rect x="300" y="20" width="100" height="40" class="node-box-yellow" rx="6"/>
+      <text x="350" y="38" class="node-label" style="font-size:10px">reward \(r_\phi(x,y)\)</text>
+      <text x="350" y="52" class="node-label-sm">frozen RM</text>
+      <rect x="300" y="100" width="100" height="40" class="node-box" rx="6" style="stroke:var(--red)"/>
+      <text x="350" y="118" class="node-label" style="font-size:10px;fill:var(--red)">KL penalty</text>
+      <text x="350" y="132" class="node-label-sm">vs \(\pi_{\text{SFT}}\)</text>
+      <rect x="420" y="60" width="50" height="40" class="node-box-green" rx="6"/>
+      <text x="445" y="83" class="node-label" style="font-size:10px;fill:var(--green)">PPO</text>
+      <line x1="120" y1="80" x2="160" y2="80" class="arrow-line" marker-end="url(#a10ppo)"/>
+      <line x1="260" y1="75" x2="300" y2="45" class="arrow-line" marker-end="url(#a10ppo)"/>
+      <line x1="260" y1="85" x2="300" y2="115" class="arrow-line" marker-end="url(#a10ppo)"/>
+      <line x1="400" y1="40" x2="430" y2="65" class="arrow-line" marker-end="url(#a10ppo)"/>
+      <line x1="400" y1="120" x2="430" y2="95" class="arrow-line" marker-end="url(#a10ppo)"/>
+      <line x1="445" y1="100" x2="445" y2="150" class="arrow-line"/>
+      <line x1="445" y1="150" x2="210" y2="150" class="arrow-line"/>
+      <line x1="210" y1="150" x2="210" y2="105" class="arrow-line" marker-end="url(#a10ppo)"/>
+      <text x="320" y="158" class="node-label-sm">gradient update</text>
+    </svg>
+    <div class="arch-caption">PPO loop: sample y from π_θ, score with frozen RM, subtract β·KL against π_SFT, take clipped policy-gradient step.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What single term in the PPO objective stops the policy from hacking the reward model?</p>
+</section>
+
+<section id="sec-dpo" class="section" data-track="sec-dpo">
+  <p class="section-kicker">Skip the RM</p>
+  <h2 class="section-title">Direct Preference Optimisation (DPO)</h2>
+  <ul class="kp-list tight">
+    <li>Insight (Rafailov et al., 2023): under the Bradley–Terry assumption, the optimal RLHF policy has a <strong>closed-form</strong> relationship to the reward,
+      \(r(x,y) = \beta\log\frac{\pi^*(y\mid x)}{\pi_{\text{SFT}}(y\mid x)} + \text{const}\).</li>
+    <li>Substitute back — the reward model <strong>disappears</strong>. Train \(\pi_\theta\) directly with a classification-style loss on preference pairs:
+      \[\mathcal{L}_{\text{DPO}} = -\mathbb{E}\!\left[\log\sigma\!\left(\beta\log\frac{\pi_\theta(y_w\mid x)}{\pi_{\text{SFT}}(y_w\mid x)} - \beta\log\frac{\pi_\theta(y_l\mid x)}{\pi_{\text{SFT}}(y_l\mid x)}\right)\right].\]
+    </li>
+    <li>No reward model, no PPO, no sampling loop — just supervised-style training.</li>
+    <li>Trade-off: avoids an unreliable RM, but inherits the same brittle preference data; cannot easily exploit on-policy exploration.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What does DPO replace from the standard RLHF pipeline?</p>
+</section>
+
+<section id="sec-risks" class="section" data-track="sec-risks">
+  <p class="section-kicker">Failure modes</p>
+  <h2 class="section-title">Risks: reward hacking, brittleness, biases</h2>
+  <ul class="kp-list tight">
+    <li><strong>Reward hacking:</strong> policy finds prompts/styles the RM over-scores but humans dislike — KL anchor mitigates, doesn't eliminate.</li>
+    <li><strong>Sycophancy:</strong> labellers prefer agreeable answers, so the RM rewards them; model learns to agree even when wrong.</li>
+    <li><strong>Mode collapse:</strong> reward-maximisation can drain output diversity onto a few high-reward templates.</li>
+    <li><strong>Preference-data bias:</strong> who labels matters — demographics, training, English-only data → biased "alignment".</li>
+    <li><strong>Brittle alignment</strong> (Lee et al., 2024): DPO de-toxified models still contain the toxic feature vectors internally — the objective only enforces the <em>minimal</em> change needed to flip output behaviour.</li>
+    <li><strong>RLVR</strong> (verifiable rewards) sidesteps human labels for code/maths, but "verifiable" \(\ne\) "correct"; hard to extend to open-ended tasks.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Distinguish reward hacking from sycophancy with a one-line example each.</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop preview &amp; materials</h2>
+  <ul class="kp-list tight">
+    <li>Workshop preview (next session): Pinecone vector database and RAG set-up; collect API keys ahead of time.</li>
+    <li>Lecture slides: <code>chapters/chapter10/materials/lecture-10.pdf</code>.</li>
+    <li>Further reading: Ouyang et al. (InstructGPT, 2022); Touvron et al. (Llama-2, 2023); Rafailov et al. (DPO, 2023); Lee et al. (toxicity-vector brittleness, 2024); the <em>RLHF Book</em>, chapter on RLVR.</li>
+  </ul>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="2" data-explanation="Cross-entropy on tokens scores 'very delicious' and 'somewhat delicious' as nearly equally bad against the reference, even though one is far closer to what a human reader wants. Preference learning compares whole outputs against each other instead.">
+    <div class="qc-question">Why is next-token cross-entropy a poor proxy for "human-preferred output"?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It cannot handle long sequences</div>
+      <div class="qc-opt" data-idx="1">It only works for classification, not generation</div>
+      <div class="qc-opt" data-idx="2">Per-token loss does not measure task success; many tasks have multiple equally good answers</div>
+      <div class="qc-opt" data-idx="3">It requires labels in every language</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="The KL term β·KL(π_θ ‖ π_SFT) keeps the trained policy close to the SFT model. Without it, the policy can drift into high-reward but degenerate text the reward model mis-scores — classic reward hacking — and collapse diversity.">
+    <div class="qc-question">What is the role of the KL penalty in the PPO RLHF objective?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">It makes the reward model train faster</div>
+      <div class="qc-opt" data-idx="1">It anchors the policy to π_SFT, preventing reward hacking and mode collapse</div>
+      <div class="qc-opt" data-idx="2">It replaces the reward model entirely</div>
+      <div class="qc-opt" data-idx="3">It enforces sparsity on attention weights</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="DPO derives a closed-form link between the optimal RLHF policy and the reward, then substitutes it into the Bradley–Terry preference likelihood. The reward model and PPO loop both vanish; you train π_θ directly on preference pairs.">
+    <div class="qc-question">What does DPO eliminate compared to the standard RLHF pipeline?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The explicit reward model and the PPO sampling loop</div>
+      <div class="qc-opt" data-idx="1">The need for any preference data</div>
+      <div class="qc-opt" data-idx="2">The supervised fine-tuning stage</div>
+      <div class="qc-opt" data-idx="3">The KL penalty</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice for this lecture.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=10" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=10&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+<section class="section" data-track="sec-problems">
+  <h2 class="section-title">Problem cards</h2>
+
+  <div class="callout" style="border-color:var(--purple); background:rgba(167,139,250,0.06); margin-bottom:1rem;">
+    <h3 style="margin-top:0;">Problem 1 — Bradley–Terry log-likelihood</h3>
+    <p>Given preference data \(\{(x^{(i)}, y_w^{(i)}, y_l^{(i)})\}_{i=1}^N\), write the RM loss and explain why adding a constant \(c\) to every reward score does not change the gradient.</p>
+    <details><summary>Hint</summary>
+    <p>Plug \(r' = r + c\) into \(\sigma(r(y_w)-r(y_l))\) and watch the \(c\)s cancel. The likelihood depends only on score <em>differences</em>; the gradient with respect to \(\phi\) is identical.</p>
+    </details>
+  </div>
+
+  <div class="callout" style="border-color:var(--green); background:rgba(16,185,129,0.06); margin-bottom:1rem;">
+    <h3 style="margin-top:0;">Problem 2 — Tune β in PPO</h3>
+    <p>You train RLHF and observe: outputs are very high-reward but read like keyword salad. Which direction would you move \(\beta\) (the KL coefficient), and why? What about the opposite failure — outputs look natural but reward barely moves?</p>
+    <details><summary>Hint</summary>
+    <p>Keyword salad = policy has drifted too far from \(\pi_{\text{SFT}}\) and is hacking the RM → <em>increase</em> \(\beta\). No reward improvement = penalty is too strong and pins the policy to SFT → <em>decrease</em> \(\beta\). Treat \(\beta\) as a fluency / preference-fit trade-off knob.</p>
+    </details>
+  </div>
+
+  <div class="callout" style="border-color:var(--yellow); background:rgba(245,158,11,0.06);">
+    <h3 style="margin-top:0;">Problem 3 — Choose RLHF or DPO</h3>
+    <p>You have a curated set of 50k high-quality preference pairs and a single 7B SFT model; no infrastructure for online RL sampling. Which method fits, and what do you give up?</p>
+    <details><summary>Hint</summary>
+    <p>DPO: no reward model, no PPO sampling — runs as supervised training on the pair data, so it suits your constraints. You give up on-policy exploration (cannot improve from new samples), and you inherit whatever biases exist in the 50k labels; brittleness results (Lee et al., 2024) suggest internal representations may still encode the undesired behaviour even if outputs no longer show it.</p>
+    </details>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="chapter10-study.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

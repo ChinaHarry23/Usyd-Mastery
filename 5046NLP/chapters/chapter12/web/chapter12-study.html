@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 12 — LLM Agents</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="LLM agents · ReAct · RAG · tool use · multi-agent systems · evaluation &amp; risks.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lecture 12 — LLM Agents">
+<meta property="og:description" content="LLM agents · ReAct · RAG · tool use · multi-agent systems · evaluation &amp; risks.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x26A1;</span>
+    <h2>Lecture 12</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-agent" class="nav-link" data-section="sec-agent">What is an agent?</a></li>
+    <li><a href="#sec-history" class="nav-link" data-section="sec-history">Historical agents</a></li>
+    <li><a href="#sec-reasoning" class="nav-link" data-section="sec-reasoning">Reasoning (CoT)</a></li>
+    <li><a href="#sec-react" class="nav-link" data-section="sec-react">ReAct</a></li>
+    <li><a href="#sec-rag" class="nav-link" data-section="sec-rag">RAG</a></li>
+    <li><a href="#sec-tools" class="nav-link" data-section="sec-tools">Tool use</a></li>
+    <li><a href="#sec-multi" class="nav-link" data-section="sec-multi">Multi-agent</a></li>
+    <li><a href="#sec-eval" class="nav-link" data-section="sec-eval">Evaluation &amp; risks</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Lab &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter12-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter12-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=12" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=12" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 11</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 12: Models &mdash; LLM Agents</h1>
+    <p class="hero-subtitle">Reasoning + Acting · ReAct · RAG · tool use · multi-agent systems · evaluation.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use:</strong> picture the Reason → Act → Observe loop · close the page and answer <strong>Recall</strong> lines.</p>
+  </div>
+</section>
+
+<section id="sec-agent" class="section" data-track="sec-agent">
+  <p class="section-kicker">Definition</p>
+  <h2 class="section-title">What is an agent?</h2>
+  <ul class="kp-list tight">
+    <li>An <strong>agent</strong> is a model that <strong>interacts with the world</strong> — it combines some <strong>internal processing</strong> (reasoning, memory) with <strong>external interaction</strong> (tools, APIs, environment).</li>
+    <li>Core components: an <strong>LLM</strong> (the brain), <strong>memory</strong> (short-term prompt context, long-term database), <strong>tools</strong> (APIs, search, calculators, code), and an <strong>environment</strong> (the world it senses and changes).</li>
+    <li>Examples: self-driving cars, chatbots, game AI, robots — agents predate LLMs, but LLM agents differentiate themselves by doing <em>reasoning</em> on top of acting.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 460 220" width="460" height="220">
+      <defs><marker id="a12" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Agent core -->
+      <rect x="170" y="80" width="120" height="60" rx="10" class="node-box-purple"/>
+      <text x="230" y="105" class="node-label" style="font-size:12px;font-weight:700;fill:var(--purple)">Agent (LLM)</text>
+      <text x="230" y="125" class="node-label-sm">reason + act</text>
+      <!-- Memory -->
+      <rect x="320" y="20" width="110" height="38" rx="8" class="node-box"/>
+      <text x="375" y="36" class="node-label" style="font-size:10px">Memory</text>
+      <text x="375" y="50" class="node-label-sm">short / long term</text>
+      <line x1="290" y1="100" x2="345" y2="58" class="arrow-line" marker-end="url(#a12)"/>
+      <line x1="345" y1="58" x2="290" y2="100" class="arrow-line" marker-end="url(#a12)"/>
+      <!-- Tools -->
+      <rect x="320" y="160" width="110" height="38" rx="8" class="node-box-green"/>
+      <text x="375" y="176" class="node-label" style="font-size:10px;fill:var(--green)">Tools / APIs</text>
+      <text x="375" y="190" class="node-label-sm">search · code · calc</text>
+      <line x1="290" y1="120" x2="345" y2="160" class="arrow-line-accent" marker-end="url(#a12)"/>
+      <line x1="345" y1="160" x2="290" y2="120" class="arrow-line-accent" marker-end="url(#a12)"/>
+      <!-- External data -->
+      <rect x="30" y="20" width="110" height="38" rx="8" class="node-box"/>
+      <text x="85" y="36" class="node-label" style="font-size:10px">External Data</text>
+      <text x="85" y="50" class="node-label-sm">documents · KB</text>
+      <line x1="115" y1="58" x2="170" y2="100" class="arrow-line" marker-end="url(#a12)"/>
+      <!-- World -->
+      <rect x="30" y="160" width="110" height="38" rx="8" class="node-box-yellow"/>
+      <text x="85" y="176" class="node-label" style="font-size:10px">World</text>
+      <text x="85" y="190" class="node-label-sm">user · web · robot</text>
+      <line x1="170" y1="120" x2="115" y2="160" class="arrow-line" marker-end="url(#a12)"/>
+      <line x1="115" y1="160" x2="170" y2="120" class="arrow-line" marker-end="url(#a12)"/>
+    </svg>
+    <div class="arch-caption">Agent architecture: LLM core surrounded by memory, tools, external data, and a world it acts on. Arrows = information flow.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What two ingredients turn an LLM into an agent?</p>
+</section>
+
+<section id="sec-history" class="section" data-track="sec-history">
+  <p class="section-kicker">Context</p>
+  <h2 class="section-title">Historical language-based agents</h2>
+  <ul class="kp-list tight">
+    <li><strong>Text only:</strong> ELIZA (1966) — rule-based reflection of user input as a Rogerian therapist; no real understanding.</li>
+    <li><strong>Virtual world interaction:</strong> Siri, Alexa — speech in/out, can call a fixed set of services.</li>
+    <li><strong>Robot control:</strong> SayCan — grounding LLM suggestions in robot affordances.</li>
+    <li>All of these resemble <strong>reflex actions / system-1</strong> behaviour — pattern match input to action with little or no explicit reasoning.</li>
+    <li>The shift with modern LLM agents is adding <em>deliberate reasoning</em> (system-2) into the loop.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What was missing from ELIZA / Siri that LLM agents now add?</p>
+</section>
+
+<section id="sec-reasoning" class="section" data-track="sec-reasoning">
+  <p class="section-kicker">Think first</p>
+  <h2 class="section-title">Reasoning: Chain-of-Thought and variants</h2>
+  <ul class="kp-list tight">
+    <li><strong>Reasoning</strong> in LMs = <em>intermediate generation</em> — text output that is not part of the final answer shown to the user, but helps the model arrive at it.</li>
+    <li><strong>Chain-of-Thought (CoT)</strong> prompting: instruct the model to show its working, e.g. "Let's think step by step." Few-shot exemplars of step-by-step solutions also work.</li>
+    <li><strong>Self-consistency:</strong> sample many CoT traces, take the majority answer — voting smooths over noisy reasoning chains.</li>
+    <li><strong>Analogical reasoning:</strong> ask the model to recall a similar problem first, then solve.</li>
+    <li><strong>Reflexion:</strong> include statements that reflect on past outputs / failures in the prompt, so later attempts learn from mistakes.</li>
+    <li><strong>Tree-of-Thoughts:</strong> branch and explore multiple reasoning paths, prune bad branches.</li>
+    <li><strong>Planning</strong> is a related (open) challenge: when evaluated carefully, LLMs still struggle to produce reliable multi-step plans.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What is the difference between CoT and self-consistency CoT?</p>
+</section>
+
+<section id="sec-react" class="section" data-track="sec-react">
+  <p class="section-kicker">Reason + Act</p>
+  <h2 class="section-title">ReAct: reasoning interleaved with acting</h2>
+  <ul class="kp-list tight">
+    <li><strong>ReAct</strong> (Yao et al., 2023) makes <em>reasoning itself</em> one of the actions the model can take, alongside acting in the world.</li>
+    <li>Two natural patterns: (a) <strong>alternate</strong> reason / act / observe steps, or (b) <strong>let the model choose</strong> any action at each step (including a "Thought" action).</li>
+    <li><strong>No training required</strong> — ReAct is purely a prompting scheme with human-written few-shot examples showing the Thought → Action → Observation pattern.</li>
+    <li>Result: the agent can update its beliefs based on observations, then plan the next action.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 520 180" width="520" height="180">
+      <defs><marker id="a12r" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Thought -->
+      <rect x="20" y="70" width="100" height="40" rx="8" class="node-box-purple"/>
+      <text x="70" y="88" class="node-label" style="font-size:11px;fill:var(--purple);font-weight:700">Thought</text>
+      <text x="70" y="102" class="node-label-sm">internal reasoning</text>
+      <line x1="120" y1="90" x2="160" y2="90" class="arrow-line" marker-end="url(#a12r)"/>
+      <!-- Action -->
+      <rect x="160" y="70" width="100" height="40" rx="8" class="node-box-green"/>
+      <text x="210" y="88" class="node-label" style="font-size:11px;fill:var(--green);font-weight:700">Action</text>
+      <text x="210" y="102" class="node-label-sm">call tool / API</text>
+      <line x1="260" y1="90" x2="300" y2="90" class="arrow-line" marker-end="url(#a12r)"/>
+      <!-- Observation -->
+      <rect x="300" y="70" width="120" height="40" rx="8" class="node-box-yellow"/>
+      <text x="360" y="88" class="node-label" style="font-size:11px;fill:var(--yellow);font-weight:700">Observation</text>
+      <text x="360" y="102" class="node-label-sm">tool / env response</text>
+      <!-- Loop back -->
+      <line x1="420" y1="90" x2="470" y2="90" class="arrow-line" marker-end="url(#a12r)"/>
+      <text x="445" y="80" class="node-label-sm">repeat</text>
+      <path d="M 470 90 Q 500 90 500 40 Q 500 20 70 20 Q 20 20 20 70" class="arrow-line" fill="none" marker-end="url(#a12r)"/>
+      <!-- Answer -->
+      <text x="445" y="135" class="node-label-sm" style="fill:var(--green)">…until done → Answer</text>
+    </svg>
+    <div class="arch-caption">ReAct loop: the agent emits a <em>Thought</em> (free-form reasoning), then an <em>Action</em> (tool call), reads the <em>Observation</em>, and repeats until it can produce a final answer.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Does ReAct require fine-tuning? How is it implemented?</p>
+</section>
+
+<section id="sec-rag" class="section" data-track="sec-rag">
+  <p class="section-kicker">Retrieve then generate</p>
+  <h2 class="section-title">RAG: Retrieval-Augmented Generation</h2>
+  <ul class="kp-list tight">
+    <li><strong>RAG</strong> is the simplest and most widely used form of acting: before generating, the LM <strong>retrieves</strong> relevant documents from a knowledge base and conditions output on them.</li>
+    <li>Pipeline: <em>input → retriever → top-k passages → prepend to prompt → LM → output</em>.</li>
+    <li>Usefulness depends on (a) the <strong>knowledge base</strong> you retrieve from, and (b) the <strong>quality of your retrieval method</strong>.</li>
+    <li><strong>Sparse retrieval (BM25):</strong> bag-of-words tf–idf scoring; exact lexical match.</li>
+    <li><strong>Dense retrieval:</strong> encode query and documents into vectors with an embedding model; rank by <strong>cosine similarity</strong> in vector space — captures semantic match.</li>
+    <li>RAG also doubles as <strong>long-term memory</strong>: write = append new documents, read = retrieve.</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 480 170" width="480" height="170">
+      <defs><marker id="a12g" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Query -->
+      <rect x="10" y="60" width="80" height="36" rx="6" class="node-box"/>
+      <text x="50" y="82" class="node-label" style="font-size:10px">Query</text>
+      <line x1="90" y1="78" x2="130" y2="78" class="arrow-line" marker-end="url(#a12g)"/>
+      <!-- Encoder -->
+      <rect x="130" y="60" width="80" height="36" rx="6" class="node-box-purple"/>
+      <text x="170" y="82" class="node-label" style="font-size:10px;fill:var(--purple)">Embed</text>
+      <line x1="210" y1="78" x2="250" y2="78" class="arrow-line" marker-end="url(#a12g)"/>
+      <!-- KB / vector store -->
+      <rect x="250" y="20" width="100" height="34" rx="6" class="node-box-yellow"/>
+      <text x="300" y="40" class="node-label" style="font-size:10px">Vector Store</text>
+      <line x1="300" y1="54" x2="300" y2="62" class="arrow-line" marker-end="url(#a12g)"/>
+      <!-- Retriever -->
+      <rect x="250" y="62" width="100" height="34" rx="6" class="node-box-green"/>
+      <text x="300" y="82" class="node-label" style="font-size:10px;fill:var(--green)">Retriever (top-k)</text>
+      <line x1="350" y1="78" x2="390" y2="78" class="arrow-line" marker-end="url(#a12g)"/>
+      <!-- LM -->
+      <rect x="390" y="60" width="80" height="36" rx="6" class="node-box"/>
+      <text x="430" y="82" class="node-label" style="font-size:10px">LM → Output</text>
+      <!-- caption label -->
+      <text x="240" y="130" class="node-label-sm">cosine sim → ranks docs → prepended to prompt</text>
+    </svg>
+    <div class="arch-caption">RAG: encode the query, retrieve top-k passages from a vector store by cosine similarity, prepend them to the prompt, then generate.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What two factors determine whether a RAG system is useful?</p>
+</section>
+
+<section id="sec-tools" class="section" data-track="sec-tools">
+  <p class="section-kicker">Acting</p>
+  <h2 class="section-title">Tool use</h2>
+  <ul class="kp-list tight">
+    <li>An LLM "uses" tools by producing <strong>special symbols</strong> in its output (function calls, JSON, API names) — a controller parses them, executes the tool, and feeds the result back in.</li>
+    <li><strong>Toolformer</strong> (Schick et al., 2023): find natural places in existing text to insert tool calls, then fine-tune the LM to predict them.</li>
+    <li>Common tool categories: <em>calculators</em>, <em>web search</em>, <em>code execution</em>, <em>knowledge-base lookup</em>, <em>browser control</em>, <em>computer use</em> (Anthropic) — agents that drive a whole desktop.</li>
+    <li>For simple APIs (calculator, search), creative prompting alone often suffices. For complex tools (entire computer), there are many active efforts including RL training (e.g. WebGPT).</li>
+    <li>Writing and executing <strong>code</strong> is itself a powerful tool — the LM emits a Python snippet, it runs in a sandbox, the output is observed.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>How does an LLM "call" a tool at the token level?</p>
+</section>
+
+<section id="sec-multi" class="section" data-track="sec-multi">
+  <p class="section-kicker">Many LLMs</p>
+  <h2 class="section-title">Multi-agent systems</h2>
+  <ul class="kp-list tight">
+    <li>An agent need not be a <em>single</em> LLM call — it can be a <strong>system</strong> built from many LLM calls plus glue code.</li>
+    <li><strong>AutoGen</strong> (Wu et al., 2023): a collection of LLMs that <strong>talk to each other</strong>, e.g. a planner and a coder agent collaborating on a task.</li>
+    <li><strong>DyLAN</strong> (Liu et al., 2024): a collection of LLMs that we <strong>choose between</strong> dynamically based on the sub-task.</li>
+    <li><strong>DSPy</strong> (Soylu et al., 2024): a framework that lets you <strong>define computation graphs</strong> over LM calls and have a compiler optimise prompts and / or fine-tune the modules automatically.</li>
+    <li><strong>Multimodal and physically embodied</strong> agents extend the idea to images, drones, and robots — language is still doing the heavy lifting.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Name two ways multiple LLMs can be composed into a single agent.</p>
+</section>
+
+<section id="sec-eval" class="section" data-track="sec-eval">
+  <p class="section-kicker">How do we measure progress?</p>
+  <h2 class="section-title">Evaluation and risks</h2>
+  <ul class="kp-list tight">
+    <li>Agent evaluation requires <strong>new benchmarks that approximate the real world</strong>, often with simulators so the agent can interact:
+      <ul>
+        <li><strong>WebArena</strong> — multi-step browsing tasks in a sandboxed web.</li>
+        <li><strong>SWE-Bench</strong> — fix real GitHub issues end-to-end.</li>
+        <li><strong>PrivacyLens</strong> — privacy-respecting behaviour in messaging-style tasks.</li>
+      </ul>
+    </li>
+    <li><strong>Risks</strong>:
+      <ul>
+        <li><em>Hallucination</em> — confident wrong answers, amplified when the agent acts on them.</li>
+        <li><em>Prompt injection</em> — malicious content in retrieved pages / tool output hijacks the agent's instructions.</li>
+        <li><em>Runaway actions</em> — agents can take many real-world steps quickly; loops or misuse of paid APIs / write actions are costly.</li>
+        <li><em>Evaluation difficulty</em> — open-ended tasks have no single ground truth; success depends on the simulator.</li>
+      </ul>
+    </li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Name a sandboxed benchmark for agents, and one safety risk it does not directly test.</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop &amp; materials</h2>
+  <ul class="kp-list tight">
+    <li><code>chapters/chapter12/materials/lecture-12.pdf</code> — full slide deck (Lecture 12, 2025).</li>
+    <li>The lecture ends with a <em>workshop preview</em> for the agent assignment — build a ReAct-style loop with a tool of your choice.</li>
+  </ul>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="2" data-explanation="ReAct alternates Thought (free-form reasoning) with Action (tool call) and Observation (result), letting the model update beliefs and pick the next action — all via prompting, no fine-tuning.">
+    <div class="qc-question">What is the core idea of ReAct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Fine-tune the LM with reinforcement learning on tool-use traces</div>
+      <div class="qc-opt" data-idx="1">Retrieve documents before every generation step</div>
+      <div class="qc-opt" data-idx="2">Interleave free-form reasoning steps with tool actions via prompting, looping until the answer</div>
+      <div class="qc-opt" data-idx="3">Use multiple LMs to vote on a single answer</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="1" data-explanation="RAG retrieves top-k relevant passages — typically by cosine similarity over embeddings — and prepends them to the prompt so the LM can condition its generation on grounded text.">
+    <div class="qc-question">In a typical dense RAG pipeline, how are documents ranked?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Random sampling from the knowledge base</div>
+      <div class="qc-opt" data-idx="1">Cosine similarity between query and document embeddings</div>
+      <div class="qc-opt" data-idx="2">Edit distance between query and document text</div>
+      <div class="qc-opt" data-idx="3">The LM scores each document with a chain-of-thought rationale</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="3" data-explanation="Prompt injection embeds malicious instructions inside retrieved content or tool output; when the agent reads it, it may obey those instructions instead of the user's. Hallucination, runaway loops, and evaluation difficulty are separate risks.">
+    <div class="qc-question">Which agent risk is specific to RAG and tool use (vs plain LM generation)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Hallucination of facts</div>
+      <div class="qc-opt" data-idx="1">High training cost</div>
+      <div class="qc-opt" data-idx="2">Token limit exhaustion</div>
+      <div class="qc-opt" data-idx="3">Prompt injection via untrusted retrieved or tool content</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice for this lecture.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=12" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=12&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="chapter12-study.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

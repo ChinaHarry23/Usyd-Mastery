@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Lecture 8</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<meta name="description" content="Foundations — Lecture 8 — Inter-annotator agreement metrics, Cohen's kappa, Fleiss' kappa, dataset statistics.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Lecture 8">
+<meta property="og:description" content="Foundations — Lecture 8 — Inter-annotator agreement metrics, Cohen's kappa, Fleiss' kappa, dataset statistics.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter8-study.html">&larr; Study Guide</a>
+  <a href="chapter8-mindmap.html">Mind Map</a>
+  <a href="../../../index.html">Home</a>
+</div>
+
+<main id="mainContent">
+
+<h1 style="font-size:1.6rem; margin-bottom:0.25rem;">Math Foundations — Lecture 8</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">Inter-annotator agreement (Cohen's &amp; Fleiss' kappa, Krippendorff's alpha), observed vs chance agreement, worked examples on imbalanced and balanced classes.</p>
+
+<!-- ========== Observed vs chance agreement ========== -->
+<section class="math-section" id="sec-observed">
+  <h2>Observed vs chance agreement</h2>
+  <p>Suppose two annotators label \(N\) items into \(K\) categories. The most basic statistic is <em>observed agreement</em>:</p>
+  <div class="formula-block">
+    \[p_o \;=\; \frac{\#\text{items where annotators agree}}{N} \;=\; \sum_{c=1}^{K} P(A_1 = A_2 = c)\]
+  </div>
+  <p>But raw \(p_o\) is misleading when one class dominates. If 95% of emails are "not spam" and both annotators just always pick "not spam", they agree 95% of the time without contributing any real labelling skill. We need to correct for chance.</p>
+  <p><em>Expected agreement by chance</em> is computed assuming each annotator labels independently according to their own marginal distribution:</p>
+  <div class="formula-block">
+    \[p_e \;=\; \sum_{c=1}^{K} P(A_1 = c)\,P(A_2 = c)\]
+  </div>
+</section>
+
+<!-- ========== Cohen's kappa ========== -->
+<section class="math-section" id="sec-cohen">
+  <h2>Cohen's kappa</h2>
+  <p>Cohen's \(\kappa\) measures agreement above chance, normalised so that perfect agreement gives \(\kappa = 1\) and chance gives \(\kappa = 0\):</p>
+  <div class="formula-block">
+    \[\boxed{\;\kappa \;=\; \frac{p_o - p_e}{1 - p_e}\;}\]
+  </div>
+  <div class="def-row"><span class="sym">\(p_o\)</span><span>Observed agreement — proportion of items both annotators label the same.</span></div>
+  <div class="def-row"><span class="sym">\(p_e\)</span><span>Expected (chance) agreement under independent marginals.</span></div>
+  <div class="def-row"><span class="sym">\(\kappa = 1\)</span><span>Perfect agreement.</span></div>
+  <div class="def-row"><span class="sym">\(\kappa = 0\)</span><span>Agreement no better than chance.</span></div>
+  <div class="def-row"><span class="sym">\(\kappa &lt; 0\)</span><span>Worse than chance — annotators systematically disagree.</span></div>
+  <p>Rough guide (Landis &amp; Koch 1977): \(&lt;0\) poor · \(0.0\text{–}0.2\) slight · \(0.2\text{–}0.4\) fair · \(0.4\text{–}0.6\) moderate · \(0.6\text{–}0.8\) substantial · \(0.8\text{–}1.0\) almost perfect. These thresholds are conventional, not statistically motivated.</p>
+</section>
+
+<!-- ========== Worked example: imbalanced ========== -->
+<section class="math-section" id="sec-ex-imbalanced">
+  <h2>Worked example 1 — imbalanced classes</h2>
+  <p>Confusion matrix for 100 items, two annotators, two labels \(A, B\):</p>
+  <div class="formula-block">
+    \[\begin{array}{c|cc}
+      & A_1{=}A & A_1{=}B \\\hline
+      A_2{=}A & 7 & 4 \\
+      A_2{=}B & 8 & 81
+    \end{array}\]
+  </div>
+  <p>Observed agreement:</p>
+  <div class="formula-block">
+    \[p_o = \frac{7 + 81}{100} = 0.07 + 0.81 = 0.88\]
+  </div>
+  <p>Marginal probabilities:</p>
+  <div class="formula-block">
+    \[P(A_1 = A) = \frac{7+8}{100} = 0.15,\quad P(A_2 = A) = \frac{7+4}{100} = 0.11\]
+    \[P(A_1 = B) = 0.85,\quad P(A_2 = B) = 0.89\]
+  </div>
+  <p>Chance agreement:</p>
+  <div class="formula-block">
+    \[p_e = 0.15 \times 0.11 + 0.85 \times 0.89 = 0.0165 + 0.7565 = 0.773\]
+  </div>
+  <p>Cohen's kappa:</p>
+  <div class="formula-block">
+    \[\kappa = \frac{0.88 - 0.773}{1 - 0.773} = \frac{0.107}{0.227} \approx 0.471\]
+  </div>
+  <p>Despite 88% raw agreement, \(\kappa \approx 0.47\) — only <em>moderate</em>, because the class imbalance inflates \(p_e\).</p>
+</section>
+
+<!-- ========== Worked example: balanced ========== -->
+<section class="math-section" id="sec-ex-balanced">
+  <h2>Worked example 2 — balanced classes</h2>
+  <p>Same observed agreement (98%) but balanced marginals:</p>
+  <div class="formula-block">
+    \[\begin{array}{c|cc}
+      & A_1{=}A & A_1{=}B \\\hline
+      A_2{=}A & 49 & 1 \\
+      A_2{=}B & 1 & 49
+    \end{array}\]
+  </div>
+  <div class="formula-block">
+    \[p_o = 0.49 + 0.49 = 0.98,\quad p_e = 0.5 \times 0.5 + 0.5 \times 0.5 = 0.5\]
+    \[\kappa = \frac{0.98 - 0.5}{1 - 0.5} = 0.96\]
+  </div>
+  <p>Same \(p_o\), but \(\kappa\) is far higher because chance agreement is much lower. <strong>Takeaway:</strong> always report \(\kappa\), not just raw agreement, especially when classes are unbalanced.</p>
+
+  <div class="quick-check" id="qc-kappa" data-answer="1" data-explanation="With balanced 50/50 classes and chance p_e = 0.5, observed agreement p_o = 0.5 means the annotators agree exactly at the chance level. κ = (0.5 - 0.5) / (1 - 0.5) = 0.">
+    <div class="qc-question">Quick Check: Two annotators label 100 items with two equally frequent classes. They agree on 50 items (\(p_o = 0.5\)). The marginals are 50/50 for both, so \(p_e = 0.5\). What is \(\kappa\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\kappa = 0.5\)</div>
+      <div class="qc-opt" data-idx="1">\(\kappa = 0\) — agreement is at chance level</div>
+      <div class="qc-opt" data-idx="2">\(\kappa = 1\) — perfect agreement</div>
+      <div class="qc-opt" data-idx="3">\(\kappa\) is undefined</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== Fleiss' kappa ========== -->
+<section class="math-section" id="sec-fleiss">
+  <h2>Fleiss' kappa (\(\geq 2\) annotators)</h2>
+  <p>For \(N\) items, \(K\) categories, \(n\) annotators per item. Let \(n_{ij}\) be the number of annotators who assigned item \(i\) to category \(j\), so \(\sum_j n_{ij} = n\).</p>
+  <p>Per-item agreement (proportion of agreeing pairs):</p>
+  <div class="formula-block">
+    \[P_i \;=\; \frac{1}{n(n-1)}\sum_{j=1}^{K} n_{ij}(n_{ij}-1)\]
+  </div>
+  <p>Average over items, and chance agreement from class-proportion squares:</p>
+  <div class="formula-block">
+    \[\bar{P}_o = \frac{1}{N}\sum_{i=1}^N P_i,\qquad \bar{P}_e = \sum_{j=1}^{K}\!\left(\frac{1}{Nn}\sum_{i=1}^N n_{ij}\right)^{\!2}\]
+  </div>
+  <div class="formula-block">
+    \[\kappa_F \;=\; \frac{\bar{P}_o - \bar{P}_e}{1 - \bar{P}_e}\]
+  </div>
+  <p>Reduces to Cohen's kappa when \(n=2\) and annotator identities are ignored.</p>
+</section>
+
+<!-- ========== Krippendorff's alpha ========== -->
+<section class="math-section" id="sec-alpha">
+  <h2>Krippendorff's alpha</h2>
+  <p>A more general coefficient that supports nominal, ordinal, interval, and ratio data, and handles missing values:</p>
+  <div class="formula-block">
+    \[\alpha \;=\; 1 - \frac{D_o}{D_e}\]
+  </div>
+  <div class="def-row"><span class="sym">\(D_o\)</span><span>Observed disagreement (sum of pairwise distances within items, weighted by a distance metric chosen for the data type).</span></div>
+  <div class="def-row"><span class="sym">\(D_e\)</span><span>Expected disagreement if labels were randomly permuted across items.</span></div>
+  <p>For nominal data with two annotators and no missing values, \(\alpha \approx \kappa\). For ordinal labels (e.g. Likert ratings) Krippendorff's distance function gives partial credit for being "close", which kappa does not.</p>
+</section>
+
+<!-- ========== When agreement is low ========== -->
+<section class="math-section" id="sec-low-agreement">
+  <h2>If agreement is low: diagnose, don't average</h2>
+  <ul style="line-height:1.7;">
+    <li><strong>Unclear guidelines</strong> — annotators interpret edge cases differently. Fix: add worked examples for the disputed cases.</li>
+    <li><strong>Careless annotators</strong> — failed attention checks, fast clicks. Fix: block them, requalify, or use redundancy.</li>
+    <li><strong>Ambiguous items</strong> — genuine label uncertainty in the data. Fix: flag and adjudicate, or accept multiple gold labels.</li>
+    <li><strong>Subjective task</strong> — sentiment, offence, humour. Accept that there is no single ground truth; report distribution of labels.</li>
+  </ul>
+  <p>Annotation is iterative: low kappa is information about your <em>schema</em> and <em>annotators</em>, not a final verdict on the data.</p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, { delimiters: [{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}], throwOnError: false });
+  }
+});
+</script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
