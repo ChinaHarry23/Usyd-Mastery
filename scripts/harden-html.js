@@ -48,13 +48,15 @@ const CSP_CONTENT = [
   "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'",
   "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
-  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com",
+  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'"
 ].join("; ");
 const CSP_TAG = `<meta http-equiv="Content-Security-Policy" content="${CSP_CONTENT}">`;
+const CONNECT_SRC =
+  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz";
 
 // ───── Description templates ───────────────────────────────────────────────
 function inferDescription(relPath, html) {
@@ -115,8 +117,17 @@ function patchSRI(html) {
   return { html, changes };
 }
 
+const CONNECT_SRC_RE =
+  /connect-src 'self' http:\/\/localhost:\* http:\/\/127\.0\.0\.1:\*(?: https:\/\/\*\.trycloudflare\.com)?(?: https:\/\/api\.openai\.com https:\/\/api\.groq\.com https:\/\/openrouter\.ai https:\/\/api\.x\.ai https:\/\/api\.deepseek\.com https:\/\/generativelanguage\.googleapis\.com https:\/\/api\.together\.xyz)?/g;
+
 function patchCSP(html) {
-  if (/Content-Security-Policy/i.test(html)) return { html, changes: 0 };
+  let changes = 0;
+  html = html.replace(CONNECT_SRC_RE, function (match) {
+    if (match === CONNECT_SRC) return match;
+    changes += 1;
+    return CONNECT_SRC;
+  });
+  if (/Content-Security-Policy/i.test(html)) return { html, changes };
   // Insert right after <meta charset=...> or after the opening <head>.
   const afterCharset = html.match(/<meta\s+charset=[^>]*>/i);
   if (afterCharset) {

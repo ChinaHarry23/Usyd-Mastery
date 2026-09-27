@@ -12,6 +12,8 @@
  */
 (function () {
   "use strict";
+  if (window.__usydChapterCommonInit) return;
+  window.__usydChapterCommonInit = true;
 
   // ========== MATH RENDERING ==========
   function renderMath() {
@@ -29,7 +31,8 @@
   // ========== SIDEBAR ==========
   var sidebar = document.getElementById("sidebar");
   var sidebarToggle = document.getElementById("sidebarToggle");
-  if (sidebar && sidebarToggle) {
+  if (sidebar && sidebarToggle && !sidebarToggle.dataset.bound) {
+    sidebarToggle.dataset.bound = "1";
     sidebarToggle.addEventListener("click", function () {
       sidebar.classList.toggle("open");
     });
@@ -68,14 +71,26 @@
         }
       });
     },
-    { rootMargin: "-20% 0px -60% 0px" }
+    { rootMargin: "-12% 0px -45% 0px", threshold: [0, 0.15, 0.4] }
   );
   sections.forEach(function (s) {
     observer.observe(s);
   });
+  navLinks.forEach(function (l) {
+    l.addEventListener("click", function () {
+      var href = l.getAttribute("href") || "";
+      if (href.charAt(0) !== "#") return;
+      var sec = document.getElementById(href.slice(1));
+      if (!sec || !sec.dataset.track) return;
+      visited.add(sec.dataset.track);
+      updateProgress();
+    });
+  });
 
   // ========== PROOF TOGGLES ==========
   document.querySelectorAll(".proof-toggle").forEach(function (btn) {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
     btn.addEventListener("click", function () {
       var target = document.getElementById(btn.dataset.target);
       if (!target) return;
@@ -88,6 +103,8 @@
 
   // ========== SOLUTION TOGGLES ==========
   document.querySelectorAll(".solution-toggle").forEach(function (btn) {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
     btn.addEventListener("click", function () {
       var target = document.getElementById(btn.dataset.target);
       if (!target) return;
@@ -103,8 +120,14 @@
 
   // ========== TABS ==========
   document.querySelectorAll(".tab-btn").forEach(function (btn) {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
     btn.addEventListener("click", function () {
-      var parent = btn.closest(".interactive-compare");
+      var parent = btn.closest(".interactive-compare, .compare-tabs");
+      if (!parent) return;
+      if (parent.classList.contains("compare-tabs")) {
+        parent = parent.parentElement;
+      }
       if (!parent) return;
       parent.querySelectorAll(".tab-btn").forEach(function (b) {
         b.classList.remove("active");
@@ -126,6 +149,32 @@
       renderMath();
     });
   });
+
+  // ========== CARD HOVER SPOTLIGHT ==========
+  var reduceMotion =
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function attachSurface(el) {
+    if (!el || el.dataset.surfaceBound) return;
+    el.dataset.surfaceBound = "1";
+    el.classList.add("interactive-surface");
+    if (reduceMotion) return;
+    el.addEventListener("mousemove", function (ev) {
+      var rect = el.getBoundingClientRect();
+      var x = ((ev.clientX - rect.left) / rect.width) * 100;
+      var y = ((ev.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty("--spot-x", x + "%");
+      el.style.setProperty("--spot-y", y + "%");
+      el.classList.add("is-hovered");
+    });
+    el.addEventListener("mouseleave", function () {
+      el.classList.remove("is-hovered");
+      el.style.removeProperty("--spot-x");
+      el.style.removeProperty("--spot-y");
+    });
+  }
+  document
+    .querySelectorAll(".hero-card, .glance-card, .flow-step, .metric-card, .col-card, .quick-check, .problem-card, .algo-card, .concept-box, .callout")
+    .forEach(attachSurface);
 
   // ========== INITIAL RENDER ==========
   updateProgress();

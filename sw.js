@@ -1,10 +1,11 @@
 // Bump the version whenever canonical shared assets change — activate() will
 // purge old named caches.
-var CACHE_NAME = "usyd-mastery-v3";
+var CACHE_NAME = "usyd-mastery-v5";
 var PRECACHE_URLS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
+  "/brand/usyd-mastery-mark-on-dark.svg",
   "/shared/root-portal.css",
   "/shared/root-portal.js",
   "/shared/home.css",
@@ -19,6 +20,8 @@ var PRECACHE_URLS = [
   "/shared/lang-toggle.js",
   "/shared/progress-tracker.js",
   "/shared/katex-loader.js",
+  "/shared/chapter-common.js",
+  "/shared/scroll-anim.js",
   "/shared/storage.js"
 ];
 

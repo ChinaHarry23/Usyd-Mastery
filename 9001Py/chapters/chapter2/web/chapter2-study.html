@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chapter 2 Study · COMP9001</title>
+<title>Chapter 2: Variables and Data Types</title>
 <link rel="stylesheet" href="../../../shared/study.css">
-<script defer src="../../../data/site-data.js"></script>
 <script defer src="../../../../shared/progress-tracker.js"></script>
 <script defer src="../../../shared/chapter-ui.js"></script>
-<script defer src="../../../shared/chapter-placeholder.js"></script>
+<script defer src="chapter2-study.js"></script>
 <link rel="stylesheet" href="../../../../shared/chat-panel.css">
-<meta name="description" content="Chapter 2 Study · COMP9001 — Interactive study guide with walkthroughs, math notation, and recall prompts.">
+<meta name="description" content="A lecture-based study guide covering variables as named containers, Python's four basic data types (int, float, bool, str), type casting, expressions, reading user input with input(), and formatting output with f-strings.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Chapter 2 Study · COMP9001">
-<meta property="og:description" content="Chapter 2 Study · COMP9001 — Interactive study guide with walkthroughs, math notation, and recall prompts.">
+<meta property="og:title" content="Chapter 2: Variables and Data Types">
+<meta property="og:description" content="A lecture-based study guide covering variables as named containers, Python's four basic data types (int, float, bool, str), type casting, expressions, reading user input with input(), and formatting output with f-strings.">
 <meta property="og:locale" content="en_AU">
 </head>
 <body>
+
 <nav id="sidebar">
   <div class="sidebar-header">
     <div>
@@ -26,21 +26,550 @@
       <h2>Chapter 2</h2>
     </div>
   </div>
-  <ul class="nav-links" id="placeholderNav"></ul>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-tailor" class="nav-link" data-section="sec-tailor">The Tailor Story</a></li>
+    <li><a href="#sec-variables" class="nav-link" data-section="sec-variables">Variables</a></li>
+    <li><a href="#sec-naming" class="nav-link" data-section="sec-naming">Naming Rules</a></li>
+    <li><a href="#sec-types" class="nav-link" data-section="sec-types">Data Types &amp; Objects</a></li>
+    <li><a href="#sec-numbers" class="nav-link" data-section="sec-numbers">int, float &amp; Casting</a></li>
+    <li><a href="#sec-expressions" class="nav-link" data-section="sec-expressions">Expressions</a></li>
+    <li><a href="#sec-bool" class="nav-link" data-section="sec-bool">bool &amp; Truth Tables</a></li>
+    <li><a href="#sec-strings" class="nav-link" data-section="sec-strings">Strings</a></li>
+    <li><a href="#sec-input" class="nav-link" data-section="sec-input">input()</a></li>
+    <li><a href="#sec-formatting" class="nav-link" data-section="sec-formatting">Output Formatting</a></li>
+    <li><a href="#sec-summary" class="nav-link" data-section="sec-summary">Lecture Summary</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
   <div class="progress-container">
     <div class="progress-label">Chapter Status</div>
-    <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
-    <div class="progress-text">Shell aligned to x270 style</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 2 built</div>
   </div>
 </nav>
+
 <button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
-<main id="mainContent"></main>
-<script>
-window.addEventListener("DOMContentLoaded", function () {
-  if (window.COMP9001_PLACEHOLDERS) window.COMP9001_PLACEHOLDERS.renderStudyPage();
-  if (window.initComp9001ChapterUI) window.initComp9001ChapterUI();
-});
-</script>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9001 — Intro to Programming</p>
+    <h1>Chapter 2: Variables and Data Types</h1>
+    <p class="hero-subtitle">A lecture-based study guide covering variables as named containers, Python&rsquo;s four basic data types, type casting, expressions, reading user input with input(), and formatting output with f-strings.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4E6;</span>
+        <span>Variables as Named Containers</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F522;</span>
+        <span>Four Basic Data Types</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2328;</span>
+        <span>input() and Type Casting</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9F5;</span>
+        <span>f-string Formatting</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter2-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter2-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built directly from the Lecture 2 PDF rather than a generic scaffold summary</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-tailor" class="section" data-track="tailor">
+  <h2 class="section-title">The Tailor Story: Why Variables?</h2>
+  <div class="concept-box">
+    <p><strong>Lecture motivation:</strong> a tailor records customer measurements (Hips, Pant Waist, Thigh, Pant Length) in a notebook. His first program, <code>tailor1.py</code>, prints every value as hard-coded text inside <code>print()</code> calls — the data lives nowhere except inside the strings.</p>
+  </div>
+
+  <div class="code-block">#tailor 1
+print("details of Armin Chitizadeh with customer ID of 3322445")
+print("Customer Name:", "Armin Chitizadeh")
+print("Customer ID:", "3322445")
+print("Hips: ", "100")
+print("Pant Waist: ", "95")
+print("Thigh: ", "25", sep=" ")
+print("Pant Length: ", "110", sep=" ")</div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>In life, details change</h3>
+      <p>The lecture shows the same customer years later: Hips 100 &rarr; 120, Pant Waist 95 &rarr; 100, Thigh 25 &rarr; 28, Pant Length 110 &rarr; 139. With hard-coded strings, every affected <code>print()</code> line has to be found and edited by hand.</p>
+    </div>
+    <div class="col-card">
+      <h3>The fix: tailor2.py</h3>
+      <p>Store each measurement once in a named variable, then reuse the name everywhere. When a value changes, you update one assignment line instead of hunting through the whole program.</p>
+    </div>
+  </div>
+
+  <div class="code-block">customer_name = "Armin Chitizadeh"
+customer_id = "3322445"
+hips_size = 120
+pant_size = 100
+thigh = 28
+pant = 139
+print("details of", customer_name, "with customer ID of", customer_id)
+print("Hips: ", hips_size, sep=" ")</div>
+
+  <div class="callout">
+    <strong>Key idea:</strong> the tailor story is the lecture&rsquo;s answer to &ldquo;how can we fix the issue of changing values?&rdquo; — give the data a name and refer to the name.
+  </div>
+</section>
+
+<section id="sec-variables" class="section" data-track="variables">
+  <h2 class="section-title">Variables: Named Containers</h2>
+  <div class="concept-box">
+    <p><strong>Lecture definition:</strong> the simplest definition of a variable is a <strong>&ldquo;named container&rdquo;</strong> of data you&rsquo;d like to refer to in your program. Variables contain data so you can call it later — this makes data <em>reusable</em>, <em>recallable</em> and <em>re-assignable</em>.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Two reasons to name your data</h3>
+      <p>1. Data usually tends to be bigger than a few characters — imagine calling books by their whole content (possibly hundreds of pages) instead of their names. 2. You will refer to your data multiple times in a program, so it helps to keep it in a convenient container and call it whenever needed, such as when you want to print it.</p>
+    </div>
+    <div class="col-card">
+      <h3>Declare &rarr; Initialise &rarr; Use</h3>
+      <p>Before you can use a variable, you must first declare it and <strong>initialize</strong> it. The lecture illustrates the flow with a C-style example: <code>int total;</code> then <code>total = 0;</code> then <code>total = total + 5;</code>.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Language style</th><th>When the type is fixed</th><th>Lecture point</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Static-typed (e.g. C)</strong></td><td>At declaration</td><td>Once a variable of a specific type is declared, it cannot be assigned a different data type</td></tr>
+        <tr><td><strong>Dynamically-typed (Python)</strong></td><td>At run-time</td><td>Programmers can re-assign a variable to a different data type after it is initialized</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Type annotation:</strong> Python does not require you to declare a type, but you can annotate it to indicate what the variable contains: <code>x: int = 10</code>. The type is still determined at runtime.
+  </div>
+</section>
+
+<section id="sec-naming" class="section" data-track="naming">
+  <h2 class="section-title">Variable Naming Rules</h2>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Hard rules</h3>
+      <p>Names must start with a letter (they cannot start with numbers) and must <strong>not</strong> contain spaces. Python is case sensitive: <code>X</code> and <code>x</code> refer to two different variables. Avoid reserved keywords — words that have a special purpose in the language.</p>
+    </div>
+    <div class="col-card">
+      <h3>Lecture conventions</h3>
+      <p>Name variables to describe the <em>purpose</em> of the value. ALL CAPS indicates constants, e.g. <code>FLAT_RATE</code> (the tailor programs use <code>FIXED_COST = 40</code>). Lowercase words separated by underscores improve readability. Avoid names that already exist as Python objects, e.g. <code>print</code>, <code>int</code>, <code>str</code>.</p>
+    </div>
+  </div>
+
+  <div class="code-block">False    class     finally   is        return
+None     continue  for       lambda    try
+True     def       from      nonlocal  while
+and      del       global    not       with
+as       elif      if        or        yield
+assert   else      import    pass
+break    except    in        raise</div>
+
+  <div class="callout">
+    <strong>No memorising needed:</strong> the lecture says you do not need to memorize the keyword list — most development environments highlight these keywords in a different colour.
+  </div>
+
+  <div class="sim-container">
+    <h3>Identifier Inspector</h3>
+    <p>The lecture&rsquo;s practice exercise asks which of these identifiers are valid variable names. Click each one to check it against the naming rules.</p>
+    <div id="namePool" class="sim-controls"></div>
+    <div id="nameVerdict" class="solution-content"></div>
+    <div class="sim-controls" style="margin-top:0.75rem;">
+      <button id="btnResetNames" class="btn btn-outline">Reset</button>
+    </div>
+  </div>
+</section>
+
+<section id="sec-types" class="section" data-track="types">
+  <h2 class="section-title">Data Types and Objects</h2>
+  <div class="concept-box">
+    <p><strong>Lecture definition:</strong> a data type is a set of <u>values</u> and a set of <u>operations</u> defined on those values. Operators are the representation of a data-type operation and can be unary, binary or ternary.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Primitive types</h3>
+      <p>Primitive types are basic data types that use a fixed amount of memory. The usual examples are <code>int</code>, <code>float</code>, <code>str</code> and <code>bool</code>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Objects</h3>
+      <p><em>Objects</em> are blocks of memory that contain related <u>data</u> and the associated <u>operations</u> for that data. One object can contain many other objects, and operators can be customised by the programmer. In Python, <strong>everything is an Object</strong>!</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Type</th><th>Set of values</th><th>Common operators</th><th>Sample literals</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>int</code></td><td>integers</td><td><code>+ - * // % **</code></td><td><code>99&nbsp;&nbsp;12&nbsp;&nbsp;2147483647</code></td></tr>
+        <tr><td><code>float</code></td><td>floating-point numbers</td><td><code>+ - * / **</code></td><td><code>3.14&nbsp;&nbsp;2.5&nbsp;&nbsp;6.022e23</code></td></tr>
+        <tr><td><code>bool</code></td><td>true-false values</td><td><code>and or not</code></td><td><code>True&nbsp;&nbsp;False</code></td></tr>
+        <tr><td><code>str</code></td><td>sequences of characters</td><td><code>+</code></td><td><code>'AB'&nbsp;&nbsp;'Hello'&nbsp;&nbsp;'2.5'</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Good programmers always:</strong> know the data type they are working with throughout the program, know the scope of each variable, and initialize variables to something useful.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">According to the lecture, what is a data type?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The lecture defines a data type as a set of values and a set of operations defined on those values." data-bad="">A set of values plus a set of operations defined on those values</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Keywords are reserved words with special purposes — the definition of a data type is about values and the operations defined on them.">A reserved keyword that names a variable</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Memory size only distinguishes primitive types; the definition itself is a set of values plus the operations defined on those values.">Any value that fits in a fixed amount of memory</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-numbers" class="section" data-track="numbers">
+  <h2 class="section-title">int, float and Type Casting</h2>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Initialising a float</h3>
+      <p>Float variables can be initialized using a sequence of digits with a decimal point or in scientific notation: <code>pi = 3.14159</code>, <code>random_float = 6.02e23</code>. Floats typically have 15&ndash;17 decimal digits of precision.</p>
+    </div>
+    <div class="col-card">
+      <h3>Floats are approximations</h3>
+      <p>Floating-point numbers are approximations of the real numbers, so the lecture warns: be careful when performing comparisons with floating-point numbers. Arithmetic operators work on floats too, but results stay <code>float</code> due to implicit type casting.</p>
+    </div>
+  </div>
+
+  <div class="code-block">&gt;&gt;&gt; 5.0 + 3.0
+8.0
+&gt;&gt;&gt; 5.0 - 3.0
+2.0
+&gt;&gt;&gt; 5.0 * 3.0
+15.0
+&gt;&gt;&gt; 5.0 / 3.0
+1.6666666666666667</div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Conversion</th><th>How it happens</th><th>Lecture examples</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Explicit</strong></td><td>Invoked using function calls</td><td><code>str()</code> converts to type <code>str</code>, <code>int()</code> converts into type <code>int</code>, <code>float()</code> converts into type <code>float</code></td></tr>
+        <tr><td><strong>Implicit</strong></td><td>Python does the conversion automatically when appropriate</td><td>Results become <code>float</code> for: division between a <code>float</code> and <code>int</code>, division between two <code>int</code>, addition between an <code>int</code> and <code>float</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Choose int when&hellip;</h4>
+      <ul>
+        <li>The information is whole numbers</li>
+        <li>Accuracy matters: integers are exact</li>
+        <li>Counting things, like the number of siblings</li>
+      </ul>
+    </div>
+    <div class="why-card con" style="background:var(--blue-bg); border-color:rgba(96,165,250,0.3);">
+      <h4>Choose float when&hellip;</h4>
+      <ul>
+        <li>There can be fractional components</li>
+        <li>Numbers are very large or very small — the float range is much bigger</li>
+        <li>Prices and measurements, like $1.50 per orange</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the lecture warn about comparing floating-point numbers?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Right. Floats are approximations of the real numbers, so a computed result may differ slightly from the value you expect." data-bad="">Because floats are approximations of real numbers, so results may not be exact</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Python allows == on floats; the danger is that floats only approximate real numbers, so equality may fail unexpectedly.">Because Python forbids the == operator on floats</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Floats typically carry 15-17 decimal digits of precision — the issue is approximation, not a 2-digit limit.">Because floats can only store two decimal digits</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-expressions" class="section" data-track="expressions">
+  <h2 class="section-title">Expressions and Calculations</h2>
+  <div class="concept-box">
+    <p><strong>Lecture definition:</strong> an expression is a combination of literals, variables, and operators that Python evaluates to produce a value. Many expressions look like mathematical formulas.</p>
+  </div>
+
+  <div class="algo-diagram">
+    <div class="algo-box input-box">4<br>operand</div>
+    <div class="algo-arrow">&larr;</div>
+    <div class="algo-box algo-core">*<br>operator</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box output-box">( x - 3 )<br>operand (and expression)</div>
+  </div>
+
+  <p>The tailor needs calculations: how much fabric does a pair of pants need? <code>tailor3.py</code> combines the measurement variables into one expression.</p>
+
+  <div class="code-block">total_fabric = ((hips_size + pant_size) * (thigh + pant))/10
+print("total fabric: ", total_fabric)</div>
+
+  <p>With the lecture&rsquo;s values (<code>hips_size = 120</code>, <code>pant_size = 100</code>, <code>thigh = 28</code>, <code>pant = 139</code>) the program prints <code>total fabric:  3674.0</code> — note the <code>.0</code>.</p>
+
+  <div class="proof-block">
+    <button class="proof-toggle" data-target="proof-fabric">
+      <span class="toggle-icon">&#9654;</span> Why the fabric total prints 3674.0 and not 3674
+    </button>
+    <div class="proof-content" id="proof-fabric">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p>(120 + 100) and (28 + 139) are additions between <code>int</code> values, so 220 * 167 = 36740 is still an <code>int</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p>The final <code>/ 10</code> is division between two <code>int</code> values — one of the lecture&rsquo;s implicit-conversion cases — so the result is converted to <code>float</code>: 3674.0.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p>If you want a whole number you must cast explicitly — exactly what <code>tailor4.py</code> later does with <code>int(...)</code> around the cost expression.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-bool" class="section" data-track="bool">
+  <h2 class="section-title">bool and Truth Tables</h2>
+  <div class="concept-box">
+    <p>The tailor needs to track <em>who has paid and who has not</em> — a fact with exactly two possibilities. The <code>bool</code> type has two possible values: <code>False</code> (0) and <code>True</code> (1). Comparison operators are mixed operators that result in a Boolean, and the Boolean operators in Python are <code>not</code>, <code>and</code>, <code>or</code>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Operator</th><th>Meaning</th><th>True example</th><th>False example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>==</code></td><td>equal</td><td><code>2 == 2</code></td><td><code>2 == 3</code></td></tr>
+        <tr><td><code>!=</code></td><td>not equal</td><td><code>3 != 2</code></td><td><code>2 != 2</code></td></tr>
+        <tr><td><code>&lt;</code></td><td>less than</td><td><code>2 &lt; 13</code></td><td><code>2 &lt; 2</code></td></tr>
+        <tr><td><code>&lt;=</code></td><td>less than or equal</td><td><code>2 &lt;= 2</code></td><td><code>3 &lt;= 2</code></td></tr>
+        <tr><td><code>&gt;</code></td><td>greater than</td><td><code>13 &gt; 2</code></td><td><code>2 &gt; 13</code></td></tr>
+        <tr><td><code>&gt;=</code></td><td>greater than or equal</td><td><code>3 &gt;= 2</code></td><td><code>2 &gt;= 3</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>X</th><th>Y</th><th>X and Y</th><th>X or Y</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+        <tr><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+        <tr><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Truth tables:</strong> all possible input and output combinations for each operation can be looked up in the truth table. 0 represents <code>False</code>, 1 represents <code>True</code>, and <code>not</code> simply flips the value.
+  </div>
+
+  <div class="sim-container">
+    <h3>Will You Get Wet? (Data IRL)</h3>
+    <p>The lecture&rsquo;s activity: write an expression that determines if you will get wet in the rain, and save the result in a variable called <code>is_wet</code>. Toggle the two inputs, then evaluate.</p>
+    <div class="code-block">is_wet = is_raining and not(have_umbrella)</div>
+    <div class="sim-controls">
+      <button id="btnToggleRain" class="btn btn-outline">is_raining = False</button>
+      <button id="btnToggleUmbrella" class="btn btn-outline">have_umbrella = False</button>
+      <button id="btnEvalWet" class="btn btn-primary">Evaluate is_wet</button>
+    </div>
+    <div id="wetPanel" class="solution-content"></div>
+  </div>
+</section>
+
+<section id="sec-strings" class="section" data-track="strings">
+  <h2 class="section-title">The str Type and String Methods</h2>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Observations from Lab 1</h3>
+      <p>Strings must be enclosed with single or double quotes. The backslash denotes the escape character for characters with special meaning — <code>'\\'</code> means a literal backslash. String concatenation uses the <code>+</code> operator and string repetition uses the <code>*</code> operator.</p>
+    </div>
+    <div class="col-card">
+      <h3>Strings are objects</h3>
+      <p>A string of characters only makes sense when the characters are together: a string variable contains the memory address that <u>contains all the characters</u>. Because <code>str</code> is an object, you can perform many more operations on it using string methods.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Method</th><th>What it returns (lecture wording)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>str.format()</code></td><td>A copy where each replacement field (placeholder <code>{}</code>) is replaced with a string value of the corresponding argument</td></tr>
+        <tr><td><code>str.lower()</code></td><td>A copy of the <code>str</code> converted to all lowercase</td></tr>
+        <tr><td><code>str.capitalize()</code></td><td>A copy of the <code>str</code> with the first character capitalized</td></tr>
+        <tr><td><code>str.upper()</code></td><td>A copy of the <code>str</code> converted to all uppercase</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">&gt;&gt;&gt; "help".upper()
+'HELP'
+&gt;&gt;&gt; "HELP".lower()
+'help'
+&gt;&gt;&gt; input().swapcase()</div>
+
+  <div class="insight-box">
+    <strong>Returns a copy:</strong> every method above returns a <em>copy</em> of the string — the original string object is not changed. This matters in the Sandwich Maker activity, where the customer name is capitalized and the sandwich type is made upper case for the printed confirmation.
+  </div>
+</section>
+
+<section id="sec-input" class="section" data-track="input">
+  <h2 class="section-title">input() and Interactive Programs</h2>
+  <div class="concept-box">
+    <p>So far our programs only push output to the user with <code>print()</code>. Programs are usually interactive — we need a way to get input from the user. The simplest form is <em>text</em> from standard <em>input</em> (the keyboard).</p>
+  </div>
+
+  <div class="algo-diagram">
+    <div class="algo-box input-box">User (keyboard)</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box algo-core">input()</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box random-box">Process (&ldquo;transformation&rdquo;)</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box output-box">print()</div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What input() does</h3>
+      <p>The <code>input()</code> function reads a line from standard input (keyboard), converts it to a <strong>string</strong>, stripping the <strong>newline character</strong>. If a prompt argument is present, it is written to standard output without a trailing newline. The documentation example: <code>s = input('--&gt; ')</code>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Output of input() feeds print()</h3>
+      <p>The Echo activity&rsquo;s hint: the output of <code>input()</code> is the input of <code>print()</code>. The anatomy of <code>num = int('12345')</code> is the same: function name, input, output — the result flows back into the assignment.</p>
+    </div>
+  </div>
+
+  <p>In <code>tailor4.py</code> the cost depends on the exchange rate, which only the user knows at run time:</p>
+
+  <div class="code-block">FIXED_COST = 40
+exchange_rate = input("Please give me the exchange rate Baba Yaga: ")
+total_cost = int((40 + total_fabric/100) * int(exchange_rate))
+print("Total cost: ", total_cost, "Toman")</div>
+
+  <p>Entering <code>51000</code> prints <code>Total cost:  3913740 Toman</code> — but only because the reply was cast with <code>int(exchange_rate)</code> before the multiplication.</p>
+
+  <div class="quick-check">
+    <div class="qc-question">The user types 51000 when tailor4.py runs. What does input() hand back to the program?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. input() always returns a string (with the newline stripped), so tailor4.py must convert it with int() before arithmetic." data-bad="">The string "51000", which must be converted with int() before arithmetic</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="input() converts what was typed to a string stripping the newline — tailor4.py needs int(exchange_rate) before multiplying.">The integer 51000, ready for multiplication</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="input() never guesses a numeric type — it always returns a string, whatever the user typed.">A float, because exchange rates can have decimals</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-formatting" class="section" data-track="formatting">
+  <h2 class="section-title">Output Formatting and f-strings</h2>
+  <div class="concept-box">
+    <p>The tailor wants to print a sales table with neatly aligned columns. The lecture presents two approaches to make output more readable: <strong>formatted string literals (f-strings)</strong> and the <strong>string <code>format()</code> method</strong>.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>f-strings</h3>
+      <p>Prefix the string with <code>f</code> or <code>F</code> and include expressions inside the string as <code>{expression}</code>. Python evaluates each expression and splices the result into the text.</p>
+    </div>
+    <div class="col-card">
+      <h3>str.format()</h3>
+      <p>Objects passed into <code>str.format()</code> replace the items in brackets — each placeholder <code>{}</code> is filled with the corresponding argument.</p>
+    </div>
+  </div>
+
+  <div class="code-block">quantity = 1
+print(f"{quantity:03d}")   # prints 001</div>
+
+  <p><strong>Format specification:</strong> you can specify the presentation format within the placeholder — here a width of 3 padded with zeros. The actual value is <u>not</u> modified during formatting; <code>quantity</code> is still the integer <code>1</code>.</p>
+
+  <div class="code-block">print(f"{customer_name}|   {customer_id}  |{hips_size:^5d}|{pant_size:^14d}|{thigh:^7d}|{pant:^12d}")
+print(f"total_cost: {total_cost:,d} Toman")</div>
+
+  <div class="insight-box">
+    <strong>tailor5.py:</strong> <code>:^5d</code> centres the integer in a field five characters wide, and <code>:,d</code> inserts thousands separators — this is how the tailor lines up his table columns.
+  </div>
+
+  <div class="info-card">
+    <h4>Recap: the print() signature</h4>
+    <p><code>print(*objects, sep=' ', end='\n', file=sys.stdout, flush=False)</code> — <code>print()</code> concatenates different pieces of information with a single space as separation, controlled by the keyword argument <code>sep</code>. The tailor programs override it with <code>sep=" "</code>.</p>
+  </div>
+</section>
+
+<section id="sec-summary" class="section" data-track="summary">
+  <h2 class="section-title">Lecture Summary</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Variables name your data</h4>
+        <p>A variable is a named container that makes data reusable, recallable and re-assignable — one edited assignment updates every use.</p>
+        <div class="flip-hint">Part 1 focus</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Know your types</h4>
+        <p>A data type is a set of values plus operations. int is exact, float approximates, bool is True/False, and str is a sequence of characters.</p>
+        <div class="flip-hint">Type discipline</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Programs are interactive</h4>
+        <p>input() reads a string from the keyboard, the program transforms it (often after casting), and f-strings or str.format() shape the printed result.</p>
+        <div class="flip-hint">Part 2 focus</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Next:</strong> use the Foundations page to self-check the variable definition, naming rules, the four basic types, casting and formatting behaviour from this lecture.
+  </div>
+</section>
+
+</main>
+
 <!-- LANG-INJECT -->
 <script src="../../../shared/translations.js"></script>
 <script src="../../../shared/section-translations.js"></script>

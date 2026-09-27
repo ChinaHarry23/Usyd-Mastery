@@ -15,6 +15,44 @@
      window.CHAT_ALLOW_REMOTE = true BEFORE this script loads, or by ticking
      the "Allow remote endpoint" box in the chat settings. */
   var LOCAL_HOSTS = { "localhost": 1, "127.0.0.1": 1, "::1": 1, "[::1]": 1 };
+  var TRUSTED_API_HOSTS = {
+    "api.openai.com": 1,
+    "api.groq.com": 1,
+    "openrouter.ai": 1,
+    "api.x.ai": 1,
+    "api.deepseek.com": 1,
+    "generativelanguage.googleapis.com": 1,
+    "api.together.xyz": 1
+  };
+  var PROVIDERS = [
+    { id: "lmstudio", label: "LM Studio (local)", endpoint: "http://localhost:1234/v1/chat/completions", needsKey: false, defaultModels: [] },
+    { id: "openai", label: "OpenAI", endpoint: "https://api.openai.com/v1/chat/completions", needsKey: true, defaultModels: ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o", "o4-mini"] },
+    { id: "openrouter", label: "OpenRouter", endpoint: "https://openrouter.ai/api/v1/chat/completions", needsKey: true, defaultModels: ["openai/gpt-4o-mini", "anthropic/claude-sonnet-4", "google/gemini-2.5-flash", "x-ai/grok-3"] },
+    { id: "groq", label: "Groq", endpoint: "https://api.groq.com/openai/v1/chat/completions", needsKey: true, defaultModels: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"] },
+    { id: "xai", label: "xAI (Grok)", endpoint: "https://api.x.ai/v1/chat/completions", needsKey: true, defaultModels: ["grok-3", "grok-3-mini", "grok-2-latest"] },
+    { id: "deepseek", label: "DeepSeek", endpoint: "https://api.deepseek.com/v1/chat/completions", needsKey: true, defaultModels: ["deepseek-chat", "deepseek-reasoner"] },
+    { id: "gemini", label: "Google Gemini", endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", needsKey: true, defaultModels: ["gemini-2.5-flash", "gemini-2.5-pro"] },
+    { id: "together", label: "Together AI", endpoint: "https://api.together.xyz/v1/chat/completions", needsKey: true, defaultModels: ["meta-llama/Llama-3.3-70B-Instruct-Turbo"] },
+    { id: "custom", label: "Custom OpenAI-compatible", endpoint: "", needsKey: true, defaultModels: [] }
+  ];
+  function getProvider(id) {
+    for (var i = 0; i < PROVIDERS.length; i++) if (PROVIDERS[i].id === id) return PROVIDERS[i];
+    return PROVIDERS[0];
+  }
+  function inferProviderId(url) {
+    try {
+      var host = new URL(url).hostname;
+      if (LOCAL_HOSTS[host]) return "lmstudio";
+      if (host === "api.openai.com") return "openai";
+      if (host === "openrouter.ai") return "openrouter";
+      if (host === "api.groq.com") return "groq";
+      if (host === "api.x.ai") return "xai";
+      if (host === "api.deepseek.com") return "deepseek";
+      if (host === "generativelanguage.googleapis.com") return "gemini";
+      if (host === "api.together.xyz") return "together";
+    } catch (e) {}
+    return "custom";
+  }
   function isLocalEndpoint(url) {
     try {
       var u = new URL(url);
@@ -23,11 +61,32 @@
   }
   function endpointAllowed(url) {
     if (isLocalEndpoint(url)) return true;
+    try {
+      var host = new URL(url).hostname;
+      if (TRUSTED_API_HOSTS[host] === 1) return true;
+    } catch (e) {}
     if (window.CHAT_ALLOW_REMOTE === true) return true;
     try {
       var cfg = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
       return cfg.allowRemote === true;
     } catch (e) { return false; }
+  }
+  function modelsUrlFromEndpoint(endpoint) {
+    if (/\/chat\/completions\/?$/.test(endpoint)) {
+      return endpoint.replace(/\/chat\/completions\/?$/, "/models");
+    }
+    var base = getBaseUrl(endpoint);
+    return base ? base + "/v1/models" : null;
+  }
+  function authHeaders(cfg, provider) {
+    var headers = { "Content-Type": "application/json" };
+    var key = cfg && cfg.apiKey ? String(cfg.apiKey).trim() : "";
+    if (key) headers.Authorization = "Bearer " + key;
+    if (provider && provider.id === "openrouter") {
+      headers["HTTP-Referer"] = location.origin;
+      headers["X-Title"] = "Usyd Mastery";
+    }
+    return headers;
   }
 
   /* Use a full SHA-1 digest of pathname for history key to avoid collisions
@@ -92,23 +151,35 @@
   }
 
   function fetchModels(endpoint, callback) {
-    var baseUrl = getBaseUrl(endpoint);
-    if (!baseUrl) { callback([]); return; }
-    if (!endpointAllowed(endpoint)) { callback([]); return; }
+    var cfg = loadConfig();
+    var provider = getProvider(cfg.provider || inferProviderId(endpoint));
+    var fallback = (provider.defaultModels || []).slice();
+    var modelsUrl = modelsUrlFromEndpoint(endpoint);
+    if (!modelsUrl || !endpointAllowed(endpoint)) {
+      availableModels = fallback.slice();
+      callback(availableModels);
+      return;
+    }
 
-    fetch(baseUrl + "/v1/models")
+    var opts = { headers: authHeaders(cfg, provider) };
+    fetch(modelsUrl, opts)
       .then(function (res) { return res.json(); })
       .then(function (data) {
         var models = [];
-        if (data.data && data.data.length > 0) {
-          models = data.data
-            .filter(function (m) { return m.id && !/embed/i.test(m.id); })
-            .map(function (m) { return m.id; });
+        var list = data.data || data.models;
+        if (list && list.length > 0) {
+          models = list
+            .map(function (m) { return typeof m === "string" ? m : m.id; })
+            .filter(function (id) { return id && !/embed/i.test(id); });
         }
+        if (models.length === 0) models = fallback.slice();
         availableModels = models;
         callback(models);
       })
-      .catch(function () { callback([]); });
+      .catch(function () {
+        availableModels = fallback.slice();
+        callback(availableModels);
+      });
   }
 
   function buildHTML() {
@@ -144,21 +215,30 @@
         '<button class="chat-close" id="chatCloseBtn" aria-label="Close chat panel">&times;</button>' +
       '</div>' +
       '<div class="chat-config" id="chatConfig">' +
-        '<label>LM Studio endpoint</label>' +
+        '<label for="chatProvider">Provider</label>' +
+        '<select id="chatProvider"></select>' +
+        '<div id="chatApiKeyRow">' +
+          '<label for="chatApiKey">API key <span class="label-hint">(saved in this browser only)</span></label>' +
+          '<input type="password" id="chatApiKey" autocomplete="off" spellcheck="false" placeholder="sk-\u2026"/>' +
+        '</div>' +
+        '<label for="chatEndpoint">Endpoint</label>' +
         '<input type="text" id="chatEndpoint" placeholder="http://localhost:1234/v1/chat/completions"/>' +
+        '<p class="chat-cors-hint" id="chatCorsHint"></p>' +
         '<label class="chat-allow-remote">' +
           '<input type="checkbox" id="chatAllowRemote"/> ' +
-          '<span>Allow remote endpoint</span> ' +
-          '<span class="label-hint">(leave off for local-only security)</span>' +
+          '<span>Allow custom remote endpoint</span> ' +
+          '<span class="label-hint">(only for hosts not in the provider list)</span>' +
         '</label>' +
-        '<label>Model</label>' +
+        '<label for="chatModelSelect">Model</label>' +
         '<div class="chat-model-row">' +
-          '<select id="chatModelSelect"><option value="">Loading models…</option></select>' +
-          '<button id="chatModelRefresh" title="Refresh models">&#x21BB;</button>' +
+          '<select id="chatModelSelect"><option value="">Loading models\u2026</option></select>' +
+          '<button type="button" id="chatModelRefresh" title="Refresh models">&#x21BB;</button>' +
         '</div>' +
-        '<label>Vision Model <span class="label-hint">(for image descriptions)</span></label>' +
+        '<label for="chatCustomModel">Or type a model id</label>' +
+        '<input type="text" id="chatCustomModel" autocomplete="off" spellcheck="false" placeholder="e.g. gpt-4o-mini"/>' +
+        '<label for="chatVisionModelSelect">Vision model <span class="label-hint">(for image descriptions)</span></label>' +
         '<div class="chat-model-row">' +
-          '<select id="chatVisionModelSelect"><option value="">Loading…</option></select>' +
+          '<select id="chatVisionModelSelect"><option value="">Loading\u2026</option></select>' +
         '</div>' +
       '</div>' +
       '<div id="chatMessages" role="log" aria-live="polite"></div>' +
@@ -194,6 +274,74 @@
       saveConfig(c);
       refreshModels();
     });
+    var providerSelect = document.getElementById("chatProvider");
+    var apiKeyInput = document.getElementById("chatApiKey");
+    var apiKeyRow = document.getElementById("chatApiKeyRow");
+    var customModelInput = document.getElementById("chatCustomModel");
+    var corsHint = document.getElementById("chatCorsHint");
+    var savedProviderId = cfg.provider || inferProviderId(endpoint);
+    PROVIDERS.forEach(function (p) {
+      var opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.label;
+      if (p.id === savedProviderId) opt.selected = true;
+      providerSelect.appendChild(opt);
+    });
+    apiKeyInput.value = cfg.apiKey || "";
+    customModelInput.value = cfg.customModel || "";
+
+    function currentProvider() {
+      return getProvider(providerSelect.value || "lmstudio");
+    }
+    function updateProviderUi() {
+      var p = currentProvider();
+      apiKeyRow.style.display = p.needsKey ? "" : "none";
+      if (p.id === "lmstudio") {
+        corsHint.textContent = "LM Studio must be running locally with the server started (default port 1234).";
+      } else if (p.id === "openrouter" || p.id === "groq") {
+        corsHint.textContent = "This provider usually works from the browser. Paste an API key, then pick or type a model.";
+      } else if (p.id === "custom") {
+        corsHint.textContent = "Use any OpenAI-compatible /v1/chat/completions URL. Tick \"Allow custom remote endpoint\" if the host is not local.";
+      } else {
+        corsHint.textContent = "Some vendors block browser calls (CORS). If a request fails, use OpenRouter, Groq, LM Studio, or a local proxy.";
+      }
+    }
+    updateProviderUi();
+    providerSelect.addEventListener("change", function () {
+      var p = currentProvider();
+      var c = loadConfig();
+      c.provider = p.id;
+      if (p.endpoint) {
+        endpointInput.value = p.endpoint;
+        c.endpoint = p.endpoint;
+      }
+      saveConfig(c);
+      updateProviderUi();
+      refreshModels();
+    });
+    apiKeyInput.addEventListener("change", function () {
+      var c = loadConfig();
+      c.apiKey = apiKeyInput.value.trim();
+      saveConfig(c);
+      refreshModels();
+    });
+    customModelInput.addEventListener("change", function () {
+      var c = loadConfig();
+      c.customModel = customModelInput.value.trim();
+      saveConfig(c);
+    });
+    function syncConfigFromUi() {
+      var c = loadConfig();
+      c.provider = providerSelect.value || inferProviderId(endpointInput.value.trim());
+      c.endpoint = endpointInput.value.trim() || DEFAULT_ENDPOINT;
+      c.apiKey = apiKeyInput.value.trim();
+      c.customModel = customModelInput.value.trim();
+      c.allowRemote = allowRemoteInput.checked;
+      c.model = getSelectedModel();
+      c.visionModel = getSelectedVisionModel();
+      saveConfig(c);
+      return c;
+    }
     var selBar = document.getElementById("chatSelectionBar");
     var selTextEl = document.getElementById("chatSelText");
     var resizeHandle = document.getElementById("chatResizeHandle");
@@ -208,6 +356,8 @@
     var visionModelSelect = document.getElementById("chatVisionModelSelect");
 
     function getSelectedModel() {
+      var typed = customModelInput.value.trim();
+      if (typed) return typed;
       return modelSelect.value || "";
     }
 
@@ -216,20 +366,38 @@
     }
 
     function populateModelSelect(models) {
-      var cfg = loadConfig();
-      var savedModel = cfg.model || "";
-      var savedVision = cfg.visionModel || "";
+      var cfgNow = loadConfig();
+      var savedModel = cfgNow.model || "";
+      var savedVision = cfgNow.visionModel || "";
 
       modelSelect.innerHTML = "";
       visionModelSelect.innerHTML = "";
 
       if (models.length === 0) {
-        modelSelect.innerHTML = '<option value="">No models found</option>';
+        modelSelect.innerHTML = '<option value="">Type a model id below</option>';
         visionModelSelect.innerHTML = '<option value="">No vision models</option>';
         return;
       }
 
+      if (models.length > 50) {
+        var preferred = (currentProvider().defaultModels || []).slice();
+        if (savedModel) preferred.unshift(savedModel);
+        var trimmed = [];
+        function addModel(id) {
+          if (id && trimmed.indexOf(id) === -1) trimmed.push(id);
+        }
+        preferred.forEach(addModel);
+        for (var mi = 0; mi < models.length && trimmed.length < 50; mi++) addModel(models[mi]);
+        models = trimmed;
+      }
+
       var visionModels = models.filter(function (m) { return VISION_PATTERNS.test(m); });
+      if (currentProvider().id !== "lmstudio") {
+        visionModels = visionModels.concat(models.filter(function (m) {
+          return /gpt-4o|gpt-4\.1|claude|gemini|grok|vision/i.test(m);
+        }));
+        visionModels = visionModels.filter(function (m, idx) { return visionModels.indexOf(m) === idx; });
+      }
 
       for (var i = 0; i < models.length; i++) {
         var opt = document.createElement("option");
@@ -243,7 +411,7 @@
       }
 
       if (visionModels.length === 0) {
-        visionModelSelect.innerHTML = '<option value="">No vision models available</option>';
+        visionModelSelect.innerHTML = '<option value="">No vision models listed</option>';
       } else {
         for (var j = 0; j < visionModels.length; j++) {
           var vopt = document.createElement("option");
@@ -258,7 +426,7 @@
       }
 
       var c = loadConfig();
-      c.model = getSelectedModel();
+      c.model = modelSelect.value || c.model || "";
       c.visionModel = getSelectedVisionModel();
       saveConfig(c);
     }
@@ -286,7 +454,7 @@
 
     refreshModels();
 
-    addSystemMsg("Page content loaded as context. Select text, attach images/files, or just ask questions. Drag left edge to resize.");
+    addSystemMsg("Page content is loaded as context. Choose a provider (LM Studio or a cloud API), then ask about this page. Drag the left edge to resize.");
 
     /* ===== RESIZE DRAG ===== */
     var isResizing = false;
@@ -338,13 +506,16 @@
       messages = [];
       try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
       messagesDiv.innerHTML = "";
-      addSystemMsg("Page content loaded as context. Select text, attach images/files, or just ask questions. Drag left edge to resize.");
+      addSystemMsg("Page content is loaded as context. Choose a provider (LM Studio or a cloud API), then ask about this page. Drag the left edge to resize.");
     });
 
     endpointInput.addEventListener("change", function () {
       var c = loadConfig();
       c.endpoint = endpointInput.value.trim();
+      c.provider = inferProviderId(c.endpoint);
+      providerSelect.value = c.provider;
       saveConfig(c);
+      updateProviderUi();
       refreshModels();
     });
 
@@ -537,9 +708,10 @@
     }
 
     function describeImage(imageUrl, userText, visionModel, endpoint) {
+      var cfgNow = loadConfig();
       return fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(cfgNow, currentProvider()),
         body: JSON.stringify({
           model: visionModel,
           messages: [
@@ -631,6 +803,7 @@
     }
 
     function callLLM() {
+      syncConfigFromUi();
       isStreaming = true;
       sendBtn.disabled = true;
 
@@ -667,8 +840,8 @@
       if (!endpointAllowed(endpoint)) {
         msgWrapper.remove();
         addErrorMsg(
-          "Remote endpoint blocked for safety. Endpoint \u201C" + endpoint + "\u201D is not local (localhost/127.0.0.1). " +
-          "Tick \u201CAllow remote endpoint\u201D in the chat settings if you really intend to use it."
+          "Endpoint \u201C" + endpoint + "\u201D is not a listed provider host. Pick OpenAI, OpenRouter, Groq, xAI, DeepSeek, Gemini, or Together, " +
+          "or tick \u201CAllow custom remote endpoint\u201D for another OpenAI-compatible URL."
         );
         isStreaming = false;
         sendBtn.disabled = false;
@@ -678,7 +851,17 @@
       var selectedModel = getSelectedModel();
       if (!selectedModel) {
         msgWrapper.remove();
-        addErrorMsg("Please select a model from the dropdown above.");
+        addErrorMsg("Select a model from the list or type a model id.");
+        isStreaming = false;
+        sendBtn.disabled = false;
+        return;
+      }
+
+      var cfgNow = loadConfig();
+      var provider = currentProvider();
+      if (provider.needsKey && !String(cfgNow.apiKey || "").trim()) {
+        msgWrapper.remove();
+        addErrorMsg("This provider needs an API key. Paste it in the chat settings (stored only in this browser).");
         isStreaming = false;
         sendBtn.disabled = false;
         return;
@@ -841,15 +1024,21 @@
 
       function handleError(err) {
         msgWrapper.remove();
-        addErrorMsg("Error: " + err.message);
+        var msg = err && err.message ? err.message : String(err);
+        if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+          msg =
+            "Could not reach the API from this page (often CORS). Try OpenRouter, Groq, or LM Studio, or run a local OpenAI-compatible proxy.";
+        }
+        addErrorMsg("Error: " + msg);
         isStreaming = false;
         sendBtn.disabled = false;
       }
 
       function doMainRequest(msgs) {
+        var cfgNow = loadConfig();
         return fetch(endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders(cfgNow, currentProvider()),
           body: JSON.stringify(buildBody(msgs))
         }).then(function (res) {
           if (!res.ok) {

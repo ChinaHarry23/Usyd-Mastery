@@ -10,6 +10,7 @@ A centralized, interactive study platform for University of Sydney Computer Scie
 | COMP5046 | Natural Language Processing | 6 | Complete |
 | COMP5318 | Machine Learning & Data Mining | 6 | Complete |
 | COMP9001 | Introduction to Programming | 5 | In progress |
+| COMP9123 | Data Structures & Algorithms | 10 | In progress |
 
 ## Features
 
@@ -27,15 +28,17 @@ A centralized, interactive study platform for University of Sydney Computer Scie
 ## Architecture
 
 ```
-Usyd-Mastery/
-├── index.html                    # Root portal (course selector)
-├── shared/                       # Cross-hub shared modules
-│   ├── home.css                  # Shared course homepage styles
-│   └── mission-control.js        # Shared progress/gamification logic
-├── 5270/                         # COMP5270 hub
-├── 5318/                         # COMP5318 hub
-├── Comp5046-NLP-Study-Hub/       # COMP5046 hub
-├── COMP9001-Intro-to-.../        # COMP9001 hub
+Usyd-Mastery/                         # ~/Desktop/Workspace/University/Usyd-Mastery
+├── index.html                        # Root portal (course selector)
+├── brand/                            # Logo mark + lockups (SVG/PNG)
+├── shared/                           # Cross-hub shared modules
+│   ├── home.css
+│   └── mission-control.js
+├── 5270RandomAlgo/                   # COMP5270
+├── 5318ML/                           # COMP5318
+├── 5046NLP/                          # COMP5046
+├── 9001Py/                           # COMP9001
+├── 9123DataStructureAlgo/            # COMP9123
 └── README.md
 ```
 

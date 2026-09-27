@@ -2,40 +2,192 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chapter 4 Foundations · COMP9001</title>
+<title>Foundations — Chapter 4</title>
 <link rel="stylesheet" href="../../../shared/study.css">
-<script defer src="../../../data/site-data.js"></script>
 <script defer src="../../../../shared/progress-tracker.js"></script>
 <script defer src="../../../shared/chapter-ui.js"></script>
-<script defer src="../../../shared/chapter-placeholder.js"></script>
 <link rel="stylesheet" href="../../../../shared/math.css">
 <link rel="stylesheet" href="../../../../shared/chat-panel.css">
-<meta name="description" content="Chapter 4 Foundations · COMP9001 — Dedicated formula reference and quick-check exercises for this chapter.">
+<meta name="description" content="A compact revision page for the container definitions, zero-based indexing rules, list operations, tuples, dictionaries, and sys.argv introduced in Lecture 4.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Chapter 4 Foundations · COMP9001">
-<meta property="og:description" content="Chapter 4 Foundations · COMP9001 — Dedicated formula reference and quick-check exercises for this chapter.">
+<meta property="og:title" content="Foundations — Chapter 4">
+<meta property="og:description" content="A compact revision page for the container definitions, zero-based indexing rules, list operations, tuples, dictionaries, and sys.argv introduced in Lecture 4.">
 <meta property="og:locale" content="en_AU">
 </head>
 <body>
+
 <div class="back-bar">
   <a href="chapter4-study.html">&larr; Back to Chapter 4 Study Guide</a>
   <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
   <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
   <span class="page-title-bar">Foundations & Checks</span>
 </div>
+
 <nav class="toc-sidebar">
-  <div class="toc-group">Revision</div>
-  <ul id="placeholderToc"></ul>
+  <div class="toc-group">Core Ideas</div>
+  <ul>
+    <li><a href="#sec-containers" class="toc-link active">Containers vs Basic Types</a></li>
+    <li><a href="#sec-lists" class="toc-link">Lists</a></li>
+    <li><a href="#sec-indexing" class="toc-link">Zero-based Indexing</a></li>
+  </ul>
+  <div class="toc-group">Working with Containers</div>
+  <ul>
+    <li><a href="#sec-operations" class="toc-link">Methods and Slicing</a></li>
+    <li><a href="#sec-tuples-strings" class="toc-link">Tuples and Strings</a></li>
+    <li><a href="#sec-dicts-args" class="toc-link">Dictionaries and argv</a></li>
+  </ul>
 </nav>
-<div class="math-content" id="mainContent"></div>
+
+<div class="math-content" id="mainContent">
+
+<section class="section hero-section" id="sec-hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9001 — Chapter 4 Supplement</p>
+    <h1>Foundations & Quick Checks</h1>
+    <p class="hero-subtitle">A compact revision page for the container definitions, zero-based indexing rules, list operations, tuples, dictionaries, and sys.argv introduced in Lecture 4.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-containers">
+  <h2 class="section-title">Containers vs Basic Types</h2>
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>A data structure is a way to organize data that we wish to process with a computer program. Basic types (integers, floating points, boolean, characters) hold a single value; containers (strings, lists, tuples, dictionaries) hold multiple values.</p>
+  </div>
+  <div class="quick-check">
+    <div class="qc-question">Which group lists only container types from the lecture?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Strings, lists, tuples, and dictionaries are the four container types on the Data Types slide." data-bad="">Strings, lists, tuples, dictionaries</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Integers, floats, and booleans are basic single-value types on the slide, not containers.">Integers, floats, booleans, lists</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-lists">
+  <h2 class="section-title">Lists</h2>
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>A list is a <em>contiguous</em> block of memory containing multiple values, not all of the same type. It solves the problem of having many variables. Python's list is <strong>not</strong> the same as an array.</p>
+  </div>
+  <div class="symbol-grid">
+    <div class="sym-header">Form</div><div class="sym-header">Slide example</div><div class="sym-header">Result</div>
+    <div class="sym-cell">Empty list</div><div class="sym-cell"><code>empty_ls = []</code></div><div class="sym-cell">A list with no elements; <code>len(empty_ls)</code> is 0</div>
+    <div class="sym-cell">Homogeneous strings</div><div class="sym-cell"><code>tutors = ["Avinash", "Joshua", "Luis"]</code></div><div class="sym-cell">Three string elements of the same type</div>
+    <div class="sym-cell">Homogeneous integers</div><div class="sym-cell"><code>x = [5, 10, 15, 20, 25]</code></div><div class="sym-cell">Five integer elements</div>
+    <div class="sym-cell">From a string</div><div class="sym-cell"><code>help_ls = list("help")</code></div><div class="sym-cell"><code>['h', 'e', 'l', 'p']</code> — one element per character</div>
+  </div>
+  <div class="quick-check">
+    <div class="qc-question">A list mixing <code>"wolves"</code> and <code>5</code> would be called what in the lecture?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Homogeneous means all elements share the same type — this list mixes a string and an integer.">A homogeneous list</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Elements of different types make a heterogeneous list — allowed in Python, though the summary advises keeping one type per list." data-bad="">A heterogeneous list</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-indexing">
+  <h2 class="section-title">Zero-based Indexing</h2>
+  <div class="def-box warning-box">
+    <div class="def-label">Python is zero-based</div>
+    <p>With zero-based indexing (index-0), the index of the last element is <strong>one less than</strong> the total number of elements. With one-based indexing (index-1), used by some other languages, the index of the last element is the <strong>same as</strong> the total number of elements.</p>
+  </div>
+  <div class="symbol-grid">
+    <div class="sym-header">Operation</div><div class="sym-header">Example</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">Access</div><div class="sym-cell"><code>battle_list[0]</code></div><div class="sym-cell">The first element of the list</div>
+    <div class="sym-cell">Length</div><div class="sym-cell"><code>len(battle_list)</code></div><div class="sym-cell">How many elements the list holds</div>
+    <div class="sym-cell">Update</div><div class="sym-cell"><code>battle_list[1] = "beast_akvan"</code></div><div class="sym-cell">Replace the value stored at index 1</div>
+  </div>
+  <div class="quick-check">
+    <div class="qc-question">For a Python list of 5 elements, what is the index of the last element?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Index 5 would be the one-based answer; in Python it raises an IndexError.">5</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Zero-based indexing makes the last index one less than the total: 5 - 1 = 4." data-bad="">4</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-operations">
+  <h2 class="section-title">Methods and Slicing</h2>
+  <div class="symbol-grid">
+    <div class="sym-header">Operation</div><div class="sym-header">Syntax</div><div class="sym-header">Effect</div>
+    <div class="sym-cell">Add to end</div><div class="sym-cell"><code>append(x)</code></div><div class="sym-cell">Adds element x to the end of the list</div>
+    <div class="sym-cell">Insert at position</div><div class="sym-cell"><code>insert(index, x)</code></div><div class="sym-cell">Inserts x at the given index; the first element has index 0</div>
+    <div class="sym-cell">Remove and return</div><div class="sym-cell"><code>pop(index)</code></div><div class="sym-cell">Removes and returns the element; with no index, the last element</div>
+    <div class="sym-cell">Remove by value</div><div class="sym-cell"><code>remove(x)</code></div><div class="sym-cell">Removes the first occurrence of x</div>
+    <div class="sym-cell">Count / find</div><div class="sym-cell"><code>count(x)</code> / <code>index(x)</code></div><div class="sym-cell">Occurrences of x / index of its first occurrence</div>
+    <div class="sym-cell">Reorder</div><div class="sym-cell"><code>sort()</code> / <code>reverse()</code></div><div class="sym-cell">Ascending order / reversed element order, in place</div>
+    <div class="sym-cell">Join lists</div><div class="sym-cell"><code>list1 + list2</code></div><div class="sym-cell"><code>[1, 2, 3] + [4, 5, 6]</code> gives <code>[1, 2, 3, 4, 5, 6]</code></div>
+    <div class="sym-cell">Slice</div><div class="sym-cell"><code>list[start:end]</code></div><div class="sym-cell">start is inclusive, end is exclusive</div>
+    <div class="sym-cell">Slice with step</div><div class="sym-cell"><code>list[start:end:step]</code></div><div class="sym-cell">step is the interval between included elements; <code>[::-1]</code> reverses</div>
+  </div>
+</section>
+
+<section class="section" id="sec-tuples-strings">
+  <h2 class="section-title">Tuples and Strings</h2>
+  <div class="def-box">
+    <div class="def-label">Tuple</div>
+    <p>A fixed list of elements, written as comma-separated objects within the parentheses <code>(</code> and <code>)</code>. Once a tuple is created, you cannot add, delete, or replace any element accidentally.</p>
+  </div>
+  <div class="def-box example-box">
+    <div class="def-label">Mutable vs immutable</div>
+    <p>Lists are <strong>mutable</strong>: elements can be modified after creation. Tuples are <strong>immutable</strong>: like string objects, once created their elements cannot be modified. Tuples are used to pass multiple values out of a function to reduce the risk of modifying the return values. Shared read operations: length with <code>len(s)</code>, the i-th item from origin 0 such as <code>tutors[1]</code>, and slices from index i to j-1 such as <code>tutors[1:2]</code>.</p>
+  </div>
+  <div class="quick-check">
+    <div class="qc-question">Why does the lecture suggest tuples for a function's return values?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Because tuples are immutable, the returned values cannot be modified accidentally." data-bad="">Immutability reduces the risk of the returned values being modified</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Tuples support the same reading operations as lists — len, indexing, and slicing — but nothing extra.">Tuples support more operations than lists</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+  <div class="quick-check">
+    <div class="qc-question">Does <code>"Hello"[0]</code> work in Python?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. A string is a container of characters, so indexing applies directly and gives the character H." data-bad="">Yes — it evaluates to the character H</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Strings are containers too: greet = 'hello' then greet[0] is the lecture's own example.">No — only lists can be indexed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-dicts-args">
+  <h2 class="section-title">Dictionaries and Command Line Arguments</h2>
+  <div class="def-box">
+    <div class="def-label">Dictionary</div>
+    <p>Stores data values in key:value pairs. A collection which is ordered (since Python 3.7), changeable, and does not allow duplicates. Items are referred to by the key name, e.g. <code>marks_hw["2134"]</code>. Create one with curly braces <code>{ }</code> or the <code>dict()</code> method.</p>
+  </div>
+  <div class="def-box example-box">
+    <div class="def-label">sys.argv</div>
+    <p>Inputs can be passed in through the command line instead of the <code>input()</code> function. They are stored in <code>argv</code> in the module <code>sys</code> as an array of string objects, and the first element is always the script name. Example: <code>python3 battles.py rostam</code>.</p>
+  </div>
+  <div class="quick-check">
+    <div class="qc-question">After running <code>python3 battles.py rostam</code>, what is <code>sys.argv[0]</code>?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is sys.argv[1]. The lecture stresses that the first element is always the script name.">"rostam"</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The first command line argument is always the script name itself." data-bad="">"battles.py"</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+</div>
+
 <script>
 window.addEventListener("DOMContentLoaded", function () {
-  if (window.COMP9001_PLACEHOLDERS) window.COMP9001_PLACEHOLDERS.renderMathPage();
-  if (window.initComp9001ChapterUI) window.initComp9001ChapterUI();
+  if (window.COMP9001_PROGRESS) {
+    window.COMP9001_PROGRESS.markPage("checks");
+  }
+  if (window.initComp9001ChapterUI) {
+    window.initComp9001ChapterUI();
+  }
 });
 </script>
+
 <!-- LANG-INJECT -->
 <script src="../../../shared/translations.js"></script>
 <script src="../../../shared/section-translations.js"></script>
