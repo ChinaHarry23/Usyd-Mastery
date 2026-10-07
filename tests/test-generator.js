@@ -270,6 +270,38 @@ test("generated practice data loads and is well formed", function () {
   assert.ok(/^[a-z0-9]+-\d+$/.test(win2.FLASHCARD_DECK_VERSION), "deck version is not <storageKey>-<n>");
 });
 
+test("a pack may ship its own translations", function () {
+  // The generator used to overwrite translations.js and section-translations.js
+  // with stubs on every build, so a pack could not carry a translation at all.
+  var trDir = path.join(ROOT, PACK, "translations");
+  var had = fs.existsSync(trDir);
+  fs.mkdirSync(trDir, { recursive: true });
+  fs.writeFileSync(path.join(trDir, "strings.json"),
+    JSON.stringify({ COMMON: { k: "\u793a\u4f8b" }, CH: {}, MINDMAP_UI: {} }));
+  fs.writeFileSync(path.join(trDir, "sections.json"),
+    JSON.stringify({ "chapter1-study.html": { title: "T", sections: { hero: "<h1>X</h1>" } } }));
+
+  var out = fs.mkdtempSync(path.join(ROOT, ".gen-tr-"));
+  try {
+    build(out);
+    var strings = fs.readFileSync(path.join(out, "shared", "translations.js"), "utf8");
+    var secs = fs.readFileSync(path.join(out, "shared", "section-translations.js"), "utf8");
+    assert.ok(strings.indexOf("\u793a\u4f8b") !== -1, "interface strings were discarded");
+    assert.ok(secs.indexOf("_SECTION_TRANSLATIONS") !== -1, "no section-translation global was emitted");
+    assert.ok(secs.indexOf("<h1>X</h1>") !== -1, "section translations were discarded");
+
+    // The global the pack emits must be the one lang-config.js looks for.
+    var langCfg = fs.readFileSync(path.join(out, "shared", "lang-config.js"), "utf8");
+    var name = secs.match(/var ([A-Z0-9_]+_SECTION_TRANSLATIONS)/)[1];
+    assert.ok(langCfg.indexOf(name) !== -1,
+      "lang-config.js looks for a different global than the pack emits (" + name + ")");
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+    fs.rmSync(trDir, { recursive: true, force: true });
+    if (had) fs.mkdirSync(trDir, { recursive: true });
+  }
+});
+
 test("the manifest counts the pages that were actually generated", function () {
   var win = {};
   new Function("window", fs.readFileSync(path.join(tmpA, "data", "chapter-manifest.js"), "utf8"))(win);

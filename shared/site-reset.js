@@ -59,12 +59,42 @@
     });
   }
 
+  /* A content pack picks its own storage key, which the fixed patterns above
+     cannot know. Read it from whatever the page declared so "Reset all
+     progress" also clears a hub that was generated into this site. */
+  function declaredPatterns() {
+    var extra = [];
+    function add(key) {
+      if (!key || typeof key !== "string") return;
+      extra.push(new RegExp("^" + key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "_"));
+    }
+    try {
+      var t = window.PROGRESS_TRACKER_CONFIG;
+      if (t && t.storageKey) add(t.storageKey);
+      var d = window.DASHBOARD_CONFIG;
+      if (d) {
+        [d.progressKey, d.flashcardsKey, d.langKey].forEach(function (k) {
+          if (k) add(String(k).replace(/_(progress|flashcards|lang)$/, ""));
+        });
+      }
+      var c = window.CHAT_STORAGE_KEY;
+      if (c) add(String(c).replace(/_chat_config$/, ""));
+    } catch (e) {
+      /* a page with no config simply adds nothing */
+    }
+    return extra;
+  }
+
+  function patterns() {
+    return KEY_PATTERNS.concat(declaredPatterns());
+  }
+
   function lsKeys() {
     var out = [];
     try {
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (k && matches(k, KEY_PATTERNS)) out.push(k);
+        if (k && matches(k, patterns())) out.push(k);
       }
     } catch (e) {
       /* storage disabled (private mode / blocked cookies) */

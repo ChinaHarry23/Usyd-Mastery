@@ -97,10 +97,20 @@ function parseSections(html) {
 }
 
 /* ── hrefs: the pack addresses chapters logically, we resolve them ──
-   Accepted in a pack (all equivalent):
-     chapter1/study#sec-x     01/study.html#sec-x
-     study.html#sec-x         ../chapters/01/math.html#sec-m-x
-   Emitted, relative to the consumer:
+
+   Accepted in a pack (all equivalent, verified by tests/test-generator.js):
+
+     chapter1/study#sec-x        01/study.html#sec-x
+     1/study#sec-x               study.html#sec-x        (this chapter)
+     chapters/01/math.html#a     ../chapters/01/math.html#a
+
+   An earlier version of this comment claimed `chapter1/study#x` worked while
+   the parser only matched a bare leading number, so that form threw at build
+   time — after verify-pack had already said the pack was valid. Both the
+   parser and the comment now agree.
+
+   Emitted, relative to whichever page consumes the link:
+
      tools/…    ../chapters/chapter1/web/chapter1-study.html#sec-x
      chapters/  chapter1-study.html#sec-x                                */
 
@@ -118,7 +128,8 @@ function resolveHref(href, defaultChapter, opts) {
   }
 
   var ch = defaultChapter;
-  var m = h.match(/^(\d+)\//);
+  // Accept "01/study", "1/study" and the "chapter1/study" spelling the docs use.
+  var m = h.match(/^(?:chapter)?(\d+)\//i);
   if (m) {
     ch = parseInt(m[1], 10);
     h = h.slice(m[0].length);
@@ -668,11 +679,31 @@ function main() {
   /* ── hub shared/ ── */
   write(path.join(outDir, "shared", "study.css"), themeCSS(pack));
   write(path.join(outDir, "shared", "lang-config.js"), langConfig(pack));
-  write(path.join(outDir, "shared", "translations.js"),
-    "/* " + pack.code + " \u2014 add COMMON / CH / MINDMAP_UI here to enable the 中文 toggle. */\n");
+  // A pack may ship its own translations. If it does, emit them; if it does
+  // not, emit an empty stub. An earlier version always wrote the stub, so a
+  // pack could not carry a translation at all — the build silently discarded it.
+  var trDir = path.join(packDir, "translations");
+  var strings = loadJSON(path.join(trDir, "strings.json"), "translations/strings.json");
+  var sections = loadJSON(path.join(trDir, "sections.json"), "translations/sections.json");
+
+  var stringsOut = [
+    "/* " + pack.code + " \u2014 interface strings for the language toggle.",
+    " * Written by scripts/build-hub.js from translations/strings.json. */"
+  ];
+  ["COMMON", "CH", "MINDMAP_UI"].forEach(function (g) {
+    stringsOut.push("var " + g + " = " + JSON.stringify((strings && strings[g]) || {}, null, 2) + ";");
+  });
+  if (!strings) {
+    stringsOut.push("/* No translations/strings.json in this pack \u2014 the toggle stays inert. */");
+  }
+  write(path.join(outDir, "shared", "translations.js"), stringsOut.join("\n\n") + "\n");
+
+  var trGlobal = pack.code.toUpperCase().replace(/[^A-Z0-9]/g, "") + "_SECTION_TRANSLATIONS";
   write(path.join(outDir, "shared", "section-translations.js"),
-    "/* " + pack.code + " \u2014 add " + pack.code.toUpperCase().replace(/[^A-Z0-9]/g, "") +
-    "_SECTION_TRANSLATIONS here to translate whole sections. */\n");
+    ["/* " + pack.code + " \u2014 whole-section translations.",
+     " * Written by scripts/build-hub.js from translations/sections.json. */",
+     "var " + trGlobal + " = " + JSON.stringify(sections || {}, null, 2) + ";",
+     ""].join("\n"));
 
   /* ── .gitignore: never commit what you do not own ── */
   write(path.join(outDir, ".gitignore"),

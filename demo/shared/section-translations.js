@@ -1,1 +1,3 @@
-/* DEMO101 — add DEMO101_SECTION_TRANSLATIONS here to translate whole sections. */
+/* DEMO101 — whole-section translations.
+ * Written by scripts/build-hub.js from translations/sections.json. */
+var DEMO101_SECTION_TRANSLATIONS = {};
