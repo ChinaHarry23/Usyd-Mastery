@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 3: Digital Input and Output (Arduino Part 1)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 foundations for COMP5047: exact definitions for digital I/O, the notation and formulas for Ohm's law, current limiting and power, current limits from the datasheet, and the timing model behind switch debouncing.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 3: Digital Input and Output (Arduino Part 1)">
+<meta property="og:description" content="Week 3 foundations for COMP5047: exact definitions for digital I/O, the notation and formulas for Ohm's law, current limiting and power, current limits from the datasheet, and the timing model behind switch debouncing.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter3-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128268;</span>
+    <h2>Week 3 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-ohm" class="toc-link">Ohm's law &amp; notation</a></li>
+  </ul>
+  <div class="toc-group">Limits</div>
+  <ul>
+    <li><a href="#sec-m-limits" class="toc-link">Current, power and datasheet limits</a></li>
+    <li><a href="#sec-m-timing" class="toc-link">The debounce timing model</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-recall" class="toc-link">Worked problems &amp; recall</a></li>
+  </ul>
+  <a href="chapter3-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5047 &mdash; Week 3 supplement</p>
+  <h1>Foundations: the arithmetic and the timing behind digital I/O</h1>
+  <p class="hero-desc">Week 3 is the week the unit becomes quantitative. This page collects the definitions that have to be word-perfect, the three rearrangements of Ohm's law that size every resistor in the kit, the datasheet limits that decide whether a circuit is safe, and a timing model that turns &ldquo;debounce the button&rdquo; into a number you can defend.</p>
+  <div class="chip-list">
+    <span>Formulas derived from the lecture deck's worked examples</span>
+    <span>Datasheet limits quoted for a 5&nbsp;V ATmega328P</span>
+    <span>Timing notation is a revision aid, not lecture notation</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on vocabulary more often than on arithmetic. Each of these has to be written in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Digital signal and logic level</div>
+    <p>A voltage interpreted as one of exactly two discrete states. A <strong>logic level</strong> is the state itself &mdash; HIGH or LOW &mdash; and the receiver decides which one it is by comparing the measured voltage against threshold bands rather than against an exact value.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">GPIO</div>
+    <p><strong>General-purpose input/output</strong>: a pin whose direction and behaviour are chosen by software rather than fixed by the circuit. Its direction is assigned with <code>pinMode()</code>, and nothing about it is predictable until that has happened.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Pull-up and pull-down resistor</div>
+    <p>A resistor that holds an input at a defined level when nothing else is driving it: a <strong>pull-up</strong> towards the supply rail (idle HIGH), a <strong>pull-down</strong> towards ground (idle LOW). It exists to stop the pin floating, and it is small enough (typically 10&nbsp;k&Omega;) to be overridden by the switch without wasting current.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Current limiting</div>
+    <p>Placing a resistor in series with a component so that the current through it is fixed by Ohm's law rather than by the source's ability to deliver. An LED has no useful internal resistance, so without a series resistor the current is limited only by the wiring &mdash; effectively a short circuit.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Contact bounce and debouncing</div>
+    <p><strong>Bounce</strong> is the rapid, unwanted opening and closing of a mechanical switch's contacts for a few milliseconds after it is operated. <strong>Debouncing</strong> is any electrical or software technique that makes the firmware see exactly one transition per press.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Active-low</div>
+    <p>A signal whose <em>asserted</em> state is the low voltage. A button wired with a pull-up is active-low: the pin is HIGH while released and LOW while pressed, so the firmware condition must be inverted &mdash; the deck's &ldquo;we must invert the behaviour&rdquo;.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Digital signal</td><td>Two discrete states, decided by thresholds</td><td>&ldquo;A signal that is either 0&nbsp;V or 5&nbsp;V exactly&rdquo; &mdash; real pins sit anywhere inside the bands</td></tr>
+        <tr><td>GPIO</td><td>Direction assigned by software</td><td>Treating a pin as fixed-purpose, like a resistor or an LED</td></tr>
+        <tr><td>Pull-up resistor</td><td>Defines the idle level and prevents floating</td><td>&ldquo;It protects the pin from too much current&rdquo; &mdash; that is the series resistor's job</td></tr>
+        <tr><td>Current limiting</td><td>A series resistance that fixes the current</td><td>Saying the LED &ldquo;draws what it needs&rdquo;, as if it regulated itself</td></tr>
+        <tr><td>Debouncing</td><td>One clean transition per press</td><td>Confusing it with the pull-up: they solve different problems</td></tr>
+        <tr><td>Floating input</td><td>An input with no defined level, reading unpredictably</td><td>&ldquo;It reads LOW&rdquo; &mdash; it reads noise, which is worse</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what does a pull-up resistor do?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes current limiting by a series resistor. A pull-up carries almost no current except while the switch is closed.">It limits the current flowing into the pin</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: it holds the input at a defined level (HIGH) whenever nothing else is driving it, which is what stops the pin from floating and reading noise." data-bad="">It holds the input at a defined HIGH level when the switch is open, so the pin never floats</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the opposite convention. A resistor to ground is a pull-down; a resistor to the supply rail is a pull-up.">It connects the pin to ground so that the reading is LOW when idle</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-ohm">
+  <h2 class="section-title">Ohm's law, notation and the series resistor</h2>
+  <p class="section-lead">One equation does all the work in this chapter. Learn it in three arrangements and every component value in the kit becomes derivable.</p>
+
+  <div class="theorem-box">
+    <h3>1. Ohm's law in three arrangements</h3>
+    \[ V = R \times I \qquad I = \frac{V}{R} \qquad R = \frac{V}{I} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Units are volts, amperes and ohms. Milliamps are 10<sup>&minus;3</sup>&nbsp;A, so 9&nbsp;mA is 0.009&nbsp;A in every substitution &mdash; the single most common arithmetic error in this week's tutorial.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The series LED branch</h3>
+    <p>A conducting LED fixes the voltage across itself at its forward voltage <em>V<sub>f</sub></em>. The supply voltage is shared out along the loop, so the series resistor must take the remainder:</p>
+    \[ V_R = V_{CC} - V_f \qquad\Longrightarrow\qquad R_{series} = \frac{V_{CC} - V_f}{I_f} \]
+    <p style="margin-top:0.6rem;">Two consequences worth stating explicitly. If <em>V<sub>CC</sub></em>&nbsp;&lt;&nbsp;<em>V<sub>f</sub></em> there is no solution with a positive current: the diode never becomes forward-biased and the LED stays dark, which is exactly what the deck shows for a 1.5&nbsp;V cell. And if <em>R<sub>series</sub></em> is rounded <em>down</em> to a standard value, the current rises &mdash; so always round up.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Power in the resistor</h3>
+    \[ P = V \times I = I^2 R = \frac{V^2}{R} \]
+    <p style="margin-top:0.6rem;">Power is the rate at which the resistor turns electrical energy into heat. It decides which <em>package</em> you need, not whether the circuit works &mdash; and, as the next section shows, it is usually the least demanding constraint in a breadboard circuit.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Worked example &mdash; the deck's own numbers</div>
+    <p><strong>(a)</strong> A 3&nbsp;V supply and a red LED dropping 2.2&nbsp;V: <em>V<sub>R</sub></em>&nbsp;=&nbsp;3.0&nbsp;&minus;&nbsp;2.2&nbsp;=&nbsp;0.8&nbsp;V. With <em>R</em>&nbsp;=&nbsp;220&nbsp;&Omega;, <em>I</em>&nbsp;=&nbsp;0.8&nbsp;/&nbsp;220&nbsp;=&nbsp;<strong>3.6&nbsp;mA</strong> &mdash; a sensible visible current.</p>
+    <p><strong>(b)</strong> The same LED on a 5&nbsp;V pin with <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.0&nbsp;V: <em>V<sub>R</sub></em>&nbsp;=&nbsp;3.0&nbsp;V. With <em>R</em>&nbsp;=&nbsp;330&nbsp;&Omega;, <em>I</em>&nbsp;=&nbsp;3.0&nbsp;/&nbsp;330&nbsp;=&nbsp;<strong>9.1&nbsp;mA</strong>, and the resistor dissipates <em>P</em>&nbsp;=&nbsp;3.0&nbsp;&times;&nbsp;0.0091&nbsp;=&nbsp;27&nbsp;mW.</p>
+    <p><strong>(c)</strong> A 1.5&nbsp;V cell and a red LED with <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.2&nbsp;V: the required <em>V<sub>R</sub></em> is negative, so <strong>no current flows at all</strong>. The LED's forward voltage has not been reached.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose and in code. The symbols below are a <em>revision aid</em> introduced here so that the week's relationships can be written compactly; they are not lecture notation and should not be quoted as such. Datasheet figures are those of the ATmega328P on an Arduino Uno at 5&nbsp;V.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(V\)</div><div class="sym-cell">voltage</div><div class="sym-cell">Potential difference in volts: what pushes the charge around the loop</div>
+    <div class="sym-cell">\(I\)</div><div class="sym-cell">current</div><div class="sym-cell">Rate of charge flow in amperes; identical at every point of a series loop</div>
+    <div class="sym-cell">\(R\)</div><div class="sym-cell">resistance</div><div class="sym-cell">Opposition to current, in ohms</div>
+    <div class="sym-cell">\(V_{CC}\)</div><div class="sym-cell">supply rail</div><div class="sym-cell">The board's logic voltage: 5&nbsp;V on the Uno, 3.3&nbsp;V on the ESP32</div>
+    <div class="sym-cell">\(V_f\)</div><div class="sym-cell">forward voltage</div><div class="sym-cell">The drop across a conducting LED, read from its datasheet</div>
+    <div class="sym-cell">\(V_R\)</div><div class="sym-cell">resistor drop</div><div class="sym-cell">The voltage left for the series resistor: \(V_{CC} - V_f\)</div>
+    <div class="sym-cell">\(I_f\)</div><div class="sym-cell">forward current</div><div class="sym-cell">The current chosen for the LED, e.g. 0.009&nbsp;A for 9&nbsp;mA</div>
+    <div class="sym-cell">\(R_{series}\)</div><div class="sym-cell">current-limiting resistor</div><div class="sym-cell">\((V_{CC} - V_f)/I_f\), then rounded <em>up</em> to a standard value</div>
+    <div class="sym-cell">\(P\)</div><div class="sym-cell">power</div><div class="sym-cell">\(V \times I\) in watts: the heat the component must dissipate</div>
+    <div class="sym-cell">\(I_{pin}\)</div><div class="sym-cell">pin current</div><div class="sym-cell">Current through one GPIO pin: 20&nbsp;mA recommended, 40&nbsp;mA absolute maximum</div>
+    <div class="sym-cell">\(T_{sample}\)</div><div class="sym-cell">sample period</div><div class="sym-cell">Time for one pass of <code>loop()</code>; tens of microseconds in a small sketch</div>
+    <div class="sym-cell">\(t_{bounce}\)</div><div class="sym-cell">bounce duration</div><div class="sym-cell">How long the contacts chatter after a press: roughly 1&ndash;5&nbsp;ms</div>
+    <div class="sym-cell">\(t_{debounce}\)</div><div class="sym-cell">debounce window</div><div class="sym-cell">How long a reading must hold still before the firmware believes it</div>
+    <div class="sym-cell">\(T_{press}\)</div><div class="sym-cell">press duration</div><div class="sym-cell">How long a human holds a button: roughly 80&ndash;200&nbsp;ms</div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-notation"></div>
+  <script type="application/json" id="ix-m-notation">
+  {
+    "title": "Match the symbol to what it means",
+    "subtitle": "Click a symbol on the left, then its meaning on the right.",
+    "pairs": [
+      ["V_CC", "The board's logic supply rail: 5 V on the Uno, 3.3 V on the ESP32"],
+      ["V_f", "The voltage an LED drops while it is conducting, taken from its datasheet"],
+      ["V_R", "The voltage left across the series resistor: V_CC minus V_f"],
+      ["I_f", "The forward current you have chosen for the LED, in amperes"],
+      ["P = V x I", "The power the component turns into heat, in watts"],
+      ["R_series", "The current-limiting resistor, rounded up to a standard value"],
+      ["t_bounce", "The 1-5 ms of contact chatter that must be ignored after a press"],
+      ["t_debounce", "How long a reading must hold still before the firmware accepts it"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A green LED has <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.2&nbsp;V and you want 12&nbsp;mA from a 5&nbsp;V pin. Which resistor value is the right <em>choice</em>?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the exact calculation, 2.8 / 0.012 = 233 Ω, but 233 Ω is not a standard resistor value — and rounding it down would raise the current above 12 mA.">233 &Omega;, the exact result</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. R = (5.0 - 2.2)/0.012 = 233 Ω; the next standard value up is 240 Ω, giving 11.7 mA — just under target and safely inside every rating." data-bad="">240 &Omega;, the next standard value above the exact result</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="220 Ω is the next standard value below 233 Ω. It would give 12.7 mA — over the target, which is the wrong direction to round.">220 &Omega;, the next standard value below the exact result</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked problem &mdash; sizing a resistor and checking that it survives.</strong> A blue LED has <em>V<sub>f</sub></em>&nbsp;=&nbsp;3.0&nbsp;V and a rated forward current of 20&nbsp;mA. You want to run it at 10&nbsp;mA from a 5&nbsp;V pin, using the 1/4&nbsp;W resistors in the kit.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Voltage left for the resistor.</strong> <em>V<sub>R</sub></em>&nbsp;=&nbsp;5.0&nbsp;&minus;&nbsp;3.0&nbsp;=&nbsp;<strong>2.0&nbsp;V</strong>. Note how little headroom a blue LED leaves on a 5&nbsp;V rail &mdash; the same circuit on a 3.3&nbsp;V board would not light it at all.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Exact resistance.</strong> <em>R</em>&nbsp;=&nbsp;<em>V<sub>R</sub></em>&nbsp;/&nbsp;<em>I<sub>f</sub></em>&nbsp;=&nbsp;2.0&nbsp;/&nbsp;0.010&nbsp;=&nbsp;<strong>200&nbsp;&Omega;</strong>. Convert milliamps to amperes before dividing.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Choose a real resistor.</strong> 200&nbsp;&Omega; is not in the E12 series, so take the next value up: 220&nbsp;&Omega;. The actual current becomes <em>I</em>&nbsp;=&nbsp;2.0&nbsp;/&nbsp;220&nbsp;=&nbsp;<strong>9.1&nbsp;mA</strong>, about 9&nbsp;% below target and well under the 20&nbsp;mA rating.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Check the power.</strong> <em>P</em>&nbsp;=&nbsp;<em>V<sub>R</sub></em>&nbsp;&times;&nbsp;<em>I</em>&nbsp;=&nbsp;2.0&nbsp;&times;&nbsp;0.0091&nbsp;=&nbsp;<strong>18&nbsp;mW</strong>. A 1/4&nbsp;W resistor is rated 250&nbsp;mW, so it is running at about 7&nbsp;% of its rating &mdash; no warmth, no derating needed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Check the pin.</strong> 9.1&nbsp;mA is below the 20&nbsp;mA recommended per-pin current and far below the 40&nbsp;mA absolute maximum. Had the calculation produced 30&nbsp;mA, the resistor would have been fine but the <em>pin</em> would not &mdash; the constraint that binds first is the GPIO, not the resistor.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-limits">
+  <h2 class="section-title">Current, power and datasheet limits</h2>
+  <p class="section-lead">A calculation tells you what value to use. The datasheet tells you whether the circuit is allowed to exist. Both have to be checked, and they are not the same check.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Limit</th><th>Value on a 5&nbsp;V ATmega328P</th><th>What happens when you exceed it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Current per pin, recommended</td><td>20&nbsp;mA</td><td>The pin still works, but the output voltage sags away from 5&nbsp;V and the part runs hot</td></tr>
+        <tr><td>Current per pin, absolute maximum</td><td>40&nbsp;mA</td><td>Permanent damage. &ldquo;Absolute maximum&rdquo; is a destruction limit, never a design target.</td></tr>
+        <tr><td>Total current through V<sub>CC</sub> and GND</td><td>200&nbsp;mA</td><td>Several pins each within their own limit can still exceed the chip's total</td></tr>
+        <tr><td>LED forward current, typical</td><td>20&nbsp;mA continuous</td><td>Brightness falls, then the junction fails &mdash; and without a series resistor this takes milliseconds</td></tr>
+        <tr><td>Resistor power rating, typical kit part</td><td>1/4&nbsp;W (250&nbsp;mW)</td><td>Overheating, drifting resistance, eventually an open circuit</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>It is worth doing the comparison explicitly, because it tells you where to spend your attention. For a 5&nbsp;V rail and an LED with <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.0&nbsp;V, the resistor always drops 3.0&nbsp;V, so its dissipation is <em>P</em>&nbsp;=&nbsp;3.0&nbsp;&times;&nbsp;<em>I</em> while the pin supplies <em>I</em>.</p>
+
+  <div data-ix="race" data-ix-src="#ix-m-power"></div>
+  <script type="application/json" id="ix-m-power">
+  {
+    "title": "The same circuit, two different constraints",
+    "subtitle": "5 V supply, LED forward voltage 2.0 V, so the resistor drops 3.0 V in every row. Power is P = 3.0 x I.",
+    "max": 90,
+    "rows": [
+      { "name": "1000 Ω — 3.0 mA", "value": 9.0, "display": "9 mW, 3.6% of a 1/4 W rating" },
+      { "name": "470 Ω — 6.4 mA", "value": 19.1, "display": "19 mW, 7.6% of rating" },
+      { "name": "330 Ω — 9.1 mA", "value": 27.3, "display": "27 mW, 10.9% of rating" },
+      { "name": "220 Ω — 13.6 mA", "value": 40.9, "display": "41 mW, 16% of rating" },
+      { "name": "100 Ω — 30.0 mA", "value": 90.0, "display": "90 mW — still fine for the resistor, too much for the pin" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Read the last row again.</strong> At 100&nbsp;&Omega; the resistor is dissipating 90&nbsp;mW &mdash; barely a third of its rating &mdash; while the GPIO pin is being asked for 30&nbsp;mA, which is above the recommended 20&nbsp;mA and uncomfortably close to the 40&nbsp;mA destruction limit. On a microcontroller board the <em>pin current</em> is almost always the binding constraint, and the resistor's power rating almost never is. Sizing a resistor is not the same as sizing a circuit.
+  </div>
+
+  <div class="callout">
+    <strong>The two rules of current, restated arithmetically.</strong> Current divides between parallel branches in inverse proportion to resistance, so for two branches <em>I</em><sub>1</sub>&nbsp;/&nbsp;<em>I</em><sub>2</sub>&nbsp;=&nbsp;<em>R</em><sub>2</sub>&nbsp;/&nbsp;<em>R</em><sub>1</sub>, and the branch currents sum to the total. And because all the energy must be used, the voltage drops around any closed loop sum to the supply &mdash; which is the same statement as <em>V<sub>R</sub></em>&nbsp;=&nbsp;<em>V<sub>CC</sub></em>&nbsp;&minus;&nbsp;<em>V<sub>f</sub></em>.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A student drives four LEDs from four pins, each drawing a carefully calculated 19&nbsp;mA. Every individual pin is inside its recommended limit. What should worry them?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. 4 x 19 mA = 76 mA, which is inside the 200 mA total for the chip — but it is close enough to matter once a fifth and sixth output are added, and the total limit is the one people forget." data-bad="">The total current: 76 mA flows through the chip's V_CC and GND pins, and the 200 mA total limit is shared by every output</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="19 mA is below the 20 mA recommended figure, so no individual pin is over its own limit. The risk is cumulative, not per-pin.">Nothing: 19 mA is below the 20 mA recommended limit, so the design is safe</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The resistor's dissipation is P = 3.0 V x 19 mA ≈ 57 mW, about a quarter of a 1/4 W rating. Power is not the binding constraint here.">The resistors will overheat, because four of them dissipate at once</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked problem &mdash; current dividing between two branches.</strong> Two LEDs share one 5&nbsp;V pin: a red one with <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.0&nbsp;V behind a 330&nbsp;&Omega; resistor, and a green one with <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.0&nbsp;V behind a 220&nbsp;&Omega; resistor. Both branches return to the same ground rail.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Treat each branch separately.</strong> The resistors are in parallel as far as the pin is concerned, so each branch sees the full 3.0&nbsp;V across its own resistor. Branch 1: 3.0&nbsp;/&nbsp;330&nbsp;=&nbsp;<strong>9.1&nbsp;mA</strong>. Branch 2: 3.0&nbsp;/&nbsp;220&nbsp;=&nbsp;<strong>13.6&nbsp;mA</strong>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Check the division rule.</strong> <em>I</em><sub>1</sub>&nbsp;/&nbsp;<em>I</em><sub>2</sub>&nbsp;=&nbsp;9.1&nbsp;/&nbsp;13.6&nbsp;=&nbsp;0.67, and <em>R</em><sub>2</sub>&nbsp;/&nbsp;<em>R</em><sub>1</sub>&nbsp;=&nbsp;220&nbsp;/&nbsp;330&nbsp;=&nbsp;0.67. The currents divide in inverse proportion to resistance, exactly as the deck states &mdash; the <em>lower</em> resistance carries the <em>larger</em> share.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Add them up.</strong> The pin now sources 9.1&nbsp;+&nbsp;13.6&nbsp;=&nbsp;<strong>22.7&nbsp;mA</strong>. Each branch is individually modest, but the pin is over its recommended 20&nbsp;mA &mdash; the classic mistake of checking the components and forgetting the driver.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Fix it properly.</strong> Drive the second LED from a different GPIO pin, or raise both resistors (470&nbsp;&Omega; and 330&nbsp;&Omega; give 6.4&nbsp;+&nbsp;9.1&nbsp;=&nbsp;15.5&nbsp;mA). Never solve a current-budget problem by removing the resistors.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-timing">
+  <h2 class="section-title">The debounce timing model</h2>
+  <p class="section-lead">&ldquo;Debounce the button&rdquo; becomes a defensible design decision once you can put four durations in order.</p>
+
+  <div class="theorem-box">
+    <h3>The ordering that makes debouncing work</h3>
+    \[ T_{sample} \;\ll\; t_{bounce} \;\ll\; t_{debounce} \;\ll\; T_{press} \]
+    <p style="margin-top:0.6rem;">Each inequality is a separate claim, and each can fail on its own:</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Inequality</th><th>What it means</th><th>What breaks if it is violated</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>\(T_{sample} \ll t_{bounce}\)</td><td>The loop runs far faster than the contacts chatter</td><td>If the loop were slower than the bounce, it would miss the chatter &mdash; debouncing would be unnecessary rather than wrong</td></tr>
+        <tr><td>\(t_{bounce} \ll t_{debounce}\)</td><td>The window is longer than the whole burst</td><td>Bounce leaks through as extra events, and one press counts several times</td></tr>
+        <tr><td>\(t_{debounce} \ll T_{press}\)</td><td>The window is far shorter than a human press</td><td>A genuine press is swallowed and the button feels broken or intermittent</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>How many spurious events a missing debounce produces</h3>
+    <p>If the firmware samples every \(T_{sample}\) seconds and the contacts chatter for \(t_{bounce}\) seconds, the number of samples taken during the burst is</p>
+    \[ N_{spurious} \approx \frac{t_{bounce}}{T_{sample}} \]
+    <p style="margin-top:0.6rem;">With \(T_{sample} = 50\ \mu s\) and \(t_{bounce} = 2\ ms\), that is \(N_{spurious} \approx 40\) samples &mdash; and every one of them is a chance for the program to act on a transition that never happened.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-debounce-order"></div>
+  <script type="application/json" id="ix-m-debounce-order">
+  {
+    "title": "Order the debounce design decisions",
+    "subtitle": "Rebuild the reasoning that turns a bouncing contact into a reliable button.",
+    "steps": [
+      "Estimate how long the contacts bounce: 1 to 5 ms for a small tactile switch",
+      "Check that the loop samples far faster than that, so the bounce is visible at all",
+      "Choose a debounce window comfortably longer than the bounce, e.g. 5 to 50 ms",
+      "Confirm the window is far shorter than a human press, so real presses are never lost",
+      "Implement the window without blocking, using millis() rather than delay()",
+      "Act on the accepted edge only, so one press produces exactly one event"
+    ]
+  }
+  </script>
+
+  <div data-ix="timeline" data-ix-src="#ix-m-budget"></div>
+  <script type="application/json" id="ix-m-budget">
+  {
+    "title": "The timing budget for one button press",
+    "subtitle": "Four durations on the same axis, from the sample period up to the limit of human perception.",
+    "events": [
+      { "label": "50 us", "title": "Sample period T_sample", "detail": "One pass of a small loop(). The firmware is three orders of magnitude faster than the mechanical event it is watching, which is exactly why the bounce is visible." },
+      { "label": "1-5 ms", "title": "Bounce duration t_bounce", "detail": "The physical settling time of the contacts. Nothing in software can make it shorter — it is a property of the switch, and it is why the window exists." },
+      { "label": "5-50 ms", "title": "Debounce window t_debounce", "detail": "The stability requirement. It must exceed the bounce with margin, and it can be as generous as 50 ms without any risk of swallowing a real press." },
+      { "label": "80-200 ms", "title": "Human press T_press", "detail": "How long a person actually holds a button. Even a 50 ms window is four times shorter than the quickest plausible press, which is the safety margin." },
+      { "label": "~100 ms", "title": "Perceptual latency limit", "detail": "Beyond roughly a tenth of a second an interface stops feeling direct. The debounce window spends a few milliseconds of that budget and no more." },
+      { "label": "the design", "title": "5 ms window, 5 ms latency", "detail": "The chosen point: large enough to erase 2 ms of bounce entirely, small enough that the added delay is twenty times below the perceptual threshold." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A sketch uses a 500&nbsp;ms debounce window on a button that users press quickly. What is the likely complaint?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A long window cannot let bounce through — it can only ignore too much. Bounce leaks through when the window is too short.">The counter still increments several times per press</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. 500 ms is longer than a quick human press (80-200 ms), so presses that start and finish inside the window are never accepted — the inequality t_debounce &lt;&lt; T_press has been violated." data-bad="">Some presses do nothing at all, because the window outlasts the press</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The window length has no effect on the pin's electrical state or on the pull-up. It only decides what the firmware believes.">The pin floats while the window is open</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked problem &mdash; choosing a window with evidence.</strong> A capacitive touch pad is substituted for the mechanical button. Its own datasheet specifies a response time of 25&nbsp;ms and 200&nbsp;&micro;s of jitter, and users tap it for as little as 60&nbsp;ms.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Re-read the failure modes.</strong> A capacitive pad has no contacts, so it does not bounce in the mechanical sense; what it has is a fixed response delay plus a small amount of jitter in when the new reading appears.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Substitute the numbers.</strong> The quantity that has to be swallowed is 200&nbsp;&micro;s of jitter, not 2&nbsp;ms of bounce. The shortest press is 60&nbsp;ms, and the pad already costs 25&nbsp;ms of that.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Place the window.</strong> It must exceed the jitter with margin and stay well under 60&nbsp;ms minus the sensor delay, so the usable band is roughly 2&ndash;20&nbsp;ms. Choose <strong>10&nbsp;ms</strong>: five times the jitter, and the total delay of 35&nbsp;ms is still inside the perceptual budget.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the general lesson.</strong> The 5&nbsp;ms figure for a tactile switch is not a constant to memorise; it is the output of the inequality \(T_{sample} \ll t_{noise} \ll t_{debounce} \ll T_{press}\) evaluated for that particular input device. Change the device and the window changes with it.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-recall">
+  <h2 class="section-title">Recall and formula self-test</h2>
+  <p class="section-lead">Everything on this page reduces to five formulas and a handful of constants. If you can produce them from memory, the tutorial calculations take seconds.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>The five formulas</h3>
+      <p><em>V</em>&nbsp;=&nbsp;<em>R I</em> &nbsp;&middot;&nbsp; <em>I</em>&nbsp;=&nbsp;<em>V</em>/<em>R</em> &nbsp;&middot;&nbsp; <em>R</em>&nbsp;=&nbsp;<em>V</em>/<em>I</em> &nbsp;&middot;&nbsp; <em>R<sub>series</sub></em>&nbsp;=&nbsp;(<em>V<sub>CC</sub></em>&nbsp;&minus;&nbsp;<em>V<sub>f</sub></em>)/<em>I<sub>f</sub></em> &nbsp;&middot;&nbsp; <em>P</em>&nbsp;=&nbsp;<em>V I</em></p>
+    </div>
+    <div class="glance-card">
+      <h3>The constants</h3>
+      <p>Uno logic 5&nbsp;V, ESP32 logic 3.3&nbsp;V. Red LED <em>V<sub>f</sub></em> 1.8&ndash;2.2&nbsp;V, blue/white about 3.0&nbsp;V. Pin current 20&nbsp;mA recommended, 40&nbsp;mA maximum. Bounce 1&ndash;5&nbsp;ms; debounce window 5&ndash;50&nbsp;ms.</p>
+    </div>
+    <div class="glance-card">
+      <h3>The units trap</h3>
+      <p>Milliamps are 10<sup>&minus;3</sup>&nbsp;A. Writing <em>I</em>&nbsp;=&nbsp;3.0&nbsp;/&nbsp;9 instead of 3.0&nbsp;/&nbsp;0.009 turns a 333&nbsp;&Omega; resistor into a 0.33&nbsp;&Omega; one &mdash; and a short circuit.</p>
+    </div>
+    <div class="glance-card">
+      <h3>The direction of rounding</h3>
+      <p>Always round the series resistance <em>up</em> to the next standard value, because a smaller resistance means a larger current. Down-rounding silently spends the LED's safety margin.</p>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: formulas and constants",
+    "subtitle": "Write the answer down before you flip the card.",
+    "cards": [
+      { "front": "State Ohm's law in all three arrangements", "back": "V = R x I, I = V / R, R = V / I — volts, amperes and ohms. Any two quantities determine the third.", "hint": "Ohm's law" },
+      { "front": "A 5 V pin drives an LED with V_f = 2.0 V. What voltage is left for the resistor?", "back": "V_R = V_CC - V_f = 5.0 - 2.0 = 3.0 V. The supply is shared out along the loop, so every other drop in the branch comes out of the same 5 V.", "hint": "Series branch" },
+      { "front": "Give the resistor formula and the resistor for 10 mA on that branch", "back": "R_series = (V_CC - V_f) / I_f = 3.0 / 0.010 = 300 ohms, rounded up to the standard 330 ohms, which gives 9.1 mA.", "hint": "Calculation" },
+      { "front": "How much power does that 330 ohm resistor dissipate?", "back": "P = V x I = 3.0 x 0.0091 = 27 mW. A 1/4 W resistor is rated 250 mW, so it is at about 11 % of its limit — the pin current binds long before the resistor power does.", "hint": "Power" },
+      { "front": "What are the ATmega328P pin current limits?", "back": "20 mA recommended per pin, 40 mA absolute maximum per pin, and 200 mA total through the V_CC and GND pins. Absolute maximum is a damage threshold, not a design target.", "hint": "Datasheet" },
+      { "front": "Why does a digital input never return a value like 2.4 V?", "back": "Because a digital receiver applies thresholds: below about 0.3 x V_CC is LOW and above about 0.6 x V_CC is HIGH, and a digitalRead() returns a state, never a voltage.", "hint": "Logic levels" },
+      { "front": "Write the debounce timing inequality and give typical values", "back": "T_sample << t_bounce << t_debounce << T_press: about 50 us, 1-5 ms, 5-50 ms and 80-200 ms. Each inequality rules out a different failure mode.", "hint": "Timing" },
+      { "front": "How many spurious events does a 2 ms bounce produce at a 50 us sample period?", "back": "N ≈ t_bounce / T_sample = 2 ms / 50 us = 40 samples inside the burst — every one of them a chance for the sketch to act on a transition that never happened.", "hint": "Estimation" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">An LED has <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.2&nbsp;V. You connect it and a 220&nbsp;&Omega; resistor to a 1.5&nbsp;V cell. What current flows?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="6.8 mA is the deck's figure for 1.5 V across a 220 Ω resistor with no LED in the loop. With the LED present, its forward voltage has to be reached first.">6.8 mA, as the deck calculates</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. V_R = 1.5 - 2.2 = -0.7 V is negative, which means the supply never reaches the LED's forward voltage. The diode never becomes forward-biased, so essentially no current flows and the LED stays dark." data-bad="">Essentially zero: the supply cannot reach the LED's forward voltage</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That value comes from dividing 1.5 by 220 and ignoring the LED entirely. The LED's forward drop is the whole point of the example.">About 3.4 mA, half the current of a 2&nbsp;V supply</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide has the board anatomy, the breadboard build sequence and the button wiring; this page has the arithmetic behind them. Then work the Quiz Hub and the Flashcards for Week 3 before the tutorial.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5047ChapterUI) return;
+    try {
+      window.initCOMP5047ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5047 chapter 3] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

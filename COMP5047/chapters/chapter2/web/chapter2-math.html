@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 2: Interaction Devices and Techniques</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 foundations for COMP5047: exact definitions of input, device, technique, mode and chunking; the design-space axes of input devices; Fitts's, Hick's and the steering law; CD gain and rate mappings; expected/sensed/desired as set relationships; and a worked classification routine.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 2: Interaction Devices and Techniques">
+<meta property="og:description" content="Week 2 foundations for COMP5047: input device taxonomy and notation, the models behind pointing, the expected/sensed/desired framework, and a classification checklist for exam answers.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 2 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Design space &amp; notation</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-models" class="toc-link">Fitts, Hick, steering and gain</a></li>
+    <li><a href="#sec-m-esd" class="toc-link">Expected / sensed / desired</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-practice" class="toc-link">Classification &amp; assumption storming</a></li>
+  </ul>
+  <a href="chapter2-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5047 &mdash; Week 2 supplement</p>
+  <h1>Foundations: the design space of input devices</h1>
+  <p class="hero-desc">Week 2 is about choosing and shaping transducers, so this page does the job a formula sheet does elsewhere: it fixes the definitions the lecture relies on, turns the device vocabulary into axes you can plot a device on, gives you the models that quantify pointing (Fitts, Hick, the steering law, CD gain and rate mappings), and reduces expected / sensed / desired to set relationships you can write down in an exam.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the lecture deck</span>
+    <span>Models from the Week 2 readings</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these as one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Input, input device, output</div>
+    <p><strong>Input</strong> is sensed information about the environment. An <strong>input device</strong> is a transducer that senses physical properties of people, places, or things. <strong>Output</strong> is any emission or modification of the physical environment.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Interaction technique</div>
+    <p>All hardware <em>and software</em> elements that provide a way for the user to accomplish a low-level task &mdash; the lecture writes it as input + output. A device on its own is not a technique: without a mapping and feedback there is nothing for the user to accomplish.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Mode</div>
+    <p>A context where user actions (keypresses, mouse clicks etc.) are treated in a specific way. The definition is about how input is <em>interpreted</em>, not about the system having internal state &mdash; every system has state.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Chunking</div>
+    <p>The integration of multiple degrees of freedom to support higher-level tasks. Chunking is how a many-degree-of-freedom device becomes usable: the user performs one task instead of solving one control problem per dimension.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Transfer function</div>
+    <p>The mapping from an input signal to a functionality in indirect interfaces. An <em>appropriate mapping</em> matches the property sensed: position-to-position (tablet), velocity-to-velocity (mouse), force-to-velocity (isometric joystick). Gain is one parameter of a transfer function, not a synonym for it.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Implicit interaction</div>
+    <p>An action, performed by the user, that is not primarily aimed to interact with a computerized system but which such a system understands as input (Albrecht Schmidt, quoted in the deck). Pressing a button is never implicit, however the reading is interpreted.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Input device</td><td>A transducer; properties of people, <em>places</em> or things</td><td>&ldquo;Anything that sends data to the computer&rdquo;, which would include a software shortcut</td></tr>
+        <tr><td>Interaction technique</td><td>Input <em>and</em> output, hardware <em>and</em> software, one low-level task</td><td>Naming a device and stopping there</td></tr>
+        <tr><td>Mode</td><td>The same action is interpreted differently</td><td>&ldquo;Any internal state&rdquo; &mdash; that makes every program modal</td></tr>
+        <tr><td>Chunking</td><td>Several degrees of freedom integrated into one higher-level task</td><td>Grouping commands into a submenu &mdash; that is menu structure, not DoF integration</td></tr>
+        <tr><td>Transfer function</td><td>Signal in, functionality out</td><td>Confusing it with gain: gain is a parameter inside a transfer function</td></tr>
+        <tr><td>Implicit interaction</td><td>The action was not aimed at the system</td><td>Treating any sensor reading as implicit; a deliberate gesture is still intentional</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose. The symbols below are a <em>revision aid</em> introduced here so that you can describe a device compactly; they are not lecture notation and should not be quoted as such.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(p\)</div><div class="sym-cell">property sensed</div><div class="sym-cell">Position, motion, force, angle or torque &mdash; for pointing devices the choice is usually position, motion or force</div>
+    <div class="sym-cell">\(n_d\)</div><div class="sym-cell">dimensions</div><div class="sym-cell">How many dimensions are sensed at once; the deck's scale runs \(0, 1, 2, 3, 6, 9\)</div>
+    <div class="sym-cell">\(\delta\)</div><div class="sym-cell">directness</div><div class="sym-cell">\(\delta = 1\) when input and display share a surface (touchscreen); \(\delta = 0\) when the display is elsewhere (mouse, tablet on a desk)</div>
+    <div class="sym-cell">\(\alpha\)</div><div class="sym-cell">absoluteness</div><div class="sym-cell">\(\alpha = 1\) for position sensing (absolute), \(\alpha = 0\) for motion sensing (relative)</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">transfer function</div><div class="sym-cell">The mapping \(u = T(x)\) from the input signal \(x\) to a controlled quantity \(u\)</div>
+    <div class="sym-cell">\(G_{CD}\)</div><div class="sym-cell">control-display gain</div><div class="sym-cell">\(v_{\text{cursor}} / v_{\text{device}}\): cursor velocity per unit of device velocity</div>
+    <div class="sym-cell">\(A, W\)</div><div class="sym-cell">amplitude, width</div><div class="sym-cell">Distance to the target and the target's width, i.e. the error tolerance</div>
+    <div class="sym-cell">\(ID\)</div><div class="sym-cell">index of difficulty</div><div class="sym-cell">\(\log_2(A/W + 1)\), measured in bits &mdash; the difficulty of a target acquisition, independent of the device</div>
+    <div class="sym-cell">\(MT\)</div><div class="sym-cell">movement time</div><div class="sym-cell">The measured or predicted time to acquire the target</div>
+    <div class="sym-cell">\(H\)</div><div class="sym-cell">decision entropy</div><div class="sym-cell">\(\log_2(n+1)\) bits for a choice among \(n\) equally probable alternatives (Hick's law)</div>
+    <div class="sym-cell">\(t_{acq}\)</div><div class="sym-cell">acquisition time</div><div class="sym-cell">Average time to pick up or put down a device &mdash; also called homing time</div>
+    <div class="sym-cell">\(E, S, D\)</div><div class="sym-cell">expected, sensed, desired</div><div class="sym-cell">The three movement sets the ESD framework compares</div>
+    <div class="sym-cell">\(K, \alpha_r\)</div><div class="sym-cell">rate mapping</div><div class="sym-cell">Parameters of the nonlinear rate mapping \(dx = K x^{\alpha_r}\) used for self-centring force devices</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is an interaction technique?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the input device, which is only one component. The technique is the device plus the mapping plus the feedback that make the task achievable.">A transducer that senses physical properties of people, places or things</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: input plus output, hardware plus software, aimed at one low-level task. The definition is what lets you criticise a device and its mapping together." data-bad="">All hardware and software elements that let the user accomplish a low-level task</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a composite goal, not a low-level task. Techniques are defined against the six primitives: selection, position, orient, path, quantify, text.">Any feature of an interface that a user is able to learn</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Design space &amp; notation</h2>
+  <p class="section-lead">Exam questions in this unit usually ask you to place a device somewhere and justify it. The morphological view from the reading helps: a device is a point in a parametrically described design space, and the useful axes are the ones that change what the device can do.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; property sensed and number of dimensions</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property sensed</th><th>Typical dimensions</th><th>Devices</th><th>Consequence</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Linear position</td><td>2 (or 3 with a 3D tracker)</td><td>Stylus tablet, touchscreen</td><td>Absolute: a fixed surface-to-display mapping; can disagree with a software value (nulling)</td></tr>
+        <tr><td>Linear motion</td><td>2</td><td>Mouse, trackpad, trackball</td><td>Relative: needs a cursor, and needs clutching when the physical space runs out</td></tr>
+        <tr><td>Force</td><td>2 (or 6 in a space mouse)</td><td>Isometric joystick</td><td>Self-centring, so it must be mapped to a rate; fine control takes practice</td></tr>
+        <tr><td>Angle</td><td>1</td><td>Rotary knob or dial</td><td>One dimension, which is why several knobs are needed for several values</td></tr>
+        <tr><td>Orientation</td><td>3</td><td>Six-DoF tracker</td><td>Combined with position it gives the deck's \(3 + 3\); without chunking it is six control problems</td></tr>
+        <tr><td>None (discrete)</td><td>0</td><td>Keyboard, button box</td><td>Symbolic entry; a 2D position becomes two quantify primitives</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; directness and absoluteness</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Direct and absolute</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Input and display share one surface</li>
+        <li>Pointing is literal; no cursor is required</li>
+        <li>Costs: no buttons for state transitions, and the hand occludes the target</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Indirect and relative</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>The display is elsewhere; a cursor carries the position</li>
+        <li>Device and cursor can be decoupled, so clutching is possible</li>
+        <li>Costs: clutching, quantisation and limb-precision problems</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 3 &mdash; the transfer function class</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Class</th><th>Used with</th><th>Feels like</th><th>Failure if mismatched</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Position &rarr; position</td><td>Absolute position devices (tablet, touchscreen)</td><td>The object is where your hand is</td><td>Nulling: hand and software value drift apart</td></tr>
+        <tr><td>Velocity &rarr; velocity</td><td>Relative motion devices (mouse, trackpad)</td><td>The cursor mirrors your hand's motion</td><td>Unusable if the cursor is clipped and the gain is fixed badly</td></tr>
+        <tr><td>Force &rarr; velocity (rate control)</td><td>Isometric, self-centring devices</td><td>Press harder, move faster; release to stop</td><td>No speed control and no predictable stop</td></tr>
+        <tr><td>Position &rarr; velocity</td><td>Usually inappropriate: e.g. scrolling from cursor position</td><td>Runaway or sluggish scrolling</td><td>Control is poor; it exists only because of screen clipping</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-classify"></div>
+  <script type="application/json" id="ix-m-classify">
+  {
+    "title": "Order the device classification checklist",
+    "subtitle": "Rebuild the order in which to interrogate a device before you label it or criticise it.",
+    "steps": [
+      "Name the property sensed: position, motion, force, angle or torque",
+      "Count the dimensions and decide whether input and display share a surface",
+      "Decide whether the device is absolute or relative",
+      "State the transfer function class that the property sensed makes appropriate",
+      "List the device states and the transitions the application can act on",
+      "Weigh the hidden costs: clutching, quantisation, limb precision, acquisition time",
+      "Name the low-level tasks the device supports well, and the ones it does not"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Property sensed</td><td>Position, motion, force, angle, torque</td><td>You describe the shape of the device instead</td></tr>
+        <tr><td>2. Dimensions and directness</td><td>How many dimensions; one surface or two</td><td>You treat &ldquo;direct&rdquo; and &ldquo;absolute&rdquo; as the same axis</td></tr>
+        <tr><td>3. Absolute or relative</td><td>Does the device report a place, or a change?</td><td>You claim a mouse needs no feedback</td></tr>
+        <tr><td>4. Transfer function</td><td>The class that matches the property sensed</td><td>You confuse gain with the mapping itself</td></tr>
+        <tr><td>5. States</td><td>Hover, tracking, dragging and their transitions</td><td>You list states without saying what each one enables</td></tr>
+        <tr><td>6. Hidden costs</td><td>Clutching, quantisation, limb precision, homing time</td><td>You claim a device has no trade-offs</td></tr>
+        <tr><td>7. Tasks supported</td><td>Which of the six low-level tasks it serves</td><td>You answer &ldquo;which device is best&rdquo; at all</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A six-degree-of-freedom tracker reports three position and three orientation dimensions. Which criticism follows from the lecture's vocabulary?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Dimension count is not a quality ranking. The deck's own point is that everything is best for something and worst for something else.">It is a better device than a mouse because it senses more dimensions</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Six simultaneous dimensions are six control problems unless the interface chunks them into a higher-level task — position and orientation integrated into one grasp, for example." data-bad="">Six dimensions must be chunked into a higher-level task, or the user is solving six control problems at once</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes the transfer function, not the dimension count. A six-DoF tracker still needs a mapping — and force-free motion usually takes velocity-to-velocity.">It cannot be used with a transfer function because it senses more than three dimensions</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-models">
+  <h2 class="section-title">The models behind pointing</h2>
+  <p class="section-lead">Four relationships are worth being able to write from memory: how long a target takes to acquire, how long a choice takes, how long a constrained path takes, and how the device's motion is scaled on the way to the screen.</p>
+
+  <div class="theorem-box">
+    <h3>1. Fitts's law &mdash; discrete target acquisition</h3>
+    <p>With \(A\) the amplitude of the movement and \(W\) the target's width along the direction of motion, the average movement time is a logarithmic function of their ratio:</p>
+    \[ MT \;=\; a + b\,\log_2\!\left(\frac{A}{W} + 1\right), \qquad ID \;=\; \log_2\!\left(\frac{A}{W} + 1\right) \]
+    <p style="margin-top:0.6rem;">The constants \(a\) and \(b\) are fitted by linear regression and depend on the device and the task, so they should never be transplanted between studies. \(ID\) is in bits and is device-independent: it describes the target, not the hand.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Hick's law &mdash; choice among alternatives</h3>
+    <p>For \(n\) equally probable alternatives, decision time grows with the entropy of the choice:</p>
+    \[ H \;=\; \log_2(n + 1) \]
+    <p style="margin-top:0.6rem;">The two laws have almost the same form. Read the Fitts task as a decision along the amplitude \(A\) between \(n = A/W\) targets of width \(W\) and they coincide &mdash; which is why the reading suggests they may be the same law seen twice.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The steering law &mdash; constrained paths</h3>
+    <p>Steering through a tunnel of length \(A\) and width \(W\) is not a Fitts task, because the cursor must stay inside the tunnel the whole way. Movement time is then linear in the ratio:</p>
+    \[ MT \;=\; a + b\,\frac{A}{W} \]
+    <p style="margin-top:0.6rem;">Pull-down menus are the canonical case: the user is not acquiring a target, they are staying inside a corridor. That is why menu design cares about corridor width and why a nested submenu widens the path it must then re-enter.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Gain and rate mappings</h3>
+    <p>The deck's control-display gain, and the nonlinear rate mapping used for self-centring force devices:</p>
+    \[ G_{CD} \;=\; \frac{v_{\text{cursor}}}{v_{\text{device}}}, \qquad dx \;=\; K\,x^{\alpha_r} \]
+    <p style="margin-top:0.6rem;">Gain confounds device size with display size, which is why it is a suspect experimental factor; in practice it mainly buys a smaller physical footprint. In the rate mapping, \(x\) is the input signal, \(dx\) the resulting rate, \(K\) a gain factor and \(\alpha_r\) the nonlinear parameter &mdash; both must be found experimentally for the specific device.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Acquisition cost is additive</h3>
+    <p>The time to perform a task with a device you are not already holding includes the time to get to it and back:</p>
+    \[ t_{\text{task}} \;=\; t_{\text{point}} \;+\; t_{acq} \;+\; t_{home} \]
+    <p style="margin-top:0.6rem;">For workflows that alternate typing and pointing, the pointing term usually dominates the two homing terms &mdash; which is why bolting a pointing stick into a keyboard does not automatically improve overall performance.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-id"></div>
+  <script type="application/json" id="ix-m-id">
+  {
+    "title": "Index of difficulty for four target configurations",
+    "subtitle": "Computed from ID = log2(A/W + 1), in bits. The bars compare difficulty only: the actual movement time also needs the fitted constants a and b for the device.",
+    "max": 5,
+    "rows": [
+      { "name": "A = 100 px, W = 100 px", "value": 1.0, "display": "1.00 bits — target as wide as the movement" },
+      { "name": "A = 200 px, W = 50 px", "value": 2.32, "display": "2.32 bits" },
+      { "name": "A = 320 px, W = 40 px", "value": 3.17, "display": "3.17 bits" },
+      { "name": "A = 600 px, W = 30 px", "value": 4.39, "display": "4.39 bits — far and small" }
+    ]
+  }
+  </script>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-models"></div>
+  <script type="application/json" id="ix-m-models">
+  {
+    "title": "Match the model to what it predicts",
+    "subtitle": "Click a model on the left, then the prediction it makes on the right.",
+    "pairs": [
+      ["Fitts's law", "Movement time for acquiring a target of width W at amplitude A"],
+      ["Hick's law", "Decision time for choosing among n equally probable alternatives"],
+      ["The steering law", "Movement time for staying inside a tunnel of width W along a path of length A"],
+      ["Control-display gain", "Cursor velocity divided by device velocity — how the device's motion is scaled on screen"],
+      ["Rate mapping dx = K x^alpha", "The nonlinear mapping from force to velocity used by self-centring devices"],
+      ["Acquisition (homing) time", "The average cost of picking up or putting down a device, separate from the pointing itself"],
+      ["Morphological analysis", "Treating each device design as a point in a parametrically described design space"]
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked calculation.</strong> A designer shrinks a toolbar button from 40&nbsp;px to 20&nbsp;px wide while the pointer has to travel 360&nbsp;px to reach it. By how much does the index of difficulty grow, and what does the gain tell you if the device moves 120&nbsp;px while the cursor moves 360&nbsp;px?</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Write the model.</strong> \(ID = \log_2(A/W + 1)\) with \(A = 360\) and \(W\) the target width along the direction of motion.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Before.</strong> \(ID = \log_2(360/40 + 1) = \log_2 10 \approx 3.32\) bits.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>After.</strong> \(ID = \log_2(360/20 + 1) = \log_2 19 \approx 4.25\) bits.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Interpret.</strong> Difficulty rose by about 0.93 bits, roughly 28&nbsp;%. The extra time is \(b \times 0.93\) seconds, where \(b\) is the fitted slope for that device &mdash; you cannot give a time in milliseconds without \(b\), and inventing one is how answers lose marks.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Gain.</strong> \(G_{CD} = v_{\text{cursor}}/v_{\text{device}} = 360/120 = 3\). The cursor moves three times as far as the device. Halving the gain would reduce the desk space needed and slow the cursor; the model says the effect on movement time is usually small, so gain is a footprint decision more than a speed decision.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Sanity check with Hick.</strong> If the toolbar instead became a menu of 19 equally probable items, the choice cost would be \(H = \log_2(19 + 1) = \log_2 20 \approx 4.32\) bits &mdash; almost exactly the Fitts difficulty of the narrow button. That coincidence is the reading's point, not a rounding error.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why is steering through a pull-down menu modelled with the steering law rather than Fitts's law?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Menus are not exempt: the moments of entering an item and clicking it are Fitts tasks. What is different is the traversal of the menu itself.">Menus do not involve target acquisition of any kind</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Steering requires continuous accuracy — the cursor must stay inside the corridor at all times — and for a tunnel of width W and length A the law is linear in A/W, not logarithmic." data-bad="">Because staying inside the corridor is a continuous constraint, and the steering law is linear in A/W rather than logarithmic</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The distinction is not about speed of hand movement but about the kind of constraint: acquire a target once, versus never leave a corridor.">Because the hand moves faster in a menu than between two targets</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-esd">
+  <h2 class="section-title">Expected, sensed and desired as set relationships</h2>
+  <p class="section-lead">The ESD framework is easiest to use when you write it as sets and then read off the four regions. Every region has a different design response, and no region is empty in practice.</p>
+
+  <div class="theorem-box">
+    <h3>The three sets and their four regions</h3>
+    <p>Let \(E\) be the movements users can and will perform, \(S\) the movements the sensors can measure, and \(D\) the movements the application needs. The analysis is the comparison of \(E\) and \(S\), checked against \(D\):</p>
+    \[ E \cap S, \qquad E \setminus S, \qquad S \setminus E, \qquad D \setminus (E \cup S) \]
+    <p style="margin-top:0.6rem;">The first three are properties of the interface; the fourth is a property of the ambition, and it is the one that sends you back to the design.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Region</th><th>Reads as</th><th>Design response</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>\(E \cap S\)</td><td>Natural and measurable</td><td>Tighten the match in range, speed and accuracy; this is ordinary interaction design</td></tr>
+        <tr><td>\(E \setminus S\)</td><td>Natural but unmeasurable</td><td>Exploit it: clutching, rest spaces, preparation, follow-through, expressive latitude</td></tr>
+        <tr><td>\(S \setminus E\)</td><td>Measurable but unnatural</td><td>Error detection, or a deliberately hidden advanced mode</td></tr>
+        <tr><td>\(D \setminus (E \cup S)\)</td><td>Wanted but neither natural nor measurable</td><td>Redesign: change the interface, the sensors, or the ambition</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Intentionality is a spectrum, not a switch</h3>
+      <p>Intentional (press the light switch), expected (walk in knowing the lights will come on), incidental (the A/C changes and you never notice). As you move along it, the dialogue gets shorter and the cost of a wrong inference gets larger, because the system has already acted.</p>
+    </div>
+    <div class="col-card">
+      <h3>Proxemic zones as arithmetic</h3>
+      <p>Hall's interpersonal zones are <em>intimate</em> (under 1.5&nbsp;ft), <em>personal</em> (1.5&ndash;4&nbsp;ft), <em>social</em> (4&ndash;12&nbsp;ft) and <em>public</em> (12&ndash;25&nbsp;ft) &mdash; approximately 0.46, 1.22, 3.66 and 7.62&nbsp;metres at the boundaries. Treat them as conventions to calibrate, not as constants: what matters is that a single continuous measure yields discrete behavioural zones.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Proxemic zone</th><th>Distance (Hall)</th><th>Approximate metric</th><th>Interaction behaviour it suggests</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Intimate</td><td>less than 1.5 ft</td><td>under 0.46 m</td><td>Explicit, personal interaction with the surface</td></tr>
+        <tr><td>Personal</td><td>1.5 to 4 ft</td><td>0.46&ndash;1.22 m</td><td>Direct manipulation by the person the surface has identified</td></tr>
+        <tr><td>Social</td><td>4 to 12 ft</td><td>1.22&ndash;3.66 m</td><td>Awareness and implicit adaptation; content that a group may see</td></tr>
+        <tr><td>Public</td><td>12 to 25 ft</td><td>3.66&ndash;7.62 m</td><td>Ambient display only; nothing personal, because anyone could be reading it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The examinable sentence:</strong> proximity gives a system a continuous, socially meaningful signal that requires no command from the user; the design obligation is to decide what happens when the inferred zone is wrong, and to make the inferred zone visible enough that the user can correct it.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A gesture interface senses a wild arm swing that users would never perform deliberately, and the application has no use for it. Which region is it in, and what is the standard response?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Expected but not sensed is a natural movement the sensors miss — here the movement is sensed, and it is not natural.">\(E \setminus S\) &mdash; build a rest space so the movement stops being reported</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. It is in S but not in E, and not needed by the application: treat it as evidence of a fault or misuse, or expose it deliberately as an advanced mode. Either way, name it rather than ignoring it." data-bad="">\(S \setminus E\) &mdash; treat it as error detection, or expose it as a deliberately hidden mode</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That region describes something the application wants but that is neither natural nor measurable. Here the movement is measurable; the question is whether anyone would do it on purpose.">\(D \setminus (E \cup S)\) &mdash; change the application's ambition</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-practice">
+  <h2 class="section-title">Classification and assumption storming</h2>
+  <p class="section-lead">Two routines to rehearse: placing a device in the design space with the checklist, and stress-testing the idea behind it with the tutorial's assumption storming.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Sort assumptions by type</h3>
+      <p><em>Problem</em> &mdash; does the problem really exist? <em>Solution</em> &mdash; is this the right way to solve it? <em>Implementation</em> &mdash; can you build it before you run out of time or money?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Place them on the grid</h3>
+      <p>Two axes: <em>risk</em> (how bad if the assumption is false) and <em>confidence</em> (how sure you are that it is true). High risk with low confidence is where the research starts.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Challenge the placement</h3>
+      <p>Is that really a known known, or an assumption wearing a costume? Can you find evidence for or against it quickly? Disagreement inside the group is a signal, not a delay.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Pair every objective with a method</h3>
+      <p>The tutorial's research plan is a two-column table: objective on the left, method and tool on the right. An objective with no method is a wish.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked classification.</strong> Place three devices with the checklist, in two sentences each.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Touchscreen.</strong> Property sensed: linear position, two dimensions, absolute (\(\alpha = 1\)) and direct (\(\delta = 1\)), so position-to-position is the natural mapping. States: out of range, touch, tracking &mdash; the extra condition is contact lost without a release. <em>Verdict:</em> excellent for selection and position, weak for text and for anything needing a state transition, because there are no buttons and the finger occludes the target.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Isometric joystick.</strong> Property sensed: force, two dimensions, relative (\(\alpha = 0\)) and indirect (\(\delta = 0\)), self-centring. The property sensed dictates a force-to-velocity rate mapping; a position-to-position mapping would leave the user with no control of speed. <em>Verdict:</em> the right device when there is no room for a mouse, at the cost of a learning period and lower precision.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Six-degree-of-freedom tracker.</strong> Property sensed: position (3) and orientation (3), \(\alpha\) depends on the mode, indirect. States and mappings multiply, so the design question is chunking: until the six dimensions are integrated into one higher-level task, the user is operating six controls. <em>Verdict:</em> powerful for 3D manipulation and unusable without chunking.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;The device senses <em>p</em> in <em>n</em> dimensions; because it is absolute/relative and direct/indirect, the appropriate transfer function is <em>T</em>; its states are <em>&hellip;</em>; and the tasks it serves well are <em>&hellip;</em>, with the trade-off that <em>&hellip;</em>.&rdquo; Fill every slot and there is nothing left to guess.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; assumption storming a mid-air gesture unlock.</strong> Idea: a door that opens when you wave your hand in a recognisable pattern. Run the tutorial's routine over it.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Problem assumptions.</strong> That keys, cards and phones are a real burden; that people arrive with their hands free; that the current lock, rather than the walk from the car, is what makes entry slow. Evidence needed: observed arrivals, hands-full frequency, time spent at the door.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Solution assumptions.</strong> That a mid-air gesture is a natural action here (it is not: opening a door is a push, not a wave); that a gesture can be recognised reliably in the dark, in rain, and while carrying shopping; that the gesture is not observable and replayable by someone standing behind you &mdash; which is the security flaw a PIN pad does not have.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Implementation assumptions.</strong> That a sensor can cover the approach zone with acceptable false accepts and false rejects; that the door can be driven and powered on site; that the gesture can be re-enrolled when recognition degrades.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Place them on the risk-by-confidence grid.</strong> &ldquo;A bystander can replay the gesture&rdquo; is high risk and low confidence in the current design: it is the first thing to test, and the reason to reconsider the gesture altogether. &ldquo;A door has a hinge&rdquo; is low risk and high confidence, so it is ignored.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Rewrite as research objectives with methods.</strong> &ldquo;Find out whether users prefer a gesture to a key at this door&rdquo; &mdash; intercept interviews at the entrance. &ldquo;Measure false accepts with a bystander imitating the gesture&rdquo; &mdash; a staged trial with a logged prototype. &ldquo;Find out how the door should signal that it recognised you&rdquo; &mdash; a Wizard-of-Oz study with a concealed operator. Each objective now has a method, which is what the tutorial's research plan requires.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Re-run ESD on the survivor.</strong> If the gesture survives, write it down: expected = approach and push the door; sensed = hand motion in the approach zone; desired = unlock for the right person only. Then check the mismatches, and note that &ldquo;push the door&rdquo; was in \(E\) all along &mdash; which is exactly the implicit redesign from the study guide.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-selfcheck"></div>
+  <script type="application/json" id="ix-m-selfcheck">
+  {
+    "title": "Self-test: models, notation and frameworks",
+    "subtitle": "Say the answer out loud before you flip the card.",
+    "cards": [
+      { "front": "Fitts's law", "back": "MT = a + b log2(A/W + 1). The index of difficulty ID = log2(A/W + 1) is measured in bits and describes the target, not the device.", "hint": "Model" },
+      { "front": "Hick's law", "back": "H = log2(n + 1) bits for a choice among n equally probable alternatives — the same shape as Fitts's law, which is why the reading suspects they are one law.", "hint": "Model" },
+      { "front": "The steering law", "back": "MT = a + bA/W for a tunnel of width W and length A. Linear rather than logarithmic, because steering is a continuous accuracy constraint.", "hint": "Model" },
+      { "front": "Control-display gain", "back": "G_CD = v_cursor / v_device. It conflates device size with display size, and in experiments it usually has little effect on movement time.", "hint": "Model" },
+      { "front": "Appropriate mapping", "back": "Position-to-position for absolute position devices, velocity-to-velocity for relative motion devices, force-to-velocity for self-centring force devices.", "hint": "Design rule" },
+      { "front": "The four ESD regions", "back": "E∩S (natural and measurable), E\\S (natural but unmeasured — rest spaces and expressive latitude), S\\E (measurable but unnatural — error detection or hidden modes), D(E∪S) (wanted but impossible — redesign).", "hint": "Framework" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">In the tutorial's research plan, what is wrong with the objective &ldquo;understand how people feel about the door&rdquo;?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Feelings are a legitimate object of study in interaction design; the problem is not the topic but the fact that nothing about it can be tested as written.">Nothing &mdash; feelings are the proper subject of interaction design</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The tutorial pairs every objective with a method and a tool. An objective that does not imply a study, a population or a measure cannot be planned, scheduled or falsified." data-bad="">It cannot be paired with a method: there is no study, population or measure implied by it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Problem assumptions are meant to be listed and challenged — that is the point of the storming pass. The defect is the missing method, not the ambition.">It is a problem assumption, and problem assumptions must be removed before research begins</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and design-space axes on this page, the device landscape and the implicit-interaction argument on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5047ChapterUI) return;
+    try {
+      window.initCOMP5047ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5047 chapter 2] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

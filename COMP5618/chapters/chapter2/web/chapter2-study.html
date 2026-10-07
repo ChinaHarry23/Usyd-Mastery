@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2: Networking Layers 1 and 2 — COMP5618</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter2-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 study guide for COMP5618: the OSI and TCP/IP models, the physical layer, Ethernet framing, MAC addressing, ARP, switching and VLANs, packet capture with Wireshark filters, and the Layer 2 attack surface.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 2: Networking Layers 1 and 2 — COMP5618">
+<meta property="og:description" content="Week 2 study guide for COMP5618: the OSI and TCP/IP models, the physical layer, Ethernet framing, MAC addressing, ARP, switching and VLANs, packet capture with Wireshark filters, and the Layer 2 attack surface.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" data-i18n="nav_home" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F5A7;</span>
+      <h2>Week 2</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-models" class="nav-link" data-section="models">OSI &amp; TCP/IP Models</a></li>
+    <li><a href="#sec-physical" class="nav-link" data-section="physical">Layer 1: The Medium</a></li>
+    <li><a href="#sec-datalink" class="nav-link" data-section="datalink">Layer 2: Ethernet Frames</a></li>
+    <li><a href="#sec-mac" class="nav-link" data-section="mac">MAC Addressing</a></li>
+    <li><a href="#sec-arp" class="nav-link" data-section="arp">ARP</a></li>
+    <li><a href="#sec-switching" class="nav-link" data-section="switching">Switching &amp; VLANs</a></li>
+    <li><a href="#sec-capture" class="nav-link" data-section="capture">Packet Capture</a></li>
+    <li><a href="#sec-devices" class="nav-link" data-section="devices">Devices at Layers 1&ndash;2</a></li>
+    <li><a href="#sec-attacks" class="nav-link" data-section="attacks">Layer 2 Attack Surface</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="tutorial">Tutorial 2 Walkthrough</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" data-i18n="link_math" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter2-mindmap.html" class="nav-link" data-i18n="link_mindmap" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" data-i18n="link_quiz" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" data-i18n="link_fc" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Week 2 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5618 — Applied Cybersecurity</p>
+    <h1>Week 2: Networking Layers 1 and 2</h1>
+    <p class="hero-subtitle">Physical and data-link layers: the OSI and TCP/IP models, Ethernet framing, MAC addressing, ARP, switching behaviour, VLANs, and capturing traffic with Wireshark.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F5C2;</span>
+        <span>OSI is conceptual, TCP/IP is real</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4E6;</span>
+        <span>Layer 2 moves frames on one LAN</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F517;</span>
+        <span>MAC addresses, learned by switches</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50D;</span>
+        <span>ARP and the capture that shows it</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter2-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter2-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 2 lecture deck (<em>Networking Layers &mdash; Layer 1 and 2</em>) and the Week 2 tutorial on jump hosts, SSH port forwarding and VPN tunnelling</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-models" class="section" data-track="models">
+  <h2 class="section-title">Two Models of the Same Stack</h2>
+  <p class="section-lead">Before touching a single frame, the deck fixes the vocabulary: one model explains, the other one runs.</p>
+
+  <div class="concept-box">
+    <p><strong>The distinction the deck insists on:</strong> the OSI model is a way to <em>conceptualise</em> network systems, where each layer is an abstraction from the one below it. TCP/IP is what is <em>actually used</em> for establishing a connection and communicating over the Internet &mdash; a more simplified and flexible model in which TCP and IP are two separate protocols that work together to manage the movement of data packets.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Encapsulation</div>
+    <p>Each layer takes the data handed down by the layer above and <strong>wraps it in its own header</strong> (and sometimes a trailer). The name of the wrapped unit changes at every layer, which is why the exam asks about the <em>PDU</em> (protocol data unit) and not just &ldquo;the data&rdquo;. Receiving hosts reverse the process: strip, check, hand up.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>OSI layer</th><th>TCP/IP model</th><th>PDU</th><th>What it is responsible for</th><th>Week 2 relevance</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>7 &mdash; Application</strong></td><td rowspan="3">Application</td><td>Data</td><td>Interacts directly with end users; the protocols applications need (HTTP, SMTP, FTP, DNS, SSH, RDP)</td><td>What the traffic is <em>for</em>; visible in Wireshark after the frame is stripped</td></tr>
+        <tr><td><strong>6 &mdash; Presentation</strong></td><td>Data</td><td>Formatting, encryption, compression and protocol conversion (MIME, SSL/TLS)</td><td>Explains why captured payloads are often unreadable</td></tr>
+        <tr><td><strong>5 &mdash; Session</strong></td><td>Data</td><td>Establishing, maintaining and terminating sessions; checkpointing and recovery (NetBIOS, SAP)</td><td>Context for &ldquo;who is talking to whom&rdquo; over time</td></tr>
+        <tr><td><strong>4 &mdash; Transport</strong></td><td>Transport</td><td>Segment (TCP) / datagram (UDP)</td><td>Sends data between two endpoints that are not necessarily on the same network segment; adds ports</td><td>Above this week's scope &mdash; Week 3 covers the handshake</td></tr>
+        <tr><td><strong>3 &mdash; Network</strong></td><td>Internet</td><td>Packet</td><td>Routes data between networks using IP addresses</td><td>The layer ARP serves; Week 3 covers addressing and routing</td></tr>
+        <tr><td><strong>2 &mdash; Data link</strong></td><td rowspan="2">Network access</td><td>Frame</td><td>Transmits data between devices on the <em>same LAN</em>; data transfer, error checking, collision detection</td><td><strong>This week</strong> &mdash; frames, MAC addresses, ARP, switching</td></tr>
+        <tr><td><strong>1 &mdash; Physical</strong></td><td>Bit</td><td>How bits are modulated, multiplexed and encoded onto the medium</td><td><strong>This week</strong> &mdash; media, encoding, capture points</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-encap"></div>
+
+  <div class="insight-box">
+    <strong>Why a security unit starts at Layer 1&ndash;2:</strong> the higher layers are abstractions built on trust that the lower ones provide. If you can influence Layer 2 &mdash; which device receives a frame, which MAC address a switch believes &mdash; every protocol above inherits the lie. That is the recurring theme of this chapter.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement matches the deck's treatment of the two models?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck says the opposite: OSI is the conceptual model, and it is TCP/IP that is used to establish connections and communicate.">OSI is the model real traffic follows; TCP/IP is only a teaching simplification</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. OSI conceptualises the system layer by layer; TCP/IP is the simplified, flexible model actually used, with TCP and IP as separate cooperating protocols." data-bad="">OSI is a conceptual abstraction of network systems; TCP/IP is the simplified model actually used for communication</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The layer count differs (seven against four), but both models describe the same job. The deck treats them as complementary, not as competitors.">The two models compete, and only one of them can be correct for a given packet</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-physical" class="section" data-track="physical">
+  <h2 class="section-title">Layer 1: Bits on the Medium</h2>
+  <p class="section-lead">Layer 1 is the physical layer. It deals with bits and how they are modulated, multiplexed and encoded onto the medium.</p>
+
+  <div class="def-box">
+    <div class="def-label">The three verbs of Layer 1</div>
+    <p><strong>Encode</strong> &mdash; turn a bit stream into a signal the receiver can recover (line codes such as Manchester or 4B/5B, or modulation such as ASK, FSK, PSK and QAM on radio). <strong>Modulate</strong> &mdash; impose that signal on a carrier. <strong>Multiplex</strong> &mdash; share one medium between several channels, by frequency (FDM), by time (TDM) or by wavelength in fibre (WDM).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Medium</th><th>Signal</th><th>Typical LAN use</th><th>What an attacker needs</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Twisted pair</strong> (Cat5e / Cat6)</td><td>Electrical, differential pairs</td><td>Wall sockets, patch panels, 1&nbsp;GbE and up to 10&nbsp;GbE on short runs</td><td>Physical access to the cable, a patch panel or an unsecured wall port</td></tr>
+        <tr><td><strong>Fibre optic</strong></td><td>Light</td><td>Building backbones, long runs, links between switches</td><td>Physical access plus a bend or splitter; no electrical emanation to exploit</td></tr>
+        <tr><td><strong>Coaxial</strong></td><td>Electrical, shared bus</td><td>Legacy LANs, cable access networks</td><td>A tap anywhere on the shared segment</td></tr>
+        <tr><td><strong>Radio</strong> (802.11)</td><td>RF in licensed-exempt bands</td><td>Access points, client devices</td><td>Nothing physical &mdash; proximity and an antenna are enough</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-physical"></div>
+  <script type="application/json" id="ix-race-physical">
+  {
+    "title": "What each medium buys you",
+    "subtitle": "Illustrative 0–5 emphasis scores for revision, not measured figures. Higher is better for the defender on the first three rows, worse on the last.",
+    "max": 5,
+    "rows": [
+      { "name": "Easy to tap without detection", "value": 4, "display": "copper: patch panel or tap" },
+      { "name": "Immunity to electromagnetic interference", "value": 5, "display": "fibre: light, not voltage" },
+      { "name": "Cost per port in a building", "value": 2, "display": "copper is cheapest" },
+      { "name": "Reach without a repeater", "value": 5, "display": "fibre: kilometres" },
+      { "name": "Exposure without physical access", "value": 5, "display": "radio: proximity is enough" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>The defender's reading of Layer 1:</strong> if an adversary can reach the medium, they can copy every bit on it. That is why physical access is treated as a full compromise rather than as a prerequisite to one, and why locked comms rooms, port security and encrypted protocols above Layer 2 are the compensating controls.
+  </div>
+</section>
+
+<section id="sec-datalink" class="section" data-track="datalink">
+  <h2 class="section-title">Layer 2: Frames on One LAN</h2>
+  <p class="section-lead">Layer 2 deals with frames and is concerned with how data is transmitted between devices on the same LAN. Its services, as the deck lists them: data transfer, error checking and collision detection.</p>
+
+  <div class="def-box">
+    <div class="def-label">Why the frame has an address at all</div>
+    <p>A packet can travel across the world, but a <em>frame</em> only ever crosses one link. Before sending data on a LAN a device must identify the MAC address of the destination device &mdash; that address is what the switch reads to decide which port to use. The frame is therefore rebuilt at every hop while the packet inside it stays the same.</p>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">The Ethernet II frame field by field</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Field</th><th>Size</th><th>Purpose</th><th>Attack angle</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Preamble</td><td>7 bytes</td><td>Alternating 1/0 pattern so the receiver can lock onto the bit timing</td><td>Not addressable by software; jamming is a Layer 1 problem</td></tr>
+        <tr><td>Start frame delimiter (SFD)</td><td>1 byte</td><td><code>10101011</code> &mdash; &ldquo;the frame starts here&rdquo;</td><td>&mdash;</td></tr>
+        <tr><td><strong>Destination MAC</strong></td><td>6 bytes</td><td>Who the frame is for on this segment</td><td>Spoofable: nothing authenticates it</td></tr>
+        <tr><td><strong>Source MAC</strong></td><td>6 bytes</td><td>Who sent it; what a switch learns from</td><td>Spoofable: this is how the CAM table is poisoned</td></tr>
+        <tr><td>EtherType / length</td><td>2 bytes</td><td>What is inside: <code>0x0800</code> IPv4, <code>0x0806</code> ARP, <code>0x86DD</code> IPv6, <code>0x8100</code> 802.1Q tag</td><td>Mismatched EtherType is a classic IDS evasion trick</td></tr>
+        <tr><td>Payload</td><td>46&ndash;1500 bytes</td><td>The encapsulated packet; padded up to 46 bytes when it is shorter</td><td>Where the actual exploit lives</td></tr>
+        <tr><td>Frame check sequence (FCS)</td><td>4 bytes</td><td>CRC-32 over the frame; corrupted frames are discarded</td><td>Detects accidents, not tampering &mdash; it is not a signature</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-frame"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The two sizes worth memorising</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Minimum frame: 64 bytes</strong> &mdash; header and trailer are 18 bytes, so a payload under 46 bytes is padded.</li>
+        <li><strong>Maximum frame: 1518 bytes</strong> &mdash; 1500 bytes of payload (the MTU) plus 18 bytes of header and trailer.</li>
+        <li>An 802.1Q tag inserts 4 bytes, giving a 1522-byte maximum.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Why the minimum exists</h3>
+      <p>On a shared half-duplex segment, collision detection only works if the frame is still being transmitted when the signal can travel to the far end of the segment and back. A frame shorter than 64 bytes could finish before a collision was noticed &mdash; the classic <em>runt</em>. Modern switched full-duplex links rarely collide, but the size rules remain.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; sizing and reading one frame.</strong> A host sends a 20-byte ARP request inside a standard Ethernet frame. How big is the frame on the wire, and how much of it is overhead?</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Add the header.</strong> Destination MAC (6) + source MAC (6) + EtherType (2) = <strong>14 bytes</strong>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Add the trailer.</strong> The FCS is <strong>4 bytes</strong>, so header plus trailer is 18 bytes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Apply the minimum-payload rule.</strong> The ARP message is 28 bytes on the wire in practice (see the ARP section), but take this example's 20 bytes: it is below 46, so it is <strong>padded to 46</strong>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Total.</strong> 14 + 46 + 4 = <strong>64 bytes</strong> &mdash; exactly the minimum frame size. Payload efficiency is 20/64 &asymp; 31%, and the real ARP message at 28 bytes gives 28/64 &asymp; 44%.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Read it in a capture.</strong> Wireshark shows the padding as trailing zero bytes that the ARP dissector ignores, which is why the frame length reported for an ARP request is 42 bytes of protocol data inside a 60-byte (FCS-excluded) frame.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A capture shows a 60-byte Ethernet frame (excluding the FCS) carrying an ARP request. Why is the frame not 42 bytes?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="There is no encryption at Layer 2; the extra bytes are padding, not ciphertext.">The payload has been encrypted, which adds bytes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The 14-byte header plus the 28-byte ARP message is 42 bytes, which is below the 46-byte payload floor, so the frame is padded to the 64-byte minimum (60 bytes plus a 4-byte FCS)." data-bad="">The payload is padded to reach the 64-byte minimum frame size</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The preamble and SFD are consumed by the network interface and are not counted in the captured frame length.">The 8-byte preamble and SFD are included in the captured length</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-mac" class="section" data-track="mac">
+  <h2 class="section-title">MAC Addressing</h2>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>Devices communicate on Layer 2 by use of <strong>MAC addresses</strong>. Every device has a unique MAC address (<strong>48-bit</strong>), which is programmed in the factory. Different manufacturers have different MAC ranges allocated to them, which can allow remote identification of hardware.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Bits</th><th>Name</th><th>Meaning</th><th>Security consequence</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>24 (first half)</td><td>OUI &mdash; organisationally unique identifier</td><td>The manufacturer or vendor block assigned by the IEEE</td><td>Passive reconnaissance: a capture reveals the vendor mix of a network without touching a single host</td></tr>
+        <tr><td>24 (second half)</td><td>NIC-specific</td><td>Assigned by the manufacturer to that interface</td><td>Uniqueness is a manufacturing promise, not a technical guarantee</td></tr>
+        <tr><td>Bit 0 of the first octet</td><td>I/G &mdash; individual/group</td><td>0 = unicast, 1 = multicast (the broadcast address is the all-ones case)</td><td>Multicast and broadcast frames are delivered to everyone in the broadcast domain</td></tr>
+        <tr><td>Bit 1 of the first octet</td><td>U/L &mdash; universal/local</td><td>0 = factory-assigned, 1 = locally administered</td><td>A locally administered address is how a spoofed or randomised MAC stays valid</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">48 bits, six octets, three common notations for the same address:<br><br>00:1A:2B:3C:4D:5E&nbsp;&nbsp;&nbsp;&nbsp;colon-hexadecimal (Linux, macOS, Wireshark filters)<br>00-1A-2B-3C-4D-5E&nbsp;&nbsp;&nbsp;&nbsp;hyphen-hexadecimal (Windows)<br>001a.2b3c.4d5e&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cisco dotted-quad<br><br>Special values:<br>FF:FF:FF:FF:FF:FF&nbsp;&nbsp;&nbsp;broadcast &mdash; every station in the broadcast domain<br>01:00:5E:xx:xx:xx&nbsp;&nbsp;&nbsp;IPv4 multicast mapped into Ethernet<br>33:33:xx:xx:xx:xx&nbsp;&nbsp;&nbsp;IPv6 multicast</div>
+
+  <div class="insight-box">
+    <strong>What a MAC address is not:</strong> it is <em>flat</em> and non-hierarchical. It says nothing about where a device is, so it cannot be routed beyond the local segment, and it does not have to be believed. A MAC address is an identifier a device <em>claims</em>, which is exactly why MAC filtering is a speed bump and not an access control.
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-mac-deck"></div>
+  <script type="application/json" id="ix-mac-deck">
+  {
+    "title": "Self-test: Layer 2 addressing",
+    "subtitle": "Answer out loud, then flip the card.",
+    "cards": [
+      { "front": "How long is a MAC address, and where does it come from?", "back": "48 bits, programmed into the interface at the factory. There is no protocol for enrolling or authenticating it.", "hint": "Fundamentals" },
+      { "front": "What does the OUI tell an attacker?", "back": "The manufacturer of the interface, and therefore often the device class — phones, printers, virtual machines and hypervisors each have recognisable vendor blocks.", "hint": "Reconnaissance" },
+      { "front": "Why can't a MAC address be routed?", "back": "It is flat: it encodes no network, so a router cannot choose a path from it. Only the IP address is hierarchical enough to route.", "hint": "Scope" },
+      { "front": "What is FF:FF:FF:FF:FF:FF?", "back": "The broadcast address. A frame sent to it is delivered to every station in the broadcast domain — which is why switches flood it out of every port.", "hint": "Special address" },
+      { "front": "What does MAC randomisation defeat?", "back": "Passive tracking of a device by its factory address. Modern client operating systems generate a locally administered address per network, so the U/L bit is set and the OUI is meaningless.", "hint": "Privacy" },
+      { "front": "What is a unicast, multicast and broadcast frame to a switch?", "back": "Unicast with a known destination is forwarded to one port; multicast and broadcast are flooded to all ports in the VLAN; unicast with an unknown destination is flooded too.", "hint": "Switching" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Your capture shows a device whose MAC begins <code>00:1A:2B</code>. What have you actually learned?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The first 24 bits are the OUI, so you have learned the vendor block — potentially narrowing the hardware type, but nothing about identity, location or trustworthiness." data-bad="">The vendor the interface block was allocated to, which may hint at the device class</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The OUI is a vendor allocation, not a location. MAC addresses are flat and carry no network information.">The network the device is currently attached to</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing in the frame is authenticated, so the value is a claim. Only a local administrative control — port security, 802.1X — gives it any evidential weight.">Proof that the frame genuinely came from that manufacturer's device</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-arp" class="section" data-track="arp">
+  <h2 class="section-title">ARP: Finding the MAC Behind an IP</h2>
+  <p class="section-lead">The deck gives the reason ARP exists in one line: before sending data on a LAN, a sending device must identify the MAC address of the destination device &mdash; and if the sender only has an IP address, it can use ARP to determine the corresponding MAC address.</p>
+
+  <div class="def-box">
+    <div class="def-label">Address Resolution Protocol</div>
+    <p><strong>ARP</strong> resolves a known IPv4 address on the local segment into the MAC address that owns it. It is a link-layer helper that straddles the Layer 2/3 boundary: the <em>question</em> is about an IP address, but the <em>answer</em> has to travel in an Ethernet frame. IPv6 does the same job with Neighbor Discovery instead.</p>
+  </div>
+
+  <div id="ix-arp"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>ARP message field</th><th>Size</th><th>Value in an Ethernet/IPv4 request</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hardware type</td><td>2 bytes</td><td><code>0x0001</code> (Ethernet)</td></tr>
+        <tr><td>Protocol type</td><td>2 bytes</td><td><code>0x0800</code> (IPv4)</td></tr>
+        <tr><td>Hardware / protocol length</td><td>1 + 1 byte</td><td>6 and 4</td></tr>
+        <tr><td>Opcode</td><td>2 bytes</td><td><code>0x0001</code> request, <code>0x0002</code> reply</td></tr>
+        <tr><td>Sender MAC and IP</td><td>6 + 4 bytes</td><td>The asking host's own addresses</td></tr>
+        <tr><td>Target MAC and IP</td><td>6 + 4 bytes</td><td>Target MAC is all zeros in a request, filled in the reply</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>28 bytes</strong></td><td>Inside a 14-byte Ethernet header, padded to the 64-byte minimum frame</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Request: broadcast</h3>
+      <p>The sender does not know who owns the target IP, so it has to ask everyone. The request goes to <code>FF:FF:FF:FF:FF:FF</code> with the target MAC field zeroed. Every station in the broadcast domain receives it; only the one whose IP matches acts on it.</p>
+    </div>
+    <div class="col-card">
+      <h3>Reply: unicast</h3>
+      <p>The target already has the requester's MAC from the request, so it answers directly. Both sides then keep a short-lived <strong>ARP cache</strong> entry, which is why the second exchange with the same host is silent.</p>
+    </div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-arp-seq"></div>
+  <script type="application/json" id="ix-arp-seq">
+  {
+    "title": "Order the ARP exchange",
+    "subtitle": "Rebuild the order of events for the first packet a host sends to a new neighbour.",
+    "steps": [
+      "Host A has an IP packet for 10.0.0.20 but no matching ARP cache entry",
+      "Host A broadcasts an ARP request for 10.0.0.20 from its own MAC",
+      "The switch floods the broadcast out of every other port in the VLAN",
+      "Host B sees its own IP in the target field and records A's MAC against A's IP",
+      "Host B sends a unicast ARP reply back to A's MAC address",
+      "Host A caches the mapping and transmits the waiting IP packet"
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>The design flaw that defines the attack:</strong> ARP has no authentication, and a host will happily accept and cache replies it never asked for. A <em>gratuitous</em> ARP &mdash; an announcement sent without a request &mdash; can overwrite a correct entry. That single property is the root of ARP spoofing, and it is why Layer 2 interception is a chapter in an offensive-security unit.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why is the ARP request broadcast while the reply is unicast?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. At request time the sender knows only the IP address, so it must ask the whole broadcast domain; by reply time the target has learned the requester's MAC from the request itself." data-bad="">The requester knows only the IP address, but the responder learns the requester's MAC from the request</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Both messages are the same size. Broadcast is used for reach, not for capacity.">The request is larger, so it needs the extra bandwidth of a broadcast</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Switches flood broadcasts because they must; there is no protocol rule that replies have to be broadcast, and unicast replies are what you see in a capture.">Both are broadcast, and the reply only looks unicast in a capture</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-switching" class="section" data-track="switching">
+  <h2 class="section-title">Switching, Broadcast Domains and VLANs</h2>
+  <p class="section-lead">A switch is the Layer 2 device that makes a LAN work: it forwards frames by MAC address and, in doing so, decides who can see whose traffic.</p>
+
+  <div class="def-box">
+    <div class="def-label">How a switch decides</div>
+    <p>For every frame the switch <strong>learns</strong> the source MAC and the port it arrived on, then looks up the destination MAC in that table. A known unicast is <strong>forwarded</strong> out of exactly one port; an unknown unicast, a broadcast or a multicast is <strong>flooded</strong> out of every other port in the same VLAN. Entries <strong>age out</strong> so that a device which moves is relearned rather than black-holed.</p>
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-node">Frame arrives</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Learn source MAC</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Look up destination</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Forward, filter or flood</div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Behaviour</th><th>Trigger</th><th>Security relevance</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Learning</strong></td><td>Any frame with a source MAC</td><td>Believing the source field is what makes CAM-table poisoning possible</td></tr>
+        <tr><td><strong>Flooding</strong></td><td>Unknown unicast, broadcast, multicast</td><td>Every flooded frame reaches every port in the VLAN, including a monitoring host</td></tr>
+        <tr><td><strong>Filtering</strong></td><td>Source and destination on the same port</td><td>Prevents unnecessary copies, not eavesdropping</td></tr>
+        <tr><td><strong>Aging</strong></td><td>Entry unused for the aging time (typically 300 seconds)</td><td>An attacker must keep re-asserting a poisoned entry</td></tr>
+        <tr><td><strong>Store-and-forward</strong></td><td>Full frame buffered, FCS checked before forwarding</td><td>Drops corrupt frames; adds latency</td></tr>
+        <tr><td><strong>Cut-through</strong></td><td>Forwarded after the destination MAC is read</td><td>Lower latency, but corrupt frames are propagated</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Collision domain vs broadcast domain</h3>
+      <p>A switch gives every port its own <strong>collision domain</strong> &mdash; that is what &ldquo;collision detection&rdquo; from Layer 2 becomes in a modern switched LAN. It does <em>not</em> split the <strong>broadcast domain</strong>: every port in the same VLAN still receives every broadcast and every unknown unicast.</p>
+    </div>
+    <div class="col-card">
+      <h3>VLANs: what they buy</h3>
+      <p>In the switch, ports are assigned <strong>VLAN IDs</strong>. A different VLAN ID effectively puts a port on a different virtual switch, and all ports with the same VLAN ID are on the same virtual switch. Traffic cannot pass between VLANs without a Layer 3 device, so VLANs give <em>task segregation</em>, lower communication overhead and a smaller blast radius &mdash; the deck's own list of what subnetting and segmentation assist with.</p>
+    </div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-topology"></div>
+  <script type="application/json" id="ix-topology">
+  {
+    "title": "Where Layer 2 decisions happen in a small network",
+    "subtitle": "Click each marker to see the role it plays and what an attacker gains by reaching it.",
+    "svg": "<svg viewBox=\"0 0 900 420\" role=\"img\" aria-label=\"Switched local network diagram with a router, two switches, hosts in two VLANs, a wireless access point, a laptop and a monitoring port\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"900\" height=\"420\" fill=\"#fdf5f7\"></rect><ellipse cx=\"85\" cy=\"66\" rx=\"58\" ry=\"30\" fill=\"none\" stroke=\"#be123c\" stroke-width=\"2\" stroke-dasharray=\"5 4\" opacity=\"0.7\"></ellipse><text x=\"85\" y=\"71\" font-family=\"monospace\" font-size=\"14\" fill=\"#be123c\" text-anchor=\"middle\">WAN</text><rect x=\"170\" y=\"40\" width=\"110\" height=\"54\" rx=\"10\" fill=\"#ffffff\" stroke=\"#be123c\" stroke-width=\"2.4\"></rect><text x=\"225\" y=\"73\" font-family=\"monospace\" font-size=\"15\" font-weight=\"700\" fill=\"#be123c\" text-anchor=\"middle\">R1</text><path d=\"M143 66 L170 66\" stroke=\"#be123c\" stroke-width=\"2\" opacity=\"0.6\"></path><path d=\"M225 94 L225 152\" stroke=\"#565d75\" stroke-width=\"2\" opacity=\"0.7\"></path><rect x=\"90\" y=\"152\" width=\"270\" height=\"92\" rx=\"12\" fill=\"#ffffff\" stroke=\"#be123c\" stroke-width=\"2.6\"></rect><text x=\"225\" y=\"192\" font-family=\"monospace\" font-size=\"16\" font-weight=\"700\" fill=\"#be123c\" text-anchor=\"middle\">SW1</text><text x=\"225\" y=\"214\" font-family=\"monospace\" font-size=\"11\" fill=\"#7b829a\" text-anchor=\"middle\">8 ports, learned MAC table</text><rect x=\"470\" y=\"24\" width=\"150\" height=\"82\" rx=\"10\" fill=\"#eef2ff\" stroke=\"#2563eb\" stroke-width=\"2.2\"></rect><text x=\"545\" y=\"58\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#2563eb\" text-anchor=\"middle\">PC-A</text><text x=\"545\" y=\"80\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">VLAN 10</text><rect x=\"700\" y=\"24\" width=\"150\" height=\"82\" rx=\"10\" fill=\"#ecfdf5\" stroke=\"#059669\" stroke-width=\"2.2\"></rect><text x=\"775\" y=\"58\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#059669\" text-anchor=\"middle\">PC-B</text><text x=\"775\" y=\"80\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">VLAN 20</text><path d=\"M360 176 L470 66\" stroke=\"#2563eb\" stroke-width=\"2.2\" opacity=\"0.75\"></path><path d=\"M360 186 L700 66\" stroke=\"#059669\" stroke-width=\"2.2\" opacity=\"0.75\"></path><rect x=\"470\" y=\"150\" width=\"150\" height=\"82\" rx=\"10\" fill=\"#eef2ff\" stroke=\"#2563eb\" stroke-width=\"2.2\"></rect><text x=\"545\" y=\"184\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#2563eb\" text-anchor=\"middle\">PRN</text><text x=\"545\" y=\"206\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">VLAN 10</text><rect x=\"700\" y=\"150\" width=\"150\" height=\"82\" rx=\"10\" fill=\"#ffffff\" stroke=\"#565d75\" stroke-width=\"2.2\"></rect><text x=\"775\" y=\"184\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#565d75\" text-anchor=\"middle\">SW2</text><text x=\"775\" y=\"206\" font-family=\"monospace\" font-size=\"11\" fill=\"#7b829a\" text-anchor=\"middle\">access ports only</text><path d=\"M360 200 L470 196\" stroke=\"#2563eb\" stroke-width=\"2.4\" opacity=\"0.75\"></path><path d=\"M360 210 L700 196\" stroke=\"#565d75\" stroke-width=\"3\" stroke-dasharray=\"7 5\"></path><text x=\"530\" y=\"240\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">802.1Q</text><path d=\"M775 232 L760 300\" stroke=\"#565d75\" stroke-width=\"2\" opacity=\"0.7\"></path><rect x=\"690\" y=\"300\" width=\"140\" height=\"72\" rx=\"10\" fill=\"#fffbeb\" stroke=\"#f59e0b\" stroke-width=\"2.2\"></rect><text x=\"760\" y=\"332\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#b45309\" text-anchor=\"middle\">AP</text><text x=\"760\" y=\"353\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">WPA2 / WPA3</text><rect x=\"490\" y=\"300\" width=\"150\" height=\"72\" rx=\"10\" fill=\"#ffffff\" stroke=\"#f59e0b\" stroke-width=\"2\"></rect><text x=\"565\" y=\"332\" font-family=\"monospace\" font-size=\"13\" font-weight=\"700\" fill=\"#b45309\" text-anchor=\"middle\">Laptop</text><text x=\"565\" y=\"353\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">randomised MAC</text><path d=\"M648 322 q16 -14 32 0\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"1.8\" stroke-dasharray=\"3 4\"></path><path d=\"M654 336 q10 -9 20 0\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"1.6\" stroke-dasharray=\"3 4\" opacity=\"0.7\"></path><path d=\"M225 244 L225 300\" stroke=\"#7c3aed\" stroke-width=\"2.2\" stroke-dasharray=\"6 4\"></path><rect x=\"150\" y=\"300\" width=\"150\" height=\"72\" rx=\"10\" fill=\"#f5f3ff\" stroke=\"#7c3aed\" stroke-width=\"2.2\"></rect><text x=\"225\" y=\"332\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#7c3aed\" text-anchor=\"middle\">MON</text><text x=\"225\" y=\"353\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">SPAN port</text></svg>",
+    "points": [
+      { "x": 25.0, "y": 15.7, "label": "Router R1", "detail": "The only Layer 3 device in the picture. It terminates the broadcast domain: frames stop here and packets continue. Its interface is the default gateway every host on both VLANs needs." },
+      { "x": 25.0, "y": 46.4, "label": "Switch SW1", "detail": "Layer 2 forwarding by MAC address. It learns source addresses per port, keeps the table for a few minutes, and floods anything it cannot resolve. Reaching its management interface usually means owning every VLAN it carries." },
+      { "x": 60.5, "y": 15.5, "label": "PC-A on VLAN 10", "detail": "An access port that carries one untagged VLAN. Frames from this host cannot reach VLAN 20 without crossing R1, which is the point of the segmentation." },
+      { "x": 86.1, "y": 15.5, "label": "PC-B on VLAN 20", "detail": "A different virtual switch on the same physical hardware. If this host is compromised, VLAN 10 is still a Layer 3 hop away — unless VLAN hopping succeeds." },
+      { "x": 58.9, "y": 47.6, "label": "802.1Q trunk to SW2", "detail": "One physical link carrying both VLANs. Every frame on it is tagged with a 12-bit VLAN ID, so an attacker who reaches the trunk sees both segments at once." },
+      { "x": 84.4, "y": 80.0, "label": "Access point", "detail": "Layer 2 bridging between radio and wire, with WPA2/WPA3 for authentication and encryption. A rogue AP impersonating this one puts clients on the attacker's segment instead." },
+      { "x": 62.8, "y": 80.0, "label": "Wireless client", "detail": "Modern clients randomise the MAC per network, which defeats passive tracking but also means MAC allow-lists are close to meaningless as access control." },
+      { "x": 25.0, "y": 80.0, "label": "Monitoring port", "detail": "A SPAN or mirror port, or a hardware TAP, copies traffic to a capture host. It is the legitimate version of what an attacker builds with ARP spoofing — and it sees exactly one VLAN unless configured otherwise." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Two hosts are on the same switch but in different VLANs. What is true?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Ports with different VLAN IDs behave as if they were on different virtual switches, so Layer 2 traffic does not cross between them.">They receive each other's broadcast frames, just as if they shared a VLAN</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The VLAN boundary is a Layer 2 boundary: the two hosts are on different virtual switches and need a Layer 3 device — a router or a Layer 3 switch — to communicate." data-bad="">They are isolated at Layer 2 and need a Layer 3 device to communicate</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A trunk carries several VLANs between switches; it does not merge them. The tags are what keep the segments apart.">They merge automatically as soon as the inter-switch link is configured as a trunk</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-capture" class="section" data-track="capture">
+  <h2 class="section-title">Capturing What Layer 2 Says</h2>
+  <p class="section-lead">Everything in this chapter is visible in a capture. The skill is knowing where to stand and how to filter.</p>
+
+  <div class="def-box">
+    <div class="def-label">Three ways to see traffic that is not addressed to you</div>
+    <p><strong>Promiscuous mode</strong> &mdash; the interface hands up every frame it receives on its segment, not just frames addressed to it. <strong>Monitor mode</strong> &mdash; the wireless equivalent: the radio reports 802.11 frames, including management frames, instead of only the traffic of the network it joined. <strong>Port mirroring (SPAN) or a network TAP</strong> &mdash; the switch, or a physical device in the cable, copies traffic to a capture port. Promiscuous mode alone is useless on a switched network: the switch will not send you other people's unicast frames.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Capture filter</th><th>Display filter</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Syntax</strong></td><td>BPF (libpcap), entered before capture starts</td><td>Wireshark display syntax, applied to what is already captured</td></tr>
+        <tr><td><strong>Effect</strong></td><td>Non-matching traffic is discarded and cannot be recovered</td><td>Non-matching traffic is hidden; it is still in the file</td></tr>
+        <tr><td><strong>Use it for</strong></td><td>Reducing volume on a busy link, or capturing only one conversation for a long run</td><td>Analysis: narrowing 200,000 frames down to the 12 that matter</td></tr>
+        <tr><td><strong>Layer 2 examples</strong></td><td><code>ether host 00:1a:2b:3c:4d:5e</code>, <code>arp</code>, <code>ether broadcast</code>, <code>vlan and not arp</code></td><td><code>arp.opcode == 1</code>, <code>eth.addr == 00:1a:2b:3c:4d:5e</code>, <code>eth.type == 0x0806</code>, <code>vlan.id == 10</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-filter-match"></div>
+  <script type="application/json" id="ix-filter-match">
+  {
+    "title": "Match the filter to what it selects",
+    "subtitle": "Click a filter on the left, then the traffic it shows on the right.",
+    "pairs": [
+      ["arp", "Every ARP request and reply in the capture"],
+      ["arp.opcode == 1", "ARP requests only — the broadcast half of the exchange"],
+      ["eth.addr == 00:1a:2b:3c:4d:5e", "Frames where that MAC is either the source or the destination"],
+      ["eth.type == 0x0806", "Frames whose EtherType field identifies ARP"],
+      ["vlan.id == 10", "Tagged frames belonging to VLAN 10"],
+      ["ether broadcast (capture filter)", "Broadcast frames only — kept, everything else is never written"],
+      ["!arp &amp;&amp; !stp", "Everything except ARP and spanning-tree traffic"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Reading order in a capture:</strong> start at Layer 2 and work up. Which source MAC is repeating itself? Is the destination a broadcast? Is the EtherType what the traffic claims to be? A host that answers an ARP request for an address it does not own, or a port that suddenly sources frames for twenty MAC addresses, is visible before you look at a single byte of payload.
+  </div>
+
+  <div class="callout">
+    <strong>Scope, ethics and the law:</strong> capturing traffic on a network you do not own or have written authorisation to test is out of scope for this unit and, in Australia, potentially a criminal offence under the <em>Criminal Code Act 1995</em> (Part 10.7). Everything in this chapter is practised inside your own isolated lab VMs &mdash; the VirtualBox NAT networks you build in Tutorial 2 &mdash; and nowhere else.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You set a capture filter of <code>arp</code> and record for an hour. What have you lost?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="What is captured is captured faithfully; a capture filter does not alter the frames it keeps.">Nothing important &mdash; capture filters only hide frames, and they can be revealed later</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A capture filter is applied by the capture engine, so non-matching frames are never written to the file. Anything that happened outside ARP is gone and the hour must be recorded again." data-bad="">Every non-ARP frame &mdash; it was discarded at capture time and is not in the file</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes a display filter. The distinction between the two is exactly what the exam tests.">Only the ARP frames are highlighted; the rest are still present but greyed out</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-devices" class="section" data-track="devices">
+  <h2 class="section-title">Devices at Layers 1&ndash;2 (and Where They Stop)</h2>
+  <p class="section-lead">The deck defines four devices plus firewalls. The layer each one operates at is what determines what it can see and what it can enforce.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Device</th><th>Definition</th><th>Function / OSI layer</th><th>Example from the deck</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Switch</strong></td><td>Connects devices within a LAN and directs data packets to their intended destination</td><td>Operates at <strong>Layer 2</strong>; forwards using MAC addresses. Features: many ports, VLAN support for logical segmentation, QoS for prioritising traffic</td><td>Cisco Catalyst switch</td></tr>
+        <tr><td><strong>Repeater / hub</strong> (legacy)</td><td>Regenerates the electrical signal on a shared segment</td><td><strong>Layer 1</strong>; no addressing, no filtering &mdash; every attached device sees every frame</td><td>&mdash;</td></tr>
+        <tr><td><strong>Access point</strong></td><td>Enables wireless devices to connect to a wired network</td><td><strong>Layer 2 and Layer 3</strong>; bridges radio to wire, manages the wireless network, supports 802.11ac/ax and WPA2/WPA3</td><td>Ubiquiti UniFi access point</td></tr>
+        <tr><td><strong>Router</strong></td><td>Connects multiple networks together and forwards data packets between them</td><td><strong>Layer 3</strong>; uses routing tables to choose the best path. Features: traffic management, NAT, firewall capabilities</td><td>Cisco ISR (Integrated Services Router)</td></tr>
+        <tr><td><strong>Firewall</strong></td><td>Monitors and controls incoming and outgoing traffic against predefined security rules</td><td><strong>Layer 3 and Layer 4</strong> for advanced firewalls; inspects packets and applies policy</td><td>Palo Alto Networks firewall</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Firewall types as the deck compares them</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Type</th><th>Inspection level</th><th>Complexity</th><th>Speed</th><th>Cost</th><th>Detection capability</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Packet filtering</td><td>Network layer</td><td>Low</td><td>High</td><td>Low</td><td>Limited to basic rule-based filtering</td></tr>
+        <tr><td>Stateful firewall</td><td>Network and transport layer</td><td>Moderate</td><td>Moderate</td><td>Moderate</td><td>Basic connection tracking</td></tr>
+        <tr><td>Proxy firewall</td><td>Application layer</td><td>Moderate&ndash;high</td><td>Moderate</td><td>Moderate&ndash;high</td><td>Advanced application filtering</td></tr>
+        <tr><td>Next-generation firewall</td><td>Multi-layer (network, application, content)</td><td>High</td><td>Moderate&ndash;high</td><td>Moderate&ndash;high</td><td>Advanced threat detection and prevention</td></tr>
+        <tr><td>Software firewall</td><td>Network and application layer</td><td>Variable</td><td>Variable</td><td>Variable</td><td>Depends on software and deployment</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-device-match"></div>
+  <script type="application/json" id="ix-device-match">
+  {
+    "title": "Match the device to what it actually does",
+    "subtitle": "The layer a device operates at is what determines what it can see and enforce.",
+    "pairs": [
+      ["Hub / repeater", "Layer 1: regenerates the signal, so every attached device receives every frame"],
+      ["Switch", "Layer 2: learns source MAC addresses and forwards frames within the LAN"],
+      ["Access point", "Layer 2/3: bridges wireless clients into the wired network"],
+      ["Router", "Layer 3: forwards packets between networks using a routing table"],
+      ["Stateful firewall", "Layers 3–4: tracks connections rather than judging each packet alone"],
+      ["Proxy firewall", "Application layer: understands the protocol it is filtering"],
+      ["VLAN", "Logical segmentation: ports with the same ID behave as one virtual switch"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The Layer 2 hiding place:</strong> a firewall that operates at Layers 3 and 4 has no opinion about a frame whose EtherType is ARP, or about two hosts on the same VLAN talking directly. Everything the switch does &mdash; flooding, learning, VLAN enforcement &mdash; happens beneath the security device's field of view.
+  </div>
+</section>
+
+<section id="sec-attacks" class="section" data-track="attacks">
+  <h2 class="section-title">The Layer 2 Attack Surface</h2>
+  <p class="section-lead">Layer 2 was designed for a trusted building, not for an adversary on the same wire. Each technique below is a consequence of a design decision you have already met in this chapter.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Technique</th><th>What it exploits</th><th>What the attacker gains</th><th>Control that stops it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>ARP spoofing / poisoning</strong></td><td>ARP replies are unauthenticated and unsolicited replies are cached</td><td>Traffic for the gateway is redirected through the attacker: on-path visibility and modification at Layer 2</td><td>Dynamic ARP inspection with DHCP snooping, static ARP for critical hosts, port security</td></tr>
+        <tr><td><strong>MAC flooding</strong></td><td>The switch's MAC table has finite memory and floods anything it cannot resolve</td><td>The table overflows and the switch starts flooding unicast frames out of every port</td><td>Port security limiting learned addresses per port, and a port shutdown instead of fail-open</td></tr>
+        <tr><td><strong>MAC spoofing</strong></td><td>The source MAC is a claim, not a credential</td><td>Bypasses MAC allow-lists and impersonates a permitted device, including after a NAC check</td><td>802.1X with certificates rather than MAC-based admission</td></tr>
+        <tr><td><strong>VLAN hopping</strong></td><td>Tags are trusted, and a port that negotiates trunking carries every VLAN</td><td>Frames reach a VLAN the attacker's port is not in, crossing the segmentation boundary</td><td>Disable DTP and hard-set access ports, put the native VLAN on an unused ID, prune allowed VLANs on trunks</td></tr>
+        <tr><td><strong>Rogue DHCP</strong></td><td>Clients accept the first offer; there is no authentication</td><td>Supplies a false gateway and DNS server, which is ARP spoofing one step earlier</td><td>DHCP snooping with trusted ports</td></tr>
+        <tr><td><strong>Rogue access point / evil twin</strong></td><td>Clients trust a network name</td><td>Attracts clients onto the attacker's segment, or harvests credentials with a captive portal</td><td>802.1X for wireless, WPA3, wireless intrusion detection, client-side network profiles</td></tr>
+        <tr><td><strong>Spanning-tree manipulation</strong></td><td>BPDUs are unauthenticated, and the root bridge is elected by whoever claims it best</td><td>Redirects the topology so traffic crosses the attacker's link</td><td>BPDU guard and root guard on access ports</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-attack-match"></div>
+  <script type="application/json" id="ix-attack-match">
+  {
+    "title": "Match the Layer 2 attack to its mitigation",
+    "subtitle": "Every mitigation is a control that removes the assumption the attack relied on.",
+    "pairs": [
+      ["ARP spoofing", "Dynamic ARP inspection with DHCP snooping"],
+      ["MAC flooding", "Port security with a maximum number of learned addresses"],
+      ["MAC spoofing past an allow-list", "802.1X authentication with certificates"],
+      ["VLAN hopping", "Disable DTP, hard-set access ports and prune trunk VLANs"],
+      ["Rogue DHCP server", "DHCP snooping with trusted ports"],
+      ["Rogue access point", "WPA3 with 802.1X plus wireless intrusion detection"],
+      ["Spanning-tree manipulation", "BPDU guard and root guard on access ports"]
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The pattern behind all seven</h3>
+      <p>Layer 2 protocols were written when the wire was the trust boundary. None of them authenticate the speaker: not ARP, not DHCP, not DTP, not BPDU. The mitigations are all variations of the same move &mdash; make the switch, not the frame, the authority on who may say what.</p>
+    </div>
+    <div class="col-card">
+      <h3>What still works when Layer 2 fails</h3>
+      <p>Encryption and integrity above the link layer: TLS, SSH, signed updates, and anything that authenticates the endpoint rather than the path. Layer 2 interception gives an attacker a position, not automatically a secret &mdash; which is exactly why the unit moves on to Layers 3 and 4 next week.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; triaging a Layer 2 symptom.</strong> Users on one VLAN report that the web proxy is &ldquo;slow and sometimes logs them out&rdquo;. A capture on a SPAN port shows the gateway's MAC address appearing as the source of frames arriving from three different switch ports.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>State what the evidence rules in.</strong> One MAC address cannot legitimately originate from three ports. Either a device moved, or something is claiming the gateway's identity. Frame-by-frame, check whether an unsolicited ARP reply carrying the gateway's IP appears before the change &mdash; that is the signature of poisoning.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Test the innocent explanation first.</strong> A laptop docking station, a virtual machine with a bridged adapter, or a redundant link can all present one MAC on two ports. Three ports at once, correlated with the start of the complaints, is what makes the benign explanation fail.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Name the impact precisely.</strong> If the gateway mapping is poisoned on the clients, their traffic is being relayed through the attacker's host. That is on-path: confidentiality is lost, and so is integrity, because the attacker chooses what to forward. &ldquo;Slow&rdquo; is the visible symptom of a deliberate relay, not of congestion.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Contain, then confirm.</strong> Identify the port, shut it or port-disable it, and clear the affected ARP caches. Re-check the switch's MAC table for the gateway address &mdash; it should resolve to exactly one port again. Container first, because every minute of relayed traffic is another minute of exposure.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Fix the condition, not the incident.</strong> The root cause is that the switch accepted unauthenticated claims. Dynamic ARP inspection with DHCP snooping, port security that limits learned addresses, and 802.1X on access ports remove the assumption. Report the finding with the evidence, the impact, the containment and the control that prevents recurrence.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does MAC flooding cause a switch to leak unicast traffic?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The MAC table fills with bogus source addresses, so genuine destinations are no longer resolvable. An unresolved unicast is flooded to every port in the VLAN — the switch fail-open behaviour you already saw for unknown destinations." data-bad="">The MAC table overflows, and an unresolvable unicast is flooded to every port in the VLAN</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="VLANs are unchanged by flooding; the leak stays inside the VLAN, which is one reason the attack is not equivalent to full network access.">The VLAN configuration is overwritten, merging all VLANs into one</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A switch in this state behaves like a hub for unknown destinations, but it does not broadcast frames to another network or disable its own error checking.">The switch starts broadcasting frames onto other networks and stops checking the FCS</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial 2: Reaching a Host Behind a Jump Host</h2>
+  <p class="section-lead">Tutorial 2 builds two VirtualBox NAT networks &mdash; a &ldquo;public&rdquo; one standing in for the Internet and a &ldquo;private&rdquo; one standing in for a company's internal network &mdash; then pivots from Kali to a target running DVWA. The layer model is what decides which pivot works.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Machine</th><th>Interfaces and networks</th><th>Role</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Kali</strong></td><td>One interface on the Public NAT network</td><td>The attacker workstation; can reach the jump host but not the private network directly</td></tr>
+        <tr><td><strong>Jump host</strong> (Ubuntu)</td><td>Two interfaces: one on Public, one on Private; SSH enabled</td><td>The pivot. It is the only host that can see both networks</td></tr>
+        <tr><td><strong>Target</strong> (Ubuntu)</td><td>One interface on the Private NAT network only</td><td>Runs Apache and MySQL serving DVWA, the intentionally vulnerable web application</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">Tutorial commands, in the order the tutorial gives them<br><br># on the target: make the web server available<br>sudo apt install apache2<br>sudo systemctl enable apache2<br>sudo systemctl start apache2<br><br># from Kali: forward a local port through the jump host to the target's port 80<br>ssh -L 8888:&lt;target host&gt;:80 user@&lt;jump host&gt; -N<br><br># then browse to http://127.0.0.1:8888/ on Kali</div>
+
+  <div data-ix="sequence" data-ix-src="#ix-tut-seq"></div>
+  <script type="application/json" id="ix-tut-seq">
+  {
+    "title": "Order the tutorial build",
+    "subtitle": "Nothing works until the machine below it exists and is reachable. Click the steps in order.",
+    "steps": [
+      "Create the Private and Public NAT networks in VirtualBox",
+      "Attach the jump host to both networks and the target to the private one only",
+      "Confirm from each machine that it received the address you expected",
+      "Install and start Apache on the target, then load DVWA locally and from the jump host",
+      "From Kali, create an SSH local port forward through the jump host to the target's port 80",
+      "Load DVWA at 127.0.0.1:8888 in Kali's browser to confirm the pivot",
+      "Add a VPN when whole-network access — including ICMP-based scanning — is required"
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; the port forward, and the wall it hits.</strong> The tutorial's command is <code>ssh -L 8888:&lt;target host&gt;:80 user@&lt;jump host&gt; -N</code>. Read it as three addresses and one rule.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Split the argument.</strong> <code>8888</code> is the port opened on <em>Kali</em>. <code>&lt;target host&gt;:80</code> is where the jump host is asked to connect, from its own point of view. <code>user@&lt;jump host&gt;</code> is who does the asking. The <code>-L</code> means &ldquo;local forward&rdquo;: the listening socket is on our side of the tunnel.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Follow one connection.</strong> Kali's browser connects to <code>127.0.0.1:8888</code>. SSH carries that byte stream, encrypted, to the jump host. The jump host opens a <em>new</em> TCP connection to the target on port 80 and splices the two together. The target sees a connection from the jump host, not from Kali &mdash; which is exactly why this is a pivot and not a direct route.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Know what <code>-N</code> does.</strong> It tells SSH not to run a remote command &mdash; the connection exists only to carry forwards. Removing it gives you an interactive shell on the jump host as well, which is handy while testing. The <code>-J</code> flag is the related shortcut for reaching a host <em>through</em> a jump host.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Find the boundary.</strong> The tunnel forwards one TCP service. The tutorial makes the consequence explicit: <code>nmap</code> uses many protocols, including ICMP, and ICMP is neither TCP nor UDP, so it cannot be forwarded by SSH or any proxy &mdash; those only forward at the application layer. You cannot scan what you cannot carry.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Choose the right tool.</strong> When the whole private network has to be reachable &mdash; several ports, several hosts, non-TCP protocols &mdash; the tutorial configures OpenVPN on the jump host, with client keys and its own certificate authority, so Kali joins the private network at Layer 3 instead of borrowing one port at a time.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Lab scope:</strong> every address, command and target in this section belongs to the isolated VirtualBox NAT networks you build yourself. Do not point any of these techniques at hosts you do not own or have written authorisation to test.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why can an SSH port forward carry an HTTP request but not an ICMP echo request?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. SSH forwards a TCP byte stream: it opens a TCP connection on the far side. ICMP is not TCP or UDP, so there is no stream to carry and no port to forward — which is the tutorial's argument for using a VPN instead." data-bad="">SSH forwards a TCP stream, and ICMP is neither TCP nor UDP, so there is nothing for the tunnel to carry</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Encryption does not care what the payload is. The limitation is the transport the tunnel provides, not the bytes inside it.">ICMP is encrypted by the IPsec layer, which SSH cannot decrypt</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Firewalls may well block ICMP, but that is a policy on top. The tutorial's point is that the tunnel itself cannot forward it regardless of policy.">ICMP is always blocked by the jump host's firewall, so the tunnel never opens</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 2 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>One model explains, one model runs</h4>
+        <p>OSI is the seven-layer abstraction; TCP/IP is the four-layer model actually used, with TCP and IP as separate cooperating protocols. Every layer wraps what it receives.</p>
+        <div class="flip-hint">Framing</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Layer 1 is bits, Layer 2 is frames</h4>
+        <p>Layer 1 modulates, multiplexes and encodes bits onto the medium. Layer 2 moves frames between devices on the same LAN and adds data transfer, error checking and collision detection.</p>
+        <div class="flip-hint">Definitions</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>48-bit MAC, learned not asserted</h4>
+        <p>The OUI says who made the interface; the switch learns which port it lives on. MAC addresses are flat, so they cannot be routed, and nothing authenticates them.</p>
+        <div class="flip-hint">Addressing</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>ARP is the seam between Layer 2 and 3</h4>
+        <p>&ldquo;Who has this IP?&rdquo; broadcast, answered by unicast, cached without authentication. That last property is the whole Layer 2 attack surface in one sentence.</p>
+        <div class="flip-hint">The flaw</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the seven OSI layers in order, say what a frame's destination MAC is for, explain why an ARP request is broadcast, and give one mitigation each for ARP spoofing, MAC flooding and VLAN hopping?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Be able to draw the Tutorial 2 topology from memory: which interface on which network, which machine can see which, and why the SSH forward reaches one service while the VPN reaches the whole subnet.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's vocabulary into definitions, address arithmetic, frame-size calculations and the capture-reading checklist. Then move on to Week 3, where the packet leaves the LAN: IP addressing, routing, the TCP handshake, NAT, port scanning and firewalls.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

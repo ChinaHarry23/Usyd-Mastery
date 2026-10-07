@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind map — Week 2: Networking Layers 1 and 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind map — Week 2 — the OSI and TCP/IP models, Layer 1 media, Ethernet framing, MAC addressing, ARP, switching and VLANs, packet capture and the Layer 2 attack surface, with expand/collapse navigation.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind map — Week 2: Networking Layers 1 and 2">
+<meta property="og:description" content="Mind map — Week 2 — the OSI and TCP/IP models, Layer 1 media, Ethernet framing, MAC addressing, ARP, switching and VLANs, packet capture and the Layer 2 attack surface, with expand/collapse navigation.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <a href="chapter2-math.html">Foundations</a>
+  <a href="../../../index.html">&#127968; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Week 2 mind map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand all</button>
+    <button id="btnCollapseAll">Collapse all</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Models &amp; framing</span>
+  <span><span class="dot" style="background:var(--green)"></span> Layers 1&ndash;2 mechanics</span>
+  <span><span class="dot" style="background:var(--purple)"></span> Addressing &amp; capture</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Devices, attacks &amp; practice</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Week 2: Networking Layers 1 and 2",
+  label_zh: "第 2 周：网络第 1、2 层",
+  children: [
+    {
+      label: "Two models of the stack",
+      label_zh: "协议栈的两种模型",
+      color: "blue",
+      href: "chapter2-study.html#sec-models",
+      children: [
+        { label: "OSI conceptualises: each layer abstracts the one below", label_zh: "OSI 用于概念化：每层都是对下层的抽象", href: "chapter2-study.html#sec-models" },
+        { label: "TCP/IP is what actually carries the traffic", label_zh: "TCP/IP 才是实际承载流量的模型", href: "chapter2-study.html#sec-models" },
+        { label: "TCP and IP: two protocols working together", label_zh: "TCP 与 IP：两个协同工作的协议", href: "chapter2-study.html#sec-models" },
+        { label: "PDU per layer: bit, frame, packet, segment, data", label_zh: "各层 PDU：比特、帧、数据包、报文段、数据", href: "chapter2-math.html#sec-m-units" },
+        { label: "Encapsulation: a new header at every layer", label_zh: "封装：每层都加上新的首部", href: "chapter2-study.html#sec-models" }
+      ]
+    },
+    {
+      label: "Layer 1 — bits on the medium",
+      label_zh: "第 1 层——介质上的比特",
+      color: "green",
+      href: "chapter2-study.html#sec-physical",
+      children: [
+        { label: "Modulated, multiplexed and encoded onto the medium", label_zh: "在介质上被调制、复用与编码", href: "chapter2-study.html#sec-physical" },
+        { label: "Copper, fibre, coax and radio", label_zh: "铜缆、光纤、同轴与无线电", href: "chapter2-study.html#sec-physical" },
+        { label: "Nyquist and Shannon bound the bit rate", label_zh: "Nyquist 与 Shannon 界定比特率上限", href: "chapter2-math.html#sec-m-physical" },
+        { label: "Delay is distance over speed, not bandwidth", label_zh: "时延是距离除以速度，而非带宽", href: "chapter2-math.html#sec-m-physical" },
+        { label: "Reach the medium and you can copy every bit", label_zh: "能够接触介质，就能复制每一个比特", href: "chapter2-study.html#sec-physical" }
+      ]
+    },
+    {
+      label: "Layer 2 — frames on one LAN",
+      label_zh: "第 2 层——同一局域网内的帧",
+      color: "blue",
+      href: "chapter2-study.html#sec-datalink",
+      children: [
+        { label: "Services: data transfer, error checking, collision detection", label_zh: "服务：数据传输、差错检测、冲突检测", href: "chapter2-study.html#sec-datalink" },
+        { label: "Ethernet II: 14-byte header, payload, 4-byte FCS", label_zh: "Ethernet II：14 字节首部、载荷、4 字节 FCS", href: "chapter2-study.html#sec-datalink" },
+        { label: "64-byte minimum, 1518-byte maximum, 1500-byte MTU", label_zh: "最小 64 字节、最大 1518 字节、MTU 1500 字节", href: "chapter2-math.html#sec-m-units" },
+        { label: "EtherType chooses the dissector: 0x0800, 0x0806, 0x86DD", label_zh: "EtherType 决定解析方式：0x0800、0x0806、0x86DD", href: "chapter2-study.html#sec-datalink" },
+        { label: "The FCS detects corruption, not tampering", label_zh: "FCS 检测损坏，而非防篡改", href: "chapter2-study.html#sec-datalink" }
+      ]
+    },
+    {
+      label: "MAC addressing",
+      label_zh: "MAC 寻址",
+      color: "purple",
+      href: "chapter2-study.html#sec-mac",
+      children: [
+        { label: "48 bits, programmed in the factory, meant to be unique", label_zh: "48 位，出厂烧录，设计上唯一", href: "chapter2-study.html#sec-mac" },
+        { label: "24-bit OUI reveals the manufacturer remotely", label_zh: "24 位 OUI 可被远程用于识别厂商", href: "chapter2-math.html#sec-m-addressing" },
+        { label: "I/G and U/L bits: unicast or group, factory or local", label_zh: "I/G 与 U/L 位：单播或组播、出厂或本地管理", href: "chapter2-math.html#sec-m-addressing" },
+        { label: "FF:FF:FF:FF:FF:FF reaches the whole broadcast domain", label_zh: "FF:FF:FF:FF:FF:FF 可达整个广播域", href: "chapter2-study.html#sec-mac" },
+        { label: "Flat, so it cannot be routed — and nothing authenticates it", label_zh: "扁平结构，无法路由——也没有任何认证", href: "chapter2-study.html#sec-mac" }
+      ]
+    },
+    {
+      label: "ARP: the seam between Layers 2 and 3",
+      label_zh: "ARP：第 2 层与第 3 层之间的接缝",
+      color: "yellow",
+      href: "chapter2-study.html#sec-arp",
+      children: [
+        { label: "A sender with only an IP address must ask for the MAC", label_zh: "只有 IP 地址的发送方必须询问 MAC", href: "chapter2-study.html#sec-arp" },
+        { label: "Request: broadcast FF:FF:FF:FF:FF:FF, target MAC zeroed", label_zh: "请求：广播 FF:FF:FF:FF:FF:FF，目标 MAC 置零", href: "chapter2-study.html#sec-arp" },
+        { label: "Reply: unicast back to the requester, opcode 0x0002", label_zh: "应答：以 opcode 0x0002 单播返回请求方", href: "chapter2-study.html#sec-arp" },
+        { label: "28-byte message inside a padded 64-byte frame", label_zh: "28 字节报文，位于填充至 64 字节的帧中", href: "chapter2-math.html#sec-m-units" },
+        { label: "No authentication: unsolicited replies are cached", label_zh: "没有认证：未经请求的应答也会被缓存", href: "chapter2-study.html#sec-attacks" }
+      ]
+    },
+    {
+      label: "Switching, broadcast domains and VLANs",
+      label_zh: "交换、广播域与 VLAN",
+      color: "green",
+      href: "chapter2-study.html#sec-switching",
+      children: [
+        { label: "Learn the source, look up the destination", label_zh: "学习源地址，查询目的地址", href: "chapter2-study.html#sec-switching" },
+        { label: "Unknown unicast and broadcast are flooded", label_zh: "未知单播与广播会被泛洪", href: "chapter2-study.html#sec-switching" },
+        { label: "A switch splits collision domains, not broadcast domains", label_zh: "交换机分割冲突域，但不分割广播域", href: "chapter2-study.html#sec-switching" },
+        { label: "VLAN ID = a different virtual switch on the same hardware", label_zh: "VLAN ID 即同一硬件上的另一台虚拟交换机", href: "chapter2-study.html#sec-switching" },
+        { label: "802.1Q adds 4 bytes and a 12-bit VLAN ID", label_zh: "802.1Q 增加 4 个字节与 12 位 VLAN ID", href: "chapter2-study.html#sec-switching" }
+      ]
+    },
+    {
+      label: "Capture and filters",
+      label_zh: "抓包与过滤器",
+      color: "purple",
+      href: "chapter2-study.html#sec-capture",
+      children: [
+        { label: "Promiscuous mode only helps on a shared segment", label_zh: "混杂模式只在共享段上有效", href: "chapter2-study.html#sec-capture" },
+        { label: "Monitor mode for 802.11, SPAN or a TAP for switched traffic", label_zh: "802.11 用监听模式，交换流量用 SPAN 或 TAP", href: "chapter2-study.html#sec-capture" },
+        { label: "Capture filters discard; display filters hide", label_zh: "捕获过滤器丢弃；显示过滤器隐藏", href: "chapter2-study.html#sec-capture" },
+        { label: "Layer 2 filters: arp, arp.opcode == 1, eth.addr, vlan.id", label_zh: "第 2 层过滤器：arp、arp.opcode == 1、eth.addr、vlan.id", href: "chapter2-study.html#sec-capture" },
+        { label: "Read bottom-up: MAC, broadcast, EtherType, then up", label_zh: "自下而上阅读：MAC、广播、EtherType，再向上", href: "chapter2-math.html#sec-m-checklist" }
+      ]
+    },
+    {
+      label: "Devices and the Layer 2 attack surface",
+      label_zh: "设备与第 2 层攻击面",
+      color: "yellow",
+      href: "chapter2-study.html#sec-attacks",
+      children: [
+        { label: "Switch at Layer 2, router at Layer 3, firewall at 3–4", label_zh: "交换机在第 2 层、路由器在第 3 层、防火墙在 3–4 层", href: "chapter2-study.html#sec-devices" },
+        { label: "ARP spoofing wins an on-path position", label_zh: "ARP 欺骗取得中间人位置", href: "chapter2-study.html#sec-attacks" },
+        { label: "MAC flooding makes the switch fail open", label_zh: "MAC 泛洪使交换机转为泛洪转发", href: "chapter2-study.html#sec-attacks" },
+        { label: "VLAN hopping crosses the segmentation boundary", label_zh: "VLAN 跳转跨越网段隔离边界", href: "chapter2-study.html#sec-attacks" },
+        { label: "Controls: DAI, DHCP snooping, port security, BPDU guard, 802.1X", label_zh: "控制措施：DAI、DHCP 嗅探、端口安全、BPDU 防护、802.1X", href: "chapter2-study.html#sec-attacks" }
+      ]
+    },
+    {
+      label: "Tutorial 2 and the foundations bridge",
+      label_zh: "辅导课 2 与基础知识衔接",
+      color: "blue",
+      href: "chapter2-study.html#sec-tutorial",
+      children: [
+        { label: "Public and private NAT networks in VirtualBox", label_zh: "VirtualBox 中的公有与私有 NAT 网络", href: "chapter2-study.html#sec-tutorial" },
+        { label: "Jump host with two interfaces; target with one", label_zh: "双网卡跳板机；单网卡目标主机", href: "chapter2-study.html#sec-tutorial" },
+        { label: "ssh -L 8888:<target>:80 user@<jump> -N", label_zh: "ssh -L 8888:<target>:80 user@<jump> -N", href: "chapter2-study.html#sec-tutorial" },
+        { label: "SSH forwards TCP only; ICMP needs a VPN", label_zh: "SSH 只能转发 TCP；ICMP 需要 VPN", href: "chapter2-math.html#sec-m-tutorial" },
+        { label: "Frame arithmetic and address arithmetic", label_zh: "帧长度计算与地址计算", href: "chapter2-math.html#sec-m-units" }
+      ]
+    }
+  ]
+};
+renderMindmap('mindmapCanvas', data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 7: Secure Network, TCP/UDP, TLS and HTTPS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 7 foundations for INFO5995: encapsulation overhead, TCP sequence and window arithmetic, round-trip budgets, the TLS 1.3 key schedule and key-size tables, certificate validation maths, and HSTS deployment arithmetic.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 7: Secure Network, TCP/UDP, TLS and HTTPS">
+<meta property="og:description" content="Week 7 foundations for INFO5995: encapsulation overhead, TCP sequence and window arithmetic, round-trip budgets, the TLS 1.3 key schedule and key-size tables, certificate validation maths, and HSTS deployment arithmetic.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter7-study.html" data-i18n="math_back_study">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link" data-i18n="nav_home">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 7 Foundations</h2>
+  </div>
+  <div class="toc-group">Layer arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-layers" class="toc-link">Encapsulation &amp; overhead</a></li>
+    <li><a href="#sec-m-tcp" class="toc-link">Sequence numbers &amp; windows</a></li>
+  </ul>
+  <div class="toc-group">Cryptographic arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-tls" class="toc-link">TLS 1.3 key schedule &amp; key sizes</a></li>
+    <li><a href="#sec-m-certs" class="toc-link">Certificate validation</a></li>
+  </ul>
+  <div class="toc-group">Operations</div>
+  <ul>
+    <li><a href="#sec-m-https" class="toc-link">HSTS &amp; downgrade arithmetic</a></li>
+    <li><a href="#sec-m-checklist" class="toc-link">Exam checklist</a></li>
+  </ul>
+  <a href="chapter7-study.html" class="back-to-study" data-i18n="math_back_study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 7 supplement</p>
+  <h1>Foundations: the arithmetic of a connection that has to be trusted</h1>
+  <p class="hero-desc">Week 7 is a protocol week, so the numbers are the ones a practitioner actually reasons with: how many bytes the headers cost, how sequence numbers and windows bound throughput, how many round trips a handshake consumes, how the TLS 1.3 key schedule derives traffic secrets, which key sizes are equivalent, and how long an HSTS policy or a certificate really protects you. Every formula below is tied to a figure from the deck or a named standard.</p>
+  <div class="chip-list">
+    <span>Header and record sizes from RFC 8446 / RFC 9293</span>
+    <span>Key sizes from NIST SP 800-57 Part 1 Rev 5</span>
+    <span>RTT budgets and overheads worked numerically</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-layers">
+  <h2 class="section-title">Encapsulation and the cost of protection</h2>
+  <p class="section-lead">Every layer adds a header, and every byte of header is a byte not carrying application data. This is the arithmetic that tells you what TLS costs in practice &mdash; and it is small, which is worth knowing before anyone argues that encryption is too expensive.</p>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>Header sizes below are the IPv4/TCP/Ethernet figures a standard Ethernet path uses, and the TLS record size is the TLS 1.3 AEAD record as specified in RFC 8446. Where the deck writes in prose, the symbols here are a revision aid, not lecture notation.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(P\)</div><div class="sym-cell">payload</div><div class="sym-cell">Application data bytes carried in one record</div>
+    <div class="sym-cell">\(L_{\text{eth}}\)</div><div class="sym-cell">link header</div><div class="sym-cell">Ethernet II header: 14 bytes (destination, source, type)</div>
+    <div class="sym-cell">\(L_{\text{ip}}\)</div><div class="sym-cell">IP header</div><div class="sym-cell">IPv4 header without options: 20 bytes</div>
+    <div class="sym-cell">\(L_{\text{tcp}}\)</div><div class="sym-cell">TCP header</div><div class="sym-cell">TCP header without options: 20 bytes</div>
+    <div class="sym-cell">\(L_{\text{tls}}\)</div><div class="sym-cell">TLS record overhead</div><div class="sym-cell">5-byte record header + 1-byte inner content type + 16-byte AEAD tag = 22 bytes</div>
+    <div class="sym-cell">\(\eta\)</div><div class="sym-cell">efficiency</div><div class="sym-cell">Fraction of the bytes on the wire that are application data, \(P / L_{\text{wire}}\)</div>
+    <div class="sym-cell">\(W\)</div><div class="sym-cell">window</div><div class="sym-cell">Bytes the receiver will accept before it must acknowledge</div>
+    <div class="sym-cell">\(\mathrm{RTT}\)</div><div class="sym-cell">round-trip time</div><div class="sym-cell">Time for a signal to reach the peer and for the reply to return</div>
+    <div class="sym-cell">\(C\)</div><div class="sym-cell">capacity</div><div class="sym-cell">Path bandwidth in bits per second</div>
+    <div class="sym-cell">\(Z\)</div><div class="sym-cell">shared secret</div><div class="sym-cell">The Diffie-Hellman value \(g^{ab} \bmod p\), never transmitted</div>
+    <div class="sym-cell">\(\mathrm{TH}\)</div><div class="sym-cell">transcript hash</div><div class="sym-cell">Hash of every handshake message so far</div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. The wire length of an HTTP request</h3>
+    <p>One application payload of \(P\) bytes costs the following on an Ethernet path:</p>
+    \[ L_{\text{wire}} \;=\; L_{\text{eth}} + L_{\text{ip}} + L_{\text{tcp}} + L_{\text{tls}} + P \;=\; 14 + 20 + 20 + 22 + P \;=\; 76 + P \]
+    <p style="margin-top:0.6rem;">The MTU is 1500 bytes, so the IP packet can carry at most \(1500 - 20 - 20 = 1460\) bytes of TCP payload. Because the TLS record overhead sits <em>inside</em> that TCP payload, the application bytes per full-size record are \(1460 - 22 = 1438\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Efficiency, with and without TLS</h3>
+    <p>Define efficiency as the fraction of transmitted bytes that are application data:</p>
+    \[ \eta \;=\; \frac{P}{L_{\text{wire}}} \]
+    <p style="margin-top:0.6rem;">With TLS: \( \eta = 1438 / 1514 = 0.9498 \). Without TLS: \( \eta = 1460 / 1514 = 0.9643 \). The protection therefore costs about <strong>1.5 percentage points</strong> of payload efficiency &mdash; 22 bytes per 1460, or roughly \(1.5\%\) of a full-size TCP segment.</p>
+  </div>
+
+  <div id="ix-record"></div>
+
+  <div class="insight-box">
+    <strong>Record size is a trade-off, not a constant.</strong> Larger records amortise the 22-byte overhead better but add latency for interactive traffic, because the receiver cannot process a record until it has all of it. The TLS 1.3 maximum plaintext of \(2^{14} = 16384\) bytes is a compromise; a request/response workload typically uses records of a few hundred bytes and pays proportionally more overhead.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-primitive-property"></div>
+  <script type="application/json" id="ix-primitive-property">
+  {
+    "title": "Match each mechanism to the property it supplies",
+    "subtitle": "Click a mechanism on the left, then the property it actually provides on the right.",
+    "pairs": [
+      ["Sequence number and cumulative ACK", "Reliability: the receiver can rebuild an ordered stream and name the byte it expects next"],
+      ["Sliding window and window scaling", "Flow control: bounds how many bytes may be in flight before an acknowledgement"],
+      ["AEAD record encryption in TLS", "Confidentiality plus integrity: content is hidden and every tagged record is checked before release"],
+      ["Certificate chain and hostname match", "Authenticity: binds a name to a public key and proves the peer controls the matching private key"],
+      ["Ephemeral (EC)DHE key exchange", "Forward secrecy: past sessions stay confidential even if the long-term key later leaks"],
+      ["SYN cookies", "Availability: no connection state is allocated until the handshake actually completes"],
+      ["HSTS with preload", "Downgrade resistance: the browser refuses plaintext before the first request is sent"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A full-size TLS 1.3 record carries 1438 application bytes. About what fraction of the bytes on the wire is application data?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the fraction lost to the TLS record overhead alone (22/1460 ≈ 1.5%), not the overall efficiency of the frame.">About 1.5%</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. 1438 application bytes out of a 1514-byte Ethernet frame is 0.9498, so roughly 95% of the bytes on the wire are payload — the 20-byte IP and TCP headers dominate the overhead, not TLS." data-bad="">About 95%</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would mean headers cost half the frame. Even with all four headers the total is 76 bytes against 1438 of payload.">About 50%</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tcp">
+  <h2 class="section-title">Sequence numbers, windows and round-trip budgets</h2>
+  <p class="section-lead">TCP reliability looks like magic until you write it as modular arithmetic and a timing budget. Both are examinable.</p>
+
+  <div class="theorem-box">
+    <h3>1. Sequence space and cumulative acknowledgement</h3>
+    <p>Sequence numbers are 32-bit counters, so they are defined modulo \(2^{32}\):</p>
+    \[ seq_{n+1} \;=\; (seq_n + \mathrm{len}_n) \bmod 2^{32}, \qquad seq \in [0,\; 2^{32}) \]
+    <p style="margin-top:0.6rem;">A cumulative acknowledgement names the next byte the receiver expects, not the last byte it received:</p>
+    \[ ACK \;=\; seq_{\text{first}} + \text{bytes received contiguously} \]
+    <p style="margin-top:0.6rem;">The deck's example numbers this directly: segments \(1\!-\!40\), \(41\!-\!70\), \(71\!-\!100\), \(101\!-\!130\) produce \(ACK = 131\), meaning &ldquo;all bytes up to 130 arrived&rdquo;. If the segment \(41\!-\!70\) is lost, the receiver keeps answering \(ACK = 41\), and after a retransmission timeout the sender resends that range.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. A window is a bandwidth-delay product</h3>
+    <p>A sender cannot have more unacknowledged bytes in flight than the window allows, so throughput is bounded by how often acknowledgements return:</p>
+    \[ \text{throughput} \;\le\; \frac{W}{\mathrm{RTT}}, \qquad W_{\min} \;=\; C \times \mathrm{RTT} \]
+    <p style="margin-top:0.6rem;">\(W_{\min}\) is the bandwidth-delay product: the amount of data that must be in flight to keep the pipe full. The window field is 16 bits, so \(W \le 65535\) bytes unless the window-scaling option multiplies it by \(2^{k}\).</p>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Worked calculation.</strong> A path has \(C = 100\ \mathrm{Mbit/s}\) and \(\mathrm{RTT} = 50\ \mathrm{ms}\). The bandwidth-delay product is \(100 \times 10^{6} \times 0.05 = 5 \times 10^{6}\) bits \(= 625{,}000\) bytes.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>Compare with the unscaled window.</strong> \(W = 65535\) bytes gives at most \(65535 / 0.05 = 1.31\ \mathrm{MB/s} \approx 10.5\ \mathrm{Mbit/s}\) &mdash; about a tenth of the available capacity.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Find the scaling factor.</strong> We need \(65535 \times 2^{k} \ge 625{,}000\), so \(2^{k} \ge 9.54\), giving \(k = 4\). The advertised window becomes \(65535 \times 16 = 1{,}048{,}560\) bytes, comfortably above the bandwidth-delay product.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>State the general lesson.</strong> Throughput on a long, fast path is limited by \(W / \mathrm{RTT}\), not by link speed. This is the same arithmetic that makes a one-round-trip handshake worth redesigning a protocol for.</p></div>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Retransmission timeout</h3>
+    <p>RFC 6298 estimates the timeout from a smoothed round-trip time and its variation:</p>
+    \[ SRTT \leftarrow (1-\alpha)\,SRTT + \alpha R, \qquad RTTVAR \leftarrow (1-\beta)\,RTTVAR + \beta\,|SRTT - R| \]
+    \[ RTO \;=\; SRTT + 4 \cdot RTTVAR \]
+    <p style="margin-top:0.6rem;">with \(\alpha = 1/8\) and \(\beta = 1/4\). Example: \(SRTT = 400\ \mathrm{ms}\) and \(RTTVAR = 100\ \mathrm{ms}\) give \(RTO = 400 + 400 = 800\ \mathrm{ms}\). RFC 6298 also requires a floor of one second; production stacks lower it, which is why a loss on a fast path can be repaired in tens of milliseconds rather than a second.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-rtt"></div>
+  <script type="application/json" id="ix-race-rtt">
+  {
+    "title": "Round trips before the first HTTP byte",
+    "subtitle": "Cost in round-trip times for each stage, from the protocol specifications. Lower is better.",
+    "max": 3,
+    "rows": [
+      { "name": "TCP three-way handshake", "value": 1, "display": "1 RTT" },
+      { "name": "TLS 1.3 full handshake (on top of TCP)", "value": 1, "display": "1 RTT" },
+      { "name": "TLS 1.2 full handshake (on top of TCP)", "value": 2, "display": "2 RTT" },
+      { "name": "TLS 1.3 with PSK resumption", "value": 0, "display": "0 RTT (early data)" }
+    ]
+  }
+  </script>
+
+  <p>At \(\mathrm{RTT} = 50\ \mathrm{ms}\), a TLS 1.3 connection reaches the first request byte after about \(2 \times 50 = 100\ \mathrm{ms}\), against roughly \(150\ \mathrm{ms}\) for TLS 1.2. Resumption with a pre-shared key can send early data immediately, at the price of <strong>replay risk</strong>: the server processes the first flight before it has proved the client is live, so 0-RTT data must be restricted to requests that are safe to repeat.</p>
+
+  <div class="theorem-box">
+    <h3>4. Half-open state is a resource equation</h3>
+    <p>A SYN is a request to allocate state. A server that accepts \(\lambda\) SYNs per second and keeps each half-open entry for \(T\) seconds needs</p>
+    \[ N_{\text{half-open}} \;\approx\; \lambda \times T \]
+    <p style="margin-top:0.6rem;">entries. With the classic SYN-ACK retransmission schedule \(1+2+4+8+16+32 = 63\) seconds and \(\lambda = 1000\) SYNs per second, the attacker demands about \(63{,}000\) simultaneous entries; a backlog of \(1024\) overflows in roughly one second. SYN cookies change the equation to \(N_{\text{half-open}} = 0\) by moving the state into the server's own sequence number until the ACK proves the client is real.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; reading a loss trace numerically.</strong> Sender transmits segments \(1\!-\!40\), \(41\!-\!70\), \(71\!-\!100\), \(101\!-\!130\). The capture shows three acknowledgements from the receiver: \(ACK\ 41\), \(ACK\ 41\), \(ACK\ 41\). Later the sender retransmits \(41\!-\!70\) and the next acknowledgement is \(ACK\ 131\).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>What the repeated ACK means.</strong> By the definition above, \(ACK = seq_{first} + \text{contiguous bytes}\). The receiver has byte 1 onward, so the highest contiguous byte is 40 and every subsequent segment leaves the expected byte at 41.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Why the receiver does not buffer-and-forget.</strong> It does buffer \(71\!-\!130\), but a cumulative acknowledgement cannot say so. Duplicate ACKs are the signal that data is missing without a timeout having to expire.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Why \(ACK\ 131\) follows the retransmission.</strong> Once \(41\!-\!70\) arrives, the contiguous prefix extends from byte 1 to byte 130, so the next expected byte is 131 &mdash; and the buffered data is released upward as one ordered stream.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Sequence-number arithmetic.</strong> Real TCP does not start at 1: it picks a random initial sequence number \(ISN\) and every value above is \((ISN + k) \bmod 2^{32}\). The deck's 1&ndash;130 numbering is the same arithmetic with \(ISN = 1\).</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A path has 200 Mbit/s capacity and 100 ms RTT. What window is needed to keep the pipe full, and what does that imply?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the capacity figure, not the amount of data that must be in flight. Multiply capacity by RTT.">200,000,000 bytes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. 200 × 10^6 × 0.1 = 2 × 10^7 bits = 2.5 MB, far beyond the 65535-byte window field, so window scaling is mandatory on this path." data-bad="">2.5 MB, so window scaling is mandatory</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="65535 bytes is the unscaled field limit; it yields only about 5 Mbit/s at a 100 ms RTT, a fortieth of the capacity.">65,535 bytes, which is always sufficient</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tls">
+  <h2 class="section-title">The TLS 1.3 key schedule and key sizes</h2>
+  <p class="section-lead">TLS 1.3 derives every key from a hash-based key schedule, and its security reduces to two hardness assumptions plus one counting argument. This section is the one to reproduce from memory.</p>
+
+  <div class="theorem-box">
+    <h3>1. HKDF: extract, then expand</h3>
+    <p>The key schedule is HKDF (RFC 5869) instantiated with the handshake hash, either SHA-256 or SHA-384:</p>
+    \[ \mathrm{PRK} \;=\; \mathrm{HMAC}(salt,\ \mathrm{IKM}), \qquad \mathrm{OKM} \;=\; \mathrm{HKDF\text{-}Expand}(\mathrm{PRK},\ info,\ L) \]
+    <p style="margin-top:0.6rem;"><em>Extract</em> concentrates whatever entropy the input has into a fixed-size pseudorandom key; <em>expand</em> stretches it into as many output bytes as the cipher needs, binding the result to a label \(info\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Three secrets, two derivations</h3>
+    <p>Each stage mixes the previous secret with a new input, using a fixed label so that two stages never share key material:</p>
+    \[ \text{Early} \;=\; \mathrm{HKDF\text{-}Extract}(0,\ \mathrm{PSK}) \]
+    \[ \text{Handshake} \;=\; \mathrm{HKDF\text{-}Extract}\big(\mathrm{DeriveSecret}(\text{Early}, \text{"derived"}),\ \mathrm{ECDHE}\big) \]
+    \[ \text{Master} \;=\; \mathrm{HKDF\text{-}Extract}\big(\mathrm{DeriveSecret}(\text{Handshake}, \text{"derived"}),\ 0\big) \]
+    \[ \mathrm{DeriveSecret}(S, label) \;=\; \mathrm{HKDF\text{-}Expand\text{-}Label}\big(S,\ label,\ H(\text{""})\big) \]
+    <p style="margin-top:0.6rem;">Traffic secrets are then split into a key and an initialisation vector, and the handshake is authenticated with a finished key:</p>
+    \[ key = \mathrm{HKDF\text{-}Expand\text{-}Label}(secret, \text{"key"}, \text{""}, K), \qquad iv = \mathrm{HKDF\text{-}Expand\text{-}Label}(secret, \text{"iv"}, \text{""}, 12) \]
+    \[ \text{Finished} \;=\; \mathrm{HMAC}\big(finished\_key,\ \mathrm{TH}\big), \qquad \mathrm{TH} = H(\text{ClientHello} \,\|\, \text{ServerHello} \,\|\, \cdots) \]
+    <p style="margin-top:0.6rem;">Because \(\mathrm{TH}\) covers every message in order, a modified handshake produces a different Finished value &mdash; that is the integrity guarantee for the negotiation itself.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Ephemeral Diffie-Hellman and forward secrecy</h3>
+    <p>Both sides pick a secret exponent and exchange a public value modulo a fixed prime (or over an elliptic curve):</p>
+    \[ A = g^{a} \bmod p, \qquad B = g^{b} \bmod p, \qquad Z = B^{a} = A^{b} = g^{ab} \bmod p \]
+    <p style="margin-top:0.6rem;">Recovering \(a\) from \(A\) is the discrete-logarithm problem; recovering \(Z\) from \(A\) and \(B\) is the computational Diffie-Hellman problem. \(Z\) is fed into the key schedule as the \(\mathrm{ECDHE}\) input and is <strong>never transmitted</strong>. If the server's long-term signing key leaks later, an attacker who recorded the session can recompute neither \(a\), nor \(b\), nor \(Z\), so the session keys stay unknown &mdash; that is forward secrecy. TLS 1.3 makes this mandatory by removing RSA key transport and static DH entirely.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. AEAD: nonce discipline is a counting argument</h3>
+    <p>A record is sealed with a unique nonce and authenticated over content and metadata:</p>
+    \[ (C, T) = \mathrm{AEAD.Encrypt}(key,\ nonce,\ aad,\ P), \qquad nonce = iv \oplus \mathrm{seq} \]
+    <p style="margin-top:0.6rem;">The forgery probability for a random 128-bit tag is \(2^{-128}\) per attempt. Reusing a nonce under the same key is catastrophic for GCM, so TLS 1.3 uses a counter rather than randomness: \(\mathrm{seq}\) increments for every record, and RFC 8446 sets per-key usage limits plus a <code>KeyUpdate</code> message to rekey before the counter can wrap.</p>
+    <p style="margin-top:0.6rem;">If nonces were chosen at random instead, the birthday bound gives the collision probability after \(q\) records with an \(n\)-bit nonce:</p>
+    \[ p \;\approx\; 1 - e^{-q(q-1)/2^{n+1}} \;\approx\; \frac{q^{2}}{2^{\,n+1}} \]
+    <p style="margin-top:0.6rem;">For \(n = 96\) and \(q = 2^{32}\), \(p \approx 2^{64}/2^{97} = 2^{-33} \approx 1.2 \times 10^{-10}\) &mdash; small, but not zero, which is exactly why the counter form is used.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Symmetric equivalent</th><th>Finite-field DH / DSA</th><th>RSA modulus</th><th>Elliptic curve</th><th>Hash</th><th>Security strength</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>2TDEA</td><td>\(L=1024, N=160\)</td><td>1024</td><td>160&ndash;223</td><td>SHA-1</td><td>80 bits</td></tr>
+        <tr><td>3TDEA</td><td>\(L=2048, N=224\)</td><td>2048</td><td>224&ndash;255</td><td>SHA-224</td><td>112 bits</td></tr>
+        <tr><td><strong>AES-128</strong></td><td>\(L=3072, N=256\)</td><td>3072</td><td>256&ndash;383</td><td>SHA-256</td><td>128 bits</td></tr>
+        <tr><td><strong>AES-192</strong></td><td>\(L=7680, N=384\)</td><td>7680</td><td>384&ndash;511</td><td>SHA-384</td><td>192 bits</td></tr>
+        <tr><td><strong>AES-256</strong></td><td>\(L=15360, N=512\)</td><td>15360</td><td>512+</td><td>SHA-512</td><td>256 bits</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:0.85rem; color:var(--text-muted); margin-top:-0.5rem;">Comparable security strengths, after NIST SP 800-57 Part 1 Rev 5. The table is the reason a 2048-bit RSA key is described as roughly 112-bit security, and why a cipher suite's name tells you the symmetric strength but not the strength of the authentication.</p>
+
+  <div data-ix="race" data-ix-src="#ix-race-strength"></div>
+  <script type="application/json" id="ix-race-strength">
+  {
+    "title": "Security strength in bits, not bytes",
+    "subtitle": "NIST-equivalent strengths. A longer key is not automatically stronger — what matters is the strength of the best known attack.",
+    "max": 256,
+    "rows": [
+      { "name": "RSA-2048 (signature or key transport)", "value": 112, "display": "112-bit" },
+      { "name": "AES-128-GCM session key", "value": 128, "display": "128-bit" },
+      { "name": "ECDHE with X25519 or P-256", "value": 128, "display": "128-bit" },
+      { "name": "SHA-256 collision resistance", "value": 128, "display": "128-bit" },
+      { "name": "RSA-3072", "value": 128, "display": "128-bit" },
+      { "name": "AES-256-GCM session key", "value": 256, "display": "256-bit" }
+    ]
+  }
+  </script>
+
+  <div class="theorem-box">
+    <h3>5. Entropy of a key versus entropy of a password</h3>
+    <p>For a uniformly random key of \(k\) bits, entropy and guessing probability are direct:</p>
+    \[ H = \log_2 2^{k} = k\ \text{bits}, \qquad \Pr[\text{guess}] = 2^{-k} \]
+    <p style="margin-top:0.6rem;">A password is not uniformly random over its alphabet. For length \(L\) over an alphabet of size \(N\) the upper bound is</p>
+    \[ H_{\max} = L \log_2 N \]
+    <p style="margin-top:0.6rem;">so an eight-character lowercase password has at most \(8 \log_2 26 \approx 37.6\) bits &mdash; less than a third of the weakest TLS 1.3 session key, and far less in practice because human choices are not uniform. This is the arithmetic behind the deck's insistence that HTTPS does not fix weak passwords.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; which part of the handshake protects what.</strong> A capture shows a ClientHello offering <code>TLS_AES_128_GCM_SHA256</code> and a key share for X25519, a ServerHello selecting the same suite, then encrypted handshake messages, then application records.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>What the cipher-suite name tells you.</strong> \(128\) is the AEAD key length and \(256\) is the hash used by HKDF. It says nothing about the strength of the server's signature, which is negotiated separately through the signature-algorithm extension.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>What X25519 contributes.</strong> The key share is \(g^{a}\) in an elliptic-curve group with about 128-bit security. The matching secret \(a\) stays on the client, so the record keys derived from \(Z\) are ephemeral by construction.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Why the certificate can be encrypted.</strong> Once both hellos have been exchanged, each side can compute the handshake secret. The certificate, CertificateVerify and Finished messages therefore travel under the handshake traffic keys, which is why a passive observer cannot even see which certificate was presented.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Where the signature fits.</strong> CertificateVerify contains a signature over the transcript hash, made with the private key matching the certificate's public key. That is the step that converts an anonymous key exchange into an authenticated one; without it, X25519 would agree a key with anybody, including an attacker.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Numerical summary.</strong> 1 RTT of handshake, 128-bit AEAD key, 128-bit ephemeral group, 128-bit collision-resistant hash, and one 16-byte tag per record: about \(2^{-128}\) forgery probability per attempt and no single long-term secret whose later compromise decrypts the session.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A specification says a deployment uses &ldquo;AES-256, therefore 256-bit security&rdquo;. Where is the reasoning incomplete?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="AES-256 genuinely provides 256-bit strength against key search; the weakness is elsewhere in the system, not in the cipher.">AES-256 provides less than 256-bit security against key search</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The overall system is only as strong as its weakest link: if the handshake is authenticated with RSA-2048 the effective strength is about 112 bits, and mode or nonce misuse reduces it further regardless of key length." data-bad="">The overall strength is bounded by the weakest component — for example a 112-bit RSA-2048 signature — and by correct nonce handling</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is not correct: symmetric key size does set the strength of the cipher itself, which is exactly why AES-128 and AES-256 differ.">Symmetric key size never determines security strength</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-certs">
+  <h2 class="section-title">Certificate validation as a decision procedure</h2>
+  <p class="section-lead">Path validation is a conjunction of predicates. If any one of them is false the connection must stop, which is why the hostname check deserves the same emphasis as the signature check.</p>
+
+  <div class="theorem-box">
+    <h3>1. A signature is a trapdoor computation</h3>
+    <p>With RSA, signing uses the private exponent and verification uses the public one:</p>
+    \[ s \equiv m^{d} \pmod n, \qquad m' \equiv s^{e} \pmod n, \qquad m = \mathrm{EMSA\text{-}PSS\text{-}Encode}\big(H(\text{TBS})\big) \]
+    <p style="margin-top:0.6rem;">Verification succeeds only if \(m' = m\), so the encoded hash &mdash; and therefore the certificate body &mdash; is bound to the signer. The padding is not decoration: textbook RSA is malleable, and schemes such as PSS exist so that a signature cannot be turned into a different valid signature. Elliptic-curve schemes (ECDSA, EdDSA) provide the same guarantee from a different hardness assumption, which is why TLS 1.3 negotiates the signature algorithm separately from the cipher suite.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Chain validity is a logical AND</h3>
+    <p>For a chain \(C_0\) (leaf), \(C_1, \dots, C_{m-1}\) (intermediates) and a trust anchor \(R\):</p>
+    \[ \mathrm{Valid} \;=\; \underbrace{\bigwedge_{i=0}^{m-2} \mathrm{Sig}\big(C_i,\ pk(C_{i+1})\big)}_{\text{every link is signed}} \;\wedge\; \underbrace{\bigwedge_{i=0}^{m-1} \mathrm{Time}(C_i)}_{\text{inside its validity window}} \;\wedge\; \mathrm{Name}(C_0, host) \;\wedge\; \mathrm{Usage}(C_i) \;\wedge\; \neg\,\mathrm{Revoked}(C_i) \]
+    <p style="margin-top:0.6rem;">Read it as a checklist rather than a formula: <strong>signature</strong>, <strong>time</strong>, <strong>name</strong>, <strong>usage</strong>, <strong>revocation</strong>. A single false term makes the whole conjunction false, and the browser is required to refuse the connection &mdash; not to warn and continue.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Time, lifetime and renewal</h3>
+    <p>A certificate is only authorised between two instants:</p>
+    \[ t_{\text{notBefore}} \;\le\; t_{\text{now}} \;\le\; t_{\text{notAfter}}, \qquad t_{\text{notAfter}} - t_{\text{notBefore}} \;\le\; 398\ \text{days} \]
+    <p style="margin-top:0.6rem;">The 398-day ceiling is the CA/Browser Forum limit that applies to publicly trusted TLS server certificates. Short lifetimes reduce the exposure from a stolen key, but they turn issuance into a continuously operating system: with a lifetime \(L\) and an issuance lead time \(\ell\), renewal must begin at \(t_{\text{notAfter}} - \ell\) with \(\ell\) comfortably larger than the worst-case issuance delay, or the service fails closed at the moment of expiry.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Name matching is exact, not approximate</h3>
+    <p>A certificate may list several subject alternative names (SANs). A wildcard matches exactly one label:</p>
+    \[ \texttt{*.example.com} \;\text{matches}\; \texttt{www.example.com}, \quad \text{but not} \quad \texttt{a.b.example.com}, \quad \text{nor} \quad \texttt{example.com} \]
+    <p style="margin-top:0.6rem;">Formally, if the pattern is \(*.\ell_1.\ell_2\ldots\ell_j\) and the presented name is \(x_1.x_2.\ldots x_{j+1}\), the match requires \(j+1\) labels with \(x_2 = \ell_1, \ldots, x_{j+1} = \ell_j\). This is also why a certificate for \(example.net\) can never be presented for \(example.com\): the names differ in a label that the pattern must compare exactly.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Transparency logs are Merkle trees</h3>
+    <p>Certificate Transparency records every issued certificate in an append-only log whose root is a hash of all entries. Proving that one certificate is included costs only a logarithmic number of sibling hashes:</p>
+    \[ \big|\text{proof}\big| \;=\; \lceil \log_2 n \rceil\ \text{hashes} \]
+    <p style="margin-top:0.6rem;">For a log with \(n = 10^{9}\) certificates that is 30 hashes &mdash; a few hundred bytes &mdash; which is why an inclusion proof can be stapled to a handshake. Tamper-evidence follows from the hash chain: changing one leaf changes every subsequent root.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-validate"></div>
+  <script type="application/json" id="ix-m-validate">
+  {
+    "title": "Order the verification, then say what each step rules out",
+    "subtitle": "The predicates are evaluated in a practical order: cheap structural checks first, expensive network checks last.",
+    "steps": [
+      "Check that the certificate is inside its validity window",
+      "Link the chain from the leaf through intermediates to a trusted root",
+      "Verify each signature with the issuer's public key",
+      "Match the requested hostname against the subject alternative names",
+      "Check key usage, basic constraints and name constraints",
+      "Check revocation and transparency receipts",
+      "Derive and confirm the handshake keys only after every check passes"
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked example &mdash; evaluate the conjunction.</strong> A client receives a chain of three certificates and a certificate whose SAN reads <code>DNS:*.shop.example, DNS:shop.example</code>. The user typed <code>https://checkout.shop.example</code>.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Signature and chain.</strong> The leaf must be signed by the intermediate's public key, and the intermediate by the root's. If either link fails, the conjunction is false and no later check matters.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Time.</strong> Both the leaf and each intermediate must satisfy \(t_{\text{notBefore}} \le t_{\text{now}} \le t_{\text{notAfter}}\). Expiry of an <em>intermediate</em> breaks the chain just as surely as expiry of the leaf.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Name.</strong> The SAN list contains <code>*.shop.example</code> and <code>shop.example</code>. The requested host <code>checkout.shop.example</code> has exactly one label in the wildcard position, so it matches; a request to <code>a.checkout.shop.example</code> would not, because the wildcard covers exactly one label.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Usage and revocation.</strong> The leaf must assert <code>serverAuth</code> extended key usage, and each issuer must be a CA with the appropriate basic constraints. Revocation status must be checked or at least stapled and validated; absence of a status response is a policy decision the operator has to make explicitly.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Result.</strong> Every predicate is true, so the client uses the certified public key to authenticate the key exchange. Had any single term been false, the correct behaviour is to terminate &mdash; which is the difference between TLS as a control and TLS as a padlock icon.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A certificate for <code>*.example.com</code> is presented for <code>login.eu.example.com</code>. What does a correct client do?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A wildcard covers exactly one label. Here the presented name has two labels where the pattern has one, so the match fails.">Accept it, because the wildcard covers every subdomain</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The pattern matches exactly one label, so login.eu.example.com does not match *.example.com. The client must reject the connection — this is a name-check failure, not a signature failure." data-bad="">Reject it: the wildcard matches one label, not two</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The certificate is valid for other names, but validation is per-connection and per-name. Validity elsewhere does not make this match succeed.">Accept it if the certificate is still within its validity window</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-https">
+  <h2 class="section-title">HSTS, downgrade and operational arithmetic</h2>
+  <p class="section-lead">The last mile of HTTPS is not cryptography; it is policy with numbers attached. These are the numbers.</p>
+
+  <div class="theorem-box">
+    <h3>1. An HSTS policy is a time window</h3>
+    <p>The header declares how long the host must be treated as HTTPS-only:</p>
+    \[ \texttt{Strict-Transport-Security: max-age}=\Delta,\qquad \Delta \ge 31{,}536{,}000\ \text{s} \]
+    <p style="margin-top:0.6rem;">The threshold is one year (365 days) and is a preload-list requirement, not a browser requirement; a two-year value \(\Delta = 63{,}072{,}000\) s is the common production choice. The protection is a state machine: before the first response arrives the browser has no policy, so the <em>first</em> request for a host is downgradeable unless the host is on the built-in preload list, which requires a long max-age, <code>includeSubDomains</code> and the <code>preload</code> token.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Every redirect and every handshake is a round trip</h3>
+    <p>A plaintext request that must first be redirected pays the redirect latency before the handshake even starts. With \(r\) redirects and a fresh TLS session:</p>
+    \[ T_{\text{first byte}} \;\approx\; (1 + r) \times \mathrm{RTT} \;+\; T_{\text{handshake}} \]
+    <p style="margin-top:0.6rem;">For \(r = 1\) and \(\mathrm{RTT} = 50\ \mathrm{ms}\), the redirect alone costs about \(50\ \mathrm{ms}\) &mdash; and, worse, that round trip is in plaintext, which is precisely the window an attacker needs. HSTS removes the redirect by having the browser rewrite the URL to <code>https</code> before anything is sent.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Downgrade protection is a sentinel value</h3>
+    <p>If a client offers TLS 1.3 and the server negotiates TLS 1.2 or below, the server is required to make that visible in its random value:</p>
+    \[ \text{ServerHello.random}[24..32) \;=\; \texttt{44 4F 57 4E 47 52 44 01} \quad (\text{"DOWNGRD}\backslash\texttt{01"}) \]
+    <p style="margin-top:0.6rem;">The client compares the received bytes and aborts the handshake if a downgrade is being signalled. This is the protocol-level defence; HSTS is the deployment-level one, and a minimum-version policy on the server is the third: an attacker who cannot negotiate an old version has nothing to downgrade to.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Small probabilities that decide designs</h3>
+    <p>Two figures are worth remembering because they explain otherwise odd engineering choices:</p>
+    \[ \Pr[\text{tag forgery}] \;=\; 2^{-t}, \qquad \Pr[\text{nonce collision}] \;\approx\; \frac{q^{2}}{2^{\,n+1}} \]
+    <p style="margin-top:0.6rem;">With a 128-bit tag, a blind forgery attempt succeeds with probability \(2^{-128}\) per attempt &mdash; so integrity failures are engineered, not guessed. With random \(n\)-bit nonces, the second expression is why AES-GCM nonces are counters: the failure mode is not a rare collision but a catastrophic key-recovery event, and no probability that grows with traffic volume is acceptable for it.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Quantity</th><th>Value</th><th>Why it matters</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>HSTS preload minimum <code>max-age</code></td><td>\(31{,}536{,}000\) s (1 year)</td><td>Below it, a host is not accepted onto the preload list</td></tr>
+        <tr><td>Common production <code>max-age</code></td><td>\(63{,}072{,}000\) s (2 years)</td><td>Long enough that a policy mistake is expensive, which is the point</td></tr>
+        <tr><td>Maximum public TLS certificate lifetime</td><td>398 days</td><td>Sets the renewal cadence and the monitoring requirement</td></tr>
+        <tr><td>TLS 1.3 maximum plaintext record</td><td>\(2^{14} = 16{,}384\) bytes</td><td>Bounds per-record latency and amortises the 22-byte overhead</td></tr>
+        <tr><td>TLS record overhead</td><td>22 bytes</td><td>About 1.5% of a full-size TCP segment</td></tr>
+        <tr><td>TLS 1.3 nonce size</td><td>96 bits (12 bytes)</td><td>Counter-based, so the birthday bound never applies</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A site sets <code>Strict-Transport-Security: max-age=86400</code> without <code>includeSubDomains</code> or <code>preload</code>. What is the practical consequence?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The header is accepted and enforced for one day. It is the preload list that refuses values below one year, not the browser.">Browsers ignore the header entirely because it is too short</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The browser enforces HTTPS-only for one day on that host, but the protection expires quickly and never covers subdomains or the very first visit — the downgrade window simply reopens on most visits." data-bad="">The browser enforces HTTPS for one day on that host only; the protection expires quickly and the first-visit window stays open</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="HSTS does not replace certificate validation. It removes the ability to bypass a validation failure; it does not perform any check itself.">It replaces the need for certificate validation during that day</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Exam checklist</h2>
+  <p class="section-lead">Week 7 questions are almost always of one of five shapes. Recognise the shape and the structure of the answer follows.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question shape</th><th>What to compute or state</th><th>Where marks are lost</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;What does layer <em>X</em> guarantee?&rdquo;</td><td>Unit of transfer, ordering, delivery, state, and the security property it does or does not provide</td><td>Crediting TCP with confidentiality or identity</td></tr>
+        <tr><td>&ldquo;Quantify the cost of <em>Y</em>.&rdquo;</td><td>Bytes per header or record, \(\eta = P/L_{\text{wire}}\), or round trips before the first byte</td><td>Forgetting that the TLS record sits inside the TCP payload</td></tr>
+        <tr><td>&ldquo;Classify this attack.&rdquo;</td><td>Property targeted (confidentiality, integrity, authenticity, availability), mechanism, control, remaining exposure</td><td>Naming a product instead of a mechanism</td></tr>
+        <tr><td>&ldquo;How does TLS defeat a MITM?&rdquo;</td><td>Certificate chain, signature, hostname match, and the observation that the client's validation is the control</td><td>Claiming encryption alone is sufficient</td></tr>
+        <tr><td>&ldquo;Is this deployment secure?&rdquo;</td><td>Minimum version, suite policy, HSTS with preload, mixed content, certificate lifecycle, and what HTTPS explicitly does not fix</td><td>Treating a padlock as a complete answer</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-formulas"></div>
+  <script type="application/json" id="ix-m-formulas">
+  {
+    "title": "Self-test: formulas and figures to recall",
+    "subtitle": "Say the answer out loud before you flip the card.",
+    "cards": [
+      { "front": "Wire length of a TLS-protected payload", "back": "L = 14 + 20 + 20 + 22 + P = 76 + P bytes on an Ethernet path, with a 1460-byte TCP payload limit at a 1500-byte MTU.", "hint": "Overhead" },
+      { "front": "Cumulative acknowledgement", "back": "ACK = seq_first + contiguous bytes received, read modulo 2^32. ACK 131 means bytes 1–130 arrived.", "hint": "TCP" },
+      { "front": "Window needed to fill a path", "back": "W ≥ C × RTT. 100 Mbit/s at 50 ms needs 625 kB, so window scaling is required beyond the 65535-byte field.", "hint": "Throughput" },
+      { "front": "Retransmission timeout", "back": "RTO = SRTT + 4 × RTTVAR, after RFC 6298, with α = 1/8 and β = 1/4 for the smoothed estimates.", "hint": "TCP timers" },
+      { "front": "Handshake round trips", "back": "TCP 1 RTT, TLS 1.3 a further 1 RTT (2 total), TLS 1.2 a further 2 RTT (3 total); PSK resumption allows 0-RTT early data with replay risk.", "hint": "Latency" },
+      { "front": "HKDF key schedule", "back": "PRK = HMAC(salt, IKM); Early → Handshake → Master secrets, each derived with a labelled HKDF-Expand and the ECDHE input.", "hint": "TLS 1.3" },
+      { "front": "Diffie-Hellman shared secret", "back": "Z = g^(ab) mod p, computed as B^a or A^b. It is never transmitted, which is what gives forward secrecy.", "hint": "Key exchange" },
+      { "front": "Key-size equivalence", "back": "AES-128 ↔ RSA/DH-3072 ↔ P-256 ↔ SHA-256, all about 128-bit security; RSA-2048 is about 112-bit.", "hint": "NIST SP 800-57" },
+      { "front": "Nonce collision probability", "back": "p ≈ q²/2^(n+1) for q records with random n-bit nonces — the reason TLS 1.3 uses a counter-based nonce instead.", "hint": "AEAD" },
+      { "front": "Certificate lifetime and HSTS window", "back": "Public TLS certificates: at most 398 days. HSTS preload: max-age ≥ 31,536,000 s with includeSubDomains and preload.", "hint": "Operations" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The one-sentence synthesis:</strong> IP moves packets without promises, TCP adds order and retransmission, TLS adds confidentiality, integrity and authenticated identity with a one-round-trip handshake whose keys are ephemeral, and HTTPS deployment is what keeps those properties instead of trading them away for convenience.
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the attack and protocol narrative; this page carries the arithmetic. Finish with the Quiz Hub and the Week 7 flashcards, then redraw the TLS 1.3 message flow from memory.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 7] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+
+  function initRecordStepper() {
+    var host = document.getElementById("ix-record");
+    if (!host || !window.Interactive) return;
+
+    window.Interactive.stepper("ix-record", {
+      title: "Building one TLS 1.3 record",
+      subtitle: "Every protected byte is fragmented, sealed and tagged before TCP ever sees it.",
+      titleZh: "构造一条 TLS 1.3 记录",
+      subtitleZh: "每一个受保护的字节在被 TCP 看到之前，都先被分片、封装并打上标签。",
+      height: 250,
+      frames: [
+        {
+          title: "1. Application data",
+          caption: "The HTTP request is just bytes. At this point nothing on the path is prevented from reading or editing them.",
+          titleZh: "1. 应用数据",
+          captionZh: "HTTP 请求本身只是一串字节。此时路径上的任何设备都可以读取或修改它们。",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var bw = Math.min(w - 80, 460);
+            var x = (w - bw) / 2;
+            k.box(x, 74, bw, 52, { fill: "#ffffff", stroke: "#94a3b8", lw: 1.8, r: 8 });
+            k.label(x + 14, 100, "GET /index.html HTTP/1.1", { size: 13, mono: true, color: "#141826" });
+            k.label(w / 2, 148, "plaintext application bytes", { align: "center", size: 12, color: "#565d75" });
+            k.highlight(x, 74, bw, 52, { color: "#dc2626", dash: [6, 4] });
+            k.label(w / 2, 176, "readable and modifiable by anything on the path", { align: "center", size: 12, color: "#dc2626" });
+          }
+        },
+        {
+          title: "2. Fragment into records",
+          caption: "The plaintext is split so that no record exceeds 2^14 = 16384 bytes. Each fragment becomes the inner plaintext of one record.",
+          titleZh: "2. 分片为记录",
+          captionZh: "明文被切分，使每条记录不超过 2^14 = 16384 字节。每个分片成为一条记录的内层明文。",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var n = 4;
+            var gap = 12;
+            var bw = Math.min((w - 80 - gap * (n - 1)) / n, 140);
+            var total = bw * n + gap * (n - 1);
+            var x0 = (w - total) / 2;
+            for (var i = 0; i < n; i++) {
+              var x = x0 + i * (bw + gap);
+              k.box(x, 78, bw, 48, { fill: "#ecfdf5", stroke: "#059669", lw: 1.8, r: 8 });
+              k.label(x + bw / 2, 102, "fragment " + (i + 1), { align: "center", size: 11, mono: true, color: "#047857" });
+            }
+            k.label(w / 2, 152, "each fragment \u2264 2^14 bytes", { align: "center", size: 12, color: "#565d75" });
+            k.label(w / 2, 176, "smaller fragments cost more overhead; larger ones add latency", { align: "center", size: 11, color: "#565d75" });
+          }
+        },
+        {
+          title: "3. Seal with AEAD",
+          caption: "The traffic key encrypts the fragment and authenticates it together with the sequence number and content type. The nonce is the static IV XOR the record counter.",
+          titleZh: "3. 用 AEAD 封装",
+          captionZh: "流量密钥加密该分片，并连同序列号与内容类型一起认证。随机数是静态 IV 与记录计数器的异或。",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var cx = w / 2;
+            k.box(cx - 250, 84, 150, 52, { fill: "#ecfdf5", stroke: "#059669", lw: 1.8, r: 8 });
+            k.label(cx - 175, 110, "plaintext", { align: "center", size: 12, color: "#047857" });
+            k.box(cx - 70, 84, 140, 52, { fill: "#eef2ff", stroke: "#4f46e5", lw: 2, r: 8 });
+            k.label(cx, 104, "AEAD", { align: "center", size: 13, mono: true, color: "#4338ca" });
+            k.label(cx, 122, "key, nonce, aad", { align: "center", size: 10, color: "#565d75" });
+            k.arrow(cx - 96, 110, cx - 76, 110, { color: "#94a3b8", lw: 1.6 });
+            k.box(cx + 120, 84, 130, 52, { fill: "#ffffff", stroke: "#0e7490", lw: 1.8, r: 8 });
+            k.label(cx + 185, 110, "ciphertext", { align: "center", size: 12, color: "#0e7490" });
+            k.arrow(cx + 74, 110, cx + 114, 110, { color: "#94a3b8", lw: 1.6 });
+            k.label(cx, 168, "nonce = iv XOR seq  \u2014  the counter never repeats under one key", { align: "center", size: 11, mono: true, color: "#565d75" });
+          }
+        },
+        {
+          title: "4. Header and tag: 22 bytes of overhead",
+          caption: "A 5-byte record header (type, legacy version, length), a 1-byte inner content type and a 16-byte AEAD tag are added. The receiver verifies the tag before releasing anything.",
+          titleZh: "4. 头部与标签：22 字节开销",
+          captionZh: "加上 5 字节记录头（类型、传统版本、长度）、1 字节内层内容类型与 16 字节 AEAD 标签。接收方在交付数据之前先校验标签。",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var cx = w / 2;
+            var parts = [
+              { w: 70, label: "hdr 5", fill: "#e0f2fe", stroke: "#0369a1" },
+              { w: 96, label: "type 1", fill: "#ecfdf5", stroke: "#059669" },
+              { w: 210, label: "ciphertext", fill: "#ffffff", stroke: "#94a3b8" },
+              { w: 110, label: "tag 16", fill: "#fef3c7", stroke: "#b45309" }
+            ];
+            var total = parts.reduce(function (a, p) { return a + p.w; }, 0);
+            var x = cx - total / 2;
+            parts.forEach(function (p) {
+              k.box(x, 86, p.w - 4, 54, { fill: p.fill, stroke: p.stroke, lw: 1.8, r: 6 });
+              k.label(x + (p.w - 4) / 2, 113, p.label, { align: "center", size: 11, mono: true, color: p.stroke });
+              x += p.w;
+            });
+            k.label(cx, 164, "22 bytes of protection per record", { align: "center", size: 12, color: "#565d75" });
+            k.label(cx, 186, "the receiver checks the tag before the application sees one byte", { align: "center", size: 11, color: "#565d75" });
+          }
+        },
+        {
+          title: "5. Count the cost",
+          caption: "At a 1500-byte MTU the TCP payload is 1460 bytes, so a full-size record carries 1438 application bytes: about 1.5% overhead, and about 95% efficiency for the whole Ethernet frame.",
+          titleZh: "5. 计算代价",
+          captionZh: "在 1500 字节 MTU 下，TCP 载荷为 1460 字节，因此一条满尺寸记录承载 1438 字节应用数据：开销约 1.5%，整个以太网帧的效率约 95%。",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var cx = w / 2;
+            var barW = Math.min(w - 120, 560);
+            var x = cx - barW / 2;
+            var segs = [
+              { f: 14 / 1514, c: "#cbd5e1", t: "eth 14" },
+              { f: 20 / 1514, c: "#bae6fd", t: "ip 20" },
+              { f: 20 / 1514, c: "#7dd3fc", t: "tcp 20" },
+              { f: 22 / 1514, c: "#f59e0b", t: "tls 22" },
+              { f: 1438 / 1514, c: "#059669", t: "payload 1438" }
+            ];
+            var px = x;
+            segs.forEach(function (s) {
+              var wpx = barW * s.f;
+              k.box(px, 86, Math.max(wpx, 3), 46, { fill: s.c, stroke: "#ffffff", lw: 1, r: 4 });
+              px += wpx;
+            });
+            k.label(cx, 158, "one 1514-byte frame: 76 header bytes, 1438 application bytes", { align: "center", size: 12, color: "#565d75" });
+            k.label(cx, 182, "efficiency = 1438 / 1514 = 0.95", { align: "center", size: 12, mono: true, color: "#047857" });
+          }
+        }
+      ]
+    });
+  }
+
+  function initAll() {
+    initRecordStepper();
+    initChrome();
+    lastLang = currentLang();
+  }
+
+  function currentLang() {
+    return typeof window.getLang === "function" ? window.getLang() : "en";
+  }
+
+  var lastLang = null;
+
+  initAll();
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = currentLang();
+    if (lang === lastLang) return;
+    lastLang = lang;
+    var toggle = document.getElementById("sidebarToggle");
+    if (toggle && toggle.parentNode) {
+      var fresh = toggle.cloneNode(true);
+      toggle.parentNode.replaceChild(fresh, toggle);
+    }
+    initRecordStepper();
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

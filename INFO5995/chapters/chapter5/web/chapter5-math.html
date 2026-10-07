@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 5: Cryptography Basics Part 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 foundations for INFO5995: modular arithmetic and the one-way gap, RSA key generation and the signature equation, Diffie-Hellman, hash sizes and the birthday bound, HMAC, and the notation behind X.509 certificates.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 5: Cryptography Basics Part 2">
+<meta property="og:description" content="Week 5 foundations for INFO5995: modular arithmetic and the one-way gap, RSA key generation and the signature equation, Diffie-Hellman, hash sizes and the birthday bound, HMAC, and the notation behind X.509 certificates.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter5-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128272;</span>
+    <h2>Week 5 Foundations</h2>
+  </div>
+  <div class="toc-group">Arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-mod" class="toc-link">Modular arithmetic &amp; the one-way gap</a></li>
+    <li><a href="#sec-m-rsa" class="toc-link">RSA equations</a></li>
+    <li><a href="#sec-m-dh" class="toc-link">Diffie-Hellman</a></li>
+  </ul>
+  <div class="toc-group">Primitives</div>
+  <ul>
+    <li><a href="#sec-m-hash" class="toc-link">Hash sizes and HMAC</a></li>
+    <li><a href="#sec-m-sign" class="toc-link">Signatures and trust binding</a></li>
+  </ul>
+  <div class="toc-group">Reference</div>
+  <ul>
+    <li><a href="#sec-m-tools" class="toc-link">Decision table &amp; notation</a></li>
+  </ul>
+  <a href="chapter5-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 5 supplement</p>
+  <h1>Foundations: the arithmetic behind public-key cryptography</h1>
+  <p class="hero-desc">Week 4 ended with confidentiality; Week 5 adds integrity, authenticity and public verification, and the primitives that provide them are built on two hard problems. This page pins down the modular arithmetic behind RSA and Diffie-Hellman, the equations you should be able to write from memory, the real sizes and bounds from the reference standards, and the notation you need in order to read a certificate.</p>
+  <div class="chip-list">
+    <span>Equations verified against the Week 5 deck</span>
+    <span>Sizes from NIST FIPS 180-4, 186-5 and 198-1</span>
+    <span>Worked toy examples you can check by hand</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-mod">
+  <h2 class="section-title">Modular arithmetic and the one-way gap</h2>
+  <p class="section-lead">Every public-key primitive in this unit is a computation that is cheap in one direction and believed to be infeasible in the other. That asymmetry is the whole idea, and it lives in arithmetic modulo a large number.</p>
+
+  <div class="def-box">
+    <div class="def-label">Notation</div>
+    <p>\(a \bmod n\) is the remainder of \(a\) on division by \(n\). Two integers are <strong>congruent</strong> modulo \(n\), written \(a \equiv b \pmod{n}\), when \(n\) divides their difference. The integers modulo \(n\) form a set written \(\mathbb{Z}_n\); the values coprime to \(n\) form a group of size \(\varphi(n)\), Euler's totient.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. Modular inverse and the totient</h3>
+    <p>A value \(a\) has a multiplicative inverse modulo \(n\) exactly when it is coprime to \(n\), and that inverse is what the extended Euclidean algorithm computes:</p>
+    \[ a\,a^{-1} \equiv 1 \pmod{n} \quad \Longleftrightarrow \quad \gcd(a,n) = 1 \]
+    <p style="margin-top:0.6rem;">For an RSA modulus \(n = pq\) with distinct primes, counting the values that are <em>not</em> coprime to \(n\) gives</p>
+    \[ \varphi(n) \;=\; (p-1)(q-1) \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Practical consequence: anyone who learns \(p\) and \(q\) can compute \(\varphi(n)\), then \(d\), and then read every message. The security of RSA is the secrecy of the factorisation, not the secrecy of the algorithm.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Fermat and Euler</h3>
+    <p>For a prime \(p\) and any \(a\) not divisible by \(p\), and more generally for any \(a\) coprime to \(n\):</p>
+    \[ a^{\,p-1} \equiv 1 \pmod{p}, \qquad a^{\,\varphi(n)} \equiv 1 \pmod{n} \]
+    <p style="margin-top:0.6rem;">This is what makes exponentiation a permutation of \(\mathbb{Z}_n^{*}\): the exponents wrap around with period \(\varphi(n)\), which is exactly why \(e d \equiv 1 \pmod{\varphi(n)}\) lets decryption undo encryption.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Easy forward, hard backward</h3>
+    <p>Raising to a power modulo \(n\) is efficient by repeated squaring, at a cost of about \(O(\log x)\) modular multiplications:</p>
+    \[ y \;=\; g^{\,x} \bmod p \qquad \text{(easy)} \qquad\qquad x \;=\; \log_g y \bmod p \qquad \text{(hard)} \]
+    <p style="margin-top:0.6rem;">The backward problem is the <strong>discrete logarithm problem</strong>. Its sibling is <strong>integer factorisation</strong>: computing \(n = p q\) is easy, and recovering \(p\) and \(q\) from \(n\) is not. Diffie-Hellman rests on the first, RSA on the second.</p>
+  </div>
+
+  <div id="ix-modexp"></div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the modular exponentiation \(y = g^{x} \bmod p\) work as a one-way function?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="There is no key in the arithmetic itself; the difficulty is computational, not secret. Publishing g, p and y gives the attacker everything except x.">Because the values g and p must be kept secret for it to be hard</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Repeated squaring makes the forward direction cheap, while recovering x is the discrete logarithm problem, for which no efficient classical method is known for suitable parameters." data-bad="">Because computing y is cheap with repeated squaring, while recovering x is the discrete logarithm problem</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It is not one-way in a small group — with p = 23 you can simply try all 22 exponents. The hardness only appears at realistic parameter sizes.">Because the operation is impossible to invert even for a tiny modulus like p = 23</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-rsa">
+  <h2 class="section-title">RSA: key generation, encryption and signatures</h2>
+  <p class="section-lead">RSA is one equation pair with a key-generation recipe attached. Learn the recipe, the two equations, and the reason the arithmetic is correct &mdash; then the sizes and the padding rules.</p>
+
+  <div class="theorem-box">
+    <h3>Key generation</h3>
+    \[ n = p\,q, \qquad \varphi(n) = (p-1)(q-1), \qquad e\,d \equiv 1 \pmod{\varphi(n)} \]
+    <p style="margin-top:0.6rem;">Public key \((n, e)\); private key \((n, d)\); \(p\), \(q\) and \(\varphi(n)\) destroyed or stored as secret material. NIST FIPS 186-5 requires a modulus of at least 2048 bits, primes \(p\) and \(q\) of equal bit length, and a public exponent in the range \(2^{16} &lt; e &lt; 2^{256}\) (typically \(e = 65537\)).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Encryption and decryption</h3>
+    \[ c \;=\; m^{\,e} \bmod n, \qquad\qquad m \;=\; c^{\,d} \bmod n \]
+    <p style="margin-top:0.6rem;">Correctness follows from Euler's theorem. Since \(ed = 1 + k\varphi(n)\) for some integer \(k\),</p>
+    \[ m^{\,ed} \;=\; m^{\,1 + k\varphi(n)} \;=\; m \cdot \left(m^{\varphi(n)}\right)^{k} \;\equiv\; m \pmod{n} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">This holds for messages coprime to \(n\); the Chinese Remainder Theorem covers the remaining cases. The practical lesson is the same either way: the exponent pair is what ties the two keys together.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Signatures reverse the roles of the keys</h3>
+    \[ s \;=\; H(m)^{\,d} \bmod n, \qquad\qquad s^{\,e} \bmod n \;\overset{?}{=}\; H(m) \]
+    <p style="margin-top:0.6rem;">Anyone can verify with \((n,e)\); only the holder of \(d\) can produce \(s\). Two warnings that the standards and the lecture both make: a signature key pair shall not be reused for encryption or key establishment, and raw textbook RSA must never be deployed &mdash; without an encoding such as PSS, the multiplicative structure of RSA makes signatures forgeable.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Quantity</th><th>Toy value</th><th>How it is obtained</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>\(p, q\)</td><td>61, 53</td><td>Random primes of equal bit length</td></tr>
+        <tr><td>\(n = pq\)</td><td>3233</td><td>Multiplication &mdash; published as part of the public key</td></tr>
+        <tr><td>\(\varphi(n) = (p-1)(q-1)\)</td><td>3120</td><td>Secret; reveals \(d\) if leaked</td></tr>
+        <tr><td>\(e\)</td><td>17</td><td>Chosen coprime to \(\varphi(n)\); published</td></tr>
+        <tr><td>\(d \equiv e^{-1} \pmod{\varphi(n)}\)</td><td>2753</td><td>Extended Euclidean algorithm; secret</td></tr>
+        <tr><td>Check</td><td>17 &times; 2753 = 46&nbsp;801 = 15 &times; 3120 + 1</td><td>\(ed \equiv 1 \pmod{\varphi(n)}\) &#10003;</td></tr>
+        <tr><td>\(m \rightarrow c\)</td><td>65 \(\rightarrow\) 2790</td><td>\(c = m^{e} \bmod n\)</td></tr>
+        <tr><td>\(c \rightarrow m\)</td><td>2790 \(\rightarrow\) 65</td><td>\(m = c^{d} \bmod n\)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>RSA modulus</th><th>Assessed security strength</th><th>Comparable symmetric key</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1024 bits</td><td>No longer acceptable in new designs</td><td>&mdash;</td></tr>
+        <tr><td>2048 bits</td><td>About 112 bits</td><td>3DES-class strength; still allowed, not generous</td></tr>
+        <tr><td>3072 bits</td><td>About 128 bits</td><td>AES-128</td></tr>
+        <tr><td>7680 bits</td><td>About 192 bits</td><td>AES-192</td></tr>
+        <tr><td>15360 bits</td><td>About 256 bits</td><td>AES-256</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In the toy RSA example, which value must never be published, and why?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="n is part of the public key and is published deliberately. Its secrecy is not what protects the scheme.">The modulus n, because it is the product of the two primes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. φ(n) together with e yields d immediately through the modular inverse, so publishing it would hand over the private key." data-bad="">φ(n), because with e it yields the private exponent d immediately</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="e is the public exponent; it is published and is not sensitive. The requirement is only that gcd(e, φ(n)) = 1.">The public exponent e, because it is the inverse of d</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; build the key pair, then use it.</strong> Parameters: \(p = 61\), \(q = 53\), \(e = 17\), message \(m = 65\).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Modulus.</strong> \(n = 61 \times 53 = 3233\), so \(\mathrm{len}(n) = 12\) bits. Real deployments require \(\mathrm{len}(n) \ge 2048\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Totient.</strong> \(\varphi(n) = 60 \times 52 = 3120\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Validity of \(e\).</strong> Euclid: \(3120 = 17 \times 183 + 9\), \(17 = 9 + 8\), \(9 = 8 + 1\), so \(\gcd(17, 3120) = 1\) and the inverse exists.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Private exponent.</strong> Back-substituting gives \(1 = 2 \times 3120 - 367 \times 17\), so \(d \equiv -367 \equiv 2753 \pmod{3120}\). Check: \(17 \times 2753 \bmod 3120 = 1\). &#10003;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Encrypt with repeated squaring.</strong> \(65^{2} \equiv 992\), \(65^{4} \equiv 1232\), \(65^{8} \equiv 1547\), \(65^{16} \equiv 789 \pmod{3233}\), so \(c = 789 \times 65 = 51\,285 \equiv 2790 \pmod{3233}\). Only five multiplications were needed rather than sixteen.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Decrypt.</strong> \(2790^{2753} \bmod 3233 = 65\) by the same route. Anyone can reproduce step 5 from the public key; only the holder of \(d\) can run this step.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-dh">
+  <h2 class="section-title">Diffie-Hellman: the shared secret equation</h2>
+  <p class="section-lead">Two parties publish values derived from their own secrets. The algebra guarantees that both arrive at the same number, and the discrete logarithm problem is what stops everyone else.</p>
+
+  <div class="theorem-box">
+    <h3>The exchange</h3>
+    <p>Public parameters: a large prime \(p\) and a generator \(g\). Alice chooses \(a\), Bob chooses \(b\), both uniformly at random from \(\{1, \dots, p-2\}\):</p>
+    \[ A = g^{\,a} \bmod p, \qquad B = g^{\,b} \bmod p, \qquad K = B^{\,a} \bmod p = A^{\,b} \bmod p \]
+    <p style="margin-top:0.6rem;">Both sides agree because exponentiation composes:</p>
+    \[ B^{\,a} = \left(g^{\,b}\right)^{a} = g^{\,ab} = \left(g^{\,a}\right)^{b} = A^{\,b} \pmod{p} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Anyone who can solve the discrete logarithm recovers \(a\) from \(A\) or \(b\) from \(B\), and therefore \(K\). That is the <strong>computational Diffie-Hellman</strong> assumption: \(g^{ab}\) is hard to compute from \(g^{a}\) and \(g^{b}\) alone.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Alice</th><th>Bob</th><th>Eve sees</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Parameters</td><td colspan="2">\(p = 23\), \(g = 5\)</td><td>\(p = 23\), \(g = 5\)</td></tr>
+        <tr><td>Private choice</td><td>\(a = 6\)</td><td>\(b = 15\)</td><td>nothing</td></tr>
+        <tr><td>Public value</td><td>\(A = 5^{6} \bmod 23 = 8\)</td><td>\(B = 5^{15} \bmod 23 = 19\)</td><td>\(A = 8\), \(B = 19\)</td></tr>
+        <tr><td>Combine</td><td>\(K = 19^{6} \bmod 23 = 2\)</td><td>\(K = 8^{15} \bmod 23 = 2\)</td><td>&mdash;</td></tr>
+        <tr><td>Why it matches</td><td colspan="2">\(19^{6} = (5^{15})^{6} = 5^{90} \equiv 5^{2} = 2 \pmod{23}\) because the order of 5 modulo 23 is 22 and \(90 \equiv 2 \pmod{22}\)</td><td>&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Why the parameters matter</h3>
+    <p>The hardness assumption only holds for good groups: a large prime-order subgroup, safe primes or approved elliptic curves, and validation of every received public value.</p>
+    \[ \text{secure: } \mathrm{ord}(g) \text{ is a large prime} \qquad\qquad \text{insecure: } \mathrm{ord}(g) \text{ has small factors} \]
+    <p style="margin-top:0.6rem;">If the order has a small factor, an attacker can test candidate values of \(a\) in that small subgroup and learn \(a\) modulo that factor. Send an invalid public value, repeat, and the private exponent leaks. This is why the standards fix the groups (NIST SP 800-186 for curves) and require public-value validation.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Classical Diffie-Hellman</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Modular arithmetic in \(\mathbb{Z}_p^{*}\)</li>
+        <li>Needs a large prime \(p\) and a generator of large prime order</li>
+        <li>Bigger values on the wire for the same security level</li>
+        <li>Vulnerable to small-subgroup attacks if parameters are weak</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Elliptic-curve Diffie-Hellman (ECDH)</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Same structure with points on a curve instead of integers</li>
+        <li>A 256-bit curve gives roughly the security of a 3072-bit RSA modulus</li>
+        <li>Smaller keys and faster operations; this is what TLS deploys</li>
+        <li>Ephemeral use (ECDHE) gives forward secrecy for past sessions</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which property does the Diffie-Hellman exchange <em>not</em> provide by itself?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The exchange produces a shared secret with an unknown party; an active attacker can run two exchanges and sit in the middle. Authentication must come from a certificate or a signature." data-bad="">Assurance about who is on the other end of the exchange</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It does provide this: both sides compute the same K from public values without transmitting it, which is the entire point of the protocol.">Agreement between two honest parties on the same secret value</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Confidentiality of the derived key does hold against a passive eavesdropper — that follows from the discrete logarithm assumption, not from authentication.">Secrecy of the derived key against a passive eavesdropper</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; verify both sides reach the same secret.</strong> Parameters \(p = 23\), \(g = 5\), \(a = 6\), \(b = 15\).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Alice's public value.</strong> \(5^{2} = 25 \equiv 2\), \(5^{3} \equiv 2 \times 5 = 10\), so \(A = 5^{6} = (5^{3})^{2} \equiv 100 \equiv 100 - 4 \times 23 = 8 \pmod{23}\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Bob's public value.</strong> \(5^{12} = (5^{6})^{2} \equiv 64 \equiv 18\), so \(B = 5^{15} = 5^{12} \cdot 5^{3} \equiv 18 \times 10 = 180 \equiv 180 - 7 \times 23 = 19 \pmod{23}\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Alice computes.</strong> \(K = B^{a} = 19^{6} \pmod{23}\). Since \(19 \equiv 5^{15}\), this is \(5^{90}\). The order of 5 modulo 23 is 22, and \(90 = 4 \times 22 + 2\), so \(K \equiv 5^{2} = 25 \equiv 2 \pmod{23}\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Bob computes.</strong> \(K = A^{b} = 8^{15} \pmod{23}\). Since \(8 \equiv 5^{6}\), this is \(5^{90}\) again, so \(K \equiv 2 \pmod{23}\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Conclusion, and the caveat.</strong> Both sides hold \(K = 2\), which was never transmitted. Eve would have to solve \(5^{a} \equiv 8 \pmod{23}\) &mdash; 22 candidates here, infeasible for an approved group &mdash; and even then she would only have a shared secret with someone she has not authenticated.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-hash">
+  <h2 class="section-title">Hash sizes, the birthday bound and HMAC</h2>
+  <p class="section-lead">Hash functions turn up everywhere in this week's material, so the sizes and the attack costs are worth knowing exactly &mdash; and HMAC is a formula, not a slogan.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Algorithm</th><th>Block size (bits)</th><th>Digest size (bits)</th><th>Collision work</th><th>Use</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SHA-1</td><td>512</td><td>160</td><td>about \(2^{80}\) &mdash; broken in practice</td><td>Legacy only; do not choose</td></tr>
+        <tr><td>SHA-224</td><td>512</td><td>224</td><td>about \(2^{112}\)</td><td>Compatible with 112-bit security targets</td></tr>
+        <tr><td>SHA-256</td><td>512</td><td>256</td><td>about \(2^{128}\)</td><td>The default choice</td></tr>
+        <tr><td>SHA-384</td><td>1024</td><td>384</td><td>about \(2^{192}\)</td><td>Higher security targets</td></tr>
+        <tr><td>SHA-512</td><td>1024</td><td>512</td><td>about \(2^{256}\)</td><td>Higher security targets, 64-bit platforms</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The birthday bound</h3>
+    <p>A collision attack does not need to hit a fixed digest; it needs any two inputs that agree. Comparing all pairs makes the expected work</p>
+    \[ q \;\approx\; 1.177\,\sqrt{2^{n}} \;\approx\; 2^{\,n/2} \]
+    <p style="margin-top:0.6rem;">So an \(n\)-bit digest gives about \(n\) bits of pre-image resistance but only about \(n/2\) bits of collision resistance. That is why MD5 and SHA-1 fell first: their collision margins were the smallest, and collision resistance is the property signatures and certificates depend on.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>HMAC is a nested keyed hash</h3>
+    <p>From NIST FIPS 198-1, with \(K_0\) the key padded (or hashed then padded) to the hash block size \(B\), and ipad/opad the bytes 0x36 and 0x5c repeated \(B\) times:</p>
+    \[ \mathrm{HMAC}(K, m) \;=\; H\!\left( (K_0 \oplus \mathrm{opad}) \,\|\, H\!\left( (K_0 \oplus \mathrm{ipad}) \,\|\, m \right) \right) \]
+    <p style="margin-top:0.6rem;">Two properties follow from the structure. The tag length equals the digest length (\(L\) bits), and the key is never fed to the hash directly, which is what a naive construction such as \(H(K \| m)\) gets wrong. Because the same construction works with any approved hash, HMAC-SHA-256 is the common modern default.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Entropy, and why a hashed password is not a key</h3>
+    <p>For a key drawn uniformly from \(N\) possibilities, the entropy is</p>
+    \[ H_{\text{key}} \;=\; \log_2 N \ \text{bits} \]
+    <p style="margin-top:0.6rem;">A 128-bit key drawn from a CSPRNG has 128 bits of entropy. A human-chosen password has far less, and hashing it does not add any: SHA-256 of a password with 30 bits of entropy still has 30 bits of guessability, even though the digest is 256 bits long. Password storage therefore uses a deliberately slow KDF with a salt (Argon2id, scrypt, bcrypt, PBKDF2), and keys come from a CSPRNG.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-attack-race"></div>
+  <script type="application/json" id="ix-attack-race">
+  {
+    "title": "Attacker work against a 256-bit digest",
+    "subtitle": "Exponents of two, drawn from the properties above. Collision resistance is always the cheapest target, which is why it is the property that gets broken first.",
+    "max": 256,
+    "rows": [
+      { "name": "Pre-image: find an input with a given digest", "value": 256, "display": "about 2^256 work" },
+      { "name": "Second pre-image: find another input matching one given message", "value": 256, "display": "about 2^256 work" },
+      { "name": "Collision: find any two inputs with the same digest", "value": 128, "display": "about 2^128 work" },
+      { "name": "Brute force an HMAC key drawn from 128 bits", "value": 128, "display": "about 2^128 guesses" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A system needs 128-bit security and uses SHA-256 in a digital signature. Is that consistent?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. SHA-256 gives about 128 bits of collision resistance and 256 bits of pre-image resistance, so it supports a 128-bit target. Using SHA-256 with a 256-bit target would not." data-bad="">Yes: SHA-256 supplies about 128 bits of collision resistance, which matches a 128-bit target</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That reasoning treats the digest length as the security level. Collision resistance is about n/2, so SHA-256 gives about 128 bits, not 256.">No: a 256-bit digest only provides 256-bit security, so the target must be raised to 256 bits</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The hash choice does not affect confidentiality at all — hashing is not encryption and hides nothing.">No: SHA-256 cannot be used in signatures because it provides no confidentiality</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked example &mdash; compute HMAC-SHA-256 by hand, at the level of the algorithm.</strong> Key \(K\) (say 20 bytes), message \(m\), hash \(H\) = SHA-256 with \(B = 64\) bytes and \(L = 32\) bytes.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Normalise the key.</strong> \(|K| = 20 &lt; B = 64\), so \(K_0 = K \,\|\, 0^{44}\): append 44 zero bytes. If the key had been longer than 64 bytes, the rule would be \(K_0 = H(K) \,\|\, 0^{32}\) instead &mdash; hash first, then pad.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Inner block.</strong> \(K_0 \oplus \mathrm{ipad}\) where ipad is 0x36 repeated 64 times. XOR is byte-wise and self-inverse, so the verifier derives the identical block from the same key.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Inner hash.</strong> Append the message and hash: \(h_{\text{in}} = H\!\left((K_0 \oplus \mathrm{ipad}) \,\|\, m\right)\), a 32-byte value. Every byte of both the key and the message now influences it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Outer block.</strong> \(K_0 \oplus \mathrm{opad}\) where opad is 0x5c repeated 64 times. Note that the message is <em>not</em> concatenated here &mdash; only the inner digest is.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Tag.</strong> \(T = H\!\left((K_0 \oplus \mathrm{opad}) \,\|\, h_{\text{in}}\right)\), 32 bytes for HMAC-SHA-256. Two hash computations over at least two blocks each, no matter how short the message.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Verify and bound the guarantee.</strong> The verifier recomputes \(T' = \mathrm{HMAC}(K, m')\) and compares. A modified \(m'\) yields a different \(T'\); a forged tag needs \(K\). But a valid pair recorded yesterday still verifies today, so freshness requires a nonce, timestamp or sequence number on top.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-sign">
+  <h2 class="section-title">Signatures and trust binding, in notation</h2>
+  <p class="section-lead">The signature equation tells you what a signature proves. The certificate structure tells you what it cannot prove on its own.</p>
+
+  <div class="theorem-box">
+    <h3>Hash-then-sign</h3>
+    <p>A signature is computed over a digest, never over an arbitrarily long message directly:</p>
+    \[ s = \mathrm{Sign}_{SK}(H(m)), \qquad \mathrm{Verify}_{PK}(m, s) = 1 \iff \mathrm{check}\!\left(PK,\, H(m),\, s\right) = 1 \]
+    <p style="margin-top:0.6rem;">Three reasons for hashing first: the signed object has a fixed size whatever the message length; the asymmetric operation is slow and is applied once to a short value; and the digest binds the signature to the exact bytes. Verification recomputes \(H(m)\), so changing a single byte of either \(m\) or \(s\) makes the check fail.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Why raw textbook RSA signatures are unsafe</h3>
+    <p>Without an encoding, RSA signatures are multiplicatively malleable: if \(s_1\) verifies \(m_1\) and \(s_2\) verifies \(m_2\), then</p>
+    \[ \left(s_1 s_2\right)^{e} \equiv m_1 m_2 \pmod{n} \]
+    <p style="margin-top:0.6rem;">so \(s_1 s_2 \bmod n\) is a valid signature on the product \(m_1 m_2\), which the attacker never had signed. Approved schemes prevent this by encoding the digest with a randomised, structured padding (RSA-PSS) or by using a different construction entirely. FIPS 186-5 approves RSA, ECDSA and EdDSA, and requires the hash strength to be at least that of the key.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The shape of ECDSA</h3>
+    <p>With domain parameters \((q, G, n)\), private key \(d\), per-message secret \(k\), and \(e\) the leftmost bits of \(H(m)\) interpreted as an integer:</p>
+    \[ R = [k]G, \qquad r = x_R \bmod n, \qquad s = k^{-1}\left(e + r\,d\right) \bmod n \]
+    <p style="margin-top:0.6rem;">The signature is the pair \((r, s)\). \(k\) must be unique per signature and secret: reuse it and the private key falls out of two signatures by simple algebra, which is exactly why the standard requires a fresh \(k\) at every invocation and allows deterministic generation to remove the temptation.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>What a certificate adds</h3>
+    <p>A certificate is a signed statement binding a public key to a subject, issued by a CA whose own key is trusted:</p>
+    \[ \mathrm{Cert} = \left\langle\, \text{subject},\ PK,\ \text{issuer},\ [\text{notBefore}, \text{notAfter}],\ \text{extensions},\ \sigma_{CA} \,\right\rangle \]
+    \[ \sigma_{CA} = \mathrm{Sign}_{SK_{CA}}\!\left(H(\text{certificate fields})\right) \]
+    <p style="margin-top:0.6rem;">Validation therefore checks more than one equation: the CA signature over the fields, a chain from the subject through any intermediates to a locally trusted root, the validity window, the name you asked for, key usage, and revocation status. A valid signature proves control of a private key; the chain is what turns that key into an identity.</p>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-cert-hotspot"></div>
+  <script type="application/json" id="ix-cert-hotspot">
+  {
+    "title": "Anatomy of an X.509 certificate",
+    "subtitle": "Click each marker to see what the field is for and what a validator does with it.",
+    "svg": "<svg viewBox=\"0 0 720 430\" role=\"img\" aria-label=\"Diagram of an X.509 certificate showing its fields and the CA signature over them\" xmlns=\"http://www.w3.org/2000/svg\">\n<rect x=\"0\" y=\"0\" width=\"720\" height=\"430\" fill=\"#fbfdfe\"></rect>\n<rect x=\"56\" y=\"16\" width=\"608\" height=\"398\" rx=\"14\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"2.4\"></rect>\n<rect x=\"56\" y=\"16\" width=\"608\" height=\"44\" rx=\"14\" fill=\"#e8f5ef\" stroke=\"#059669\" stroke-width=\"2.4\"></rect>\n<text x=\"76\" y=\"44\" font-family=\"monospace\" font-size=\"14\" fill=\"#047857\">X.509 v3 certificate</text>\n<text x=\"640\" y=\"44\" text-anchor=\"end\" font-family=\"monospace\" font-size=\"12\" fill=\"#565d75\">tbsCertificate</text>\n<line x1=\"76\" y1=\"74\" x2=\"644\" y2=\"74\" stroke=\"#cbd5e1\" stroke-width=\"1\"></line>\n<text x=\"76\" y=\"102\" font-family=\"monospace\" font-size=\"12\" fill=\"#047857\">version / serialNumber</text>\n<text x=\"330\" y=\"102\" font-family=\"monospace\" font-size=\"12\" fill=\"#141826\">v3, 04:9a:1c:... (unique)</text>\n<line x1=\"76\" y1=\"116\" x2=\"644\" y2=\"116\" stroke=\"#e2e8f0\" stroke-width=\"1\"></line>\n<text x=\"76\" y=\"144\" font-family=\"monospace\" font-size=\"12\" fill=\"#047857\">signatureAlgorithm</text>\n<text x=\"330\" y=\"144\" font-family=\"monospace\" font-size=\"12\" fill=\"#141826\">ecdsa-with-SHA256</text>\n<line x1=\"76\" y1=\"158\" x2=\"644\" y2=\"158\" stroke=\"#e2e8f0\" stroke-width=\"1\"></line>\n<text x=\"76\" y=\"186\" font-family=\"monospace\" font-size=\"12\" fill=\"#047857\">issuer</text>\n<text x=\"330\" y=\"186\" font-family=\"monospace\" font-size=\"12\" fill=\"#141826\">CN = Example Intermediate CA</text>\n<line x1=\"76\" y1=\"200\" x2=\"644\" y2=\"200\" stroke=\"#e2e8f0\" stroke-width=\"1\"></line>\n<text x=\"76\" y=\"228\" font-family=\"monospace\" font-size=\"12\" fill=\"#047857\">validity</text>\n<text x=\"330\" y=\"228\" font-family=\"monospace\" font-size=\"12\" fill=\"#141826\">2026-03-01 to 2027-03-01</text>\n<line x1=\"76\" y1=\"242\" x2=\"644\" y2=\"242\" stroke=\"#e2e8f0\" stroke-width=\"1\"></line>\n<text x=\"76\" y=\"270\" font-family=\"monospace\" font-size=\"12\" fill=\"#047857\">subject</text>\n<text x=\"330\" y=\"270\" font-family=\"monospace\" font-size=\"12\" fill=\"#141826\">CN = www.example.com</text>\n<line x1=\"76\" y1=\"284\" x2=\"644\" y2=\"284\" stroke=\"#e2e8f0\" stroke-width=\"1\"></line>\n<text x=\"76\" y=\"312\" font-family=\"monospace\" font-size=\"12\" fill=\"#047857\">subjectPublicKeyInfo</text>\n<text x=\"330\" y=\"312\" font-family=\"monospace\" font-size=\"12\" fill=\"#141826\">id-ecPublicKey, P-256, 04:3b:...</text>\n<line x1=\"76\" y1=\"326\" x2=\"644\" y2=\"326\" stroke=\"#e2e8f0\" stroke-width=\"1\"></line>\n<text x=\"76\" y=\"354\" font-family=\"monospace\" font-size=\"12\" fill=\"#047857\">extensions</text>\n<text x=\"330\" y=\"354\" font-family=\"monospace\" font-size=\"12\" fill=\"#141826\">SAN, keyUsage, basicConstraints</text>\n<line x1=\"56\" y1=\"372\" x2=\"664\" y2=\"372\" stroke=\"#059669\" stroke-width=\"2\" stroke-dasharray=\"6 5\"></line>\n<text x=\"76\" y=\"398\" font-family=\"monospace\" font-size=\"12\" fill=\"#7c3aed\">signatureValue</text>\n<text x=\"330\" y=\"398\" font-family=\"monospace\" font-size=\"12\" fill=\"#7c3aed\">the CA signature over every field above</text>\n</svg>",
+    "points": [
+      { "x": 16.0, "y": 23.7, "label": "Version and serial number", "detail": "A unique identifier for this certificate. It is what a revocation list names, and it is how a renewal is distinguished from the certificate it replaces." },
+      { "x": 16.0, "y": 33.5, "label": "Signature algorithm", "detail": "The algorithm the issuer used to sign these fields — here ECDSA with SHA-256. A validator must trust this choice, not just the signature bytes." },
+      { "x": 16.0, "y": 43.3, "label": "Issuer", "detail": "The CA that signed the certificate. Validation uses this to find the next certificate up the chain, and continues until it reaches a locally trusted root." },
+      { "x": 16.0, "y": 53.0, "label": "Validity", "detail": "A bounded lifetime. An expired certificate is invalid even when every signature checks out, which is why renewal is an operational process rather than an optional one." },
+      { "x": 16.0, "y": 62.8, "label": "Subject", "detail": "The identity being bound — a domain name for a server certificate, or an organisation for a client or code-signing certificate." },
+      { "x": 16.0, "y": 72.6, "label": "Subject public key info", "detail": "The algorithm and the public key itself: the object being certified. This is the value an application will use to verify signatures or to run a key exchange." },
+      { "x": 16.0, "y": 82.3, "label": "Extensions", "detail": "Subject alternative names, key usage, and basic constraints such as whether this key may sign other certificates. A validator must enforce these; ignoring key usage is a real vulnerability class." },
+      { "x": 16.0, "y": 92.6, "label": "Signature value", "detail": "The CA's signature over every field above. Change any field and this no longer verifies — but a valid signature still only proves control of the CA's private key; the chain is what makes it an identity." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does hash-then-sign not lose security compared with signing the whole message?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It is the opposite: hashing is what binds the signature to the exact message bytes. Changing one byte changes the digest completely.">Because a hash hides the message, so the signer cannot be identified from it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The digest is a fixed-length, collision-resistant commitment to the message, so a valid signature over the digest transfers to the message — while keeping the slow asymmetric operation to one short input." data-bad="">Because a collision-resistant digest commits to the whole message in a fixed length, so one signature covers all of it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Hashing is not needed for confidentiality and provides none. The reason is size, cost and binding.">Because hashing makes the signature shorter than the message so it fits in one packet</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tools">
+  <h2 class="section-title">Decision table, notation and self-checks</h2>
+  <p class="section-lead">The exam question is almost always &ldquo;which primitive, and why?&rdquo;. This is the table to reconstruct, and the symbols you need in order to read it.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Guarantee needed</th><th>Primitive</th><th>Key model</th><th>Fails when</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Detect that data changed</td><td>Hash (SHA-256, SHA-3)</td><td>No key</td><td>An attacker replaces the message <em>and</em> the digest</td></tr>
+        <tr><td>Prove a key holder created the tag</td><td>MAC / HMAC</td><td>Shared secret</td><td>The key leaks, or one of many holders forges</td></tr>
+        <tr><td>Let anyone verify one signer</td><td>Digital signature</td><td>Private / public pair</td><td>The public key is substituted, or the scheme is raw RSA</td></tr>
+        <tr><td>Hide and authenticate traffic</td><td>AEAD (AES-GCM, ChaCha20-Poly1305)</td><td>Shared secret</td><td>The nonce is reused</td></tr>
+        <tr><td>Agree a key over an open channel</td><td>Diffie-Hellman / ECDHE</td><td>Ephemeral key pairs</td><td>The exchange is unauthenticated, or parameters are weak</td></tr>
+        <tr><td>Bind a key to a name</td><td>X.509 certificate, PKI</td><td>Trust anchors</td><td>A trusted CA is compromised, or validation is skipped</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-notation"></div>
+  <script type="application/json" id="ix-m-notation">
+  {
+    "title": "Match the notation to its meaning",
+    "subtitle": "Click a symbol on the left, then what it denotes on the right.",
+    "pairs": [
+      ["n = p·q", "The RSA modulus; its bit length is the key size"],
+      ["(n, e)", "The RSA public key, used to encrypt and to verify"],
+      ["(n, d)", "The RSA private key, used to decrypt and to sign"],
+      ["φ(n) = (p−1)(q−1)", "Euler's totient — secret, because it yields d"],
+      ["g, p", "Public Diffie-Hellman parameters: generator and prime"],
+      ["A = g^a mod p", "Alice's public value; a itself stays private"],
+      ["K = g^(ab) mod p", "The shared secret both sides derive and never transmit"],
+      ["H(m)", "The digest that a signature or MAC actually covers"],
+      ["K0 ⊕ ipad / opad", "HMAC's inner and outer key blocks (0x36 and 0x5c)"],
+      ["2^(n/2)", "The birthday bound on collision attacks against an n-bit digest"],
+      ["σ_CA", "The certificate authority's signature over the certificate fields"],
+      ["Verify(PK, H(m), s)", "The check a verifier runs using the signer's public key"]
+    ]
+  }
+  </script>
+
+  <div data-ix="deck" data-ix-src="#ix-m-formulas"></div>
+  <script type="application/json" id="ix-m-formulas">
+  {
+    "title": "Formula recall",
+    "subtitle": "Write the equation down before you flip the card.",
+    "cards": [
+      { "front": "RSA key generation", "back": "n = p·q, φ(n) = (p−1)(q−1), e·d ≡ 1 (mod φ(n)); publish (n, e), keep (n, d).", "hint": "Three equations" },
+      { "front": "RSA encryption and decryption", "back": "c = m^e mod n and m = c^d mod n, correct because m^(ed) ≡ m (mod n).", "hint": "Euler's theorem" },
+      { "front": "RSA signature and verification", "back": "s = H(m)^d mod n, verified by s^e mod n = H(m) — with PSS encoding, never raw.", "hint": "Reversed key roles" },
+      { "front": "Diffie-Hellman", "back": "A = g^a mod p, B = g^b mod p, K = B^a = A^b = g^(ab) mod p.", "hint": "Key agreement" },
+      { "front": "HMAC", "back": "H((K0 ⊕ opad) ‖ H((K0 ⊕ ipad) ‖ m)), with B the hash block size.", "hint": "Nested keyed hash" },
+      { "front": "Birthday bound", "back": "Collisions need about 2^(n/2) work for an n-bit digest, while pre-images need about 2^n.", "hint": "Why collision resistance fails first" }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Symbols used on this page</div>
+    <p>The deck writes these relationships in prose and in slide diagrams. The table below collects the notation used here so that the equations above can be read without guessing.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(n\)</div><div class="sym-cell">modulus</div><div class="sym-cell">Product of two primes; its bit length is the RSA key size</div>
+    <div class="sym-cell">\(e\)</div><div class="sym-cell">public exponent</div><div class="sym-cell">Published with \(n\); coprime to \(\varphi(n)\); typically 65537</div>
+    <div class="sym-cell">\(d\)</div><div class="sym-cell">private exponent</div><div class="sym-cell">\(d \equiv e^{-1} \pmod{\varphi(n)}\); never leaves the owner</div>
+    <div class="sym-cell">\(p, q\)</div><div class="sym-cell">the primes</div><div class="sym-cell">Equal bit length; secret, because they reveal \(\varphi(n)\)</div>
+    <div class="sym-cell">\(\varphi(n)\)</div><div class="sym-cell">Euler's totient</div><div class="sym-cell">\((p-1)(q-1)\) for an RSA modulus; the period of exponentiation</div>
+    <div class="sym-cell">\(g, p\)</div><div class="sym-cell">generator, prime</div><div class="sym-cell">Public Diffie-Hellman domain parameters</div>
+    <div class="sym-cell">\(a, b\)</div><div class="sym-cell">private exponents</div><div class="sym-cell">Chosen uniformly at random and never transmitted</div>
+    <div class="sym-cell">\(A, B\)</div><div class="sym-cell">public values</div><div class="sym-cell">\(A = g^{a} \bmod p\), \(B = g^{b} \bmod p\)</div>
+    <div class="sym-cell">\(K\)</div><div class="sym-cell">shared secret</div><div class="sym-cell">\(g^{ab} \bmod p\), then expanded by a KDF into session keys</div>
+    <div class="sym-cell">\(H(\cdot)\)</div><div class="sym-cell">hash function</div><div class="sym-cell">Fixed-length digest; deterministic, one-way, collision resistant</div>
+    <div class="sym-cell">\(B\)</div><div class="sym-cell">block size</div><div class="sym-cell">Hash input block in HMAC: 64 bytes for SHA-256, 128 for SHA-512</div>
+    <div class="sym-cell">\(L\)</div><div class="sym-cell">digest size</div><div class="sym-cell">HMAC output length in bytes: 32 for SHA-256, 64 for SHA-512</div>
+    <div class="sym-cell">\(s, \sigma\)</div><div class="sym-cell">signature</div><div class="sym-cell">The value a verifier checks against the signer's public key</div>
+    <div class="sym-cell">\(SK, PK\)</div><div class="sym-cell">private, public key</div><div class="sym-cell">\(SK\) signs and decrypts; \(PK\) verifies and encrypts</div>
+    <div class="sym-cell">\(x \oplus y\)</div><div class="sym-cell">exclusive or</div><div class="sym-cell">Bitwise XOR; its own inverse, used for HMAC's ipad and opad</div>
+    <div class="sym-cell">\(x \,\|\, y\)</div><div class="sym-cell">concatenation</div><div class="sym-cell">Appending one byte string to another</div>
+    <div class="sym-cell">\(2^{n/2}\)</div><div class="sym-cell">birthday bound</div><div class="sym-cell">Expected collision work against an \(n\)-bit digest</div>
+    <div class="sym-cell">\(\mathrm{HMAC}(K, m)\)</div><div class="sym-cell">keyed tag</div><div class="sym-cell">Nested keyed hash producing an integrity and authenticity tag</div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the narrative and the animated walkthroughs of HMAC, RSA key generation and the Diffie-Hellman exchange. Work this page until the equations and sizes are automatic, then use the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 5] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+
+  function initModExpStepper() {
+    var host = document.getElementById("ix-modexp");
+    if (!host || !window.Interactive) return;
+
+    window.Interactive.stepper("ix-modexp", {
+      title: "Easy forward, hard backward",
+      subtitle: "Modular exponentiation in the toy group p = 23, g = 5 — and what changes when the group is real.",
+      height: 300,
+      frames: [
+        {
+          title: "Forward: repeated squaring costs O(log x) multiplications",
+          caption: "Computing 5^6 mod 23 does not need six multiplications. Square the base, square the square, and combine: 5^2 = 2, 5^4 = 4, 5^6 = 5^4 · 5^2 = 8. Three multiplications instead of five.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var rows = [
+              ["5^1 mod 23", "5", "start"],
+              ["5^2 mod 23", "25 mod 23 = 2", "square"],
+              ["5^4 mod 23", "2 x 2 = 4", "square the square"],
+              ["5^6 mod 23", "4 x 2 = 8", "6 = 4 + 2, combine"]
+            ];
+            var top = 54;
+            var bw = Math.min(w - 40, 620);
+            var x = (w - bw) / 2;
+            k.label(w / 2, 26, "forward:  x = 6  \u2192  y = 5\u02e3 mod 23", { align: "center", size: 12.5, mono: true, color: "#141826" });
+            rows.forEach(function (r, i) {
+              var y = top + i * 46;
+              k.box(x, y, bw, 38, { fill: i === 3 ? "#e8f5ef" : "#f7fafc", stroke: i === 3 ? "#059669" : "#cbd5e1", lw: i === 3 ? 2.2 : 1.2, r: 9 });
+              k.label(x + 14, y + 19, r[0], { size: 12, mono: true, color: "#047857" });
+              k.label(x + bw * 0.42, y + 19, r[1], { size: 12, mono: true, color: "#141826" });
+              k.label(x + bw * 0.74, y + 19, r[2], { size: 11, color: "#565d75" });
+            });
+            k.label(w / 2, h - 16, "Cost grows with log x, so a 256-bit exponent is still fast.", { align: "center", size: 11.5, color: "#565d75" });
+          }
+        },
+        {
+          title: "Backward: exhaustive search in a toy group",
+          caption: "Given y = 8, find x. With p = 23 there are only 22 candidate exponents, so trying them all is instant — and that is precisely why 23 is a teaching value and not a parameter.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var cx = w / 2;
+            k.label(cx, 26, "backward:  find x such that 5\u02e3 mod 23 = 8", { align: "center", size: 12.5, mono: true, color: "#141826" });
+            var vals = ["x=1 \u2192 5", "x=2 \u2192 2", "x=3 \u2192 10", "x=4 \u2192 4", "x=5 \u2192 20", "x=6 \u2192 8 \u2713"];
+            var cols = 3;
+            var bw = Math.min((w - 80) / cols, 190);
+            var gap = (w - 40 - bw * cols) / (cols - 1);
+            vals.forEach(function (v, i) {
+              var x = 20 + (i % cols) * (bw + gap);
+              var y = 62 + Math.floor(i / cols) * 62;
+              var hit = i === vals.length - 1;
+              k.box(x, y, bw, 46, { fill: hit ? "#e8f5ef" : "#fbfcfe", stroke: hit ? "#059669" : "#cbd5e1", lw: hit ? 2.2 : 1.2, r: 9 });
+              k.label(x + bw / 2, y + 23, v, { align: "center", size: 12, mono: true, color: hit ? "#047857" : "#565d75" });
+            });
+            k.label(cx, h - 42, "22 candidates, found by hand. The attacker's work is the size of the exponent space.", { align: "center", size: 11.5, color: "#565d75" });
+            k.label(cx, h - 20, "With a 256-bit group the same search is about 2\u00b2\u2075\u2076 attempts \u2014 no efficient classical method is known.", { align: "center", size: 11.5, color: "#dc2626" });
+          }
+        },
+        {
+          title: "The same asymmetry, at real sizes",
+          caption: "Two hard problems carry all of this week's public-key cryptography. Neither direction is secret; only the backward direction is infeasible, and that is what lets you publish parameters and public values.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            var cards = [
+              ["factoring", "n = p \u00b7 q  easy", "recover p, q from n  hard", "RSA"],
+              ["discrete log", "g\u02e3 mod p  easy", "recover x  hard", "Diffie-Hellman, ECDH"]
+            ];
+            var bw = Math.min((w - 60) / 2, 290);
+            var gap = (w - 40 - bw * 2);
+            cards.forEach(function (c, i) {
+              var x = 20 + i * (bw + gap);
+              var y = 62;
+              k.box(x, y, bw, 150, { fill: "#f7fafc", stroke: "#cbd5e1", lw: 1.4, r: 12 });
+              k.label(x + bw / 2, y + 26, c[0], { align: "center", size: 13, mono: true, color: "#047857" });
+              k.label(x + bw / 2, y + 62, c[1], { align: "center", size: 11.5, mono: true, color: "#141826" });
+              k.arrow(x + bw / 2, y + 78, x + bw / 2, y + 100, { color: "#94a3b8", lw: 1.6 });
+              k.label(x + bw / 2, y + 114, c[2], { align: "center", size: 11.5, mono: true, color: "#dc2626" });
+              k.label(x + bw / 2, y + 136, "used by: " + c[3], { align: "center", size: 11, color: "#565d75" });
+            });
+            k.label(w / 2, h - 18, "Publish the parameters and the public value; keep the exponent and the primes.", { align: "center", size: 11.5, color: "#565d75" });
+          }
+        }
+      ]
+    });
+  }
+
+  initChrome();
+  initModExpStepper();
+
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    initModExpStepper();
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

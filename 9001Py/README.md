@@ -25,7 +25,7 @@ This project mirrors the requested study-hub folder layout so it is ready for a 
 
 ## Notes
 
-- Lecture 4's exact topic could not be recovered reliably from PDF metadata in this environment, so it is labelled neutrally as **Lecture 4 Materials** for now.
+- Lecture 4 covers **containers** (lists, tuples, dictionaries and command-line arguments).
 - The scaffold is intentionally lightweight. It is meant to be a clean starting point for turning the PDFs into full study content next.
 
 ## Run locally

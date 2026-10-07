@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards — INFO6007</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../shared/flashcards.css">
+<meta name="description" content="Flashcards — INFO6007 — SM-2 spaced-repetition flashcards with week filters and review history.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Flashcards — INFO6007">
+<meta property="og:description" content="Flashcards — INFO6007 — SM-2 spaced-repetition flashcards with week filters and review history.">
+<meta property="og:locale" content="en_AU">
+</head>
+<link rel="stylesheet" href="../../shared/chat-panel.css">
+<body>
+
+<nav class="nav-bar">
+  <a href="../index.html">Home</a>
+  <a href="quiz-hub.html">Quiz</a>
+  <a href="knowledge-graph.html">Graph</a>
+  <a href="math-knowledge-graph.html">Foundations</a>
+  <a href="progress-dashboard.html">Progress</a>
+  <span class="nav-spacer"></span>
+  <button id="langToggle">中文</button>
+</nav>
+
+<div class="config-panel">
+  <div class="config-toggle open" id="configToggle">
+    <span class="cfg-icon">&#x1F4E6;</span>
+    <span class="cfg-label" id="lbl-configure">Configure Deck</span>
+    <span class="cfg-summary" id="cfgSummary"></span>
+    <span class="cfg-arrow">&#x25BC;</span>
+  </div>
+  <div class="config-body show" id="configBody">
+    <div class="config-row">
+      <div class="cfg-card" style="flex:2;">
+        <h4 id="lbl-chapters">Weeks</h4>
+        <div class="ch-chips" id="chChips">
+          <button class="ch-chip-action" id="btnAllCh">All</button>
+          <button class="ch-chip-action" id="btnNoneCh">None</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h4>Options</h4>
+        <label class="toggle-row">
+          <span class="toggle-label" id="lbl-shuffle">Shuffle deck</span>
+          <input type="checkbox" id="chkShuffle"><span class="toggle-switch"></span>
+        </label>
+        <p style="font-size:0.72rem;color:var(--text-dim);line-height:1.5;margin-top:0.5rem;" id="srs-hint">SM-2 spaced repetition: flip, recall, rate. Overdue cards shown first.</p>
+      </div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card due-stat">
+      <div class="stat-value" id="statDue" style="color:var(--yellow);">0</div>
+      <div class="stat-label">Due</div>
+    </div>
+    <div class="stat-card new-stat">
+      <div class="stat-value" id="statNew" style="color:var(--accent);">0</div>
+      <div class="stat-label">New</div>
+    </div>
+    <div class="stat-card total-stat">
+      <div class="stat-value" id="statTotal" style="color:var(--green);">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+  </div>
+  <div class="action-row">
+    <button class="btn btn-primary" id="btnStart">Start session</button>
+    <button class="btn btn-ghost" id="btnClearSRS">Reset SRS progress</button>
+  </div>
+</div>
+
+<div class="fc-wrapper">
+  <div class="empty-hero" id="emptyState">
+    <span class="empty-icon">&#x1F4E6;</span>
+    <h2 id="empty-title">Spaced-repetition flashcards</h2>
+    <p id="empty-desc">Pick weeks, then <strong>Start session</strong>.</p>
+    <div class="kbd-hints">
+      <span class="kbd"><kbd>Space</kbd> Flip card</span>
+      <span class="kbd"><kbd>1</kbd>–<kbd>4</kbd> Rate</span>
+    </div>
+  </div>
+  <div id="fcArea" style="display:none;"></div>
+</div>
+
+<script src="../../shared/flashcard-srs.js"></script>
+<script src="../data/flashcard-data.js"></script>
+<script>
+window.FLASHCARD_CONFIG = {
+  courseCode: "info6007",
+  numChapters: 8,
+  totalCards: (window.ALL_FLASHCARD_DATA || []).length,
+  progressKey: "info6007_progress"
+};
+</script>
+<script src="../../shared/flashcards.js"></script>
+<script src="../../shared/chat-panel.js"></script>
+<script src="../../shared/site-reset.js"></script>
+</body>
+</html>

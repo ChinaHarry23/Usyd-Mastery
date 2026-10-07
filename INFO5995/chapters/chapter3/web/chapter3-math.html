@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 3: Mobile Security</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 foundations for INFO5995: the mobile threat model, sandbox and permission notation, secure storage and secret-handling decisions, and the artefact-to-finding analysis workflow.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 3: Mobile Security">
+<meta property="og:description" content="Week 3 foundations for INFO5995: the mobile threat model, sandbox and permission notation, secure storage and secret-handling decisions, and the artefact-to-finding analysis workflow.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter3-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 3 Foundations</h2>
+  </div>
+  <div class="toc-group">Model</div>
+  <ul>
+    <li><a href="#sec-m-model" class="toc-link">Threat model &amp; attack surface</a></li>
+    <li><a href="#sec-m-sandbox" class="toc-link">Sandbox &amp; permission model</a></li>
+  </ul>
+  <div class="toc-group">Decisions</div>
+  <ul>
+    <li><a href="#sec-m-storage" class="toc-link">Storage, secrets &amp; proportionality</a></li>
+    <li><a href="#sec-m-workflow" class="toc-link">Artefact &rarr; finding workflow</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-risk" class="toc-link">Risk, hardening &amp; self-test</a></li>
+  </ul>
+  <a href="chapter3-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 3 supplement</p>
+  <h1>Foundations: the mobile security model, written precisely</h1>
+  <p class="hero-desc">Week 3 is a systems week, so this page does the equivalent of a formula sheet: it fixes the threat-model vocabulary, writes the sandbox and permission model as relationships you can reason about, turns &ldquo;where does this data live?&rdquo; into a table of named storage classes with their exposure, and ends with the artefact-to-finding workflow that turns an APK into defensible findings.</p>
+  <div class="chip-list">
+    <span>Every definition traced to the Week 3 deck</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>OWASP MASVS / Mobile Top 10 used as named reference anchors</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-model">
+  <h2 class="section-title">Threat model &amp; attack surface</h2>
+  <p class="section-lead">The deck's framing question is the one to carry into every mobile assessment: <em>what crosses the boundary &mdash; and who should be allowed through?</em> A threat model is how you answer it on purpose rather than by accident.</p>
+
+  <div class="def-box">
+    <div class="def-label">Threat model &mdash; four questions, in this order</div>
+    <p><strong>1.</strong> What are we building? <strong>2.</strong> What can go wrong? <strong>3.</strong> What are we going to do about it? <strong>4.</strong> Did we do a good enough job? Answer them for a mobile app and the second question immediately becomes platform-specific, because the app is not the only thing running on the device.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Attack surface (week 3 definition)</div>
+    <p>The set of places where data or control can cross a trust boundary. On the study page that produced exactly three lists: <strong>other apps</strong>, <strong>system resources</strong> (camera, files, location), and <strong>the messages an app will accept</strong> (activities, services, receivers, providers, deep links).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. The attack surface is a sum, not a feeling</h3>
+    <p>Let \(C\) be the app's components. Each component contributes an exposure term, and a component only contributes when all three conditions hold at once:</p>
+    \[ \text{Surface}(C) \;=\; \sum_{c \in C} \mathbb{1}\!\left[\,\text{exported}(c) \;\wedge\; \lnot\text{auth}(c) \;\wedge\; \text{sensitive}(c)\,\right] \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Read the indicator function as a checklist: the component must be reachable from outside, must not require authorisation, <em>and</em> must do something that matters. Drop any one of the three and the term is zero &mdash; which is exactly why &ldquo;is this a finding?&rdquo; is a question about a conjunction, not about a keyword.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Risk composes the same way it does everywhere else</h3>
+    <p>The Week 1 risk language still applies; only the inputs change:</p>
+    \[ R \;=\; T \times V \times I \]
+    <p style="margin-top:0.6rem;">On mobile, \(T\) is who can reach the entry point (any installed app, any web page that can trigger a link, anyone with physical access), \(V\) is whether the control that should have stopped them is present, and \(I\) is what the app can do or disclose once reached. A high-impact action behind an authenticated server check has \(V \approx 0\) for a remote attacker; the same action on an exported screen with no session check has \(V \approx 1\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Privilege is transitive, so impact grows with the layer</h3>
+    <p>Write the attacker's cost as the product of the boundaries that must be crossed. With \(p_i\) the probability of crossing boundary \(i\):</p>
+    \[ \Pr(\text{full compromise}) \;=\; \prod_{i=1}^{n} p_i \qquad\text{and impact scales with the layer reached} \]
+    <p style="margin-top:0.6rem;">This is the arithmetic behind the deck's trust table. Apps are the cheapest layer to reach and the least valuable to own; the kernel is the most expensive and the most valuable. That is why defence in depth is not redundancy &mdash; each boundary multiplies the attacker's cost by a factor below one.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Band</th><th>Boundary crossed</th><th>Attacker requirement</th><th>Representative control</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Hardware</strong></td><td>Physical port or accessory</td><td>Contact with the device, or the user's consent to a data prompt</td><td>Power-only charging, device lock, restricted host connections by policy</td></tr>
+        <tr><td><strong>Runtime</strong></td><td>Process memory and state</td><td>Crafted input that reaches a bug</td><td>Memory-safe code, bounds checks, input validation at the parse boundary</td></tr>
+        <tr><td><strong>Gray zone</strong></td><td>An already-granted permission</td><td>Nothing new &mdash; the grant exists</td><td>Data minimisation, scoped grants, in-context prompts, server-side limits</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-defence"></div>
+  <script type="application/json" id="ix-m-defence">
+  {
+    "title": "Match the boundary to the control that guards it",
+    "subtitle": "Click a boundary on the left, then the control that actually addresses it.",
+    "pairs": [
+      ["App-to-app boundary", "Sandbox with a separate user ID and no direct file access between apps"],
+      ["App-to-system-resource boundary", "A permission checked at request time, scoped to the resource and the moment"],
+      ["App-to-app message boundary", "A declared intent filter plus an explicit decision about what is exported"],
+      ["App-to-external-input boundary", "Validation of every deep-link parameter, because anyone can compose the URL"],
+      ["App data-at-rest boundary", "System-protected storage plus keys held in the platform keystore"],
+      ["Automation boundary", "Server-side authorisation that does not trust the UI state an agent can read"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">An activity is not exported and performs a sensitive action only after an authenticated session check. Which term of the surface sum is zero?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="&ldquo;Sensitive&rdquo; is about what the action does, and this activity still does something that matters. It is the reachability and authorisation terms that fall away.">The sensitivity term &mdash; the action is not important enough to count</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Not-exported removes the reachability term and the session check removes the authorisation term, so the conjunction is false and the component contributes nothing to the outer surface." data-bad="">Both the reachability term and the authorisation term</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="No term is set to one automatically. The conjunction is only true when all three hold, which is the opposite of what is described here.">The whole expression evaluates to one because the activity exists in the manifest</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-sandbox">
+  <h2 class="section-title">The sandbox &amp; permission model</h2>
+  <p class="section-lead">Two mechanisms do most of the work on Android: apps are separated from each other, and access to protected resources is granted explicitly. Write both down and the week's analysis questions become mechanical.</p>
+
+  <div class="def-box">
+    <div class="def-label">Sandbox</div>
+    <p>Apps are isolated by default: each app normally has its own user ID and its own sandbox. Android &mdash; not the app &mdash; decides what may cross each boundary, so communication between apps happens only through controlled mechanisms.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Sandbox as a policy on the attacker's reach</h3>
+    <p>Model a sandboxed app as a tuple \(\langle u, D_u, G_u \rangle\): its own user ID \(u\), the data directory \(D_u\) it owns, and the set of permissions \(G_u\) it has been granted. File access is a policy decision:</p>
+    \[ \text{allow}(a, f) \;=\; \big[\, \text{owner}(f) = u_a \,\big] \;\vee\; \big[\, \text{perm}(f) \in G_a \,\big] \]
+    <p style="margin-top:0.6rem;">The first clause is possession: an app can always read files it owns. The second is a decision made at the boundary. Everything the study page calls a &ldquo;gate&rdquo; is an instance of this second clause &mdash; camera, location, files, microphone, and the system services that broker them.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Privilege tiers and blast radius</h3>
+    <p>Order the layers by the trust the deck assigns them: apps, framework services, native services and HAL, kernel. If a compromise at layer \(\ell\) exposes everything at or below \(\ell\), then the blast radius is monotonic in \(\ell\):</p>
+    \[ \ell_{\text{apps}} \;\prec\; \ell_{\text{framework}} \;\prec\; \ell_{\text{native/HAL}} \;\prec\; \ell_{\text{kernel}} \qquad\Longrightarrow\qquad B(\ell_1) \subseteq B(\ell_2) \;\text{ whenever }\; \ell_1 \prec \ell_2 \]
+    <p style="margin-top:0.6rem;">Practical use: when you rank findings, you are really ranking \(\ell\). A missing check in an app is bounded by that app's grants; the same class of mistake inside a framework service is not.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-tiers"></div>
+  <script type="application/json" id="ix-m-tiers">
+  {
+    "title": "Blast radius by layer",
+    "subtitle": "Illustrative 0–5 reach scores derived from the deck's trust table, not measured data. Higher trust means more of the device sits behind the layer — and more boundaries must be crossed to reach it.",
+    "max": 5,
+    "rows": [
+      { "name": "Apps", "value": 1, "display": "one app, one grant" },
+      { "name": "Framework services", "value": 3, "display": "answers permission and intent checks" },
+      { "name": "Native services / HAL", "value": 4, "display": "drives camera, radios and sensors" },
+      { "name": "Kernel", "value": 5, "display": "owns every sandbox at once" }
+    ]
+  }
+  </script>
+
+  <div data-ix="hotspot" data-ix-src="#ix-m-riskmap"></div>
+  <script type="application/json" id="ix-m-riskmap">
+  {
+    "title": "Where risk actually comes from",
+    "subtitle": "Risk is a product, not a sum. Click each marker to see which factor it supplies and what happens when it is zero.",
+    "svg": "<svg viewBox=\"0 0 760 220\" role=\"img\" aria-label=\"A chain from an outside caller, through the control gate, to what the app can disclose, with the three risk factors marked\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"760\" height=\"220\" fill=\"#f7fbfa\"></rect><rect x=\"28\" y=\"64\" width=\"180\" height=\"88\" rx=\"14\" fill=\"#ffffff\" stroke=\"#2563eb\" stroke-width=\"2\"></rect><text x=\"118\" y=\"96\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"700\" fill=\"#1d4ed8\">Caller</text><text x=\"118\" y=\"120\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">another app, a link,</text><text x=\"118\" y=\"138\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">physical contact</text><rect x=\"290\" y=\"44\" width=\"180\" height=\"128\" rx=\"14\" fill=\"#eef7f4\" stroke=\"#059669\" stroke-width=\"2\"></rect><text x=\"380\" y=\"76\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"700\" fill=\"#047857\">Control</text><text x=\"380\" y=\"100\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">session check,</text><text x=\"380\" y=\"118\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">validation, permission</text><text x=\"380\" y=\"144\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#b91c1c\">missing \u2192 V = 1</text><rect x=\"552\" y=\"64\" width=\"180\" height=\"88\" rx=\"14\" fill=\"#ffffff\" stroke=\"#7c3aed\" stroke-width=\"2\"></rect><text x=\"642\" y=\"96\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"700\" fill=\"#6d28d9\">Impact</text><text x=\"642\" y=\"120\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">data disclosed,</text><text x=\"642\" y=\"138\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">action performed</text><path d=\"M212 108 L286 108\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"1.8\"></path><path d=\"M286 108 l-9 -5 l0 10 z\" fill=\"#94a3b8\"></path><path d=\"M474 108 L548 108\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"1.8\"></path><path d=\"M548 108 l-9 -5 l0 10 z\" fill=\"#94a3b8\"></path><rect x=\"228\" y=\"178\" width=\"304\" height=\"30\" rx=\"10\" fill=\"#ffffff\" stroke=\"#cbd5e1\" stroke-dasharray=\"5 4\"></rect><text x=\"380\" y=\"198\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#047857\">R = T \u00d7 V \u00d7 I</text></svg>",
+    "points": [
+      { "x": 15.5, "y": 49.1, "label": "Threat — who can reach the entry point", "detail": "Any installed app, any web page that can trigger the scheme, anyone with physical access. Threat alone decides nothing; it only sets how many attempts the attacker gets." },
+      { "x": 50.0, "y": 20.0, "label": "Vulnerability — is the control present", "detail": "The middle term is the one you can actually change. A session check, validated parameters or a permission check drives V towards zero even when the threat is broad." },
+      { "x": 84.5, "y": 49.1, "label": "Impact — what the app can do or disclose", "detail": "Impact sets the ceiling on the damage. High impact behind a present control is a low-risk finding; the same impact with the control missing is not." }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Permissions &mdash; what must be written in an answer</div>
+    <p>A permission protects a capability rather than a file: camera, location, files, microphone and the rest. It is <strong>requested</strong> in the manifest, <strong>granted</strong> by the user or the platform, and <strong>checked</strong> when the resource is actually used. A permission that was granted once is not consent for unlimited collection &mdash; the gray-zone question (&ldquo;necessary and proportionate?&rdquo;) survives every grant.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Control</th><th>What it decides</th><th>Where it lives</th><th>Failure mode when missing or misconfigured</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Sandbox / user ID</td><td>Which files and processes an app can touch at all</td><td>Kernel, enforced per app</td><td>One app reads another's private data</td></tr>
+        <tr><td>Permission grant</td><td>Whether a protected resource may be used</td><td>Manifest declaration plus a user or platform decision</td><td>Silent access to camera, microphone or location</td></tr>
+        <tr><td>Component exposure</td><td>Whether another app may start a component</td><td><code>exported</code> and intent filters in the manifest</td><td>A sensitive screen is reachable by any caller</td></tr>
+        <tr><td>Session / authorisation</td><td>Whether <em>this</em> caller may perform <em>this</em> action</td><td>Application code, ideally re-checked on the server</td><td>The screen opening is treated as permission to act</td></tr>
+        <tr><td>Input validation</td><td>Whether the values that arrived are of the expected form</td><td>The boundary the data crossed</td><td>Attacker-controlled parameters reach business logic</td></tr>
+        <tr><td>UI metadata</td><td>What an automated reader can learn and operate</td><td>The runtime UI tree</td><td>Labels and state are enumerated at scale</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A photo-editing app requests photo-library access so the user can pick one image to crop. Which assessment matches the Week 3 model?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is precisely the gray zone: the grant is legitimate, and the question is whether the scope of access is proportionate to the feature.">It is safe, because the user granted the permission explicitly</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The grant is legitimate, so the remaining question is scope and necessity — the deck's &ldquo;does it need the entire album?&rdquo; test — which argues for a scoped picker rather than whole-library access." data-bad="">The grant is legitimate, but scope still matters: the feature needs one image, so the album-wide grant is not proportionate</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A permission is checked at the boundary where the resource is used. Classifying it as a runtime memory bug confuses two different bands of the threat model.">It is a runtime attack, because the app processes untrusted image data</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-storage">
+  <h2 class="section-title">Storage, secrets &amp; proportionality</h2>
+  <p class="section-lead">The deck states the conclusion before the technique: <em>never store sensitive secrets in the client app &mdash; protect secrets on trusted servers.</em> This section turns that instruction into a table of storage classes you can name in an answer.</p>
+
+  <div class="def-box">
+    <div class="def-label">The three storage classes</div>
+    <p><strong>App-private internal storage</strong> &mdash; owned by the app's user ID, protected by the sandbox. <strong>External or shared storage</strong> &mdash; shared with other apps and with the user; treat it as public. <strong>Credential or key storage</strong> &mdash; platform key material that the app can use without ever reading the secret itself. Putting a value in the wrong class is a design defect, not a coding mistake.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Storage class</th><th>Who can read it</th><th>Acceptable content</th><th>Never put here</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>App-private internal storage</td><td>The app's own user ID; the platform</td><td>Cached sessions, preferences, non-sensitive state</td><td>Long-lived passwords or shared secrets, if a server-side alternative exists</td></tr>
+        <tr><td>External / shared storage</td><td>Other apps and the user; increasingly also backup and sync paths</td><td>User-visible media the app is meant to hand over</td><td>Tokens, keys, personal data the app is not prepared to publish</td></tr>
+        <tr><td>Platform credential / key storage</td><td>The app may use the key; it does not get to read raw key material</td><td>Keys for signing, encryption and authentication</td><td>Anything the client fundamentally should not be able to do alone</td></tr>
+        <tr><td>Packaged in the APK</td><td>Anyone &mdash; decompilation is expected</td><td>Public configuration, endpoint names, feature flags</td><td>API keys, signing keys, credentials, anything a server should hold</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Why client-side secrets fail &mdash; the search space argument</h3>
+    <p>Suppose a secret has \(H\) bits of entropy and an attacker who can inspect the client gets one guess per attempt at rate \(r\). The expected time to recover it is</p>
+    \[ \mathbb{E}[t] \;=\; \frac{2^{H-1}}{r} \]
+    <p style="margin-top:0.6rem;">For a 4-digit PIN, \(2^{H} = 10^{4}\); at \(r = 100\) guesses per second the expected recovery time is about \(50\) seconds. Raise the secret to an 8-character mixed-alphabet password and \(2^{H}\) reaches roughly \(2^{52}\), which at the same rate is geological. The asymmetry is the whole argument: a secret that ships to the client is not protected by its length, it is protected only by the attacker's patience &mdash; and the attacker sets that.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Secret shape</th><th>Search space \(2^{H}\)</th><th>Expected time at 100 guesses/s</th><th>Verdict</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>4-digit PIN</td><td>\(10^{4}\)</td><td>~50 seconds</td><td>Unusable as a secret that ships with the app</td></tr>
+        <tr><td>6-digit PIN</td><td>\(10^{6}\)</td><td>~83 minutes</td><td>Still trivially recoverable offline</td></tr>
+        <tr><td>8 lowercase characters</td><td>\(26^{8} \approx 2^{37.6}\)</td><td>~44 years</td><td>Weak against an attacker with faster hardware</td></tr>
+        <tr><td>8 chars, mixed case + digit</td><td>\(\approx 2^{48}\)</td><td>~44,600 years</td><td>Adequate as a user password, still not a substitute for keeping keys server-side</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>How to write this in an exam:</strong> &ldquo;Client-side secrets are recoverable because the code is delivered to the device and can be decompiled, so the correct control is architectural rather than cryptographic. Store the secret on a trusted server, keep long-lived keys in platform key storage so the app never holds raw key material, and store nothing sensitive in the APK or in shared storage.&rdquo;
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team must let the app call a third-party paid API. Where should the API key live?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Obfuscation changes how long the search takes, not whether it succeeds. The key still ships to the device, and the deck's rule is to assume someone will inspect it.">In the APK, obfuscated so that decompiled code cannot reveal it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The key belongs on a trusted server that the app calls, so the client never holds the secret. The client can still be authenticated — with a credential scoped to that user, not to the paid API." data-bad="">On a trusted server that the app calls through a mediated endpoint</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Shared storage is readable beyond the app's own sandbox, so this is weaker than keeping the value internal — and it still ships the secret to the device.">In a file in the app's external storage directory</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; choosing storage for four values.</strong> A campus app holds: (a) a session token, (b) an API key for a paid timetable service, (c) a user's saved PDFs, (d) a signing key used to prove the app's requests came from the app.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>(a) Session token.</strong> Keep it in app-private storage or in memory, scoped as narrowly as possible and expiring quickly. It is a bearer credential, so its lifetime is the control &mdash; a token that cannot be refreshed is far less valuable to an attacker than one that lives for months.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>(b) Paid API key.</strong> Not in the app at all. Put it on a server you control and have the app call your endpoint. The client cannot be trusted with a secret whose disclosure costs money, and no amount of obfuscation changes that.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>(c) Saved PDFs.</strong> These are the user's own documents, so they may live in app storage or a user-visible location &mdash; but decide deliberately, because shared storage means other apps and backup paths can reach them. If they can contain personal data, keep them app-private and export on request.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--red);">4</div>
+        <div class="step-body"><p><strong>(d) Signing key.</strong> Generate it in platform credential storage so the app can use it without reading it, and design the server side to accept only what that key proves. If the client could export the key, then anyone who decompiles the app can impersonate it &mdash; which means the key was never proving anything.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--accent);">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;Each value was placed by asking who must be able to read it: only the app (private storage), nobody on the device (a server), the user themselves (shared storage), or nobody at all, not even the app (platform key storage). The APK itself holds no secrets, because decompilation is expected.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-workflow">
+  <h2 class="section-title">Artefact &rarr; finding workflow</h2>
+  <p class="section-lead">The deck's analysis order is configuration first, then code. Written as a workflow, that gives a repeatable table: for each artefact, one question, one evidence source, and one class of finding.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-workflow"></div>
+  <script type="application/json" id="ix-m-workflow">
+  {
+    "title": "Order the mobile analysis workflow",
+    "subtitle": "Rebuild the order from the deck: the manifest before the Java code, exposure before behaviour, and every finding paired with its countermeasure.",
+    "steps": [
+      "Inventory the APK: manifest, dex, resources, signing information",
+      "Map what exists and what starts first, so the rest of the analysis has an entry point",
+      "Decide what is exposed, using exported flags and intent filters",
+      "Decode the intent filters: action, category and data for each",
+      "Decompile classes.dex and follow the code behind each exposed component",
+      "Check data at rest and in transit: secrets in the package, endpoints, storage choices",
+      "Write each finding as one boundary plus one countermeasure"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Artefact</th><th>Question it answers</th><th>What a finding looks like</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>AndroidManifest.xml</code></td><td>What exists, what starts first, what is requested, what is exposed</td><td>A component reachable from outside that has no reason to be public</td></tr>
+        <tr><td>Intent filters</td><td>Which actions, categories and data will match this component</td><td>A browsable data scheme that leads to a sensitive action with no session check</td></tr>
+        <tr><td><code>classes.dex</code></td><td>What the code does on the paths a caller can reach</td><td>Intent parameters used without validation; a secret assembled in the client</td></tr>
+        <tr><td><code>res/layout/</code>, <code>res/xml/</code></td><td>What the user sees, and how the app is configured to behave</td><td>A network configuration that weakens transport protection; a screen whose labels expose state</td></tr>
+        <tr><td><code>res/raw/</code>, <code>assets/</code></td><td>What data ships inside the package</td><td>Bundled data files containing personal data or credentials</td></tr>
+        <tr><td><code>META-INF/</code></td><td>Who signed the package, and whether it is intact</td><td>A signature that does not cover what you are reading, or an unexpected signer</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Deep-link validation as an explicit predicate</h3>
+    <p>A deep link is untrusted input, so model the decision rather than the prose. For an incoming URL \(u\), a session \(s\) and an action \(a\):</p>
+    \[ \text{allow}(u, s, a) \;=\; \text{valid}(u) \;\wedge\; \text{authenticated}(s) \;\wedge\; \text{authorised}(s, a) \;\wedge\; \big(\lnot\text{sensitive}(a) \,\vee\, \text{confirmed}(a)\big) \]
+    <p style="margin-top:0.6rem;">All four conjuncts are required. The formula is a compact way to answer the common exam follow-up &mdash; <em>which single check was missing?</em> &mdash; because a missing check is a false conjunct, and false conjuncts are visible one at a time.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; writing a finding so it can be acted on.</strong> Observation: an exported activity accepts a <code>reset</code> action from a deep link, reads the new password from a URL parameter, and applies it without asking for the current password.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the artefact.</strong> The manifest exports the component and declares a browsable filter; the code path is in the decompiled activity. Evidence exists in two artefacts, which is what makes the finding solid rather than speculative.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Name the boundary.</strong> External input crossed into an authentication action. That is one boundary, not three, and saying so keeps the finding readable.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Test the predicate.</strong> \(\text{valid}(u)\) is unchecked because the password string is used as supplied; \(\text{authenticated}(s)\) is missing because anyone can compose the link; \(\text{authorised}(s, a)\) is missing for the same reason; \(\text{confirmed}(a)\) is missing because opening the screen performs the action.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--red);">4</div>
+        <div class="step-body"><p><strong>State the impact in terms of the risk model.</strong> \(T\) is broad (any app, any web page that can trigger the scheme), \(V\) is near one (four missing conjuncts), \(I\) is account takeover. High risk, and the reason is the middle term &mdash; not the sensitivity of the screen.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--accent);">5</div>
+        <div class="step-body"><p><strong>Pair it with countermeasures, strongest first.</strong> Do not accept a password from a link at all; require an authenticated session and the current credential; confirm the action explicitly; validate every parameter; and stop exporting anything that need not be public.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">During a review you find an exported <code>ViewProfile</code> activity with no session check, and it is the only exported component. What is the most defensible risk statement?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Impact alone does not set risk, and the missing control is what makes the exposure meaningful. The risk sentence has to name all three factors.">The risk is maximal because the component is exported</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: threat is broad (any caller), vulnerability is present (no session check), and impact is whatever the profile reveals — so the risk is meaningful, and the fix is a session check or removing the export." data-bad="">Threat is broad, the control is missing, and impact is whatever the profile discloses &mdash; so the risk is real and the countermeasure is a session check or dropping the export</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="No memory safety issue is involved. The band is the gray zone — legitimate access producing an unintended effect — not the runtime band.">The risk is only a runtime concern, since no memory corruption is possible in managed code</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-risk">
+  <h2 class="section-title">Risk, hardening &amp; self-test</h2>
+  <p class="section-lead">The software half of a mobile finding is the analysis; the decision half is what you do about it. Both belong in the answer.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Class of issue (week 3 vocabulary)</th><th>Where it appears</th><th>Countermeasure to name</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Missing or misconfigured control at a boundary</td><td>Manifest configuration, exported components, permission declarations</td><td>Export only what must be public; check permission and session at the point of use</td></tr>
+        <tr><td>Missing or misconfigured controls that expose data</td><td>Storage choices, logging, backup and sync paths</td><td>Keep personal data app-private; remove sensitive values from logs and from shared storage</td></tr>
+        <tr><td>Insufficient input validation</td><td>Deep links, intent extras, exported component parameters</td><td>Validate the shape and range of every value that crossed a boundary</td></tr>
+        <tr><td>Secrets in the client</td><td><code>classes.dex</code>, <code>res/raw/</code>, <code>res/xml/</code></td><td>Move the secret to a trusted server; use platform key storage for key material</td></tr>
+        <tr><td>Automation exposure</td><td>The runtime UI tree, labels and state</td><td>Server-side authorisation for sensitive actions; publish only the metadata the screen needs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The two sentences that summarise the week</h3>
+    <p><strong>1.</strong> Security modelling asks what crosses the boundary &mdash; and who should be allowed through. <strong>2.</strong> If code is delivered to a user's device, assume that someone can inspect it, so never store sensitive secrets in the client app.</p>
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Instance one is the architecture claim; instance two is the consequence. Almost every Week 3 question is a special case of one of them.</p>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: the model, one term at a time",
+    "subtitle": "Say the definition and its consequence out loud before you flip the card.",
+    "cards": [
+      { "front": "Attack surface", "back": "The set of places where data or control can cross a trust boundary. On Android: other apps, system resources, and the messages the app will accept.", "hint": "Definition" },
+      { "front": "Sandbox", "back": "Apps are isolated by default, each with its own user ID and data directory. Android decides what may cross each boundary, so inter-app communication goes through controlled mechanisms only.", "hint": "Isolation" },
+      { "front": "Permission", "back": "A control on a capability rather than a file — camera, location, files, microphone. Requested in the manifest, granted by the user or platform, checked when the resource is used.", "hint": "Access control" },
+      { "front": "Explicit vs implicit intent", "back": "Explicit names one destination; implicit describes an action and lets Android choose. Neither is dangerous by itself — who can start the target, and whether it authenticates, is what decides.", "hint": "Messaging" },
+      { "front": "Gray zone", "back": "Legitimate app access that creates harm. The question is not &ldquo;did the user allow it?&rdquo; but whether the access was necessary and proportionate.", "hint": "Threat band" },
+      { "front": "Deep link", "back": "A URL that opens a specific screen via an intent filter. Treat it as untrusted input: validate it, check the session, and confirm sensitive actions.", "hint": "Input channel" },
+      { "front": "UI tree", "back": "A machine-readable map of screen elements and their properties — text, type, clickable, bounds. It is what lets an agent act, and it is part of the attack surface.", "hint": "Automation" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement would lose marks on a Week 3 question about reverse engineering?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is correct and worth saying: decompilation produces readable, source-like code without reproducing the original exactly.">Decompiled code approximates the original source rather than reproducing it exactly</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is the deck's own guidance: open the manifest before the Java code, because configuration defines what is reachable.">The manifest should be read before the decompiled code during analysis</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct — this is the claim that loses marks. Compilation is not a confidentiality mechanism: code delivered to a device can be reverse engineered, so secrets must not depend on it." data-bad="">Compiled bytecode hides secrets well enough that a secret can safely ship inside the APK</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(B\)</div><div class="sym-cell">boundary</div><div class="sym-cell">A trust boundary: app-to-app, app-to-resource, app-to-external-input, data-at-rest</div>
+    <div class="sym-cell">\(C\)</div><div class="sym-cell">components</div><div class="sym-cell">The activities, services, receivers and providers declared by an app</div>
+    <div class="sym-cell">\(\text{exported}(c)\)</div><div class="sym-cell">reachable from outside</div><div class="sym-cell">The component may be started by another app or by a link</div>
+    <div class="sym-cell">\(\text{auth}(c)\)</div><div class="sym-cell">authorisation is checked</div><div class="sym-cell">The component verifies a session and that the session may perform the action</div>
+    <div class="sym-cell">\(u, D_u\)</div><div class="sym-cell">user ID, data directory</div><div class="sym-cell">The sandbox identity and the storage it owns</div>
+    <div class="sym-cell">\(G_a\)</div><div class="sym-cell">grants of app \(a\)</div><div class="sym-cell">The set of permissions the app currently holds</div>
+    <div class="sym-cell">\(\ell\)</div><div class="sym-cell">layer</div><div class="sym-cell">Apps \(\prec\) framework \(\prec\) native/HAL \(\prec\) kernel, ordered by trust</div>
+    <div class="sym-cell">\(B(\ell)\)</div><div class="sym-cell">blast radius</div><div class="sym-cell">What a compromise at layer \(\ell\) can reach &mdash; monotonic in \(\ell\)</div>
+    <div class="sym-cell">\(2^{H}\)</div><div class="sym-cell">search space</div><div class="sym-cell">The number of candidates an attacker must try against a secret of \(H\) bits</div>
+    <div class="sym-cell">\(R = T \times V \times I\)</div><div class="sym-cell">risk</div><div class="sym-cell">Threat (who can reach it) &times; vulnerability (is the control missing) &times; impact</div>
+    <div class="sym-cell">\(\text{allow}(u,s,a)\)</div><div class="sym-cell">deep-link decision</div><div class="sym-cell">Valid input and authenticated, authorised session, plus confirmation when the action is sensitive</div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the gatekeeper model, the APK tour and the deep-link checks live on the study guide; this page supplies the notation and the decision tables behind them. Then attempt the Quiz Hub and the Flashcards for Week 3.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 3] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

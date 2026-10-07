@@ -1,0 +1,107 @@
+<section id="sec-m-hero" class="section hero-section" data-track="hero">
+  <p class="hero-course">DEMO101 &mdash; Building a Study Hub</p>
+  <h1 class="section-title">Foundations: Configs and Counting</h1>
+  <p class="hero-subtitle">Widget behaviour is small enough to describe exactly: a validity condition on keys, a position on a scale, a count of arrangements, and a bar drawn as a proportion of a maximum.</p>
+</section>
+
+<section id="sec-m-schema" class="section" data-track="m-schema">
+  <h2 class="section-title">The config condition</h2>
+  <p class="section-lead">A widget config is valid when it carries the right keys with values of the right kind. That sentence is already mathematics.</p>
+  <p>Treat a config as a partial function \(c\) from key names to values, so that \(c(k)\) is defined exactly when the key \(k\) is present. Every widget type \(t\) declares a set of required keys \(K_t\). Presence is the first half of validity:</p>
+  \[ \mathrm{present}(c, t) \iff K_t \subseteq \mathrm{dom}(c). \]
+  <p>Presence alone is not enough, because a key can be present with a value of the wrong kind. Write \(\tau(k)\) for the type a key expects &mdash; text, number, or a list of records. The full condition is a conjunction over the required keys:</p>
+  \[ \mathrm{valid}(c, t) \iff \bigwedge_{k \in K_t} \bigl[\, k \in \mathrm{dom}(c) \;\wedge\; \mathrm{kind}\bigl(c(k)\bigr) = \tau(k) \,\bigr]. \]
+  <p>Two failure modes map cleanly onto the two conjuncts. A missing key yields the wrong shape and a widget that renders nothing. A key of the wrong kind &mdash; the number \(6\) where the string <code>"6"</code> was expected, or a single record where a list of records was expected &mdash; usually renders the frame and then draws nothing inside it. Recognising which conjunct failed is most of the debugging.</p>
+  <div class="def-box">
+    <h3>Schema of a widget type</h3>
+    <p>The pair \((K_t, \tau)\): the keys the type requires and the value kind each key expects. Chapter 2's catalogue table is this schema written out in prose.</p>
+  </div>
+</section>
+
+<section id="sec-m-stepper" class="section" data-track="m-stepper">
+  <h2 class="section-title">Position on a scale</h2>
+  <p class="section-lead">A stepper is a number line with captions. Everything visible on it is a function of one ratio.</p>
+  <p>Let \(m\) be the maximum of the scale and \(v\) the current value, with \(m &gt; 0\). The position of the current value as a fraction of the scale, and the same quantity as a percentage, are</p>
+  \[ f = \frac{v}{m}, \qquad p = 100 \cdot \frac{v}{m}. \]
+  <p>The clamping rule keeps a careless config from drawing a bar that leaves its own track:</p>
+  \[ \hat{f} = \min\left(1, \max\left(0, \frac{v}{m}\right)\right). \]
+  <p>Frame \(i\) carries its own value \(v_i\), and the natural convention is that the values are non-decreasing and end on the ceiling:</p>
+  \[ v_0 \le v_1 \le \cdots \le v_{n-1} = m. \]
+  <p>A scale whose last frame does not reach \(m\) tells the reader that it continues past the finish line, which is rarely what an author means. The table below is the scale the stepper on the study page draws: seven frames from an empty folder to a validated pack, and each frame's position on the scale.</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Frame</th><th>Value \(v_i\)</th><th>Fraction \(v_i / 6\)</th><th>Percentage</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Empty folder</td><td>0</td><td>0.000</td><td>0%</td></tr>
+      <tr><td>Registered in the manifest</td><td>1</td><td>0.167</td><td>17%</td></tr>
+      <tr><td>Study page drafted</td><td>2</td><td>0.333</td><td>33%</td></tr>
+      <tr><td>Foundations page drafted</td><td>3</td><td>0.500</td><td>50%</td></tr>
+      <tr><td>Mind map sketched</td><td>4</td><td>0.667</td><td>67%</td></tr>
+      <tr><td>Chapter script added</td><td>5</td><td>0.833</td><td>83%</td></tr>
+      <tr><td>Validated</td><td>6</td><td>1.000</td><td>100%</td></tr>
+    </tbody>
+  </table>
+  <div class="insight-box">
+    <h3>Why the scale is the author's job</h3>
+    <p>The engine can divide two numbers; it cannot know what they mean. Choosing \(m\) is a claim about what counts as finished, and it is the only editorial decision a stepper forces you to make.</p>
+  </div>
+</section>
+
+<section id="sec-m-match" class="section" data-track="m-match">
+  <h2 class="section-title">Counting matchings</h2>
+  <p class="section-lead">A matcher with \(n\) pairs has \(n!\) possible arrangements. That number decides whether guessing is a strategy.</p>
+  <p>Order the left column as fixed and let the reader arrange the right column against it. Every arrangement is a permutation of \(n\) items, so the number of arrangements a reader could produce is</p>
+  \[ n! = 1 \cdot 2 \cdot 3 \cdots n. \]
+  <p>Exactly one of those arrangements is fully correct. If a reader shuffled the right column at random, the probability of an accidental perfect score would be \(1/n!\):</p>
+  \[ \Pr[\text{perfect by luck}] = \frac{1}{n!} \quad\Longrightarrow\quad n = 6:\; \frac{1}{720} \approx 0.0014. \]
+  <p>The more useful quantity is the expected number of pairs a random arrangement gets right, because it explains why a matcher feels harder than a multiple-choice question. Let \(X_i\) be the indicator that pair \(i\) happens to be correct. By linearity of expectation,</p>
+  \[ \mathbb{E}[X] = \sum_{i=1}^{n} \Pr[X_i = 1] = \sum_{i=1}^{n} \frac{1}{n} = 1, \]
+  <p>because each right-hand item is equally likely to land opposite any left-hand item. A random arrangement therefore earns exactly one correct pair on average, whatever \(n\) is. A reader who scores five of six has done real work, not found a lucky pattern.</p>
+  <div class="theorem-box">
+    <h3>Expected correct pairs</h3>
+    <p>For a uniformly random matching of \(n\) pairs, the expected number of correct pairs is exactly \(1\), independent of \(n\). The variance shrinks as \(n\) grows, so small matchers are noisier than large ones.</p>
+  </div>
+</section>
+
+<section id="sec-m-race" class="section" data-track="m-race">
+  <h2 class="section-title">Bars and proportions</h2>
+  <p class="section-lead">One division decides every bar length. The choice of denominator is the design decision.</p>
+  <p>For a row with value \(v_i\) and a declared maximum \(M\), the bar width as a percentage is</p>
+  \[ w_i = 100 \cdot \frac{v_i}{M}. \]
+  <p>Bars are drawn as percentages of \(M\), not as percentages of the largest row, which is what makes the widget comparable across pages: two race widgets that declare the same \(M\) are drawn on the same scale even when their largest rows differ. The cost is the clipping case. If some value exceeds the declared maximum, then</p>
+  \[ v_j &gt; M \quad\Longrightarrow\quad w_j &gt; 100, \]
+  <p>and the leader is drawn flush against the end of the track, indistinguishable from a row that exactly hits \(M\). The safe choice sets the denominator at or above the largest value, which also gives the leader a visible margin:</p>
+  \[ M \ge \max_i v_i. \]
+  <p>Two ratios are worth keeping apart. The <em>normalised</em> ratio \(v_i / M\) answers "how far along the scale is this row?". The <em>relative</em> ratio \(v_i / \max_j v_j\) answers "how does this row compare with the leader?". Only the first is drawn; the second is what a reader infers by eye.</p>
+</section>
+
+<section id="sec-m-practice" class="section" data-track="m-practice">
+  <h2 class="section-title">Practice</h2>
+  <p class="section-lead">One check on the config condition, then a worked answer that counts arrangements.</p>
+  <p>Work the quick check first. It tests the distinction between a missing key and a key of the wrong kind, which is the difference between an empty placeholder and an empty frame.</p>
+  <div class="quick-check">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">A stepper config supplies <code>max</code> as the string <code>"6"</code> instead of the number <code>6</code>. Which part of the validity condition fails?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-bad="The key is present in the config, so the subset condition holds. Presence is not the problem here.">The presence conjunct: <code>max</code> is missing from the config</div>
+      <div class="qc-opt" data-correct="true" data-good="The key exists but carries text where a number is expected, so the kind conjunct fails. That is the failure that renders a frame with nothing inside it.">The kind conjunct: the value has the wrong type for the key</div>
+      <div class="qc-opt" data-correct="false" data-bad="Nothing in the condition depends on the order of keys in the config; key order is a presentation choice, not a validity rule.">The ordering of keys inside the config object</div>
+      <div class="qc-opt" data-correct="false" data-bad="The scale is defined by the declared maximum, not by how many steps are listed. A steps count of six is not what is being asserted.">The number of steps does not equal six</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+  <button type="button" class="solution-toggle" data-target="sol-ch2m-count">Show solution</button>
+  <div class="solution-body" id="sol-ch2m-count">
+    <p><strong>Worked answer &mdash; how many arrangements, and how many are close?</strong> A matcher ships with \(n = 5\) pairs. Answer three questions: how many arrangements exist, what is the chance of a perfect score by luck, and how many arrangements get exactly one pair right?</p>
+    <p><strong>Step 1: total arrangements.</strong></p>
+    \[ n! = 5! = 120. \]
+    <p><strong>Step 2: perfect score by luck.</strong> Exactly one arrangement is correct, so</p>
+    \[ \Pr[\text{perfect}] = \frac{1}{120} \approx 0.0083. \]
+    <p><strong>Step 3: exactly one correct pair.</strong> Count the arrangements that fix a chosen pair and fix no other. Fixing pair \(1\) leaves the remaining four items to be arranged with no item in its own position, which is the number of derangements of four items:</p>
+    \[ D_4 = 4! \left(1 - \frac{1}{1!} + \frac{1}{2!} - \frac{1}{3!} + \frac{1}{4!}\right) = 9. \]
+    <p>Any of the five pairs can be the single correct one, and those cases are disjoint, so the count is</p>
+    \[ 5 \cdot D_4 = 5 \cdot 9 = 45, \qquad \Pr[\text{exactly one}] = \frac{45}{120} = 0.375. \]
+    <p><strong>Reading the answer.</strong> More than a third of all arrangements score exactly one pair &mdash; which is also the expected score from the previous section. A reader who reports "one out of five" has usually not started yet, and the widget should say so gently rather than congratulate them.</p>
+  </div>
+</section>

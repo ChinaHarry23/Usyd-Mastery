@@ -175,12 +175,32 @@ function countTutorialUnderstood(p, ck) {
   return n;
 }
 
+/**
+ * Weighted chapter mastery, renormalised over the dimensions that exist.
+ *
+ * A chapter with no tutorial self-assessments (or no quick checks) has no
+ * denominator for that dimension. Scoring it as 0 would cap the chapter
+ * permanently below 100% — a chapter with no `.solution-toggle` could never
+ * pass 70% however well it was studied. Dimensions with a zero denominator are
+ * therefore dropped and the remaining weights renormalised to sum to 1.
+ *
+ * The quiz dimension always participates: its denominator is the 0-100 score.
+ */
 function weightedChapterPct(sv, st, qcd, qct, quizBestPct, tuDone, tuTotal) {
-  var secR = st > 0 ? Math.min(1, sv / st) : 0;
-  var qcR  = qct > 0 ? Math.min(1, qcd / qct) : 0;
-  var qzR  = quizBestPct != null && quizBestPct >= 0 ? Math.min(1, quizBestPct / 100) : 0;
-  var tutR = tuTotal > 0 ? Math.min(1, tuDone / tuTotal) : 0;
-  return W.sections * secR + W.qc * qcR + W.quiz * qzR + W.tutorials * tutR;
+  var dims = [
+    { w: W.sections,  done: sv, st: st },
+    { w: W.qc,        done: qcd, st: qct },
+    { w: W.quiz,      done: quizBestPct != null && quizBestPct >= 0 ? quizBestPct : 0, st: 100 },
+    { w: W.tutorials, done: tuDone, st: tuTotal }
+  ];
+  var weightSum = 0;
+  var acc = 0;
+  dims.forEach(function (d) {
+    if (!(d.st > 0)) return;
+    weightSum += d.w;
+    acc += d.w * Math.min(1, d.done / d.st);
+  });
+  return weightSum > 0 ? acc / weightSum : 0;
 }
 
 /* ── flashcard schedule ───────────────────────────────────── */
@@ -599,7 +619,22 @@ function render() {
     tutAvgAcrossCh += ttot > 0 ? tdone / ttot : 0;
   }
   tutAvgAcrossCh /= NUM_CH;
-  var overallPct = Math.round(100 * (W.sections * secRatio + W.qc * qcRatio + W.quiz * quizAvgAcrossCh + W.tutorials * tutAvgAcrossCh));
+  // Renormalise over the dimensions that actually have items — see
+  // weightedChapterPct() above for why a missing dimension must not score 0.
+  var overallDims = [
+    { w: W.sections, r: secRatio, present: totalSectionsAll > 0 },
+    { w: W.qc, r: qcRatio, present: totalQCAll > 0 },
+    { w: W.quiz, r: quizAvgAcrossCh, present: true },
+    { w: W.tutorials, r: tutAvgAcrossCh, present: totalTutAll > 0 }
+  ];
+  var overallWeight = 0;
+  var overallAcc = 0;
+  overallDims.forEach(function (d) {
+    if (!d.present) return;
+    overallWeight += d.w;
+    overallAcc += d.w * d.r;
+  });
+  var overallPct = Math.round(100 * (overallWeight > 0 ? overallAcc / overallWeight : 0));
 
   document.getElementById("ringPct").textContent = overallPct + "%";
   document.getElementById("ringLabel").textContent = lang === "zh" ? "\u603b\u4f53\u8fdb\u5ea6" : "Overall";
@@ -703,8 +738,24 @@ var btnReset = document.getElementById("btn-reset");
 if (btnReset) {
   btnReset.addEventListener("click", function() {
     if (!confirm(lang === "zh"
-      ? "\u786e\u5b9a\u8981\u91cd\u7f6e\u6240\u6709\u8fdb\u5ea6\u548c\u95ea\u5361\u590d\u4e60\u8bb0\u5f55\u5417\uff1f"
-      : "Reset all progress and flashcard scheduling? This cannot be undone.")) return;
+      ? "\u786e\u5b9a\u8981\u6e05\u9664\u672c\u7ad9\u7684\u5168\u90e8\u672c\u5730\u6570\u636e\u5417\uff1f\n\n"
+        + "\u5305\u62ec\uff1a\u5b66\u4e60\u8fdb\u5ea6\u3001\u95ea\u5361 SRS\u3001\u8bed\u8a00\u8bbe\u7f6e\u3001"
+        + "AI \u5bf9\u8bdd\u914d\u7f6e\u3001IndexedDB \u955c\u50cf\u4e0e\u79bb\u7ebf\u7f13\u5b58\u3002\n"
+        + "\u6b64\u64cd\u4f5c\u4e0d\u53ef\u64a4\u9500\uff0c\u9875\u9762\u5c06\u91cd\u65b0\u52a0\u8f7d\u3002"
+      : "Clear ALL local data for this site?\n\n"
+        + "This removes study progress, flashcard scheduling, language choice, "
+        + "AI chat configuration, the IndexedDB mirror and the offline cache.\n"
+        + "It cannot be undone, and the page will reload.")) return;
+
+    // SiteReset clears all four storage layers; fall back to the two keys this
+    // dashboard owns if the module is not loaded on the page.
+    if (window.SiteReset && window.SiteReset.purgeAll) {
+      btnReset.disabled = true;
+      window.SiteReset.purgeAll().then(function() {
+        location.reload();
+      });
+      return;
+    }
     try {
       localStorage.removeItem(PROGRESS_KEY);
       localStorage.removeItem(FC_KEY);

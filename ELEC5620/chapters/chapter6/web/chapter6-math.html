@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 6: Modelling Behaviour</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 foundations for ELEC5620: exact definitions of action, activity, interaction, event and active object, a notation reference card for activity, sequence and state-machine diagrams, and the semantics of transition firing, action ordering, run-to-completion and orthogonal regions.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 6: Modelling Behaviour">
+<meta property="og:description" content="Week 6 foundations for ELEC5620: exact definitions, a notation reference card for behaviour diagrams, and the semantics of transition firing, action ordering, run-to-completion and orthogonal regions.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter6-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 6 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-notation" class="toc-link">Notation reference card</a></li>
+  </ul>
+  <div class="toc-group">Semantics</div>
+  <ul>
+    <li><a href="#sec-m-semantics" class="toc-link">Rules you can write from memory</a></li>
+    <li><a href="#sec-m-cases" class="toc-link">Worked cases: order and selection</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Model-selection checklist</a></li>
+  </ul>
+  <a href="chapter6-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">ELEC5620 &mdash; Week 6 supplement</p>
+  <h1>Foundations: the notation and semantics of behaviour models</h1>
+  <p class="hero-desc">Week 6 is notation-heavy rather than algebraic, so this page does the equivalent job: it fixes the definitions the lecture relies on, collects every notation element into a reference card, writes the transition and run-to-completion semantics as relationships you can reproduce under exam pressure, and ends with the checklist that picks the right model for a scenario.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the lecture deck</span>
+    <span>Formal notation is a revision aid, not lecture notation</span>
+    <span>Worked cases from the deck's own exercises</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Action</div>
+    <p>A named element representing a <strong>single atomic step</strong> within an activity, not further decomposed within that activity. An action is executed by an object, may change variables or slots, and &mdash; if it is a communication action &mdash; may invoke an operation on another object or send a signal. Its successors are determined by control flow or by data flow.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Activity</div>
+    <p>A <strong>parameterised behaviour represented as a coordinated flow of actions</strong>. It contains activity nodes (action, object or control) connected by activity edges. Partitions (swimlanes) group actions that share a common characteristic, and the partitioning criterion is the modeller's choice.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Interaction</div>
+    <p>A behaviour that focuses on <strong>communications between collaborating instances</strong> communicating via messages. An interaction requires a prior definition of a collaboration structure, which is its context. Its concrete notational forms are the sequence diagram, the communication diagram and the interaction overview diagram.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">State machine and event</div>
+    <p>A <strong>statechart</strong> shows the discrete behaviour of part of a designed system through finite state transitions, and describes <strong>event-driven</strong> behaviour. An <strong>event</strong> is an instantaneous change of state in the system: a <em>message event</em> (receipt of an operation call or a signal), a <em>change event</em> (a change in the system configuration) or a <em>time event</em> (occurs at the specified time). An <strong>event occurrence</strong> is an instance of an event: it occurs at a particular time instant and has <strong>no duration</strong>.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Active object and run-to-completion</div>
+    <p>An <strong>active object</strong> commences to execute its classifier behaviour as a direct consequence of its creation and does not cease until that behaviour completes or an external object terminates it; the points at which it responds to messages are determined solely by its own behaviour specification. <strong>Run-to-completion</strong> is the rule that messages arriving between successive receive actions are queued and only considered on the next receive action.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Action</td><td>Atomic <em>and</em> executed by an object</td><td>Treating an action as a whole workflow, i.e. confusing it with an activity</td></tr>
+        <tr><td>Activity</td><td>Coordinated flow of actions; partitions are the modeller's choice</td><td>Calling the swimlanes a generalisation or a concurrency declaration</td></tr>
+        <tr><td>Interaction</td><td>Messages between collaborating instances; needs a collaboration structure</td><td>Using &ldquo;interaction&rdquo; for any behaviour diagram, including a lone state machine</td></tr>
+        <tr><td>Event</td><td>Instantaneous change of state; occurrence has no duration</td><td>Making an event a state or a duration</td></tr>
+        <tr><td>Guard</td><td>Boolean predicate for conditional execution; side-effect free</td><td>Letting a guard compute or assign a value</td></tr>
+        <tr><td>Active object</td><td>Starts on creation; responds only at a receive action</td><td>Calling any object with a thread &ldquo;active&rdquo; without the receive discipline</td></tr>
+        <tr><td>Orthogonal regions</td><td>Concurrent <em>viewpoints</em> of one entity</td><td>Using them to model concurrent objects &mdash; the trap the deck names</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is an action?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes an activity: a coordinated flow of actions. An action is the atomic step inside it.">A behaviour composed of a coordinated flow of steps</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: a named element representing a single atomic step within an activity, not further decomposed, executed by an object." data-bad="">A single atomic step within an activity, executed by an object, that is not further decomposed</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a state machine's transition effect. It is behaviour, but it is attached to a transition rather than being the atomic step itself.">The behaviour executed when a state machine takes a transition</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">Notation reference card</h2>
+  <p class="section-lead">Every symbol Week 6 uses, in one table. Read the middle column as the question the symbol answers, and the right column as what it commits you to.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning and commitment</div>
+
+    <div class="sym-cell">&#x25CF;</div><div class="sym-cell">initial pseudostate</div><div class="sym-cell">The single entry point of a state machine or activity. In a state machine its outgoing transition carries <em>no trigger</em>.</div>
+
+    <div class="sym-cell">&#x25C9;</div><div class="sym-cell">final state / activity final</div><div class="sym-cell">Ends the whole region or activity. An activity final consumes every remaining token, not just the one that reached it.</div>
+
+    <div class="sym-cell">&#x2297;</div><div class="sym-cell">flow final</div><div class="sym-cell">Ends <em>this one path</em> only; the rest of the activity continues.</div>
+
+    <div class="sym-cell">&#x25A2;&nbsp;rounded</div><div class="sym-cell">action / state</div><div class="sym-cell">An atomic step in an activity, or a state in a state machine. The name is a verb phrase for an action, a condition for a state.</div>
+
+    <div class="sym-cell">&#x25A1;&nbsp;square</div><div class="sym-cell">object node</div><div class="sym-cell">A value or object travelling between actions. A horizontal compartment names the state it is in, e.g. <code>Order [filled]</code>.</div>
+
+    <div class="sym-cell">&#x25A0;&nbsp;small</div><div class="sym-cell">pin</div><div class="sym-cell">An input or output of one specific action, drawn on its border.</div>
+
+    <div class="sym-cell">&#x25C7;</div><div class="sym-cell">choice / junction</div><div class="sym-cell">Mutually exclusive alternatives. A <em>junction</em> evaluates guards before the transition; a <em>choice</em> evaluates them at the point it is reached.</div>
+
+    <div class="sym-cell">&#x25AC;</div><div class="sym-cell">fork / join</div><div class="sym-cell">A thick bar: split one flow into concurrent flows, or wait for all of them. The same shape as a simple (non-concurrent) join.</div>
+
+    <div class="sym-cell">&#x2192;</div><div class="sym-cell">activity edge / transition</div><div class="sym-cell">Control flow (or object flow when it carries an object). On a state machine it is labelled <code>trigger [guard] / effect</code>.</div>
+
+    <div class="sym-cell">&#x21E2;&nbsp;dashed</div><div class="sym-cell">reply message</div><div class="sym-cell">On a sequence diagram, the return of control and of a result. It travels back along the same lifeline pair as the call.</div>
+
+    <div class="sym-cell">&#x2502;&nbsp;dashed</div><div class="sym-cell">lifeline</div><div class="sym-cell">One object or one part, with its own line of time. Vertical position <em>is</em> time.</div>
+
+    <div class="sym-cell">frame + <code>sd</code></div><div class="sym-cell">interaction frame</div><div class="sym-cell">Names the interaction and declares the lifelines that take part in it, e.g. <code>sd ATM-transaction</code>.</div>
+
+    <div class="sym-cell">frame + <code>ref</code></div><div class="sym-cell">interaction occurrence</div><div class="sym-cell">Reuses another interaction at this point instead of redrawing its messages.</div>
+
+    <div class="sym-cell">frame + <code>alt</code></div><div class="sym-cell">combined fragment</div><div class="sym-cell">Carries a control structure over messages: <code>alt &hellip; [else]</code> for alternatives, <code>loop</code> for repetition.</div>
+
+    <div class="sym-cell"><code>entry/ &hellip; exit/ &hellip;</code></div><div class="sym-cell">state compartments</div><div class="sym-cell">A dynamic assertion mechanism: the entry action establishes the state's invariant, the exit action restores it whatever transition caused the exit.</div>
+
+    <div class="sym-cell">dashed divider</div><div class="sym-cell">orthogonal regions</div><div class="sym-cell">Concurrent descriptions of <em>one</em> entity. Every region sees the same event and responds to it simultaneously.</div>
+
+    <div class="sym-cell"><code>&#8214;</code>&nbsp;left border</div><div class="sym-cell">active class</div><div class="sym-cell">Parallel lines distinguishing an active class from a passive one.</div>
+
+    <div class="sym-cell">&#171;name&#187;</div><div class="sym-cell">stereotype</div><div class="sym-cell">A profile annotation such as &#171;precondition&#187; or &#171;postcondition&#187; on an activity, or &#171;instanceOf&#187; in the structural models of Week 5.</div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-state-notation"></div>
+  <script type="application/json" id="ix-state-notation">
+  {
+    "title": "The same notation, drawn: a state machine for the health agent",
+    "subtitle": "Click a marker to see how each element of the reference card appears in a real diagram.",
+    "svg": "<svg viewBox='0 0 880 400' role='img' aria-label='State machine diagram with an initial pseudostate, a state with entry and exit compartments, a choice pseudostate, guarded transitions, a final state and a state split into orthogonal regions' xmlns='http://www.w3.org/2000/svg'><rect x='0' y='0' width='880' height='400' fill='#fbfcff'></rect><circle cx='46' cy='104' r='12' fill='#1f2937'></circle><line x1='58' y1='104' x2='92' y2='104' stroke='#4f46e5' stroke-width='2'></line><path d='M92 104 l-12 -6 l0 12 z' fill='#4f46e5'></path><rect x='96' y='64' width='200' height='80' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><line x1='96' y1='104' x2='296' y2='104' stroke='#4f46e5' stroke-width='1.5'></line><text x='196' y='86' text-anchor='middle' font-size='13.5' fill='#312e81' font-family='sans-serif'>Analysing</text><text x='104' y='122' font-size='10.5' font-family='monospace' fill='#475569'>entry/ analyse()</text><text x='104' y='137' font-size='10.5' font-family='monospace' fill='#475569'>exit/ decision()</text><line x1='296' y1='104' x2='356' y2='104' stroke='#4f46e5' stroke-width='2'></line><path d='M356 104 l-12 -6 l0 12 z' fill='#4f46e5'></path><text x='326' y='48' text-anchor='middle' font-size='10.5' font-family='monospace' fill='#4f46e5'>Req received / provideSymp()</text><polygon points='360,104 400,70 440,104 400,138' fill='#fff7ed' stroke='#f59e0b' stroke-width='2'></polygon><line x1='440' y1='104' x2='500' y2='72' stroke='#4f46e5' stroke-width='2'></line><path d='M500 72 l-13 -3 l4 11 z' fill='#4f46e5'></path><text x='470' y='62' text-anchor='middle' font-size='10.5' font-family='monospace' fill='#b45309'>[if mild]</text><line x1='440' y1='104' x2='500' y2='182' stroke='#4f46e5' stroke-width='2'></line><path d='M500 182 l-4 -11 l13 3 z' fill='#4f46e5'></path><text x='470' y='152' text-anchor='middle' font-size='10.5' font-family='monospace' fill='#b45309'>[if need doctor]</text><rect x='500' y='40' width='200' height='64' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><line x1='500' y1='72' x2='700' y2='72' stroke='#4f46e5' stroke-width='1.5'></line><text x='600' y='60' text-anchor='middle' font-size='12.5' fill='#312e81' font-family='sans-serif'>Advising Self-care</text><text x='508' y='92' font-size='10.5' font-family='monospace' fill='#475569'>entry/ genAdvice()</text><rect x='500' y='150' width='200' height='64' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><line x1='500' y1='182' x2='700' y2='182' stroke='#4f46e5' stroke-width='1.5'></line><text x='600' y='170' text-anchor='middle' font-size='12.5' fill='#312e81' font-family='sans-serif'>Make Booking</text><text x='508' y='202' font-size='10.5' font-family='monospace' fill='#475569'>entry/ reqSlots()</text><line x1='700' y1='72' x2='790' y2='104' stroke='#4f46e5' stroke-width='2'></line><path d='M790 104 l-13 2 l6 11 z' fill='#4f46e5'></path><line x1='700' y1='182' x2='790' y2='104' stroke='#4f46e5' stroke-width='2'></line><path d='M790 104 l-13 -2 l-6 11 z' fill='#4f46e5'></path><circle cx='790' cy='104' r='15' fill='none' stroke='#1f2937' stroke-width='2.5'></circle><circle cx='790' cy='104' r='7' fill='#1f2937'></circle><text x='790' y='136' text-anchor='middle' font-size='10.5' font-family='monospace' fill='#64748b'>final state</text><rect x='40' y='230' width='320' height='130' rx='14' fill='#ffffff' stroke='#4f46e5' stroke-width='2'></rect><line x1='200' y1='256' x2='200' y2='360' stroke='#94a3b8' stroke-width='2' stroke-dasharray='7 5'></line><text x='200' y='248' text-anchor='middle' font-size='12' fill='#312e81' font-family='sans-serif'>Person</text><rect x='70' y='272' width='110' height='48' rx='12' fill='#ecfdf5' stroke='#059669' stroke-width='2'></rect><text x='125' y='300' text-anchor='middle' font-size='12' fill='#065f46' font-family='sans-serif'>Child</text><rect x='226' y='272' width='110' height='48' rx='12' fill='#ecfdf5' stroke='#059669' stroke-width='2'></rect><text x='281' y='300' text-anchor='middle' font-size='12' fill='#065f46' font-family='sans-serif'>Poor</text><text x='200' y='348' text-anchor='middle' font-size='10.5' font-family='monospace' fill='#64748b'>orthogonal regions</text></svg>",
+    "points": [
+      { "x": 5.2, "y": 26.0, "label": "Initial pseudostate", "detail": "The machine starts here and nowhere else. Its outgoing transition has no trigger — it is taken as soon as the machine is entered." },
+      { "x": 22.3, "y": 21.0, "label": "State with compartments", "detail": "Name above the line, entry and exit actions below it. Entry asserts the state's invariant, exit restores it." },
+      { "x": 11.8, "y": 31.8, "label": "Entry and exit actions", "detail": "entry/ analyse() runs on the way in; exit/ decision() runs on the way out, for every transition that leaves the state. In the deck's health agent these are exactly the actions on Analysing." },
+      { "x": 37.0, "y": 12.0, "label": "Transition label: trigger [guard] / effect", "detail": "Req received / provideSymp(). The trigger is the message event; the guard, if written, decides whether the event actually fires this transition; the effect is behaviour executed during the transition." },
+      { "x": 45.5, "y": 26.0, "label": "Choice pseudostate", "detail": "The guards on the outgoing transitions are evaluated when the choice point is reached — after any effect on the incoming transition has run." },
+      { "x": 53.4, "y": 15.5, "label": "Guarded transition", "detail": "[if mild] — a guard, not an event. If two guards could both hold, the model is ill-formed; alternatives must be mutually exclusive." },
+      { "x": 89.8, "y": 26.0, "label": "Final state", "detail": "A bullseye: this region of the machine has terminated. If this machine is nested inside a larger one, terminating here generates a completion event for the outer machine." },
+      { "x": 22.7, "y": 75.0, "label": "Orthogonal regions", "detail": "The dashed divider splits Person into two regions that are always both active: age and financial status. They are concurrent descriptions of one entity — never a way to model two objects." },
+      { "x": 53.4, "y": 32.0, "label": "Guard on the alternative branch", "detail": "[if need doctor] — the mutually exclusive partner of [if mild]. The deck's health agent uses exactly these two conditions to split the booking path from the self-care path." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A state machine diagram shows a transition whose label reads <code>1sec /</code> with nothing after the slash, and a separate transition with only a guard and an effect. What are these two?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The slash separates the trigger from the effect. An empty part after the slash is a transition with no effect, not a missing trigger.">Both are completion transitions with implicit triggers</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: 1sec is a time event (a kind of event that fires at the specified time) with no effect written, while the guarded label carries a condition rather than an event." data-bad="">The first has a time-event trigger and no effect; the second carries a guard rather than an event</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A completion transition has no trigger at all and is generated when an immediately nested state machine terminates — nothing in either label says that.">The first is a completion transition; the second is a choice pseudostate</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-semantics">
+  <h2 class="section-title">Rules you can write from memory</h2>
+  <p class="section-lead">Six relationships carry most of the marks in this topic. The notation below is a revision aid introduced on this page; it is not lecture notation and should not be quoted as such.</p>
+
+  <div class="theorem-box">
+    <h3>1. When does a transition fire?</h3>
+    <p>A transition \(t\) with source state \(s\) is enabled by event \(e\) when the trigger matches and the guard holds on the current values:</p>
+    \[ t \text{ enabled by } e \iff \operatorname{trigger}(t) = e \;\wedge\; \operatorname{guard}(t)(v) = \text{true} \]
+    <p>What fires is the <em>innermost</em> enabled transition, so a nested state's transition pre-empts the group transition on the state that contains it:</p>
+    \[ t^{*} \;=\; \arg\max_{t \in E(e)} \operatorname{depth}\big(\operatorname{source}(t)\big) \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">If two transitions at the same depth are enabled by the same event, the model is underspecified: the deck's rule is simply that two or more transitions <em>may</em> share a trigger, and the innermost wins.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. In what order do the actions run?</h3>
+    <p>Let \(L = \operatorname{LCA}(s_{src}, s_{tgt})\) be the least common ancestor of the source and target states, and let \(\uparrow\) mean &ldquo;outwards&rdquo; and \(\downarrow\) &ldquo;inwards&rdquo;:</p>
+    \[ \operatorname{seq}(t) \;=\; \operatorname{exit}\big(s_{src} \uparrow L\big) \;\cdot\; \operatorname{effect}(t) \;\cdot\; \operatorname{entry}\big(L \downarrow s_{tgt}\big) \]
+    <p>Exit actions run from the innermost active state outwards, stopping <em>below</em> \(L\); entry actions run from \(L\) inwards to the target. For a flat machine \(L\) is the enclosing region, so the sequence collapses to the deck's simple case: <strong>exit actions prefix the transition action, entry actions postfix it</strong>.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Run-to-completion as a queue discipline</h3>
+    <p>With \(Q_k\) the queue before step \(k\) and \(A_k\) the events that arrive while step \(k\) executes:</p>
+    \[ Q_{k+1} = Q_k \cup A_k, \qquad e_{k+1} = \sigma\big(Q_{k+1}\big) \]
+    <p>where \(\sigma\) is the chosen scheduling policy. The consequence is the point: no event is ever handled <em>inside</em> another, so no observer can see a half-updated state. Priority inversion appears when \(\sigma\) can select a low-priority event ahead of a high-priority one that has already arrived at the same object.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Junction decides before, choice decides after</h3>
+    <p>For a guard \(g\) over the system's values \(v\):</p>
+    \[ \text{junction: } g\big(v_{\text{before}}\big) \qquad\qquad \text{choice: } g\big(v_{\text{after effect}}\big) \]
+    <p>A junction is a graphical shortcut for rendering a decision tree; a choice is genuine dynamic branching. If the branch condition depends on something the transition itself computes &mdash; the deck's <code>gain := calculatePotentialGain(value)</code> &mdash; only a choice can express it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Orthogonal regions multiply the state space</h3>
+    <p>A state with regions \(R_1 \dots R_n\) is in exactly one state of every region at once, so its configurations are the cartesian product:</p>
+    \[ S = R_1 \times R_2 \times \dots \times R_n, \qquad |S| = \prod_{i=1}^{n} |R_i| \]
+    <p>Two regions of three and two states give six simultaneous situations (Child&nbsp;&times;&nbsp;Poor, Child&nbsp;&times;&nbsp;Rich, &hellip;). Every region receives the same event and responds to it simultaneously, which in practice reduces to some interleaving whose order is not specified.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Message ordering in an interaction.</strong> On a single lifeline \(l\) the message occurrences are totally ordered by vertical position: \(m_1 \prec_l m_2 \prec_l \dots\). Between different lifelines only the send&ndash;receive causality of each message is fixed, which is why a sequence diagram can show genuine concurrency that a numbered communication diagram has to flatten into a single numbering.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-rule-match"></div>
+  <script type="application/json" id="ix-rule-match">
+  {
+    "title": "Match the rule to the case it decides",
+    "subtitle": "Each situation is decided by exactly one of the rules above.",
+    "pairs": [
+      ["Innermost enabled transition wins", "A substate and its enclosing state both have a transition on the same event"],
+      ["Exit outwards, effect, entry inwards", "Working out the action sequence of a transition that crosses a composite-state boundary"],
+      ["Q(k+1) = Q(k) ∪ A(k)", "Deciding what happens to three messages that arrive while one reaction is still running"],
+      ["Junction vs choice timing", "Deciding whether a branch may depend on a value the transition itself computes"],
+      ["|S| = ∏ |R(i)|", "Counting the simultaneous configurations of a state with two orthogonal regions"],
+      ["m1 ≺(l) m2 on one lifeline", "Reading a sequence diagram to recover the order in which one object sees its messages"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A transition leaves <code>S1::S11</code> and targets <code>S2::S21</code>, where <code>S11</code> is nested in <code>S1</code> and <code>S21</code> is nested in <code>S2</code>. Which action is executed immediately after <code>exS11</code>?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Exits run from the innermost active state outwards, stopping below the least common ancestor — and the LCA here is above S1, so exS1 runs before the transition's own effect." data-bad=""><code>exS1</code>, the exit action of the outer source state</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The transition's effect runs after all the exit actions of the states being left, not between them.">The transition's effect, because exits and entries bracket it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Entry actions run after the effect, from the least common ancestor inwards. enS2 cannot run before the source side has been exited."><code>enS2</code>, because the target side is entered next</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-cases">
+  <h2 class="section-title">Worked cases: count the actions, then justify them</h2>
+  <p class="section-lead">The deck's complex exercise is the cleanest way to test rule 2. Both cases end in the same nested configuration &mdash; the difference is entirely in how much of the machine had to be torn down.</p>
+
+  <div data-ix="race" data-ix-src="#ix-race-case1"></div>
+  <script type="application/json" id="ix-race-case1">
+  {
+    "title": "Case 1 — in S1::S11, event E1 occurs (crosses the boundary of S1)",
+    "subtitle": "Action counts for the deck's first question. E1 leaves S1 entirely, so everything active is exited and the target nested state is entered from the outside in.",
+    "max": 3,
+    "rows": [
+      { "name": "Exit actions executed", "value": 2, "display": "exS11, exS1" },
+      { "name": "Transition actions executed", "value": 1, "display": "act1" },
+      { "name": "Entry actions executed", "value": 2, "display": "enS2, enS21" }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-case2"></div>
+  <script type="application/json" id="ix-race-case2">
+  {
+    "title": "Case 2 — in S2::S21, event E3 occurs (stays inside S2)",
+    "subtitle": "Same three dimensions, same scale. The least common ancestor is S2, which is not exited, so only the nested configuration below it is rebuilt.",
+    "max": 3,
+    "rows": [
+      { "name": "Exit actions executed", "value": 1, "display": "exS21" },
+      { "name": "Transition actions executed", "value": 1, "display": "act3" },
+      { "name": "Entry actions executed", "value": 2, "display": "enS2, enS21" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Read the two charts together:</strong> the entry count is identical because both transitions finish by entering <code>S2</code> through its default transition into <code>S21</code>. The exit count differs because only the first transition leaves <code>S1</code>. Whenever an exam question gives you a nested machine, locate the least common ancestor first &mdash; everything else follows from it.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked derivation &mdash; which transition fires when two share a trigger?</strong> The deck's lamp example has <code>LampFlashing</code> with substates <code>FlashOn</code> (entry <code>lamp.on()</code>) and <code>FlashOff</code> (entry <code>lamp.off()</code>), timed transitions <code>1sec/</code> between them, and an <code>on/</code> transition drawn both on the substates and on the composite state. The group also has an <code>off/</code> transition.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Collect the candidates.</strong> For an event \(e\), \(E(e)\) is every transition whose trigger matches and whose guard holds. With the machine in <code>LampFlashing::FlashOn</code> and event <code>on</code> arriving, \(E(\texttt{on})\) contains the <code>on/</code> transition on <code>FlashOn</code> and the group-level <code>on/</code> transition on <code>LampFlashing</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Apply the depth rule.</strong> \(t^{*} = \arg\max_{t \in E(e)} \operatorname{depth}(\operatorname{source}(t))\). <code>FlashOn</code> is deeper than <code>LampFlashing</code>, so the substate's transition wins and the group transition is never taken.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Write the action sequence.</strong> \(L = \operatorname{LCA}(\texttt{FlashOn}, \texttt{FlashOn}) = \texttt{FlashOn}\) for a self-transition, so the sequence is <code>exit(FlashOn)</code>, then the effect, then <code>entry(FlashOn)</code> &mdash; the lamp is switched off and straight back on. For <code>off/</code> the group transition does fire, because no nested state has a transition on <code>off</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the design consequence.</strong> Group transitions are a convenience: they let you write one reaction for a whole composite state. The moment one substate needs different behaviour for the same event, you add the substate transition and the group transition quietly stops applying there &mdash; no editing of the group transition required.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked classification &mdash; junction or choice?</strong> Five transition fragments from the deck's auction example. Decide each one with rule 4, in one sentence.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><code>bid [value &lt; 100] /reject</code> leaving <code>Selling</code> to <code>Unhappy</code>. A single guarded transition: no pseudostate at all, and <code>value</code> is read as it stands. The guard is evaluated when the event <code>bid</code> is dispatched.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><code>Selling &mdash;bid&rarr; &diams; &mdash;[value &ge; 200] /sell&rarr; Happy</code> and its two siblings. This is a <strong>junction</strong>: the incoming transition carries no effect, and the three guards are evaluated <em>before</em> the transition is taken. It is a decision tree drawn compactly.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><code>Selling &mdash;bid /gain := calculatePotentialGain(value)&rarr; &diams;</code> followed by <code>[gain &ge; 200] /sell</code>, <code>[gain &lt; 100] /reject</code> and the middle case. This is a <strong>choice</strong>: the guards mention <code>gain</code>, which does not exist until the incoming transition's effect has run, so they can only be evaluated at the choice point.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The discriminating question.</strong> &ldquo;Does the branch condition depend on something this transition computes?&rdquo; Yes &rarr; choice. No &rarr; a junction, or simply guards on the transitions. A guard that assigns a value is not a guard at all: guards must be side-effect free.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Why the distinction is examinable.</strong> The two notations draw as the same diamond. Only the position of the effect &mdash; on the incoming transition or after the pseudostate &mdash; tells you which semantics apply, and the action order changes accordingly.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A composite state has an <code>off/</code> group transition and its substate has an <code>off/</code> transition too. The machine is in the substate and <code>off</code> arrives. What happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct: the innermost enabled transition wins, so the substate's transition fires and the group transition does not." data-bad="">The substate's transition fires; the group transition is not taken</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Both would be a non-deterministic model. The deck's triggering rule resolves the conflict in favour of the inner transition.">Both transitions fire, innermost first, then the group one</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The group transition is a fallback for substates that have no reaction of their own; it is not a priority override.">The group transition fires because it is written on the outer state</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Model-selection checklist</h2>
+  <p class="section-lead">Most Week 6 exam questions reduce to &ldquo;which model, and why?&rdquo;. Run the scenario through these steps in order and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the model-selection checklist",
+    "subtitle": "Rebuild the order in which to interrogate a scenario before you choose a notation.",
+    "steps": [
+      "Name the open question the model has to close, and the uncertainty it is worth spending effort on",
+      "Decide whether the subject is one object's lifetime or several objects talking",
+      "If it is several: fix the collaboration structure, then choose sequence for time order or communication for structure",
+      "If it is one object: list its events and its stable conditions, and choose state machine over plain control flow",
+      "If the question is who does what in what order: use an activity with partitions and explicit object nodes",
+      "Add the edge cases: guards, alternatives, interruptible regions and references",
+      "Check the model against the requirements and list what it still leaves unspecified"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. The open question</td><td>A decision the code cannot make consistently today</td><td>You draw a diagram without saying what it decides</td></tr>
+        <tr><td>2. Subject: object or system</td><td>One lifetime, or message traffic between instances</td><td>You model a workflow as a state machine for the whole system</td></tr>
+        <tr><td>3. Interaction form</td><td>Time order (sequence) vs structure and coupling (communication)</td><td>You use a communication diagram to prove a timing property</td></tr>
+        <tr><td>4. State machine form</td><td>Events, guards, entry and exit actions, nesting</td><td>You list activities as states, or forget the final state</td></tr>
+        <tr><td>5. Activity form</td><td>Partitions, object nodes, fork and join, finals</td><td>You draw a flow with no start, no end, or no responsibility</td></tr>
+        <tr><td>6. Edge cases</td><td>Alternatives, loops, interruption, reused interactions</td><td>You model only the happy path</td></tr>
+        <tr><td>7. What is still open</td><td>The questions the model deliberately leaves to another model</td><td>You claim the model answers everything</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: the terms that decide exam answers",
+    "subtitle": "Say the definition and the consequence out loud before you flip the card.",
+    "cards": [
+      { "front": "Event occurrence", "back": "An instance of an event: it occurs at a particular time instant and has no duration — which is why a state machine can always complete one reaction before the next event is considered.", "hint": "Timing" },
+      { "front": "Run-to-completion", "back": "Messages arriving between successive receive actions are queued and only considered at the next receive action, so no observer sees a half-updated state.", "hint": "Concurrency" },
+      { "front": "Priority inversion", "back": "A high-priority message waits for a low-priority message. RTC is susceptible to it, but only where the same object handles both.", "hint": "Scheduling" },
+      { "front": "Junction vs choice", "back": "Junction: guards evaluated before the transition is taken, a shortcut for decision trees. Choice: guards evaluated when the choice point is reached, so they may use values the transition computed.", "hint": "Branching" },
+      { "front": "Completion transition", "back": "A transition with an implicit trigger, generated automatically when an immediately nested state machine terminates.", "hint": "Hierarchy" },
+      { "front": "Orthogonal regions", "back": "Concurrent descriptions of one entity: every region sees the same event and responds simultaneously. Never a way to model concurrent objects.", "hint": "The trap" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A scenario needs to show that a &ldquo;cancel&rdquo; message may arrive between two booking messages, and that the answer depends on which object has already recorded the booking. Which model is the right primary choice?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An activity diagram shows order and responsibility well, but it does not order messages between instances — that is the interaction's job.">An activity diagram with a swimlane per participant</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: the question is about the ordering of messages between collaborating instances and about what has already been recorded, so the interaction is primary — and the state machine is the supporting model that says what 'already recorded' means." data-bad="">A sequence diagram, supported by a state machine for the object whose state decides the answer</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An interaction overview diagram shows which interaction runs when; it deliberately hides the message order inside each interaction, which is exactly what this question is about.">An interaction overview diagram on its own</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and notation are on this page; the four formalisms, the RTC rules and the agentic examples are on the study guide. Then use the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initELEC5620ChapterUI) return;
+    try {
+      window.initELEC5620ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[ELEC5620 chapter 6] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

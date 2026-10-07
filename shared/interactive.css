@@ -1,0 +1,812 @@
+/* ================================================================
+   interactive.css — Shared interactive + animated learning components
+   ================================================================
+
+   Canonical location: /shared/interactive.css
+   Loaded automatically by every hub because shared/study-base.css
+   imports it at the top of the file.
+
+   Components (see shared/interactive.js for the JS API):
+     .ix                 base wrapper for every widget
+     .ix-head            title + subtitle row
+     .ix-stage           canvas / visual stage
+     .ix-transport       play / step / scrub controls
+     .ix-caption         narration line synced to the current frame
+     .ix-dots            frame progress dots
+     .ix-sequence        order-the-steps widget
+     .ix-matcher         match-the-pairs widget
+     .ix-timeline        event timeline player
+     .ix-hotspot         clickable diagram hotspots
+     .ix-deck            flip-card deck
+     .ix-meter           animated single-value meter / race bar
+     .ix-race            multi-bar animated comparison
+   ================================================================ */
+
+/* ── Shared shell ───────────────────────────────────────────── */
+
+.ix {
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.25rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.ix::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    rgba(var(--secondary-rgb), 0.8),
+    var(--accent)
+  );
+  opacity: 0.85;
+}
+
+.ix-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.ix-head h3,
+.ix-head h4 {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.ix-sub {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+.ix-badge {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-glow);
+  white-space: nowrap;
+}
+
+.ix-stage {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--section-bg-rgb), 0.9),
+    rgba(var(--section-bg-2-rgb), 0.75)
+  );
+  border: 1px solid var(--border);
+}
+
+.ix-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
+.ix-caption {
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-glow);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--text);
+  min-height: 3.2rem;
+}
+
+.ix-caption strong {
+  color: var(--accent-strong);
+}
+
+/* ── Transport controls ─────────────────────────────────────── */
+
+.ix-transport {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.ix-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 2.35rem;
+  padding: 0.42rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(var(--section-bg-rgb), 0.92);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+
+.ix-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.ix-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ix-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ix-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ix-btn.ix-primary {
+  color: var(--btn-primary-text, #fff);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ix-btn.ix-primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.ix-scrub {
+  flex: 1 1 8rem;
+  min-width: 7rem;
+  height: 6px;
+  appearance: none;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+}
+
+.ix-scrub::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid rgba(var(--section-bg-rgb), 0.95);
+  box-shadow: 0 2px 6px rgba(var(--shadow-medium-rgb), 0.25);
+  cursor: grab;
+}
+
+.ix-scrub::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(var(--section-bg-rgb), 0.95);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.ix-count {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  min-width: 4.5rem;
+  text-align: right;
+}
+
+/* ── Frame dots ─────────────────────────────────────────────── */
+
+.ix-dots {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.ix-dot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.ix-dot:hover {
+  transform: scale(1.25);
+}
+
+.ix-dot.done {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.ix-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.3);
+}
+
+/* ── Sequence widget ───────────────────────────────────────── */
+
+.ix-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-height: 2.6rem;
+  padding: 0.6rem;
+  border-radius: 11px;
+  border: 1px dashed var(--border);
+  background: rgba(var(--section-bg-rgb), 0.6);
+}
+
+.ix-pool:empty::after {
+  content: attr(data-empty);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.ix-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.75rem;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text);
+  background: rgba(var(--section-bg-rgb), 0.95);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.ix-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.ix-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ix-chip.placed {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.ix-chip.right {
+  background: rgba(52, 211, 153, 0.16);
+  border-color: var(--green, #34d399);
+}
+
+.ix-chip.wrong {
+  background: rgba(248, 113, 113, 0.14);
+  border-color: var(--red, #f87171);
+}
+
+.ix-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+  counter-reset: ix-slot;
+}
+
+.ix-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(var(--section-bg-rgb), 0.85);
+  font-size: 0.85rem;
+  min-height: 2.4rem;
+  color: var(--text-muted);
+  transition: border-color 0.18s ease;
+}
+
+.ix-slot::before {
+  counter-increment: ix-slot;
+  content: counter(ix-slot);
+  flex: 0 0 auto;
+  width: 1.45rem;
+  height: 1.45rem;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  border-radius: 50%;
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.ix-slot.filled {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.ix-slot.right {
+  border-color: var(--green, #34d399);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.ix-slot.wrong {
+  border-color: var(--red, #f87171);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/* ── Matcher widget ─────────────────────────────────────────── */
+
+.ix-match-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+@media (max-width: 620px) {
+  .ix-match-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ix-match-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ix-match-item {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text);
+  background: rgba(var(--section-bg-rgb), 0.92);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.ix-match-item:hover {
+  transform: translateX(3px);
+  border-color: var(--accent);
+}
+
+.ix-match-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ix-match-item.selected {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.ix-match-item.paired {
+  border-color: var(--green, #34d399);
+  background: rgba(52, 211, 153, 0.1);
+  cursor: default;
+}
+
+.ix-match-item.wrong {
+  border-color: var(--red, #f87171);
+  animation: ix-shake 0.4s ease;
+}
+
+@keyframes ix-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* ── Timeline widget ────────────────────────────────────────── */
+
+.ix-track {
+  position: relative;
+  height: 3.4rem;
+  margin: 0.6rem 0 0.2rem;
+}
+
+.ix-track-line {
+  position: absolute;
+  top: 1.55rem;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--accent-glow),
+    rgba(var(--secondary-rgb), 0.45),
+    var(--accent-glow)
+  );
+}
+
+.ix-track-fill {
+  position: absolute;
+  top: 1.55rem;
+  left: 0;
+  height: 3px;
+  width: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ix-mark {
+  position: absolute;
+  top: 0.85rem;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ix-mark-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: rgba(var(--section-bg-rgb), 0.98);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.ix-mark:hover .ix-mark-dot {
+  transform: scale(1.2);
+}
+
+.ix-mark.active .ix-mark-dot,
+.ix-mark.done .ix-mark-dot {
+  background: var(--accent);
+}
+
+.ix-mark.active .ix-mark-dot {
+  box-shadow: 0 0 0 5px var(--accent-glow);
+}
+
+.ix-mark-label {
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.ix-mark.active .ix-mark-label {
+  color: var(--accent);
+}
+
+/* ── Hotspot widget ─────────────────────────────────────────── */
+
+.ix-hotspot-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ix-hotspot-wrap img,
+.ix-hotspot-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ix-hotspot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: rgba(var(--section-bg-rgb), 0.7);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.ix-hotspot::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+  animation: ix-ping 2.2s ease-out infinite;
+}
+
+.ix-hotspot:hover,
+.ix-hotspot.active {
+  background: var(--accent);
+  color: var(--btn-primary-text, #fff);
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+@keyframes ix-ping {
+  0% { transform: scale(0.85); opacity: 0.55; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ── Flip deck ──────────────────────────────────────────────── */
+
+.ix-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.9rem;
+}
+
+.ix-flip {
+  position: relative;
+  min-height: 10.5rem;
+  perspective: 1100px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.ix-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 10.5rem;
+  transition: transform 0.62s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.ix-flip.flipped .ix-flip-inner {
+  transform: rotateY(180deg);
+}
+
+.ix-flip-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.ix-flip-front {
+  background: linear-gradient(
+    160deg,
+    rgba(var(--section-bg-rgb), 0.97),
+    rgba(var(--section-bg-2-rgb), 0.9)
+  );
+}
+
+.ix-flip-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(
+    160deg,
+    rgba(var(--accent-rgb), 0.14),
+    rgba(var(--section-bg-rgb), 0.97)
+  );
+  border-color: var(--accent);
+  overflow-y: auto;
+}
+
+.ix-flip h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.ix-flip p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.ix-flip-hint {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ── Meter / race ───────────────────────────────────────────── */
+
+.ix-race {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.ix-race-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 8rem) 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.ix-race-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.ix-race-track {
+  position: relative;
+  height: 0.85rem;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.ix-race-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), rgba(var(--secondary-rgb), 0.95));
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ix-race-row.leader .ix-race-fill {
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+.ix-race-val {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  min-width: 4.2rem;
+  text-align: right;
+}
+
+/* ── Feedback line ──────────────────────────────────────────── */
+
+.ix-feedback {
+  margin-top: 0.7rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  min-height: 1.3rem;
+}
+
+.ix-feedback.good {
+  color: var(--green, #34d399);
+}
+
+.ix-feedback.bad {
+  color: var(--red, #f87171);
+}
+
+/* ── Animated pipeline (CSS-driven) ─────────────────────────── */
+
+.ix-pipe {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.ix-pipe-node {
+  flex: 1 1 7rem;
+  position: relative;
+  padding: 0.8rem 0.7rem;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: rgba(var(--section-bg-rgb), 0.92);
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.ix-pipe-node.live {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  transform: translateY(-3px);
+}
+
+.ix-pipe-node.done {
+  border-color: rgba(52, 211, 153, 0.55);
+}
+
+.ix-pipe-node small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.ix-pipe-spark {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ix-pipe-spark.run {
+  animation: ix-spark 1.15s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+}
+
+@keyframes ix-spark {
+  0% { left: 0; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { left: calc(100% - 10px); opacity: 0; }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .ix-flip-inner,
+  .ix-race-fill,
+  .ix-track-fill,
+  .ix-chip,
+  .ix-match-item,
+  .ix-pipe-node {
+    transition: none !important;
+  }
+
+  .ix-hotspot::after,
+  .ix-pipe-spark.run {
+    animation: none !important;
+  }
+
+  .ix-match-item.wrong {
+    animation: none !important;
+  }
+}

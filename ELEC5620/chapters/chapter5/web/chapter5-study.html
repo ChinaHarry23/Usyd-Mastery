@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 5: Modelling Structure — ELEC5620</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter5-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 study guide for ELEC5620: elementary structural concepts, full class-diagram notation, associations with aggregation and composition, generalisation sets and association specialisation, constraints and OCL, plus objects, roles, collaborations and structured classes.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 5: Modelling Structure — ELEC5620">
+<meta property="og:description" content="Week 5 study guide for ELEC5620: elementary structural concepts, full class-diagram notation, associations with aggregation and composition, generalisation sets and association specialisation, constraints and OCL, plus objects, roles, collaborations and structured classes.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F9F1;</span>
+      <h2>Week 5</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-structure" class="nav-link" data-section="structure">Modelling Structure</a></li>
+    <li><a href="#sec-elementary" class="nav-link" data-section="elementary">Elementary Concepts</a></li>
+    <li><a href="#sec-classifiers" class="nav-link" data-section="classifiers">Classes &amp; Associations</a></li>
+    <li><a href="#sec-notation" class="nav-link" data-section="notation">Notation Builder</a></li>
+    <li><a href="#sec-generalization" class="nav-link" data-section="generalization">Generalisation</a></li>
+    <li><a href="#sec-constraints" class="nav-link" data-section="constraints">Constraints &amp; OCL</a></li>
+    <li><a href="#sec-complex" class="nav-link" data-section="complex">Objects, Roles, Collaborations</a></li>
+    <li><a href="#sec-structured" class="nav-link" data-section="structured">Structured Classes</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter5-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter5-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 5 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">ELEC5620 — Model-Based Software Engineering</p>
+    <h1>Week 5: Modelling Structure</h1>
+    <p class="hero-subtitle">Class modelling in depth: the elementary structural concepts underneath the notation, associations and every adornment they carry, aggregation and composition, generalisation sets, the shift from classes to structured classes, and the constraints that make a model precise.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9F1;</span>
+        <span>Values, objects, links, classifiers</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F517;</span>
+        <span>Associations and their adornments</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F48E;</span>
+        <span>Composition owns, aggregation only suggests</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F510;</span>
+        <span>Invariants and OCL constraints</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter5-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter5-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 5 lecture decks (<em>Modelling Structure</em>, parts 1 and 2) and the Week 5 tutorial and laboratory note</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-structure" class="section" data-track="structure">
+  <h2 class="section-title">What Structure Modelling Is For</h2>
+  <p class="section-lead">Part 1 of the deck opens with a claim about who a model is written for, and Part 2 closes by showing what the notation can and cannot say about run-time reality. Both halves answer the same question: what exactly do you get when you model structure?</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition — structure modelling</div>
+    <p><strong>Structure modelling</strong> deals with the representation of entities that take up space (ultimately, physical) and which have state and may have behaviour. Concretely it is the modelling of design-time <em>classes</em>, of run-time <em>instances</em> (objects) and their relationships (links), and of the specifications of those run-time entities and relationships.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Code is intended for machines</h3>
+      <p>The deck opens with SystemC source for a producer/consumer pair: modules, ports, sensitivity lists, constructors, a container that wires two processes together through a link object. Every token exists to satisfy a compiler.</p>
+      <p>The structurally identical picture beside it — a <code>&laquo;sc_method&raquo; producer</code> box, a <code>&laquo;sc_link_mp&raquo; link1</code> box, an <code>&laquo;sc_slave&raquo; consumer</code> box, joined with a <code>start</code> input and an <code>out1 &rarr; in1</code> connection — says the same thing to a person in one glance.</p>
+    </div>
+    <div class="col-card">
+      <h3>Models are intended for people</h3>
+      <p>The deck names exactly two key features of model-based methods: <strong>abstraction</strong> and <strong>automation</strong>. Abstraction is what lets one diagram replace forty lines of source; automation is what lets the diagram become an artefact you can generate from, check and transform.</p>
+      <p>UML is the running example because it is the most widely taught and used modelling language, and because it descends from three separate modelling traditions — <strong>Booch</strong>, <strong>OMT</strong> and <strong>OOSE</strong> — that were merged into one notation.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>UML was originally intended for descriptive models, and also supports prescriptive (for example executable) models.</strong> That single sentence decides how you read every diagram in this unit. A descriptive model documents a system that already exists or has been decided; a prescriptive model is the specification that the system will be built to conform to — and, in the executable case, the thing that runs.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Where structure sits in the course walkthrough</h3>
+  <div class="flow-grid">
+    <div class="flow-node">What and how to model structure</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">What and how to model behaviour</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">How to structure models</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Meta-modelling &amp; language specialisation</div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question</th><th>Week 5 answer</th><th>Where it leads</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What is being modelled?</td><td>Entities that take up space, with state and possibly behaviour</td><td>Values, objects, links and the classifiers that type them</td></tr>
+        <tr><td>At which level?</td><td>Design-time classes <em>and</em> run-time instances and links</td><td>Class diagrams versus object diagrams</td></tr>
+        <tr><td>In which language?</td><td>UML, which merged Booch, OMT and OOSE</td><td>Notation: compartments, adornments, stereotypes</td></tr>
+        <tr><td>How precise must it be?</td><td>As precise as the constraints you attach to it</td><td>Invariants, OCL, association specialisation</td></tr>
+        <tr><td>Which structural entities exist?</td><td>Two categories: <strong>elementary</strong> and <strong>structured</strong></td><td>Structured classes, collaborations and ports for architecture</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-notate-seq"></div>
+  <script type="application/json" id="ix-notate-seq">
+  {
+    "title": "Order the modelling workflow",
+    "subtitle": "The path the Week 5 material follows from a domain question to a validated structure model.",
+    "steps": [
+      "Identify the domain entities that must be represented",
+      "Decide which of them are values and which need identity (classes)",
+      "Add the associations between classes and name both roles",
+      "Set the multiplicity and the modifiers on every end",
+      "Apply stereotypes, generalisation and association specialisation where they tighten the meaning",
+      "Write the invariants that the diagram cannot draw",
+      "Check the model against concrete run-time scenarios"
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> a class diagram is not a picture of a program, and it is not a picture of one run of a program. It is a specification whose instances are <em>all</em> the run-time configurations that satisfy it — which is why the same small diagram can describe two completely different systems (see <a href="#sec-complex">Objects, Roles, Collaborations</a>).
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">The Week 5 deck justifies UML as the running example on two grounds. Which pair matches the deck?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Graphical syntax is explicitly not the point — the deck's hint warns that the question of modelling languages is not really about the difference between graphical and textual syntax.">It is graphical rather than textual, and it compiles to code</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. UML is the most widely taught and used modelling language for software, and it merged three separate traditions: Booch, OMT and OOSE." data-bad="">It is the most widely taught and used modelling language, and it unifies Booch, OMT and OOSE</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="UML was originally intended for descriptive models and also supports prescriptive (for example executable) ones — so executability is an addition, not the reason it was chosen as the example.">It was originally designed for executable models and later extended to documentation</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-elementary" class="section" data-track="elementary">
+  <h2 class="section-title">Elementary Structural Concepts</h2>
+  <p class="section-lead">Before notation there is ontology. The deck spends its first eight slides on four concepts — value, object, object identity and link — because every UML adornment you will draw later is a claim about one of them.</p>
+
+  <div class="def-box">
+    <div class="def-label">Value</div>
+    <p>A representation of information that is <strong>universal, unique and unchanging</strong>: numbers, characters, strings, symbols and icons. Typically written as a symbol or a string — <code>7</code>, <code>VII</code>, <code>"seven"</code>, <code>"fubar"</code>, <code>"+"</code>. To be useful in a program a value must be stored in some container where it can be read and written.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Object and object identity</div>
+    <p>An <strong>object</strong> is a complex value container with a unique identity conforming to a Class type. It may own attribute slots (value containers for attribute values) and may be capable of performing behaviours (operations). The deck's warning about attributes is exact: an attribute slot holds a value; the identity does not.</p>
+    <p><strong>Object identity</strong> is an immanent property of an instance, acquired upon creation and retained unchanged throughout its lifetime, which distinguishes that object from all others. Identity does not change when attribute values change, and it does not change when the type of the object is changed (<em>type reclassification</em>).</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The deck's identity example</h3>
+      <p>One object, <code>prince : Adult</code>, at two times. At <em>t = 1958</em> its <code>name</code> slot holds <code>"Prince"</code>; at <em>t = 1993</em> the same slot holds <code>"The Artist Formerly Known As Prince"</code>. The attribute slot changed; the object did not. Identity is what the attribute slots are attached <em>to</em>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why this matters in a diagram</h3>
+      <p>Every association you draw is a promise about links between object identities, not between values. Two objects with identical attribute values are still two links; one object whose values changed is still one link. Multiplicity ranges count <em>identities</em>.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Link — and the two kinds</div>
+    <p>A <strong>link</strong> is a tuple of value containers (link ends) that store object identifiers and conforming to an Association type. Links can be created and destroyed dynamically, and a link may itself have an identity — some links are objects.</p>
+    <p>The deck separates two kinds by asking <em>who owns the ends</em>. In kind (a) the link ends are owned by the linked objects: <code>obj1</code> holds <code>obj2.id</code> and <code>obj2</code> holds <code>obj1.id</code>. In kind (b) both ends are owned by the link itself, so the link is a first-class object and the linked objects hold nothing.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Concept</th><th>Has identity?</th><th>Can change?</th><th>Notation that depends on it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Value</strong></td><td>No — it <em>is</em> what it is</td><td>No; a container holding it can be overwritten</td><td>Attribute types, enumeration literals, <code>{readOnly}</code></td></tr>
+        <tr><td><strong>Object</strong></td><td>Yes, from creation</td><td>Attribute slots and even its type, but not its identity</td><td>Class boxes, object boxes, instance specifications</td></tr>
+        <tr><td><strong>Link, ends owned by the objects</strong></td><td>No</td><td>Created and destroyed dynamically</td><td>Ordinary association with navigable ends</td></tr>
+        <tr><td><strong>Link, ends owned by the link</strong></td><td>Yes — the link is an object</td><td>Its own properties can change</td><td>Association class, or the reified «class» alternative</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The dot notation, and why it appears everywhere.</strong> When a class box shows a feature typed by another class, the notation signals that <code>ClassA</code> has a feature typed by <code>ClassB</code>: an object <code>obj1 : ClassA</code> reaches <code>obj2 : ClassB</code> through the dot path <code>obj1</code>&nbsp;&rarr;&nbsp;<code>obj2</code>. A navigable association end is the diagram-level way of saying the same thing, which is why the class box and the association line are two views of one model element.
+  </div>
+
+  <div class="callout">
+    <strong>The model and the thing modelled.</strong> The deck spends a slide on the most common confusion in the unit. The word &ldquo;Batmobile&rdquo; names both the toy (the model, M1) and the real vehicle (the modelled world, M0), and the two are related by <code>&laquo;represents&raquo;</code>. Underneath that, <code>Adult</code> is a <em>type</em> — a specification of a category of entities sharing the same kinds of properties; <code>Alice : Adult</code> is an <em>instance specification</em>; <code>Alice</code> herself is the individual in M0. Keep the three layers apart and the rest of the week is mechanical.
+  </div>
+</section>
+
+<section id="sec-classifiers" class="section" data-track="classifiers">
+  <h2 class="section-title">Classes and Associations as Classifiers</h2>
+  <p class="section-lead">The single most useful move in Week 5 is to stop treating an association as a line and start treating it as a classifier — a thing with its own instances, its own ends and its own properties.</p>
+
+  <div class="def-box">
+    <div class="def-label">Classifier</div>
+    <p>A <strong>classifier</strong> is a specification of a collection of entities (things, concepts) that (1) share a set of characteristics (features) and (2) can be classified (divided) into sub-collections according to the nature of some of their characteristics. People can be classified by gender into men and women, or by age into adults and children — two different classification criteria on one collection.</p>
+    <p>Kinds of classifier in UML include classes, associations, association classes, data types, enumerations, interfaces, behaviours (activities, interactions, state machines), signals, use cases, collaborations, components and nodes.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Class</h3>
+      <p>A specification of a collection of <strong>object instances</strong> characterised by the same set of features and behaviours. Its instances are objects.</p>
+    </div>
+    <div class="col-card">
+      <h3>Association</h3>
+      <p>A specification of a collection of <strong>links</strong> whose ends conform respectively to the same type. Its instances are links. Both classes and associations are classifiers, and all classifiers can serve as types.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The exercise the deck sets, and the answer to memorise.</strong> <em>Explain why Association is a classifier.</em> Because it satisfies both clauses: it specifies a collection of entities (the links), those links share a set of characteristics (their ends, and any properties the association itself owns), and the collection can be divided into sub-collections according to the nature of those characteristics — which is exactly what association specialisation does later in the deck.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">The parent/child model, end names and multiplicity</h3>
+  <p>Everything in this section is built on one small diagram from the deck. Read the two end names first, then the two multiplicity ranges, and only then the two classes.</p>
+
+  <div class="arch-diagram" style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:1.25rem;">
+    <svg viewBox="0 0 720 220" role="img" aria-label="UML class diagram: Adult with name and gender attributes associated to Child with name and gender attributes; the Adult end is named parents with multiplicity 1..2 over an ordered, unique collection and the Child end is named children with multiplicity 0..*." xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+      <rect x="40" y="52" width="220" height="106" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="40" y1="80" x2="260" y2="80" stroke="#4f46e5" stroke-width="2"></line>
+      <line x1="40" y1="126" x2="260" y2="126" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="150" y="71" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" font-weight="700" fill="#312e81">Adult</text>
+      <text x="54" y="101" font-family="'JetBrains Mono',monospace" font-size="12" fill="#312e81">name : String</text>
+      <text x="54" y="118" font-family="'JetBrains Mono',monospace" font-size="12" fill="#312e81">gender : [M, F]</text>
+      <text x="54" y="146" font-family="'JetBrains Mono',monospace" font-size="12" fill="#4f46e5">parents()</text>
+      <rect x="460" y="52" width="220" height="106" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="460" y1="80" x2="680" y2="80" stroke="#4f46e5" stroke-width="2"></line>
+      <line x1="460" y1="126" x2="680" y2="126" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="570" y="71" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" font-weight="700" fill="#312e81">Child</text>
+      <text x="474" y="101" font-family="'JetBrains Mono',monospace" font-size="12" fill="#312e81">name : String</text>
+      <text x="474" y="118" font-family="'JetBrains Mono',monospace" font-size="12" fill="#312e81">gender : [M, F]</text>
+      <text x="474" y="146" font-family="'JetBrains Mono',monospace" font-size="12" fill="#4f46e5">children()</text>
+      <line x1="260" y1="105" x2="460" y2="105" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="352" y="96" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif" font-size="12.5" font-weight="600" fill="#4f46e5">is parent of</text>
+      <text x="300" y="42" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12.5" font-weight="600" fill="#312e81">children</text>
+      <text x="300" y="146" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" fill="#0891b2">1..2</text>
+      <text x="420" y="42" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12.5" font-weight="600" fill="#312e81">parents</text>
+      <text x="420" y="146" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" fill="#0891b2">0..*</text>
+      <text x="352" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11.5" fill="#0891b2">{unique, ordered}</text>
+      <text x="352" y="172" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif" font-size="11.5" fill="#565d75">an Adult has 1..2 parents; a Child has 0..* children</text>
+      <text x="352" y="190" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif" font-size="11.5" fill="#565d75">end names give the direction of the reading</text>
+    </svg>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Element</th><th>What it says</th><th>Read from the diagram above</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Association</strong></td><td>A set of links of one type</td><td>&ldquo;Adult is parent of Child&rdquo; is one association</td></tr>
+        <tr><td><strong>Association end name (role)</strong></td><td>Specifies the role or direction of the entity at that end</td><td><code>children</code> and <code>parents</code>, not &ldquo;Adult&rdquo; and &ldquo;Child&rdquo;</td></tr>
+        <tr><td><strong>Multiplicity</strong></td><td>Range of possible connections between objects</td><td>An Adult has <code>1..2</code> parents; a Child has <code>0..*</code> children</td></tr>
+        <tr><td><strong>Multiplicity modifiers</strong></td><td>How the collection behaves at that end</td><td><code>{unique, ordered}</code> on the parents end</td></tr>
+        <tr><td><strong>Reading the sets</strong></td><td>Each end gives a set-valued expression</td><td><code>Karl.children-&gt;includes(Cory)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Multiplicity: where it applies, and its modifiers</h3>
+
+  <div class="def-box">
+    <div class="def-label">Multiplicity</div>
+    <p>Multiplicity specifies <strong>usages that are collections</strong>: attributes, association ends, parameters and anything else whose value can be a collection. It can specify ranges with an upper and a lower bound, where <code>0</code> means the absence of elements and <code>*</code> (or <code>[0..*]</code>) means an open-ended upper bound.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3><code>{unique}</code> — default true</h3>
+      <p>No two elements of the collection can have the same value. Write <code>{nonunique}</code> to say the opposite. Because it is the default, forgetting to write it is a claim that the collection is a set.</p>
+    </div>
+    <div class="col-card">
+      <h3><code>{ordered}</code> — default false</h3>
+      <p>The elements of the collection are ordered in some appropriate manner, so the collection is a sequence rather than a bag or set. Write <code>{unordered}</code> to state the default explicitly.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>In the deck's own notation</strong> the <code>{unique, ordered}</code> modifier is attached to the <code>0..*</code> child end; the same slide also shows multiplicity on plain attributes (<code>name : String [1..*]</code>), which is the reminder that multiplicity is not an association-only concept. The tutorial adds the vocabulary: <code>[1..*]</code> is one-to-many and <code>[*..*]</code> is many-to-many.
+  </div>
+
+  <div class="callout" style="border-left-color:var(--purple); background:var(--purple-bg);">
+    <strong>Tutorial exercise — extend the model.</strong> The Week 5 tutorial asks you to extend the class diagram to show explicitly the relationships between (1) an Adult and his or her sons and (2) an Adult and his or her daughters. The honest answer needs no new association: <code>Child</code> already carries <code>gender : [M, F]</code>, so &ldquo;sons&rdquo; and &ldquo;daughters&rdquo; are subsets of <code>Adult.children</code> selected by that attribute. Expressing them as two separate associations would duplicate the same links and lose the fact that they partition one collection.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In the parent/child model, what exactly does the <code>1..2</code> at the <code>parents</code> end constrain?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would be a constraint on how many Children an Adult has — which is what the 0..* at the children end governs. The parents end is read from the Child.">How many children a single Adult may have</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. An end's multiplicity is read from the class at the other end: each Child has between one and two parents, and the collection of those parents is unique and ordered." data-bad="">How many Adult instances a single Child may be linked to</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the size of the whole Adult population, which is a population constraint and not what an end multiplicity expresses. Multiplicity counts links per instance.">How many Adult objects may exist in the whole system</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-notation" class="section" data-track="notation">
+  <h2 class="section-title">The Notation Builder: One Class Box, Layer by Layer</h2>
+  <p class="section-lead">UML class notation is layered: a name, then attributes with their types and defaults, then operations with their signatures, then the adornments that carry the model's real precision. Build it in order and nothing on the box is arbitrary.</p>
+
+  <div id="ix-notation-builder"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Adornment</th><th>Meaning</th><th>Deck example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>+</code> <code>-</code> <code>#</code> <code>~</code></td><td>Visibility: public, private, protected, package</td><td><code>+credit (amount: Amount)</code>, <code>#bankPrefix</code></td></tr>
+        <tr><td><code>/</code> before a feature</td><td>The feature is derived — computed from other model elements rather than stored</td><td><code>+/customers : BankCustomer</code></td></tr>
+        <tr><td><code>name : Type</code></td><td>Attribute with its type after the colon; attributes map onto member variables in code</td><td><code>+owner : CorporateCustomer</code></td></tr>
+        <tr><td><code>= value</code></td><td>Default value for the attribute slot</td><td><code>#bankPrefix : String = "0613"</code></td></tr>
+        <tr><td><code>{property}</code></td><td>A property string such as <code>{readOnly}</code> constraining the element</td><td><code>{readOnly}</code> on <code>bankPrefix</code></td></tr>
+        <tr><td><code>op (param: Type) : Type</code></td><td>Operation; parameter types after the parameter name, return type after the closing bracket</td><td><code>+debit (amount) : Boolean</code></td></tr>
+        <tr><td><code>&laquo;stereotype&raquo;</code></td><td>Extends the element's meaning with a profile-defined keyword</td><td><code>+&laquo;signal&raquo; alarm ()</code> — the keyword signifies a reception</td></tr>
+        <tr><td>List box header</td><td>The header compartment of an association's list box is optional</td><td>The <code>accounts / branch</code> association shown without its header</td></tr>
+        <tr><td>Black dot at an end</td><td>The association end is <em>owned</em> by the classifier at that end</td><td>The dot at the <code>CorporateAccount</code> end of <code>accounts / branch</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why the black dot is examinable.</strong> Owning an end means the classifier holds a reference — the end is one of its features. In the deck's instance view, <code>obj2 : CorporateAccount</code> holds <code>obj1.id</code> and <code>obj1 : BankBranch</code> holds <code>obj2.id</code>; the black dot tells you which of those two references the model intends as a feature of the class rather than as an end owned by the association. It is the same link in both directions, but only one direction is <em>owned</em>.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-notation-match"></div>
+  <script type="application/json" id="ix-notation-match">
+  {
+    "title": "Match the notation to the semantics",
+    "subtitle": "Click a symbol on the left, then the meaning it carries on the right.",
+    "pairs": [
+      ["Filled diamond at one end", "Composition: the whole owns the part and deleting the whole deletes the parts"],
+      ["Hollow diamond at one end", "Aggregation: a user-defined weak form of ownership, otherwise the same as a plain association"],
+      ["Hollow triangle arrowhead", "Generalisation: all features of the superclass are also present in the subclass"],
+      ["Dashed line with an open arrow", "Dependency: a client requires a supplier, so a change in the supplier affects the client"],
+      ["Dashed line with a hollow triangle", "Realisation: a classifier implements the features declared by an interface"],
+      ["Circle with a short line (lollipop)", "A provided interface — an interface plus the realisation relationship, not an interface instance"],
+      ["Solid line with a plain end", "Simple association: a structural link between two peer classes"],
+      ["Rectangle with a folded corner name tag", "A constraint attached as a note rather than written in line"]
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Interfaces, dependencies and the shorthand</h3>
+
+  <div class="def-box">
+    <div class="def-label">Interfaces</div>
+    <p>Like classes, interfaces define a set of features, but they are <strong>restricted to declarations only</strong> — interfaces cannot have instances. A classifier <strong>realises</strong> an interface when it provides implementations, directly or indirectly, for all of the interface's features. A classifier <strong>uses</strong> an interface when it requires the services of some object that realises it, which is one of the standard methods of decoupling elements from each other.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The deck's example</h3>
+      <p><code>&laquo;interface&raquo; JetEngineControl</code> declares <code>+thrust : Real</code>, <code>+status : [OK, Fail]</code> and the operations <code>accelerate()</code>, <code>decelerate()</code>, <code>reverseThrust()</code>, <code>ignite()</code> and <code>powerDown()</code>. <code>Pilot</code> has a <code>&laquo;uses&raquo;</code> relationship to it; <code>RollsRoyce Engine</code> and <code>GE Engine</code> both realise it.</p>
+    </div>
+    <div class="col-card">
+      <h3>The trap in the shorthand</h3>
+      <p>The lollipop <strong>does not</strong> represent an interface instance. It is a combination of an interface and a realisation relationship — one icon standing for two model elements. That is the whole reason the alternative notation is compact, and the reason an examiner can ask you to expand it.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Dependencies</div>
+    <p>A dependency is an informal statement that one or more <strong>client</strong> items require one or more <strong>supplier</strong> items in some way: a change in a supplier affects the clients. The semantics are deliberately open (loose), but they can be specialised — the deck shows <code>Factory</code> and <code>Car</code> joined by a plain dependency, then the same pair joined by a dependency carrying the user-defined stereotype <code>&laquo;manufacturedBy&raquo;</code>, and then the same dashed arrow reused between <code>Car</code>, <code>Motorcycle</code> and <code>Factory</code>.
+    </p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A model shows <code>Pilot</code> connected to a lollipop labelled <code>JetEngineControl</code>. What is actually being asserted?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck states this explicitly as wrong: the lollipop is not an interface instance. Interfaces cannot have instances at all.">That a single instance of the interface is attached to the Pilot</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The lollipop is a combination of an interface and a realisation relationship: the classifier realises the interface, and the Pilot uses it." data-bad="">That a classifier realises the interface and the Pilot uses its services</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A lollipop is not a dependency. Dependencies are drawn as a dashed line with an open arrow, and they assert a much weaker, change-propagation relationship.">That Pilot depends on JetEngineControl in the loose dependency sense</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-generalization" class="section" data-track="generalization">
+  <h2 class="section-title">Generalisation, Sets and Association Specialisation</h2>
+  <p class="section-lead">Generalisation is the subset&ndash;set relationship UML uses for classification. The interesting exam material is not the arrowhead; it is what happens when you have two classification criteria at once, and what happens when you specialise an association rather than a class.</p>
+
+  <div class="def-box">
+    <div class="def-label">Generalisation</div>
+    <p><strong>Generalisation</strong> is a subset&ndash;set relationship: the instances of the subclass are a subset of the instances of the superclass, and the diagram's arrow signifies a graphical operation — all features of the superclass are also present in the subclass. <strong>Specialisation</strong> is the reverse process, in which a subclass refines or extends the characteristics of the superclass to create more specific subtypes.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What inheritance copies, mechanically</h3>
+      <p><code>BankAccount</code> declares <code>/customers : BankCustomer</code>, <code>credit (amount: Amount)</code> and <code>debit (amount) : Boolean</code>. <code>CorporateAccount</code> adds <code>owner : CorporateCustomer</code> — and the deck's point is that the two operations and the derived attribute are <em>also present in the subclass</em>. They are not redrawn; they are inherited.</p>
+    </div>
+    <div class="col-card">
+      <h3>Two criteria on one class</h3>
+      <p><code>Person</code> can be partitioned by an <em>age</em> criterion into <code>Adult</code> and <code>Child</code>, and by a <em>gender</em> criterion into <code>Males</code> and <code>Females</code>. Each partition is a <strong>generalisation set</strong>, and the label on the shared arrowhead names the criterion. A person is in exactly one subset of each set.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Generalisation sets exist because multiple classification criteria are possible for a given class.</strong> Without the set label, two arrowheads hanging off <code>Person</code> would be ambiguous: are <code>Adult</code> and <code>Males</code> alternatives, or independent axes? The criterion label (<code>age</code>, <code>gender</code>) answers that, and it is what makes the multiple-inheritance-free modelling of several simultaneous partitions legal in UML.
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-gen-timeline"></div>
+  <script type="application/json" id="ix-gen-timeline">
+  {
+    "title": "Association specialisation, step by step",
+    "subtitle": "The deck's BankAccount / BankCustomer refinements, in the order that each one tightens the constraint.",
+    "events": [
+      { "label": "Step 1", "title": "The general association", "detail": "BankAccount accounts 1..* — 1..* customers BankCustomer. Two ends, two multiplicities, and no claim about which accounts belong to which kind of customer." },
+      { "label": "Step 2", "title": "Specialise the classes", "detail": "Add CorporateAccount and PersonalAccount as subclasses of BankAccount, and CorporateCustomer and PrivateCustomer as subclasses of BankCustomer." },
+      { "label": "Step 3", "title": "Specialise the association", "detail": "Draw a narrower association between the subclasses: CorporateAccount 1..* — 1 CorporateCustomer. This prevents a CorporateAccount from being linked to a PrivateCustomer." },
+      { "label": "Step 4", "title": "Name the specialised ends", "detail": "C-accounts / owner for the corporate association and P-accounts / owners for the personal one. The new end names are subsets of the general end names." },
+      { "label": "Step 5", "title": "Tighten the multiplicity", "detail": "The corporate end is 1 where the general end was 1..*. The deck's note on the slide is exactly this: a tightened constraint." },
+      { "label": "Step 6", "title": "Mark the ends as subsets", "detail": "{subsets accounts} on C-accounts and P-accounts, alongside the derived {union} /accounts at the general end. This records that the specialised ends partition the general one." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Construct</th><th>Constraint it adds</th><th>Why it matters</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>General association</td><td>Only the two multiplicities</td><td>Any BankAccount can link to any BankCustomer</td></tr>
+        <tr><td>Association specialisation</td><td>A tighter class pair and a tighter multiplicity</td><td>Corporate accounts cannot be linked to private customers</td></tr>
+        <tr><td><code>{subsets accounts}</code></td><td>The specialised end's links are a subset of the general end's links</td><td>Keeps the general and specialised views consistent</td></tr>
+        <tr><td><code>{union} /accounts</code></td><td>The general end is derived as the union of its subsets</td><td>No link can exist at the general end that no subset covers</td></tr>
+        <tr><td>Disjointness / completeness</td><td>Whether the subsets overlap, and whether they cover everything</td><td>The difference between a partition and an incomplete split</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Reading order for an association specialisation:</strong> general association &rarr; class generalisations &rarr; specialised association &rarr; end names &rarr; multiplicities &rarr; <code>{subsets}</code> and <code>{union}</code>. Each step only narrows what the previous one allowed, which is why the deck calls the result a <em>more refined specification</em>.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A model has <code>BankAccount accounts 1..* &mdash; 1..* customers BankCustomer</code> plus a specialised <code>CorporateAccount C-accounts 1..* &mdash; 1 CorporateCustomer</code> whose end is marked <code>{subsets accounts}</code>. Which run-time configuration does the model forbid?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A PersonalAccount linked to a PrivateCustomer is exactly what the other specialised association permits, and it is still covered by the general association.">A PersonalAccount linked to a PrivateCustomer</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The specialised association pairs CorporateAccount with CorporateCustomer only, and the tightened 1 and 1..* multiplicities apply inside that pair." data-bad="">A CorporateAccount linked to a PrivateCustomer</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A CorporateAccount with several owners is allowed: the corporate end is 1..* on the account side, so one customer may own many corporate accounts. It is the customer end that is tightened to 1.">A CorporateAccount that is owned by more than one CorporateCustomer</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-constraints" class="section" data-track="constraints">
+  <h2 class="section-title">Composition, Aggregation, Association Classes and Constraints</h2>
+  <p class="section-lead">This is the densest page of the deck, and the part most likely to be examined directly: the two diamonds, the two ways to give an association properties of its own, and the two notations for a constraint.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>&#x1F48E; Composition — the black diamond</h3>
+      <p>Implies <strong>ownership</strong> of one element by another: an instance of <code>Person</code> owns an instance of <code>String</code> that specifies that person's <code>name</code>. The semantics are <strong>deletion</strong> semantics — when the owner is removed, all its owned elements are also removed with it. The deck's instance view is a <code>Person</code> named Bran whose <code>:String</code> has <code>value = "Bran"</code>.</p>
+    </div>
+    <div class="col-card">
+      <h3>&#x1F0CF; Aggregation — the white diamond</h3>
+      <p>Intended to support a user-defined <strong>weak</strong> form of ownership, for example in a UML profile. In standard UML its semantics are <strong>the same as a regular association</strong> — the deck prints the <code>Adult 0..1 child &mdash; 0..* Child</code> fragment twice to make the point that nothing changes when the diamond is added.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The examinable asymmetry:</strong> the black diamond adds real semantics (deletion propagates from whole to part); the white diamond adds none in standard UML unless a profile defines what the weak ownership means. A question that asks you to choose between them is really asking whether the part's lifetime is bound to the whole's.
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-strength"></div>
+  <script type="application/json" id="ix-strength">
+  {
+    "title": "Dependency strength, from weakest to strongest",
+    "subtitle": "Choose the weakest relationship that states what you actually need — UML gives you no way to strengthen a model later without changing it.",
+    "nodes": [
+      { "label": "Dependency", "note": "Dashed open arrow. A change in the supplier affects the client. No structural link is implied, and the semantics are deliberately loose." },
+      { "label": "Association", "note": "A solid line between peer classes. Links exist and can be navigated in the directions the ends allow." },
+      { "label": "Aggregation", "note": "The same association with a hollow diamond. In standard UML the semantics are unchanged; the diamond is a hook for a profile-defined weak ownership." },
+      { "label": "Composition", "note": "A filled diamond. Ownership with deletion semantics: removing the whole removes the parts with it." },
+      { "label": "Generalisation", "note": "Not a strength at all but a classification: instances of the subclass are a subset of the superclass, and every superclass feature is present in the subclass." }
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Giving an association its own properties</h3>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Option A — the association class</h3>
+      <p>Some associations have properties in addition to the ends. The deck's example attaches <code>Job</code> with a <code>salary</code> to the <code>Person 1..* &mdash; 0..* Company</code> association. One link, one salary: the property belongs to the <em>link</em>, not to either object, which is exactly the &ldquo;link ends owned by the link itself&rdquo; case from the elementary concepts.</p>
+    </div>
+    <div class="col-card">
+      <h3>Option B — a class plus two associations</h3>
+      <p>The alternative replaces the association class with an ordinary class <code>Job</code> standing between <code>Person</code> and <code>Company</code>, each side <code>0..*</code>. It avoids the complexities involved with association class semantics, such as writing constraints — but the deck's note is the price: it requires a <strong>coupling between the links</strong> of those two associations.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Criterion</th><th>Association class</th><th>Class plus two associations</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What it says</td><td>The link itself has properties</td><td>There is an object that links the two</td></tr>
+        <tr><td>Instance count</td><td>One <code>Job</code> per link, by construction</td><td>One <code>Job</code> object, which could be rewired to a different pair</td></tr>
+        <tr><td>Constraint writing</td><td>Complex — the deck cites association class semantics as the difficulty</td><td>Straightforward, because <code>Job</code> is an ordinary class</td></tr>
+        <tr><td>Hidden cost</td><td>Tool and reader support varies</td><td>A coupling between the links of the two associations has to be maintained by a constraint</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Constraints: what a diagram cannot draw</h3>
+
+  <div class="def-box">
+    <div class="def-label">Constraint</div>
+    <p>A constraint captures some semantics for elements of a namespace. It is expressed in either a formal language or a natural one — the deck lists the Object Constraint Language (OCL), English, and, in its own words, Australian. There are two notation choices: written <strong>in line</strong> inside the element, as in <code>size : Integer {size &gt;= 0}</code>, or attached as a <strong>note</strong>, with the same text in a rectangle joined to the element by a dashed line.</p>
+  </div>
+
+  <div class="arch-diagram" style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:1.25rem;">
+    <svg viewBox="0 0 720 200" role="img" aria-label="Two UML constraint notations side by side: the Stack class with size Integer followed by the in-line constraint size greater than or equal to zero, and the same class with an attached note rectangle carrying the same constraint." xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+      <text x="30" y="26" font-family="'Plus Jakarta Sans',sans-serif" font-size="12.5" font-weight="700" fill="#4f46e5">IN LINE</text>
+      <rect x="30" y="42" width="270" height="76" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="30" y1="70" x2="300" y2="70" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="165" y="61" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" font-weight="700" fill="#312e81">Stack</text>
+      <text x="42" y="92" font-family="'JetBrains Mono',monospace" font-size="12" fill="#312e81">size : Integer</text>
+      <text x="170" y="92" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#0891b2">{size &gt;= 0}</text>
+      <text x="42" y="110" font-family="'Plus Jakarta Sans',sans-serif" font-size="11" fill="#565d75">the constraint is part of the attribute declaration</text>
+      <text x="410" y="26" font-family="'Plus Jakarta Sans',sans-serif" font-size="12.5" font-weight="700" fill="#4f46e5">ATTACHED NOTE</text>
+      <rect x="410" y="42" width="270" height="76" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="410" y1="70" x2="680" y2="70" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="545" y="61" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" font-weight="700" fill="#312e81">Stack</text>
+      <text x="422" y="92" font-family="'JetBrains Mono',monospace" font-size="12" fill="#312e81">size : Integer</text>
+      <text x="422" y="110" font-family="'Plus Jakarta Sans',sans-serif" font-size="11" fill="#565d75">only the attribute is in the box</text>
+      <path d="M680 96 L620 118 L400 118 L400 96 L680 96" fill="none" stroke="#94a3b8" stroke-width="0"></path>
+      <path d="M680 100 L640 132 L430 100" fill="none" stroke="#94a3b8" stroke-width="0"></path>
+      <rect x="452" y="132" width="210" height="44" rx="4" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"></rect>
+      <text x="557" y="152" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#0891b2">{size &gt;= 0}</text>
+      <text x="557" y="168" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif" font-size="10.5" fill="#565d75">a note joined by a dashed line</text>
+      <line x1="545" y1="118" x2="545" y2="132" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3"></line>
+      <text x="360" y="196" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif" font-size="11.5" fill="#565d75">Both notations assert exactly the same constraint — choose by what the diagram has room for.</text>
+    </svg>
+  </div>
+
+  <div class="insight-box">
+    <strong>Invariants and OCL.</strong> A constraint whose text is a boolean expression that must hold in every valid system state is an <em>invariant</em>. OCL is the formal option in the deck's list, and it is the reason the earlier sections matter: an invariant is written over the model's elements — its classes, their attributes, and the collections given by association ends. The <code>1..2</code> and <code>0..*</code> you set earlier are structural constraints; an OCL invariant is how you say something the diagram has no symbol for.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A diagram puts a filled diamond at the <code>String</code> end of <code>Person 0..1 name &mdash; 1 String</code>. What has the modeller committed to?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the white diamond. In standard UML aggregation's semantics are the same as a plain association, so assuming deletion would be wrong.">That the name can be shared between persons, but weakly</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: composition implies ownership with deletion semantics — when the Person is removed, the String it owns is removed with it." data-bad="">That the Person owns the String, and removing the Person removes that String</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The diamond says nothing about when the part is created. It constrains deletion, not construction.">That the String attribute is instantiated at the same moment as the Person</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Tutorial exercise &mdash; explain why Association is a classifier, and answer the two set questions.</strong> Worked answer using the <code>Adult</code>/<code>Child</code> model.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>What is the content of the set <code>children</code> of Karl?</strong> Every <code>Child</code> linked to <code>Karl</code> by a link of the association. If the diagram shows Karl linked to Cory, Ida and Dee, the set is exactly <code>{Cory, Ida, Dee}</code> — and the <code>1..2</code> at the <code>parents</code> end tells you that each of those three children has one or two parents, of whom Karl is one.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>What is the set <code>parents</code> of Cory?</strong> Every <code>Adult</code> linked to <code>Cory</code>. The <code>1..2</code> bound says the set has size one or two, so a link to Karl alone is a valid configuration, and so is a link to Karl and Jill. <code>Karl.children-&gt;includes(Cory)</code> and <code>Cory.parents-&gt;includes(Karl)</code> are two navigations of the same link.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Why Association is a classifier.</strong> A classifier is a specification of a collection of entities that share a set of characteristics and can be divided into sub-collections according to the nature of some of those characteristics. An association specifies the collection of <em>links</em>; those links share their ends and any properties the association owns (the <code>Job.salary</code> case); and the collection can be divided into sub-collections — the corporate and personal links — which is association specialisation. Both clauses hold, so an association is a classifier, and like every classifier it can serve as a type.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Extend the model for sons and daughters.</strong> Do not add associations. <code>Child</code> already has <code>gender : [M, F]</code>, so &ldquo;sons&rdquo; and &ldquo;daughters&rdquo; are the two subsets of <code>Adult.children</code> obtained by selecting on that attribute. Two extra associations would state the same links twice, break the <code>0..*</code> multiplicity's meaning, and lose the fact that the two subsets are disjoint and together cover the whole collection. If you must expose them as navigable features, add derived ends with <code>{subsets children}</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;An association is a classifier because its instances are links, those links share the association's ends and owned properties, and the collection of links can be partitioned by association specialisation — which is precisely the definition of a classifier, and the reason an association can carry its own attributes as an association class.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-complex" class="section" data-track="complex">
+  <h2 class="section-title">Objects, Roles and Collaborations</h2>
+  <p class="section-lead">Part 2 asks the question that makes class diagrams honest: how many different run-time configurations does one class diagram describe? The deck answers it three ways — an object diagram, a role, and a collaboration — and each answer is more reusable than the last.</p>
+
+  <div class="insight-box">
+    <strong>The five-year-old and the computer scientist.</strong> Asked to draw a picture of a car, the five-year-old draws boxes for the parts and lines for the connections between them: left front wheel, engine, right front wheel, body, rear wheels. The deck's point is that this is not a childish drawing — it is a structure model, and it is the same shape as the diagram the computer scientist produces. Boxes are parts; lines are connections.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The questionnaire that exposes the limit of class diagrams</div>
+    <p>The deck shows a class diagram with <code>ClassA</code> linked to <code>ClassB</code> by two 1-to-1 association ends, named <code>al</code> (left) and <code>ar</code> (right). <em>How many different run-time configurations are described by this class diagram?</em> The answer is that there is no finite number. Configuration (1) is one <code>ClassA</code> linked to one <code>ClassB</code>; configuration (2) is two; then three; and so on. The diagram is a specification with infinitely many instances, which is exactly what makes it worth having — and exactly why it cannot show you one run.</p>
+  </div>
+
+  <div id="ix-object-diagram"></div>
+
+  <div class="def-box">
+    <div class="def-label">Object diagrams, and their limitation</div>
+    <p>An object diagram represents a <strong>snapshot</strong> of some specific system at some point in time. The deck is careful about what follows: object diagrams <em>can only serve as examples</em>, not as general architectural specifications — unless a profile is defined. Two snapshots of the same four-node linked structure at times T and T+1 differ only by one added node, and the class diagram that describes both is silent about the difference.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Role — a prototypical instance</div>
+    <p>A <strong>role</strong> is a representation of an instance with a specific responsibility in some broader generalised context (a collaboration). The deck's example is the role of Hamlet in Shakespeare's play: the role can be filled by different actual individuals — Laurence Olivier in one production, Kenneth Branagh in another — and one actor instance may fill two roles in the same production (Olivier played Hamlet and the Ghost). What is needed is a way of talking about <em>prototypical</em> instances across time.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Collaboration</div>
+    <p>A <strong>collaboration</strong> describes a set of collaborating roles communicating via connectors that represent communication links. Collaborations represent a network of cooperating object instances <strong>whose identities have been abstracted away</strong>. The deck's <code>MicroHamlet</code> collaboration has a connector line to a <em>constrained</em> role (<code>Hamlet : YoungMan</code>), unconstrained roles (<code>Gertrude</code>, <code>Ophelia</code>, <code>Ghost</code>), and an <code>&laquo;abstraction&raquo;</code> dependency from each concrete production (<code>MicroHamlet(1948)</code>, <code>MicroHamlet(1996)</code>) to the collaboration.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Collaboration uses</h3>
+      <p>Applying a collaboration specification to a particular situation is a <strong>collaboration use</strong>. The deck's <code>BrokeredSale</code> binds the roles of a <code>Sale</code> — <code>Buyer</code>, <code>Seller</code> — to a wholesale and a retail context, with <code>broker</code> and <code>producer</code> connectors tying them together.</p>
+    </div>
+    <div class="col-card">
+      <h3>Collaborations are classifiers</h3>
+      <p>They can be refined using inheritance, which opens the possibility of defining generic architectural structures. <code>TwoViewMVC</code> has two view roles plus <code>ctrlr</code> and <code>model</code>; <code>ThreeViewMVC</code> refines it by adding a third view role while keeping the same controller and model roles.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The one line to remember from Part 2:</strong> a collaboration has <em>no encapsulation shell</em> — it cannot be instantiated as objects. That is the whole difference from the structured class in the next section, and it is why collaborations model patterns while structured classes model components.
+  </div>
+
+  <div class="callout" style="border-left-color:var(--green); background:var(--green-bg);">
+    <strong>Agentic AI, object level.</strong> For agent systems the deck uses object diagrams to show how agents are instantiated at run time, with BDI-style objects: agent instances (<code>doctorAgent1</code>), belief objects (<code>KnowledgeBase</code>, <code>UserProfile</code>), desire/goal objects (<code>BookAppointment</code>), intention/plan objects (<code>SendReminder</code>) and environment objects (<code>HospitalSystem</code>). The analytic point is the many-to-many structure: <em>each agent has two beliefs, and each belief associates with two agents</em>, so <code>patientProfile</code> is shared rather than owned. Compare that with the composition on <code>Person</code> and <code>String</code>: a shared belief is an association, never a composition.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Two agent instances share one <code>patientProfile : Belief</code> object. What does the deck's analysis imply about how that link should be modelled?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Composition has deletion semantics: removing the owner removes the owned element. Deleting one agent must not delete a belief another agent still uses.">As a composition from each agent to the belief</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck analyses this as a many-to-many relationship — each agent has many beliefs and each belief associates with many agents — so a plain association with 0..* at both ends is the honest model." data-bad="">As an association with many-to-many ends, since the belief is shared</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Multiplicity is about how many instances may be linked, not about who copies what. Copying the belief would create two objects and lose the sharing the diagram is meant to show.">By giving each agent its own copy of the belief attribute</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; choose between a class diagram, an object diagram and a collaboration.</strong> Four scenarios from the Week 5 material, each answer in one paragraph.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>&ldquo;Describe every legal state of the linked-node structure.&rdquo;</strong> Class diagram. It constrains <code>Node</code> with <code>left 0..1</code> and <code>right 0..1</code>, which permits every chain, tree and ring the run time can produce. No object diagram can do this, because each one fixes a single number of nodes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>&ldquo;Show the reviewer the four objects that exist right now, and what happened when a fifth was added.&rdquo;</strong> Two object diagrams, at T and T+1. They are snapshots and can only serve as examples — but an example is exactly what is wanted here, because the interesting claim is about one specific run.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>&ldquo;Capture the pattern that two productions of the same play share, so that a third can be compared against it.&rdquo;</strong> A collaboration. The roles <code>Gertrude</code>, <code>Ophelia</code>, <code>Hamlet</code> and <code>Ghost</code> abstract away which individual fills each one, and the two historical productions depend on the collaboration with <code>&laquo;abstraction&raquo;</code>. A collaboration cannot be instantiated — it has no encapsulation shell — which is correct, because it describes a pattern rather than a component.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>&ldquo;Record which beliefs are shared between agent instances and which belong to one agent only.&rdquo;</strong> A class diagram for the rules (<code>DoctorAgent * &mdash; * Belief</code>, plus any composition for beliefs that really are private), then one object diagram to demonstrate the sharing that motivated the rule. If the sharing structure recurs in other systems, promote it to a collaboration so it can be reused instead of redrawn.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-structured" class="section" data-track="structured">
+  <h2 class="section-title">Structured Classes: Ports, Parts and Connectors</h2>
+  <p class="section-lead">UML added structured classifiers primarily for architectural modelling. Where a class diagram says what things are, a structured class opens a class up and shows how its components are wired together at run time.</p>
+
+  <div class="def-box">
+    <div class="def-label">Structured class</div>
+    <p>A class with an <strong>external structure</strong> (port interaction points) and an <strong>internal (collaboration) structure</strong>. Think of it as &ldquo;opening up&rdquo; a class and showing how its components are wired together at runtime. The heritage is architectural description languages: the UML-RT profile (Selic and Rumbaugh, 1998), ACME (Garlan et al.) and SDL (ITU-T standard Z.100).</p>
+  </div>
+
+  <div id="ix-structured-class"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The port structural pattern</h3>
+      <p>Ports are <strong>distinct interaction points</strong> of an object for multiple, possibly simultaneous collaborations. They let an object distinguish between different external collaborators <em>without direct coupling to them</em>. One basic purpose of ports, the deck notes, is the separation of roles.</p>
+    </div>
+    <div class="col-card">
+      <h3>Ports and interfaces</h3>
+      <p>Ports can provide and/or require interfaces. The general case is both: the deck's <code>DataBase</code> has an <code>adminPort</code> that provides <code>DBserver</code> (<code>readDB</code>, <code>writeDB</code>, <code>notifyOfChange</code>) and a <code>clientPort</code> that requires <code>DBclient</code> (<code>change (d)</code>). Uni-directional ports are also common.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why multiple interfaces per port should be avoided.</strong> The deck gives three reasons and they are all examinable: it creates potential conflicts (name clashes) and requires some kind of disambiguation mechanism; the semantics are unclear if the interfaces have protocol state machines attached; and it is much less problematic to simply define separate ports for each interface. The slide's own illustration is <code>WebServer.read (id)</code> and <code>Library.read (id)</code> colliding on one port.
+  </div>
+
+  <div class="insight-box">
+    <strong>Internal structure, and the question the deck leaves open.</strong> A structured class can contain collaboration structures comprising <em>parts</em> that are usages of other structured or basic classes. A part is drawn inside the class box as <code>partF : F</code>, and a <strong>delegation connector</strong> joins a port on the boundary to a part, or one part to another. The deck's unanswered question is deliberately provocative: <em>should all attributes in a class become parts in its structured class?</em> The defensible answer is no — a value-typed attribute such as <code>name : String</code> has no interaction points to wire, so it stays an attribute, while a component with ports and its own internal structure earns a part.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Feature</th><th>Collaboration</th><th>Structured class</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Purpose</td><td>Capture patterns of cooperating objects</td><td>Architectural components</td></tr>
+        <tr><td>Contents</td><td>Roles and connectors</td><td>Ports, parts and connectors</td></tr>
+        <tr><td>Encapsulation shell</td><td>None — cannot be instantiated as objects</td><td>Yes — can be created and destroyed as a unit</td></tr>
+        <tr><td>Inheritance</td><td>Can be refined (e.g. <code>TwoViewMVC</code> &rarr; <code>ThreeViewMVC</code>)</td><td>Structure can be refined through specialisation, for product families</td></tr>
+        <tr><td>Typical use</td><td>Recording a recurring pattern</td><td>Modelling a component with an external and an internal view</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout" style="border-left-color:var(--purple); background:var(--purple-bg);">
+    <strong>Structure refinement through specialisation.</strong> Because a structured class is a class, its internal structure can be refined by inheritance: a <code>ProductArchitecture</code> with a <code>sender : Fax</code> and a <code>receiver : Fax</code> part can be specialised into <code>ProductA</code> and <code>ProductB</code>, and one of them adds an <code>mgr : FaxMgr</code> part. The deck's framing is reuse at the architectural level, useful for representing product families and product lines. The <code>FaxCall</code> example makes the lifetime point: the whole structured class is created and destroyed as a unit, with <code>sendCtrl</code> and <code>receiveCtrl</code> ports on the boundary.
+  </div>
+
+  <div class="callout" style="border-left-color:var(--green); background:var(--green-bg);">
+    <strong>Agentic AI, structured level.</strong> An agent's sub-components — belief base, desire/goal manager, intention/plan manager, reasoning/decision engine and communication interface — are modelled as parts of a structured class, not as attributes. The deck's <code>HealthcareAgent</code> has a <code>PatientCommPort</code> with an <code>Input</code> interface and a <code>HospitalAPIPort</code> with a <code>CallAPI</code> interface, and inside it a <code>reasoner : DecisionEngine</code>, a <code>beliefBase : KnowledgeStore</code>, a <code>goalManager : DesireManager</code> and an <code>intentionHandler : PlanExecutor</code>, joined by <code>Belief</code>, <code>Goal</code> and <code>Reasoning</code> connectors.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A modeller puts <code>WebServer.read (id)</code> and <code>Library.read (id)</code> on a single port. According to the deck, why is this a problem?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Multiple interfaces per port create name clashes that need a disambiguation mechanism, and the semantics are unclear if the interfaces have protocol state machines attached — separate ports per interface are much less problematic." data-bad="">The two interfaces declare a conflicting operation, and the state-machine semantics become unclear</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="UML permits multiple interfaces per port. The deck's objection is about conflicts and unclear semantics, not about legality — it says this is possible but should be avoided.">It is illegal in UML, because a port may provide exactly one interface</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Coupling is reduced by ports, but that is not the issue here. A provided interface is realised by the component itself, so no implementation is being imported.">It couples the component directly to the implementation of both interfaces</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 5 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Four concepts under the notation</h4>
+        <p>Value (unchanging, no identity), object (a container with identity from creation), identity (unchanged by attribute values or reclassification) and link (a tuple of ends conforming to an association type).</p>
+        <div class="flip-hint">Elementary structure</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Every association is a classifier</h4>
+        <p>Its instances are links; its features are its ends and any owned properties; it can be specialised. That is why it can carry attributes as an association class.</p>
+        <div class="flip-hint">The key abstraction</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Black diamond owns, white diamond does not</h4>
+        <p>Composition carries deletion semantics: remove the owner and the owned elements go with it. Aggregation in standard UML has the same semantics as a plain association.</p>
+        <div class="flip-hint">Two diamonds</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Precision comes from constraints</h4>
+        <p>Multiplicity gives ranges; <code>{unique}</code> and <code>{ordered}</code> shape the collections; <code>{subsets}</code> and <code>{union}</code> link refined associations to general ones; invariants in OCL say what the diagram cannot draw.</p>
+        <div class="flip-hint">Making it precise</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Self-test: state the answer before you flip",
+    "subtitle": "Eight questions the Week 5 material is built to make you able to answer.",
+    "cards": [
+      { "front": "What does structure modelling represent?", "back": "Entities that take up space and have state and may have behaviour: design-time classes, run-time instances and their links, and the specifications of both.", "hint": "Definition" },
+      { "front": "Why is an association a classifier?", "back": "Because it specifies a collection of links that share characteristics (ends, owned properties) and can be divided into sub-collections — which is association specialisation.", "hint": "Exercise" },
+      { "front": "Composition versus aggregation?", "back": "Composition (filled diamond) is ownership with deletion semantics. Aggregation (hollow diamond) is a weak, user-defined ownership that in standard UML has the same semantics as a regular association.", "hint": "Two diamonds" },
+      { "front": "What does the notation /customers mean?", "back": "The feature is derived: it is computed from other model elements rather than stored. The deck shows it on BankAccount as /customers : BankCustomer with a {union} constraint.", "hint": "Class notation" },
+      { "front": "Two generalisation sets on one class — why?", "back": "Because multiple classification criteria are possible for a given class: age partitions Person into Adult and Child, gender partitions it into Males and Females, and each criterion is labelled on its own arrowhead.", "hint": "Generalisation sets" },
+      { "front": "Association class or a class plus two associations?", "back": "The association class states that the link itself has properties, at the cost of complex semantics when writing constraints. The alternative avoids that complexity but needs a coupling between the links of the two associations.", "hint": "Association properties" },
+      { "front": "Why can an object diagram not replace a class diagram?", "back": "It is a snapshot at one time and can only serve as an example, not a general architectural specification — unless a profile is defined. One class diagram describes infinitely many configurations.", "hint": "Part 2" },
+      { "front": "Collaboration versus structured class?", "back": "Both capture cooperating structures. A collaboration abstracts identities into roles and has no encapsulation shell, so it cannot be instantiated. A structured class has ports, parts and connectors and can be created and destroyed as a unit.", "hint": "Complex structure" }
+    ]
+  }
+  </script>
+
+  <div class="flow-grid">
+    <div class="flow-node">Elementary structure</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Class diagrams &amp; constraints</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Instances &amp; roles</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Structured classes</div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you draw the class notation from memory, read an end multiplicity aloud in the right direction, and say what the filled diamond commits you to?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the lab</h3>
+      <p>Laboratory 5 Part Two asks for a class diagram with classes and relationships, interfaces and how they are implemented, multiplicity on every association, and attributes and methods — using correct UML notation. Have a stereotype list and a multiplicity checklist beside you.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's notation into a symbol reference card, the grammar of a precise association, and the OCL forms you will need. Then attempt the Quiz Hub and the Flashcards for Week 5.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

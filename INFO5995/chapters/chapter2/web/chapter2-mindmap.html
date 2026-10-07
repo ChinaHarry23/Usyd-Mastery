@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind map — Week 2: AI-Assisted Vulnerability Discovery</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind map — Week 2 — Hierarchical mind map of AI-assisted vulnerability discovery: LLM mechanics, reasoning models, terminal agents, prompt design, failure modes and human verification.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind map — Week 2: AI-Assisted Vulnerability Discovery">
+<meta property="og:description" content="Mind map — Week 2 — Hierarchical mind map of AI-assisted vulnerability discovery: LLM mechanics, reasoning models, terminal agents, prompt design, failure modes and human verification.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <a href="chapter2-math.html">Foundations</a>
+  <a href="../../../index.html">&#127968; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Week 2 mind map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand all</button>
+    <button id="btnCollapseAll">Collapse all</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Why AI, and how LLMs work</span>
+  <span><span class="dot" style="background:var(--green)"></span> Artefacts, prompting and verification</span>
+  <span><span class="dot" style="background:var(--purple)"></span> Agents, boundaries and failure modes</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Foundations and quantitative models</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Week 2: AI-Assisted Vulnerability Discovery",
+  label_zh: "第 2 周：AI 辅助漏洞发现",
+  children: [
+    {
+      label: "Why AI is on the security agenda",
+      label_zh: "AI 为何进入安全议程",
+      color: "blue",
+      href: "chapter2-study.html#sec-why",
+      children: [
+        { label: "Modern software is too large to inspect manually, line by line", label_zh: "现代软件规模过大，无法逐行人工审查", href: "chapter2-study.html#sec-why" },
+        { label: "Predictable patterns exist in code as well as in prose", label_zh: "代码与自然语言中同样存在可预测的模式", href: "chapter2-study.html#sec-why" },
+        { label: "The goal is to investigate with AI, not to ask it for a verdict", label_zh: "目标是借助 AI 进行调查，而非向它索要结论", href: "chapter2-study.html#sec-why" },
+        { label: "First question: is the AI authorised to act?", label_zh: "首要问题：AI 是否获得了行动授权？", href: "chapter2-study.html#sec-agents" }
+      ]
+    },
+    {
+      label: "How an LLM responds",
+      label_zh: "大语言模型如何作答",
+      color: "blue",
+      href: "chapter2-study.html#sec-llm",
+      children: [
+        { label: "System prompt sets role, instructions and boundaries", label_zh: "系统提示词设定角色、指令与边界", href: "chapter2-study.html#sec-llm" },
+        { label: "Conversation context shapes each new response", label_zh: "对话上下文塑造每一次新的回答", href: "chapter2-study.html#sec-llm" },
+        { label: "The same prompt does not always produce the same response", label_zh: "同一个提示词未必产生相同的回答", href: "chapter2-study.html#sec-llm" },
+        { label: "Key takeaway 1 — LLMs predict patterns, they do not know what is true", label_zh: "要点一——LLM 预测模式，并不知晓何为真", href: "chapter2-study.html#sec-llm" }
+      ]
+    },
+    {
+      label: "Code is data too",
+      label_zh: "代码同样是数据",
+      color: "green",
+      href: "chapter2-study.html#sec-tokens",
+      children: [
+        { label: "Text → tokens → patterns → prediction", label_zh: "文本 → 词元 → 模式 → 预测", href: "chapter2-study.html#sec-tokens" },
+        { label: "Obscure language with no syntax supplied: the model must guess structure", label_zh: "未提供语法的冷门语言：模型只能猜测结构", href: "chapter2-study.html#sec-tokens" },
+        { label: "Decompilation requires reasoning about semantics, not syntax", label_zh: "反编译需要对语义而非语法进行推理", href: "chapter2-study.html#sec-tokens" },
+        { label: "Crypto and consensus proofs may not even be verifiable automatically", label_zh: "密码学与共识证明甚至无法自动验证", href: "chapter2-study.html#sec-tokens" },
+        { label: "Hallucination — sounds correct, not grounded in reality", label_zh: "幻觉——听起来正确，却无现实依据", href: "chapter2-math.html#sec-m-defs" }
+      ]
+    },
+    {
+      label: "Reasoning models",
+      label_zh: "推理模型",
+      color: "blue",
+      href: "chapter2-study.html#sec-reasoning",
+      children: [
+        { label: "Internal scratchpad before the answer", label_zh: "作答之前的内部草稿", href: "chapter2-study.html#sec-reasoning" },
+        { label: "Hidden work of hundreds or thousands of tokens", label_zh: "数百至数千词元的隐藏工作", href: "chapter2-study.html#sec-reasoning" },
+        { label: "Controllable effort — low, medium, high", label_zh: "可调节的推理投入——低、中、高", href: "chapter2-study.html#sec-reasoning" },
+        { label: "More reasoning does not guarantee a correct answer", label_zh: "更多推理并不保证答案正确", href: "chapter2-study.html#sec-reasoning" },
+        { label: "The aha moment: real vulnerabilities found at scale", label_zh: "顿悟时刻：大规模发现真实漏洞", href: "chapter2-study.html#sec-reasoning" }
+      ]
+    },
+    {
+      label: "Terminal AI agents",
+      label_zh: "终端 AI 智能体",
+      color: "purple",
+      href: "chapter2-study.html#sec-agents",
+      children: [
+        { label: "Repositories are huge, the context window is small", label_zh: "代码库庞大，而上下文窗口很小", href: "chapter2-study.html#sec-agents" },
+        { label: "The agent decides whether to answer or to call a tool", label_zh: "智能体自行决定直接作答还是调用工具", href: "chapter2-study.html#sec-agents" },
+        { label: "Existing text tools become the agent's instruments", label_zh: "既有的文本工具成为智能体的器械", href: "chapter2-study.html#sec-agents" },
+        { label: "Where is the security boundary enforced?", label_zh: "安全边界在哪里强制执行？", href: "chapter2-study.html#sec-agents" },
+        { label: "More cyber capability requires more trust", label_zh: "更强的网络能力需要更高的信任", href: "chapter2-study.html#sec-agents" }
+      ]
+    },
+    {
+      label: "Prompt and context design",
+      label_zh: "提示词与上下文设计",
+      color: "green",
+      href: "chapter2-study.html#sec-prompt",
+      children: [
+        { label: "Give it context, evidence and boundaries", label_zh: "给予上下文、证据与边界", href: "chapter2-study.html#sec-prompt" },
+        { label: "Bad prompts → shallow answers; partial code → shallow analysis", label_zh: "糟糕的提示词→浅层回答；残缺的代码→浅层分析", href: "chapter2-study.html#sec-prompt" },
+        { label: "Combine static analysis, fuzzing, manual review and LLM reading", label_zh: "结合静态分析、模糊测试、人工审查与 LLM 阅读", href: "chapter2-study.html#sec-prompt" },
+        { label: "Slicing a repository that does not fit in the window", label_zh: "切分无法装入窗口的代码库", href: "chapter2-math.html#sec-m-tokens" }
+      ]
+    },
+    {
+      label: "Failure modes and countermeasures",
+      label_zh: "失效模式与对策",
+      color: "purple",
+      href: "chapter2-study.html#sec-failures",
+      children: [
+        { label: "Lazy — stops at the first obvious issue", label_zh: "偷懒——止步于第一个明显问题", href: "chapter2-study.html#sec-failures" },
+        { label: "Hallucinates — reports fake vulnerabilities", label_zh: "产生幻觉——报告虚假漏洞", href: "chapter2-study.html#sec-failures" },
+        { label: "Misses things — overlooks vulnerabilities", label_zh: "遗漏问题——忽略漏洞", href: "chapter2-study.html#sec-failures" },
+        { label: "Sensitive to framing and starved of context", label_zh: "对表述敏感且缺乏上下文", href: "chapter2-study.html#sec-failures" },
+        { label: "Countermeasures force a checkable claim, not a smarter model", label_zh: "对策旨在使论断可核验，而非让模型更聪明", href: "chapter2-math.html#sec-m-screening" }
+      ]
+    },
+    {
+      label: "Human verification",
+      label_zh: "人工验证",
+      color: "green",
+      href: "chapter2-study.html#sec-verify",
+      children: [
+        { label: "Never trust a finding until you verify it", label_zh: "未经验证，绝不采信任何发现", href: "chapter2-study.html#sec-verify" },
+        { label: "Locate → trace → trigger → minimise → assess → report", label_zh: "定位 → 追踪 → 触发 → 最小化 → 评估 → 报告", href: "chapter2-study.html#sec-verify" },
+        { label: "Confirmed, refuted or unresolved — all three are results", label_zh: "确认、驳倒或未决——三者皆为结果", href: "chapter2-study.html#sec-verify" },
+        { label: "Failures → adaptation → partial success → verification", label_zh: "失败 → 调整 → 部分成功 → 验证", href: "chapter2-study.html#sec-verify" },
+        { label: "Working backwards from the APK you receive", label_zh: "从你拿到的 APK 反向推导", href: "chapter2-study.html#sec-verify" }
+      ]
+    },
+    {
+      label: "Foundations bridge",
+      label_zh: "基础知识衔接",
+      color: "yellow",
+      href: "chapter2-math.html#sec-m-defs",
+      children: [
+        { label: "Definitions that must be exact", label_zh: "必须精确的定义", href: "chapter2-math.html#sec-m-defs" },
+        { label: "Notation for an investigation", label_zh: "调查工作的记号体系", href: "chapter2-math.html#sec-m-notation" },
+        { label: "Tokens, context window and the cost of looking", label_zh: "词元、上下文窗口与检索成本", href: "chapter2-math.html#sec-m-tokens" },
+        { label: "Screening arithmetic: precision, recall and verification budget", label_zh: "筛查算术：精确率、召回率与验证预算", href: "chapter2-math.html#sec-m-screening" },
+        { label: "Coverage, fuzzing and cost per confirmed finding", label_zh: "覆盖率、模糊测试与每个已确认发现的成本", href: "chapter2-math.html#sec-m-coverage" },
+        { label: "Triage checklist for an AI finding", label_zh: "AI 发现的分类检查清单", href: "chapter2-math.html#sec-m-checklist" }
+      ]
+    }
+  ]
+};
+renderMindmap('mindmapCanvas', data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -431,7 +431,10 @@ test("Progress + SRS: quiz score and SRS data coexist in localStorage", function
 console.log("\n\u2500\u2500 HTML Structure Validation \u2500\u2500");
 
 test("All hub index.html files exist and are valid HTML", function() {
-  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py", "9123DataStructureAlgo"];
+  var hubs = [
+    "5270RandomAlgo", "5318ML", "5046NLP", "9001Py", "9123DataStructureAlgo",
+    "COMP5047", "COMP5618", "ELEC5620", "INFO5995", "INFO6007",
+  ];
   hubs.forEach(function(hub) {
     var filePath = path.join(ROOT, hub, "index.html");
     assert.ok(fs.existsSync(filePath), hub + "/index.html should exist");
@@ -462,7 +465,10 @@ test("Chapter pages reference root shared/ not hub shared/", function() {
 });
 
 test("No stale hub copies of canonical shared files", function() {
-  var hubs = ["5270RandomAlgo", "5318ML", "5046NLP", "9001Py", "9123DataStructureAlgo"];
+  var hubs = [
+    "5270RandomAlgo", "5318ML", "5046NLP", "9001Py", "9123DataStructureAlgo",
+    "COMP5047", "COMP5618", "ELEC5620", "INFO5995", "INFO6007",
+  ];
   var canonical = ["chat-panel.js", "chat-panel.css", "mindmap.js", "mindmap.css", "flashcard-srs.js", "progress-tracker.js", "lang-toggle.js"];
   hubs.forEach(function(hub) {
     canonical.forEach(function(file) {
@@ -477,7 +483,8 @@ test("Root shared/ contains all canonical modules", function() {
     "chat-panel.js", "chat-panel.css", "mindmap.js", "mindmap.css",
     "flashcard-srs.js", "progress-tracker.js", "storage.js",
     "mission-control.js", "knowledge-graph.js", "progress-dashboard.js",
-    "quiz-hub.js", "flashcards.js", "math.css", "lang-toggle.js"
+    "quiz-hub.js", "flashcards.js", "math.css", "lang-toggle.js",
+    "interactive.js", "interactive.css", "home.css", "root-portal.css"
   ];
   expected.forEach(function(file) {
     assert.ok(

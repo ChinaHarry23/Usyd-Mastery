@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 1: Introduction to Cybersecurity Basics</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 1 foundations for INFO5995: exact definitions, the CIA triad stated precisely, the risk arithmetic behind threat times vulnerability times impact, annualised loss and control cost, entropy and keyspace, detection arithmetic and the base-rate fallacy, defence-in-depth probability, and the modelling checklist that turns a vague answer into a markable one.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 1: Introduction to Cybersecurity Basics">
+<meta property="og:description" content="Week 1 foundations for INFO5995: exact definitions, the CIA triad stated precisely, the risk arithmetic behind threat times vulnerability times impact, annualised loss and control cost, entropy and keyspace, detection arithmetic and the base-rate fallacy, defence-in-depth probability, and the modelling checklist that turns a vague answer into a markable one.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter1-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 1 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions and notation</a></li>
+    <li><a href="#sec-m-cia" class="toc-link">The CIA triad, stated precisely</a></li>
+  </ul>
+  <div class="toc-group">Quantities</div>
+  <ul>
+    <li><a href="#sec-m-risk" class="toc-link">Risk arithmetic</a></li>
+    <li><a href="#sec-m-entropy" class="toc-link">Entropy, keyspace and guessing cost</a></li>
+    <li><a href="#sec-m-detect" class="toc-link">Detection arithmetic &amp; layer probability</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-controls" class="toc-link">Attacks &amp; countermeasures</a></li>
+    <li><a href="#sec-m-checklist" class="toc-link">The modelling checklist</a></li>
+  </ul>
+  <a href="chapter1-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 1 supplement</p>
+  <h1>Foundations: the arithmetic behind security decisions</h1>
+  <p class="hero-desc">Week 1 is mostly vocabulary, but every claim in it can be made quantitative: risk as a product, loss as an annualised expectation, password strength as entropy, detection as conditional probability, and defence in depth as a product over layers. This page pins down the definitions that must be exact, then works the numbers you can be asked to reproduce. The formulas are standard security and NIST material, not lecture notation &mdash; the deck argues in prose, and these equations are the revision aid that makes the argument checkable.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 1 deck</span>
+    <span>Formulas from standard NIST risk and detection practice</span>
+    <span>Worked numbers you can reproduce by hand</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions and notation</h2>
+  <p class="section-lead">Marks are lost on definitions more often than on ideas. Each of these should be writable in one sentence with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Asset, threat, vulnerability, impact, risk</div>
+    <p>An <strong>asset</strong> is something with value that needs protection. A <strong>threat</strong> is a circumstance or actor with the potential to cause harm; a <strong>threat actor</strong> is the agent behind it. A <strong>vulnerability</strong> is a weakness a threat can exploit. <strong>Impact</strong> is how much harm results if it does. <strong>Risk</strong> is the combination of how likely that is with how bad it would be.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Exposure, attack surface, control</div>
+    <p><strong>Exposure</strong> is the state of being open to a threat (an internet-facing service is exposed; a patched, segmented one is less so). The <strong>attack surface</strong> is the sum of the ways an attacker can interact with the system &mdash; every port, account, input field, API, human process and supply chain. A <strong>control</strong> (countermeasure) is anything that reduces risk: preventive, detective, corrective, recovery, deterrent or compensating. The deck's shorthand is <em>Prevent &rarr; Detect &rarr; Recover</em>.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Why &ldquo;risk = threat &times; vulnerability &times; impact&rdquo; is a product</div>
+    <p>Each factor is a gate. No threat means nothing to fear; no vulnerability means nothing to exploit; no impact means nothing at stake. That is why multiplying is the right shape for the qualitative model, and why a single zero should stop you writing a risk report.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vulnerability</td><td>A weakness that a threat can exploit</td><td>Confusing it with the threat itself, or with the impact of exploitation</td></tr>
+        <tr><td>Risk</td><td>Likelihood combined with impact, for a named asset</td><td>&ldquo;A vulnerability&rdquo; &mdash; risk is about the asset and the consequence, not the flaw alone</td></tr>
+        <tr><td>Threat actor</td><td>Goal plus capability</td><td>Assuming all attackers are equally capable, so all threats are equal</td></tr>
+        <tr><td>Control</td><td>Something that reduces a named risk, with a stated cost</td><td>Listing products instead of naming the risk each one reduces</td></tr>
+        <tr><td>Defence in depth</td><td>Multiple independent layers, assuming any one can fail</td><td>Claiming layers are additive when they actually fail together</td></tr>
+        <tr><td>Attack surface</td><td>Everything an attacker can interact with</td><td>Counting only the network ports and forgetting people and suppliers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose. The symbols below are a <em>revision aid</em> introduced here so that risk, detection and defence-in-depth arguments can be written compactly; they are not lecture notation and should not be quoted as such. Where a symbol clashes with a CIA initial, the context makes it clear.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(A\)</div><div class="sym-cell">asset value</div><div class="sym-cell">What the asset is worth, in money or in consequence (AV in classic risk analysis)</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">threat</div><div class="sym-cell">Threat level for this asset: how motivated and capable the relevant actors are (1&ndash;5 in the qualitative model)</div>
+    <div class="sym-cell">\(V\)</div><div class="sym-cell">vulnerability</div><div class="sym-cell">How easily the threat can succeed against this asset</div>
+    <div class="sym-cell">\(I\)</div><div class="sym-cell">impact</div><div class="sym-cell">Harm if the event occurs; also \(I\) for information in the CIA discussion, distinguished by context</div>
+    <div class="sym-cell">\(R\)</div><div class="sym-cell">risk</div><div class="sym-cell">The product \(T \times V \times I\) qualitatively, or a function of likelihood and impact</div>
+    <div class="sym-cell">\(\mathrm{EF}\)</div><div class="sym-cell">exposure factor</div><div class="sym-cell">Fraction of the asset's value lost in one event, \(0 \le \mathrm{EF} \le 1\)</div>
+    <div class="sym-cell">\(\mathrm{SLE}\)</div><div class="sym-cell">single loss expectancy</div><div class="sym-cell">Expected loss from one event: \(\mathrm{AV} \times \mathrm{EF}\)</div>
+    <div class="sym-cell">\(\mathrm{ARO}\)</div><div class="sym-cell">annualised rate of occurrence</div><div class="sym-cell">Expected number of events per year</div>
+    <div class="sym-cell">\(\mathrm{ALE}\)</div><div class="sym-cell">annualised loss expectancy</div><div class="sym-cell">\(\mathrm{ARO} \times \mathrm{SLE}\), the yearly expected loss</div>
+    <div class="sym-cell">\(H\)</div><div class="sym-cell">entropy</div><div class="sym-cell">Uncertainty in bits; also the work factor of a guessing attack</div>
+    <div class="sym-cell">\(\pi\)</div><div class="sym-cell">base rate</div><div class="sym-cell">Prior probability that a given event is a genuine attack</div>
+    <div class="sym-cell">\(\mathrm{Se}, \mathrm{Sp}\)</div><div class="sym-cell">sensitivity, specificity</div><div class="sym-cell">True-positive and true-negative rates of a detector</div>
+    <div class="sym-cell">\(\mathrm{PPV}\)</div><div class="sym-cell">precision</div><div class="sym-cell">Probability that a raised alert is real: \(\Pr(\text{attack} \mid \text{alert})\)</div>
+    <div class="sym-cell">\(p_i, q_i\)</div><div class="sym-cell">layer failure and success</div><div class="sym-cell">\(p_i\) is the probability layer \(i\) is bypassed; \(q_i = 1 - p_i\) is the probability it stops the attack</div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-cia">
+  <h2 class="section-title">The CIA triad, stated precisely</h2>
+  <p class="section-lead">The deck gives each property a question. For a written answer, add the condition that makes the property testable.</p>
+
+  <div class="theorem-box">
+    <h3>1. Confidentiality is an authorisation property of reads</h3>
+    <p>A subject \(s\) may read an object \(o\) only if it is authorised for that object:</p>
+    \[ \text{read}(s,o) \;\Rightarrow\; \text{auth}(s,o) \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The deck's question &mdash; &ldquo;who is allowed to see this?&rdquo; &mdash; is the left-hand side of the implication. Encryption is how you keep the property while the data is in transit or at rest; access control is how you keep it while the system is running.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Integrity is a property of writes</h3>
+    <p>A change taking object \(o\) to \(o'\) is permitted only if it is authorised and remains attributable:</p>
+    \[ o \to o' \;\Rightarrow\; \text{authorised}(o \to o') \;\wedge\; \text{logged}(o \to o', \text{who}, \text{when}) \]
+    <p style="margin-top:0.6rem;">Two consequences follow, and both appear in the Bybit case. First, integrity is not only about preventing changes: it requires being able to <em>detect</em> them, which is what signatures, MACs and append-only logs provide (Weeks 4&ndash;5). Second, &ldquo;authorised&rdquo; has to mean the authoriser saw what they were authorising &mdash; the what-you-see-is-what-you-sign requirement.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Availability is a ratio of uptime to total time</h3>
+    <p>With \(\mathrm{MTBF}\) the mean time between failures and \(\mathrm{MTTR}\) the mean time to repair:</p>
+    \[ A \;=\; \frac{\mathrm{MTBF}}{\mathrm{MTBF} + \mathrm{MTTR}} \]
+    <p style="margin-top:0.6rem;">Worked example: \(\mathrm{MTBF} = 2000\) hours and \(\mathrm{MTTR} = 4\) hours give \(A = 2000/2004 = 0.9980\), that is \(99.80\%\) availability, which is about \(17.5\) hours of downtime a year (\(0.002 \times 8760\)). Halving the repair time to 2 hours raises availability to \(99.90\%\) and halves the downtime &mdash; which is why detection and response speed are availability controls, not just security theatre.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>Formal statement</th><th>Violated by (DAD)</th><th>Detected by</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Confidentiality</td><td>Reads imply authorisation</td><td>Disclosure</td><td>Access logs, data-loss prevention, egress monitoring</td></tr>
+        <tr><td>Integrity</td><td>Writes imply authorisation and attribution</td><td>Alteration</td><td>Signatures and MACs, checksums, integrity monitoring, append-only logs</td></tr>
+        <tr><td>Availability</td><td>\(A = \mathrm{MTBF}/(\mathrm{MTBF}+\mathrm{MTTR})\) stays above target</td><td>Destruction / denial</td><td>Uptime monitoring, capacity alerts, restore drills</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Do not add the three properties into a single score and call it security.</strong> A weighted sum \(S = w_C C + w_I I + w_A A\) is a decision aid for comparing options, and the weights have to come from a risk assessment for a named asset. Two systems with the same \(S\) can have completely different failure modes &mdash; one leaks, one silently corrupts &mdash; and averages hide exactly the property that matters.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A monitoring system logs every change to a medical record, but a clinician can still edit a record without any approval step. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Logging gives attribution and detection, which is real integrity support — but the condition also requires the change to be authorised, and here no authorisation step exists.">Integrity is fully satisfied, because every change is logged</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The formal condition has two halves: authorised and attributable. Logging supplies the second; without an authorisation step the first is unmet, so this is detective integrity with a preventive gap." data-bad="">Integrity is only partly satisfied: changes are attributable but not authorised</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is an integrity question, not a confidentiality one. Nothing here is about who may read the record.">Integrity is irrelevant once the record is confidential under privacy law</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-risk">
+  <h2 class="section-title">Risk arithmetic</h2>
+  <p class="section-lead">Two models, one idea: risk is a quantity you can compare, budget against and reduce. The qualitative model ranks; the quantitative model prices.</p>
+
+  <div class="theorem-box">
+    <h3>1. Qualitative: risk as a product of three factors</h3>
+    \[ R \;=\; T \times V \times I, \qquad T, V, I \in \{1, \dots, 5\} \]
+    <p style="margin-top:0.6rem;">Standards such as NIST SP 800-30 write risk as a function of the likelihood of the event and its impact, \(R = f(L, I)\), with \(L\) itself driven by threat and vulnerability. The three-factor form is the practical version used in workshops: score each factor, multiply, sort the list, argue about the top of the list.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Quantitative: single loss and annualised loss</h3>
+    <p>Let \(\mathrm{AV}\) be asset value, \(\mathrm{EF}\) the fraction lost in one event, and \(\mathrm{ARO}\) the expected number of events per year:</p>
+    \[ \mathrm{SLE} \;=\; \mathrm{AV} \times \mathrm{EF}, \qquad \mathrm{ALE} \;=\; \mathrm{ARO} \times \mathrm{SLE} \]
+    <p style="margin-top:0.6rem;">\(\mathrm{ALE}\) is the number a budget conversation needs. It is also a place to be honest about uncertainty: \(\mathrm{ARO}\) is an estimate, and events are rarely independent.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Worked example: is the control worth buying?</h3>
+    <p>A clinic's records system has \(\mathrm{AV} = \$50{,}000\) (hardware, records reconstruction, notification cost and lost appointments). Ransomware would destroy or lock about \(40\%\) of that in one event, and the clinic estimates \(0.5\) events per year at current defences.</p>
+    \[ \mathrm{SLE} = 50{,}000 \times 0.4 = \$20{,}000, \qquad \mathrm{ALE} = 0.5 \times 20{,}000 = \$10{,}000\ \text{per year} \]
+    <p style="margin-top:0.6rem;">A backup and recovery programme costing \(\$3{,}000\) per year reduces the exposure factor to \(0.1\):</p>
+    \[ \mathrm{ALE}_{\text{after}} = 0.5 \times (50{,}000 \times 0.1) = \$2{,}500, \qquad \text{saving} = 10{,}000 - 2{,}500 = \$7{,}500 \gt 3{,}000 \]
+    <p style="margin-top:0.6rem;">The control is justified on the numbers alone, and the residual \(\mathrm{ALE}\) of \(\$2{,}500\) is the risk the clinic still carries. If the same control had saved only \(\$2{,}000\) a year, the arithmetic would say no &mdash; and a regulatory obligation or a reputational argument would then have to be made explicitly rather than smuggled in as &ldquo;best practice&rdquo;.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Likelihood \ Impact</th><th>Low</th><th>Medium</th><th>High</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>High</strong></td><td>Medium &mdash; monitor</td><td>High &mdash; mitigate this cycle</td><td>Critical &mdash; mitigate now, or avoid the activity</td></tr>
+        <tr><td><strong>Medium</strong></td><td>Low &mdash; accept</td><td>Medium &mdash; mitigate when funded</td><td>High &mdash; mitigate with detective controls first</td></tr>
+        <tr><td><strong>Low</strong></td><td>Low &mdash; accept, review annually</td><td>Low &mdash; accept with monitoring</td><td>Medium &mdash; transfer (insurance) and monitor</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The four treatments, applied to the same number.</strong> <em>Mitigate</em>: spend \(\$3{,}000\) to cut \(\mathrm{ALE}\) by \(\$7{,}500\) (the example above). <em>Transfer</em>: pay an insurer to carry the tail risk &mdash; which is the deck's insurance line in the post-incident phase. <em>Avoid</em>: stop holding the data at all, which is often the cheapest control available. <em>Accept</em>: record the number and the reason, so the decision is auditable. Every one of these is a governance decision, which is why <em>Govern</em> sits at the centre of the NIST CSF.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An asset worth \(\$80{,}000\) would lose \(25\%\) of its value in a successful attack, which currently succeeds about \(0.2\) times a year. What is the annualised loss expectancy?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the single loss expectancy: AV × EF = $20,000. The annualised figure multiplies it by the event rate.">\(\$20{,}000\)</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: SLE = 80,000 × 0.25 = $20,000, and ALE = 0.2 × 20,000 = $4,000 per year." data-bad="">\(\$4{,}000\) per year</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This multiplies the asset value by the rate and ignores the exposure factor, which is the fraction actually lost.">\(\$16{,}000\) per year</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; a three-line risk register for a student club's website.</strong> The club runs a WordPress site on shared hosting, takes membership payments through a payment provider, and stores member names, emails and dietary requirements in the site database.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the asset and its value.</strong> Member contact data (personal information, privacy obligations, low direct cash value); payment integrity (the provider holds the cards, so the club's exposure is to fraud disputes and chargebacks, say \(\mathrm{AV} = \$10{,}000\)); the site itself (availability matters during the enrolment window).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Score the top three risks with \(T \times V \times I\).</strong> (a) Automated scanning and exploitation of an out-of-date plugin: \(T = 4\) (opportunistic, constant), \(V = 4\) (unpatched, internet-facing), \(I = 3\) (defacement, data exposure) \(\Rightarrow 48\). (b) Phishing a committee member's admin login: \(T = 4\), \(V = 3\), \(I = 4\) \(\Rightarrow 48\). (c) Shared-hosting neighbour compromise: \(T = 2\), \(V = 2\), \(I = 3\) \(\Rightarrow 12\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Price the top two.</strong> For (a): if the site is defaced and must be rebuilt, \(\mathrm{EF} = 0.3\) of a \(\$10{,}000\) exposure gives \(\mathrm{SLE} = \$3{,}000\), and \(\mathrm{ARO} = 0.4\) gives \(\mathrm{ALE} = \$1{,}200\). For (b): an admin takeover leads to the same rebuild plus notification, \(\mathrm{SLE} = \$4{,}000\), \(\mathrm{ARO} = 0.3\), \(\mathrm{ALE} = \$1{,}200\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Choose controls and compare cost with saving.</strong> Automatic plugin updates plus a staging check (about 4 hours of volunteer time, call it \(\$400\)): reduces both \(V\) and the \(\mathrm{ARO}\), plausibly cutting each \(\mathrm{ALE}\) by \(40\%\) &mdash; a saving near \(\$960\) for \(\$400\) spent. Two-factor authentication on the admin account (free, one hour to configure) attacks (b) directly and is the highest value per dollar on the list.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the residual risk and the decision.</strong> After both controls, roughly \(\$1{,}000\) a year of expected loss remains. The club accepts it, records the number, and reviews it if the site starts holding payment data directly &mdash; at which point the impact changes and the whole calculation has to be redone.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-entropy">
+  <h2 class="section-title">Entropy, keyspace and guessing cost</h2>
+  <p class="section-lead">Confidentiality eventually rests on a secret that cannot be guessed. This is the one piece of mathematics that underpins every credential, key and token in the unit, and it is also the origin of the &ldquo;is this password strong enough?&rdquo; argument.</p>
+
+  <div class="theorem-box">
+    <h3>1. Entropy measures how much an attacker does not know</h3>
+    <p>For a random variable \(X\) taking values with probabilities \(p_i\), the Shannon entropy in bits is:</p>
+    \[ H(X) \;=\; -\sum_{i=1}^{n} p_i \log_2 p_i \]
+    <p style="margin-top:0.6rem;">If the value is uniform over \(N\) equally likely possibilities the sum collapses to \(H = \log_2 N\): one bit per halving of the search space, so a 4-digit PIN carries \(\log_2 10^4 \approx 13.3\) bits.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Keyspace for a password of length \(L\) over an alphabet of size \(N\)</h3>
+    \[ H \;=\; L \log_2 N \quad \text{(only if every character is independent and uniform)} \]
+    <p style="margin-top:0.6rem;">The bracket is the whole difficulty of password strength. Human-chosen passwords are neither uniform nor independent, which is why breach lists, dictionary rules and pattern masks beat the \(L \log_2 N\) bound by orders of magnitude. A randomly generated password or passphrase does meet the assumption.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Secret</th><th>Keyspace</th><th>Entropy (bits)</th><th>Exhaustive search at \(10^9\) guesses/s</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>4-digit PIN</td><td>\(10^4\)</td><td>13.3</td><td>microseconds</td></tr>
+        <tr><td>8 lowercase letters</td><td>\(26^8 \approx 2.1 \times 10^{11}\)</td><td>37.6</td><td>about 2 minutes</td></tr>
+        <tr><td>8 characters, mixed case and digits</td><td>\(62^8 \approx 2.2 \times 10^{14}\)</td><td>47.6</td><td>about 2.5 days</td></tr>
+        <tr><td>12 characters, mixed case and digits</td><td>\(62^{12} \approx 3.2 \times 10^{21}\)</td><td>71.5</td><td>about 100 000 years</td></tr>
+        <tr><td>6 diceware words from 7776</td><td>\(7776^6 \approx 2.2 \times 10^{23}\)</td><td>77.5</td><td>about 7 million years</td></tr>
+        <tr><td>AES-128 key</td><td>\(2^{128}\)</td><td>128</td><td>not feasible</td></tr>
+        <tr><td>RSA-2048 modulus</td><td>factoring, not enumeration</td><td>\(\approx 112\)-bit equivalent security</td><td>not feasible with known algorithms</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Guessing cost, and why length beats complexity</h3>
+    <p>If an attacker can test \(r\) guesses per second, a full search of a space of \(2^{H}\) possibilities takes</p>
+    \[ t_{\text{worst}} \;=\; \frac{2^{H}}{r}, \qquad t_{\text{expected}} \;\approx\; \frac{2^{H-1}}{r} \]
+    <p style="margin-top:0.6rem;">Doubling the length of a random password squares the keyspace and therefore <em>doubles</em> \(H\); adding one character class multiplies the alphabet by a much smaller factor. That is why a 12-character random password beats an 8-character one with symbols. Two defences change \(r\) rather than \(H\): rate limiting and account lockout reduce attempts per second, and a deliberately slow password hash (bcrypt, scrypt, Argon2) multiplies the real cost of each guess. The unit returns to hashes and key sizes in Weeks 4 and 5.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Reading the last table honestly.</strong> The RSA and AES rows are a forward reference, not Week 1 content: a symmetric key of \(n\) bits gives about \(n\) bits of security against exhaustive search, an RSA modulus of 2048 bits gives roughly 112 bits of security because the best known attack is factoring rather than enumeration, and a hash function with an \(n\)-bit output gives only about \(n/2\) bits against collisions by the birthday bound. Those equivalences are how NIST SP 800-57 compares algorithms, and they are why &ldquo;longer key&rdquo; and &ldquo;stronger algorithm&rdquo; are different claims.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Two proposals: (a) a random 10-character password from a 62-character alphabet, or (b) a random 4-word passphrase from a 7776-word list. Which has more entropy, and by roughly how much?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Compute both: 10 × log2 62 ≈ 59.5 bits against 4 × log2 7776 ≈ 51.7 bits. The character-based password wins here — but only four words were used.">The passphrase, because words are longer than characters</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: about 59.5 bits versus 51.7 bits. The passphrase becomes competitive at five or six words (77.5 bits at six), which is the point — entropy comes from the size of the space, not from how unreadable the secret looks." data-bad="">The 10-character random password, by about 8 bits</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Alphabet size enters as a logarithm, and 7776 is only about 12.9 bits per word. Both proposals are computable; neither is automatically better.">They are equal, because both are randomly generated</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; is the help desk's reset policy strong enough?</strong> The help desk issues temporary passwords of 8 random lowercase letters, valid for 24 hours, with no rate limit on the login page. Assume an attacker can attempt \(10^{9}\) guesses per second against a stolen hash, and \(10\) guesses per second against the live login form.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Entropy of the temporary password.</strong> \(H = 8 \log_2 26 = 37.6\) bits, so the space is about \(2.1 \times 10^{11}\) candidates.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Against the live form.</strong> At \(r = 10\) guesses per second the expected search is \(2^{36.6}/10 \approx 1.0 \times 10^{10}\) seconds &mdash; about 320 years. The live login is not the weak point, and the 24-hour validity makes the attack hopeless.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Against a stolen hash.</strong> At \(r = 10^{9}\) guesses per second the same space falls in about \(2^{36.6}/10^{9} \approx 100\) seconds. The password policy is fine only while the hash stays secret &mdash; which is not an assumption a security argument may rest on.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The fix is two-sided.</strong> Raise \(H\) (12 characters, or a five-word passphrase at about 64.6 bits) <em>and</em> raise the per-guess cost with a slow hash and a rate limit, so that a leaked database no longer converts into a working credential within a coffee break. Then add the policy layers: one-time use, forced change on first login, and no reuse of the previous password.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say which control addresses which risk.</strong> Entropy addresses offline cracking; rate limiting addresses online guessing; expiry limits the value of any single credential that leaks; MFA makes a guessed password insufficient on its own. Four controls, four different risks &mdash; which is exactly what defence in depth means in practice.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-detect">
+  <h2 class="section-title">Detection arithmetic and layer probability</h2>
+  <p class="section-lead">The deck puts monitoring and intrusion detection in the after-deployment phase. Two pieces of mathematics decide whether that monitoring is useful: the base rate on the day, and whether your layers fail independently.</p>
+
+  <div class="theorem-box">
+    <h3>1. A detector is described by two conditional probabilities</h3>
+    \[ \mathrm{Se} \;=\; \Pr(\text{alert} \mid \text{attack}), \qquad \mathrm{Sp} \;=\; \Pr(\text{no alert} \mid \text{no attack}) \]
+    <p style="margin-top:0.6rem;">with the false-positive rate \(\mathrm{FPR} = 1 - \mathrm{Sp}\). Vendors quote these. The number an analyst experiences is different: the probability that an alert is real,</p>
+    \[ \mathrm{PPV} \;=\; \Pr(\text{attack} \mid \text{alert}) \;=\; \frac{\mathrm{Se}\,\pi}{\mathrm{Se}\,\pi \;+\; (1-\mathrm{Sp})(1-\pi)} \]
+    <p style="margin-top:0.6rem;">where \(\pi\) is the base rate: the prior probability that a given event is a genuine attack. This is Bayes' theorem, and it is the single most useful formula on this page.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Worked example: a good detector with a terrible queue</h3>
+    <p>Take \(\mathrm{Se} = 0.90\) and \(\mathrm{Sp} = 0.99\) &mdash; respectable numbers &mdash; with a base rate of \(\pi = 10^{-4}\), meaning one in ten thousand events is a real attack.</p>
+    \[ \mathrm{PPV} = \frac{0.90 \times 10^{-4}}{0.90 \times 10^{-4} + 0.01 \times 0.9999} = \frac{9.0 \times 10^{-5}}{1.009 \times 10^{-2}} \approx 0.0089 \]
+    <p style="margin-top:0.6rem;">Under \(1\%\) of alerts are real: about \(99.1\%\) are false positives. At a million events a day the queue is \(10^4\) false alerts plus roughly \(90\) true ones &mdash; about \(10{,}090\) alerts a day, or one every \(8.6\) seconds. This is why the deck treats monitoring as a process with people in it, and why Week 2 insists that every AI-assisted finding is verified. Alert fatigue is not a cultural problem; it is arithmetic.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Three levers that raise precision</h3>
+    <p>(i) <strong>Raise the base rate</strong> by narrowing the scope &mdash; monitor authentication to internet-facing services rather than all traffic. (ii) <strong>Raise specificity</strong> &mdash; better rules and models, at the cost of sensitivity. (iii) <strong>Correlate independent signals</strong>, because the posterior of the first test becomes the prior of the second: \(\pi_2 = \mathrm{PPV}_1\), so two conditional checks can lift precision by orders of magnitude. That third lever is what a SIEM is actually for, and it is the same &ldquo;layer&rdquo; idea as defence in depth.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-layers"></div>
+  <script type="application/json" id="ix-race-layers">
+  {
+    "title": "Defence in depth: probability that an attack still succeeds",
+    "subtitle": "Each independent layer stops 70% of attempts against it (q = 0.7). The last row is the weakest-link model, where the attacker chooses the easiest path instead of facing every layer.",
+    "max": 30,
+    "rows": [
+      { "name": "1 layer", "value": 30, "display": "0.30 = 30%" },
+      { "name": "2 independent layers", "value": 9, "display": "0.3² = 9%" },
+      { "name": "3 independent layers", "value": 2.7, "display": "0.3³ = 2.7%" },
+      { "name": "4 independent layers", "value": 0.81, "display": "0.3⁴ = 0.81%" },
+      { "name": "4 layers, but the attacker picks the weakest (q = 0.05)", "value": 95, "display": "max pᵢ = 0.95 → ≥ 95%" }
+    ]
+  }
+  </script>
+
+  <div class="theorem-box">
+    <h3>4. Defence in depth is a product &mdash; if the layers are independent</h3>
+    <p>Let \(q_i\) be the probability that layer \(i\) stops a given attack, and \(p_i = 1 - q_i\) the probability it is bypassed. If the attacker must defeat <em>every</em> layer and the layers fail independently, the attack succeeds only when all of them fail:</p>
+    \[ P(\text{success}) \;=\; \prod_{i=1}^{n} (1 - q_i) \;=\; \prod_{i=1}^{n} p_i \]
+    <p style="margin-top:0.6rem;">Four layers each stopping \(70\%\) give \(0.3^4 = 0.0081\), under \(1\%\). But if the attacker only needs <em>one</em> way in &mdash; the wooden barrel in the Week 1 deck &mdash; the model becomes</p>
+    \[ P(\text{success}) \;=\; \max_i p_i \]
+    <p style="margin-top:0.6rem;">and improving every layer except the weakest changes nothing at all. The two models are not in conflict: the product applies when all layers must be traversed, the maximum applies when the attacker can choose a path. Say which one you are using, because the difference is the whole argument.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>The independence assumption is where defence-in-depth arguments go wrong.</strong> If one phishing email defeats both the awareness training and the mail filter, then \(P(\text{both fail}) \ne p_1 p_2\); the failures are correlated and the product is far too optimistic. Practical consequence: prefer layers that fail for <em>different reasons</em> &mdash; a technical control and a procedural control, or two controls operated by different teams &mdash; and say out loud which single event could defeat several of them at once.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A detection rule catches \(99\%\) of real attacks and has a \(2\%\) false-positive rate. In a system where 1 event in 1000 is a real attack, roughly what fraction of alerts are real?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the sensitivity, not the precision. Precision depends on the base rate as well: most alerts come from the huge population of non-attacks.">About \(99\%\)</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: PPV = (0.99 × 0.001) / (0.99 × 0.001 + 0.02 × 0.999) ≈ 0.00099 / 0.02097 ≈ 4.7%. Even a very sensitive rule produces mostly false positives at this base rate." data-bad="">About \(5\%\)</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the false-positive rate. The question asks for the probability that an alert is real, which the base rate drags far below it.">About \(2\%\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; should the security team buy the new detector, or hire a second analyst?</strong> Current state: \(10^6\) events a day, \(\pi = 10^{-4}\), existing detector \(\mathrm{Se} = 0.85\), \(\mathrm{Sp} = 0.995\). One analyst can triage about \(120\) alerts per shift.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Current alert load.</strong> False positives: \(10^6 \times 0.005 = 5{,}000\) per day. True positives: \(10^6 \times 10^{-4} \times 0.85 = 85\). Total \(5{,}085\) alerts a day against a capacity of \(120\) &mdash; the queue is failed by a factor of \(42\), and precision is \(85/5085 \approx 1.7\%\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>The proposed detector.</strong> \(\mathrm{Se} = 0.95\), \(\mathrm{Sp} = 0.9995\). False positives fall to \(10^6 \times 0.0005 = 500\) per day; true positives rise to \(95\). Load \(595\) alerts, precision \(16\%\). Better on every axis &mdash; and still five times the analyst's capacity.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Narrow the scope instead of buying sensitivity.</strong> Restrict monitoring to authentication events on internet-facing services: suppose that reduces the event population to \(2 \times 10^4\) a day while retaining \(80\) of the \(95\) true positives. The base rate rises to \(\pi = 80/20{,}000 = 4 \times 10^{-3}\), and the same detector now yields false positives \(2 \times 10^4 \times 0.0005 = 10\) and precision \(80/90 \approx 89\%\). Ninety alerts a day is a queue one analyst can actually work.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Decide with the numbers, then state the trade-off.</strong> Scoping beats sensitivity here, because precision is dominated by the base rate rather than by \(\mathrm{Se}\). The cost is coverage: events outside the scope are no longer watched, so the residual risk is the attack that never touches an authentication endpoint. That risk is accepted knowingly, mitigated by a lower-priority daily review of the remaining events.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Connect it back to defence in depth.</strong> The scoped detector is one layer with \(q \approx 0.9\) for the attacks it sees. Adding a second, differently-shaped layer &mdash; say integrity monitoring on the record store &mdash; multiplies the failure probability only if the two fail independently, and takes over exactly where the first layer is blind.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-controls">
+  <h2 class="section-title">Attacks and countermeasures</h2>
+  <p class="section-lead">Each attack from the Week 1 material maps to a control family, and most controls serve one property and one lifecycle phase. Being able to say which is which is the whole skill.</p>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-counter"></div>
+  <script type="application/json" id="ix-m-counter">
+  {
+    "title": "Match the attack to its primary countermeasure",
+    "subtitle": "Click an attack on the left, then the countermeasure that addresses it first.",
+    "pairs": [
+      ["Data disclosed in transit", "TLS 1.3 with certificate validation (Week 7)"],
+      ["Transaction altered in flight", "Message authentication with HMAC (Week 5)"],
+      ["Password guessing at scale", "Rate limiting plus a deliberately slow password hash (Weeks 4–5)"],
+      ["Staff phished for credentials", "Phishing-resistant MFA and an independent approval procedure"],
+      ["Lateral movement after one host falls", "Network segmentation and least privilege"],
+      ["Ransomware encrypting a file server", "Tested, offline, immutable backups"],
+      ["Falsified approval screens (Bybit pattern)", "What-you-see-is-what-you-sign display plus dual approval"],
+      ["Flooding the public service", "Rate limiting, scrubbing and capacity headroom (Week 7)"]
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Family</th><th>Covers</th><th>Typical Week 1 example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>AC</strong> &mdash; Access Control</td><td>Who may do what, to which object</td><td>Least privilege, per-user accounts instead of a shared login</td></tr>
+        <tr><td><strong>AT</strong> &mdash; Awareness and Training</td><td>People as a layer, not only as a risk</td><td>Phishing awareness; the approval procedure staff are asked to follow</td></tr>
+        <tr><td><strong>AU</strong> &mdash; Audit and Accountability</td><td>Attribution and detection of change</td><td>Append-only logs of who changed a grade, and when</td></tr>
+        <tr><td><strong>CM</strong> &mdash; Configuration Management</td><td>Baselines, hardening, change control</td><td>Patching and removing services nobody uses</td></tr>
+        <tr><td><strong>CP</strong> &mdash; Contingency Planning</td><td>Surviving and recovering</td><td>Tested offline backups and a recovery drill</td></tr>
+        <tr><td><strong>IA</strong> &mdash; Identification and Authentication</td><td>Proving who is acting</td><td>MFA; one-time temporary credentials</td></tr>
+        <tr><td><strong>IR</strong> &mdash; Incident Response</td><td>Contain, investigate, report</td><td>The deck's post-mortem and disaster-recovery activities</td></tr>
+        <tr><td><strong>RA</strong> &mdash; Risk Assessment</td><td>Finding and scoring risk</td><td>Threat modelling the ATM, and the risk register arithmetic above</td></tr>
+        <tr><td><strong>SC</strong> &mdash; System and Communications Protection</td><td>Protecting data in motion and boundaries</td><td>Encryption in transit, key management, segmentation</td></tr>
+        <tr><td><strong>SI</strong> &mdash; System and Information Integrity</td><td>Noticing flaws and corruption</td><td>Monitoring, integrity checks, malicious-code protection</td></tr>
+        <tr><td><strong>SR</strong> &mdash; Supply Chain Risk Management</td><td>Trusting what you did not build</td><td>The hosting provider who can read the database (the portal example)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>How to use the catalogue.</strong> The families above are a selection from the NIST SP 800-53 control catalogue, which is the reference most frameworks map onto &mdash; the NIST CSF says <em>what</em> outcomes to achieve and SP 800-53 supplies <em>which</em> controls achieve them. You are not expected to memorise the catalogue. You are expected to be able to say: &ldquo;this risk, on this asset, breaks this property, so I want a preventive access control plus a detective audit control, and here is the residual risk.&rdquo;
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">The modelling checklist</h2>
+  <p class="section-lead">Most Week 1 exam questions reduce to &ldquo;model this system, then say what you would do&rdquo;. Run the steps in order and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the modelling checklist",
+    "subtitle": "Rebuild the sequence before you interrogate a system of your own.",
+    "steps": [
+      "Name the assets and what each is worth",
+      "Model the system: components, actors, environment and trust assumptions",
+      "Model intended behaviour, before, during and after the event",
+      "Think like an attacker and break one assumption per stage",
+      "Name the CIA property at stake and score risk with T × V × I",
+      "Choose controls by function and category, and state the residual risk"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Assets</td><td>Data, money, service availability, reputation, legal exposure</td><td>You list technology without saying what it is worth or to whom</td></tr>
+        <tr><td>2. System model</td><td>Components, actors, environment, and the assumptions that hold it together</td><td>You describe features instead of trust assumptions</td></tr>
+        <tr><td>3. Intended behaviour</td><td>Before, during and after &mdash; and which steps are guarantees</td><td>You write &ldquo;the system works correctly&rdquo; as if it were a control</td></tr>
+        <tr><td>4. Attacker view</td><td>One broken assumption per stage; who benefits</td><td>You list attacks that do not apply to this system</td></tr>
+        <tr><td>5. Property and risk</td><td>Confidentiality, integrity or availability; \(T \times V \times I\)</td><td>You skip the scoring, so every risk looks equally urgent</td></tr>
+        <tr><td>6. Controls and residual risk</td><td>Function (prevent/detect/recover), category, cost, trade-off</td><td>You claim the design has no trade-offs and no residual risk</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-selftest"></div>
+  <script type="application/json" id="ix-m-selftest">
+  {
+    "title": "Self-test: definitions and the numbers behind them",
+    "subtitle": "Say the definition, or the formula, out loud before you flip the card.",
+    "cards": [
+      { "front": "Risk", "back": "The combination of how likely an event is with how bad it would be, for a named asset: qualitatively T × V × I, or quantitatively a function of likelihood and impact.", "hint": "Definition" },
+      { "front": "Vulnerability", "back": "A weakness that a threat can exploit. A threat without a vulnerability has nothing to act on; a vulnerability without a threat is a latent issue, not a live risk.", "hint": "Definition" },
+      { "front": "Annualised loss expectancy", "back": "ALE = ARO × SLE, and SLE = AV × EF. It converts a risk into a yearly number you can compare against the annual cost of a control.", "hint": "Formula" },
+      { "front": "Defence in depth", "back": "Multiple layers such that any one may fail. If all layers must be defeated and they fail independently, P(success) = Π pᵢ; if the attacker can choose a path, P(success) = max pᵢ and the weakest layer decides.", "hint": "Formula and caveat" },
+      { "front": "Precision (PPV) of a detector", "back": "Pr(attack | alert) = Se·π / (Se·π + (1−Sp)(1−π)). It falls with the base rate, which is why a sensitive detector can still produce a queue of mostly false alerts.", "hint": "Formula" },
+      { "front": "Entropy of a randomly chosen secret", "back": "H = log₂ N for N equally likely values, and H = L·log₂ N for L independent characters from an alphabet of size N. Human-chosen secrets do not satisfy the independence assumption.", "hint": "Formula" }
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>The six-line answer template</h3>
+      <p>Asset and value &rarr; system model and assumptions &rarr; intended behaviour &rarr; attacker view with one broken assumption &rarr; CIA property and \(T \times V \times I\) &rarr; controls by function, with the residual risk and the trade-off stated.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Numbers worth memorising</h3>
+      <p>\(\log_2 10^4 \approx 13.3\); \(\log_2 26^8 \approx 37.6\); \(\log_2 62^8 \approx 47.6\); \(A = \mathrm{MTBF}/(\mathrm{MTBF}+\mathrm{MTTR})\); \(\mathrm{ALE} = \mathrm{ARO} \times \mathrm{AV} \times \mathrm{EF}\); and Bayes for the alert queue.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Where this goes next</h3>
+      <p>Weeks 4&ndash;5 give the primitives that make the integrity and confidentiality claims concrete: block ciphers, hash functions, RSA, Diffie-Hellman, signatures and HMAC. The risk and detection arithmetic here is what tells you when they are worth deploying.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Back to the week</h3>
+      <p>Re-read the study guide's modelling and Bybit sections with this page open: the five steps become the checklist, and the Bybit failure becomes an integrity claim with a control that answers it.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and numbers on this page, the castle-to-lifecycle argument on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 1] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

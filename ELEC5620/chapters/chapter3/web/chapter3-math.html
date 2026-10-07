@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 3: Requirement Modelling</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter3-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 foundations for ELEC5620: a notation reference card for requirement models, the grammar of a testable requirement statement, the taxonomy behind functional and non-functional requirements, and worked rewrites of defective requirement statements.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 3: Requirement Modelling">
+<meta property="og:description" content="Week 3 foundations for ELEC5620: requirement-model notation, the grammar of testable requirement statements, non-functional requirement categories and worked rewrites.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter3-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 3 Foundations</h2>
+  </div>
+  <div class="toc-group">Notation</div>
+  <ul>
+    <li><a href="#sec-m-notation" class="toc-link">The requirement-model notation card</a></li>
+    <li><a href="#sec-m-grammar" class="toc-link">Grammar of a requirement statement</a></li>
+  </ul>
+  <div class="toc-group">Classification</div>
+  <ul>
+    <li><a href="#sec-m-nfr" class="toc-link">Functional vs non-functional</a></li>
+    <li><a href="#sec-m-defects" class="toc-link">The five defects of a statement</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-worked" class="toc-link">Worked rewrites</a></li>
+  </ul>
+  <a href="chapter3-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">ELEC5620 &mdash; Week 3 supplement</p>
+  <h1>Foundations: the notation and the grammar of requirements</h1>
+  <p class="hero-desc">This page is the reference card for the week. Part one is notation: every symbol in a feature diagram and a use case diagram, what it reads as, and what it commits you to. Part two is grammar: how to turn a sentence a stakeholder would say into a statement an engineer can implement and a tester can falsify, and where the functional/non-functional line actually falls.</p>
+  <div class="chip-list">
+    <span>Notation verified against the tutorial's component list</span>
+    <span>Grammar is a revision aid, not course notation</span>
+    <span>Every claim traced to the Week 3 deck or tutorial</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">The requirement-model notation card</h2>
+  <p class="section-lead">Three diagrams carry this week's marks. Every element below appears in the lecture deck or in Tutorial 3, and the arrowheads are where the marks are lost.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Notation</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning and commitment</div>
+
+    <div class="sym-cell">Stick figure, outside the boundary</div><div class="sym-cell">Actor</div><div class="sym-cell">An entity &mdash; person, organisation or outside system &mdash; that interacts with the system to achieve one or more goals. Named by a noun; it plays a role, so one person can be several actors across systems.</div>
+
+    <div class="sym-cell">Ellipse inside the boundary</div><div class="sym-cell">Use case</div><div class="sym-cell">A collection of possible interactions between actors and a system relating to one or more goals. Named verb + noun. Gives context to the requirements, facilitates agreement, and is a collection of possible scenarios.</div>
+
+    <div class="sym-cell">Rectangle</div><div class="sym-cell">System boundary</div><div class="sym-cell">The scope of the system, typically defined by the requirements document. A large system may have one boundary per module with an overall boundary spanning them.</div>
+
+    <div class="sym-cell">Solid line, no arrowhead</div><div class="sym-cell">Association / communication link</div><div class="sym-cell">The participation of an actor in a use case. The tutorial adds the semantics: the actor and the use case communicate with one another using messages. Every actor must be linked to at least one use case.</div>
+
+    <div class="sym-cell">Dashed arrow &rarr; child use case, <em>&laquo;include&raquo;</em></div><div class="sym-cell">Include</div><div class="sym-cell">One use case relies on another's functionality: a step in the scenario is a sub-use case at a lower level, with its own sub-goals and actors. The main use case includes actions from the child.</div>
+
+    <div class="sym-cell">Dashed arrow &rarr; base use case, <em>&laquo;extend&raquo;</em></div><div class="sym-cell">Extend</div><div class="sym-cell">An optional step added to a use case <strong>without affecting the specification of the original</strong>. Requires extension points &mdash; the named places where an extension can be woven in &mdash; and carries a condition such as <em>[service successful]</em>.</div>
+
+    <div class="sym-cell">Solid line with hollow triangle &rarr; parent</div><div class="sym-cell">Generalization</div><div class="sym-cell">A parent&ndash;child relationship between use cases. The child is an enhancement of the parent, connected at the base of the arrow, with the tip at the parent.</div>
+
+    <div class="sym-cell">Extension point (named, e.g. <em>X1</em>)</div><div class="sym-cell">Where an extension attaches</div><div class="sym-cell">Advertised on the base use case and referenced by the extending use case. Without a declared extension point there is nowhere for the extension to be woven in.</div>
+
+    <div class="sym-cell">Filled circle on a refinement edge</div><div class="sym-cell">Mandatory sub-feature</div><div class="sym-cell">In a feature diagram: the child feature must be selected. Feature diagrams are a graphical representation of domain concepts and their refinements.</div>
+
+    <div class="sym-cell">Hollow circle on a refinement edge</div><div class="sym-cell">Optional sub-feature</div><div class="sym-cell">The child feature can be selected or not selected.</div>
+
+    <div class="sym-cell">Filled arc over sibling edges</div><div class="sym-cell">Or-group</div><div class="sym-cell">At least one of the sub-features must be selected.</div>
+
+    <div class="sym-cell">Hollow arc over sibling edges</div><div class="sym-cell">Alternative (xor) group</div><div class="sym-cell">Exactly one of the sub-features must be selected &mdash; the e-shop example's choice between a standard and a high-standard security policy.</div>
+
+    <div class="sym-cell">Dashed arrow between branches, with a condition</div><div class="sym-cell">Cross-tree constraint</div><div class="sym-cell">A dependency that the tree structure cannot express: the tutorial's e-shop forces any system including credit-card payment to implement the high-security policy.</div>
+  </div>
+
+  <div id="ix-m-match"></div>
+
+  <div class="callout">
+    <strong>The two arrowheads, in one line each.</strong> <em>Include:</em> the base needs the child, so the arrow leaves the base and points at the child. <em>Extend:</em> the child may be woven into the base, so the arrow leaves the extending use case and points at the base. If you can say which use case would be incomplete without the other, you have the direction.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A dashed arrow runs from <em>Login</em> to <em>Withdraw Cash</em> with no stereotype shown. What is wrong with the diagram?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Direction alone does not make it wrong — «extend» arrows do point at the base. The missing piece is which relationship is being asserted.">Nothing — the arrow simply means that login is used by withdrawing cash</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Both relationships are dashed, so the stereotype is what disambiguates them: an unstereotyped dashed arrow could be either an include (pointing at the child) or an extend (pointing at the base)." data-bad="">The relationship is ambiguous: a dashed arrow must carry «include» or «extend», because the stereotype is what distinguishes them</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Generalization is drawn as a solid line with a hollow triangle at the parent end. This is not that notation.">It should be a solid line, because generalization uses dashed arrows</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-grammar">
+  <h2 class="section-title">Grammar of a requirement statement</h2>
+  <p class="section-lead">The deck's complaint about informal specification is not that it is informal &mdash; it is that you cannot mechanically check it. The fix is a shape every requirement can be poured into.</p>
+
+  <div class="def-box">
+    <div class="def-label">The five-slot shape</div>
+    <p>A checkable requirement names a <strong>subject</strong> (which system or component), a <strong>trigger or condition</strong> (when it applies), a <strong>response</strong> (what must happen), an <strong>object</strong> (to what), and a <strong>measure</strong> (how it is demonstrated). Anything missing from those five slots becomes an assumption, and assumptions are where projects fail.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Stated as relationships</h3>
+    <p>Two relationships cover everything on this page. The first says a requirement is a mapping from a condition to an obliged response:</p>
+    \[ R \;=\; \langle\, C \;\longrightarrow\; O \,\rangle \]
+    <p>The second says that a requirement is only verifiable when the obligation carries a measure that a test could falsify:</p>
+    \[ \text{verifiable}(R) \iff \exists\, m : O \text{ is decidable within } m \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">This is why &ldquo;the system shall be user-friendly&rdquo; is not a requirement and &ldquo;the response shall be returned within 400&nbsp;ms for 95% of requests&rdquo; is. The first has no \(m\); the second does.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Slot</th><th>The tutorial's use case header field it matches</th><th>What goes wrong when it is absent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Subject</td><td>Name &mdash; the use case or component being specified</td><td>Nobody knows which part of the system owes the behaviour</td></tr>
+        <tr><td>Trigger or condition</td><td>Trigger, precondition</td><td>The requirement fires at the wrong time or never; the precondition becomes an untested assumption</td></tr>
+        <tr><td>Response</td><td>Goal, main success scenario step</td><td>The requirement describes a wish rather than an obligation</td></tr>
+        <tr><td>Object</td><td>Actors and the data they exchange</td><td>Two teams implement incompatible interfaces around the same sentence</td></tr>
+        <tr><td>Measure</td><td>Success condition, failure condition</td><td>No test can be written, so the requirement is never actually accepted or rejected</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-notation-deck"></div>
+  <script type="application/json" id="ix-m-notation-deck">
+  {
+    "title": "Self-test: say the meaning before you flip",
+    "subtitle": "Each card is one notation element from the reference grid above.",
+    "cards": [
+      { "front": "Actor", "back": "An entity — person, organisation or outside system — that interacts with the system to achieve one or more goals. In the diagram it sits outside the boundary.", "hint": "Who" },
+      { "front": "Use case", "back": "A collection of possible interactions between actors and a system relating to one or more goals. Named verb + noun; it gives context to the requirements and facilitates agreement.", "hint": "What" },
+      { "front": "«include»", "back": "The base use case relies on the included child: a step of its scenario is a lower-level use case with its own sub-goals and actors. The dashed arrow points at the child.", "hint": "Necessary" },
+      { "front": "«extend»", "back": "An optional step woven into the base use case at a declared extension point, under a condition, without affecting the specification of the original. The dashed arrow points at the base.", "hint": "Optional" },
+      { "front": "Extension point X1", "back": "A named place inside the base use case where an extension may be woven in. Without it the extending use case has nothing to attach to.", "hint": "Where" },
+      { "front": "Generalization", "back": "A parent–child relationship between use cases: the child is an enhancement of the parent. Drawn as a solid line with a hollow triangle at the parent end.", "hint": "Specialisation" },
+      { "front": "Alternative (xor) in a feature diagram", "back": "Exactly one of the sibling sub-features must be selected. Drawn as a hollow arc over the edges; the or-group, at least one, is the filled arc.", "hint": "Feature notation" },
+      { "front": "Cross-tree constraint", "back": "A dependency between features in different branches of the tree — the e-shop's rule that credit-card payment forces the high-security policy.", "hint": "Feature notation" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which of these is written in a form a test can falsify?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="&ldquo;Fast&rdquo; and &ldquo;robustly&rdquo; carry no measure, so no observation could ever contradict this statement.">The system shall respond quickly and behave robustly under load</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. There is a condition (opening the door), an obliged response (alarm plus message), an object (the police station) and a measure (30 seconds). A test can be built from it." data-bad="">When the door is opened while the system is enabled, the system shall sound the audible alarm and send a message to the police if no valid fingerprint is scanned within 30 seconds</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This describes a capability, not an obligation with a measure: there is no condition and nothing a test could contradict.">The system shall support fingerprint identification and audible alarms</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-nfr">
+  <h2 class="section-title">Functional vs non-functional, and the quality taxonomy</h2>
+  <p class="section-lead">The deck frames the split simply: functional requirements describe <em>what</em> a software system should do, non-functional requirements place constraints on <em>how</em> it does so &mdash; performance characteristics such as accessibility and reliability.</p>
+
+  <div class="svg-wrap" style="margin:1.5rem 0;">
+  <svg viewBox="0 0 800 470" role="img" aria-label="Two stacked bands: functional requirements with three example boxes, and non-functional requirements with five category boxes including a performance band and a truncated latency axis" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+    <rect x="0" y="0" width="800" height="470" fill="#fbfbff"></rect>
+
+    <rect x="24" y="22" width="752" height="76" rx="12" fill="rgba(99,102,241,0.10)" stroke="#4f46e5" stroke-width="1.6"></rect>
+    <text x="44" y="50" font-size="13" font-family="system-ui, sans-serif" fill="#4f46e5" font-weight="700">FUNCTIONAL — what the system does</text>
+    <text x="44" y="74" font-size="12" font-family="system-ui, sans-serif" fill="#4a4f66">Describes behaviour; realised by use cases and their scenarios; traced to design elements and tests.</text>
+
+    <rect x="44" y="116" width="216" height="54" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="1.6"></rect>
+    <text x="152" y="139" font-size="12" text-anchor="middle" font-family="system-ui, sans-serif" fill="#0e7490">Enter Secure Room</text>
+    <text x="152" y="157" font-size="11" text-anchor="middle" font-family="system-ui, sans-serif" fill="#565d75">check identity, then unlock</text>
+
+    <rect x="292" y="116" width="216" height="54" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="1.6"></rect>
+    <text x="400" y="139" font-size="12" text-anchor="middle" font-family="system-ui, sans-serif" fill="#0e7490">Sound Audible Alarm</text>
+    <text x="400" y="157" font-size="11" text-anchor="middle" font-family="system-ui, sans-serif" fill="#565d75">after a failed access window</text>
+
+    <rect x="540" y="116" width="216" height="54" rx="10" fill="#ffffff" stroke="#0e7490" stroke-width="1.6"></rect>
+    <text x="648" y="139" font-size="12" text-anchor="middle" font-family="system-ui, sans-serif" fill="#0e7490">Summon Police</text>
+    <text x="648" y="157" font-size="11" text-anchor="middle" font-family="system-ui, sans-serif" fill="#565d75">send id and location</text>
+
+    <rect x="24" y="200" width="752" height="76" rx="12" fill="rgba(168,85,247,0.10)" stroke="#a855f7" stroke-width="1.6"></rect>
+    <text x="44" y="228" font-size="13" font-family="system-ui, sans-serif" fill="#7e22ce" font-weight="700">NON-FUNCTIONAL — how well it must do it</text>
+    <text x="44" y="252" font-size="12" font-family="system-ui, sans-serif" fill="#4a4f66">Constrains the solution space: performance, reliability, accessibility, usability, security, maintainability.</text>
+
+    <rect x="44" y="294" width="132" height="46" rx="9" fill="#ffffff" stroke="#a855f7" stroke-width="1.5"></rect>
+    <text x="110" y="322" font-size="11.5" text-anchor="middle" font-family="system-ui, sans-serif" fill="#7e22ce">Performance</text>
+
+    <rect x="192" y="294" width="132" height="46" rx="9" fill="#ffffff" stroke="#a855f7" stroke-width="1.5"></rect>
+    <text x="258" y="322" font-size="11.5" text-anchor="middle" font-family="system-ui, sans-serif" fill="#7e22ce">Reliability</text>
+
+    <rect x="340" y="294" width="132" height="46" rx="9" fill="#ffffff" stroke="#a855f7" stroke-width="1.5"></rect>
+    <text x="406" y="322" font-size="11.5" text-anchor="middle" font-family="system-ui, sans-serif" fill="#7e22ce">Accessibility</text>
+
+    <rect x="488" y="294" width="132" height="46" rx="9" fill="#ffffff" stroke="#a855f7" stroke-width="1.5"></rect>
+    <text x="554" y="322" font-size="11.5" text-anchor="middle" font-family="system-ui, sans-serif" fill="#7e22ce">Security</text>
+
+    <rect x="636" y="294" width="132" height="46" rx="9" fill="#ffffff" stroke="#a855f7" stroke-width="1.5"></rect>
+    <text x="702" y="322" font-size="11.5" text-anchor="middle" font-family="system-ui, sans-serif" fill="#7e22ce">Maintainability</text>
+
+    <line x1="60" y1="364" x2="748" y2="364" stroke="#a855f7" stroke-width="1.2" stroke-dasharray="5 5"></line>
+    <rect x="356" y="356" width="120" height="16" rx="4" fill="#fbfbff"></rect>
+    <text x="416" y="368" font-size="11" text-anchor="middle" font-family="system-ui, sans-serif" fill="#7e22ce">latency axis (ms)</text>
+
+    <circle cx="180" cy="364" r="6" fill="#7e22ce"></circle>
+    <text x="180" y="390" font-size="11" text-anchor="middle" font-family="system-ui, sans-serif" fill="#565d75">unlock &lt; 400 ms</text>
+
+    <circle cx="416" cy="364" r="6" fill="#7e22ce"></circle>
+
+    <circle cx="648" cy="364" r="6" fill="#7e22ce"></circle>
+    <text x="648" y="390" font-size="11" text-anchor="middle" font-family="system-ui, sans-serif" fill="#565d75">police message &lt; 10 s</text>
+
+    <text x="24" y="428" font-size="12" font-family="system-ui, sans-serif" fill="#4a4f66">Move the axis far enough left and the functional requirement changes. &ldquo;Compute the optimal route&rdquo; and</text>
+    <text x="24" y="448" font-size="12" font-family="system-ui, sans-serif" fill="#4a4f66">&ldquo;compute it in 4 &#181;sec&rdquo; are not the same requirement with a number attached — they are two different systems.</text>
+  </svg>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Quality characteristic</th><th>The non-functional question</th><th>What makes it testable</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Performance</strong></td><td>How fast, for how many, under what load?</td><td>A percentile and a load: 95th percentile under 200 concurrent users</td></tr>
+        <tr><td><strong>Reliability</strong></td><td>How often may it fail, and for how long?</td><td>Availability over a stated window, and a maximum outage duration</td></tr>
+        <tr><td><strong>Accessibility</strong></td><td>Who must be able to use it, with what assistance?</td><td>A named conformance target and an assistive-technology test</td></tr>
+        <tr><td><strong>Usability</strong></td><td>How long until a first-time user succeeds?</td><td>A task time or completion rate with a stated user population</td></tr>
+        <tr><td><strong>Security</strong></td><td>Who may read, write, send or change what?</td><td>An authority list per role &mdash; the deck's separation of capability from permission</td></tr>
+        <tr><td><strong>Maintainability</strong></td><td>How easily can a change be introduced?</td><td>Ease of diagnosing problems and of introducing modifications, stated as a change-cost budget</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-nfr-race"></div>
+  <script type="application/json" id="ix-m-nfr-race">
+  {
+    "title": "The same requirement, made measurable",
+    "subtitle": "Illustrative 0–5 scores for how falsifiable a statement is. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "\u201cThe system shall be fast\u201d", "value": 0, "display": "no measure" },
+      { "name": "\u201cThe system shall respond quickly to a fingerprint scan\u201d", "value": 1, "display": "adverb only" },
+      { "name": "\u201cThe system shall unlock within 400 ms of a valid scan\u201d", "value": 4, "display": "one measure" },
+      { "name": "\u201c95% of valid scans shall unlock within 400 ms at 200 users\u201d", "value": 5, "display": "percentile + load" },
+      { "name": "\u201cThe alarm shall sound if no valid scan occurs within 30 s\u201d", "value": 5, "display": "condition + bound" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The deck's own warning:</strong> &ldquo;for very many systems, these are not always separable concerns&rdquo;. Treat the functional/non-functional split as a convention for organising a specification, not as a claim that the two kinds of requirement are independent. The split becomes actively misleading when a performance bound is what selects the algorithm.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">The secure access specification says a valid fingerprint must be scanned within 30&nbsp;seconds of the door opening. How should this be classified?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It is not a capability in its own right — it constrains when an existing capability must complete. That is the non-functional role.">Functional, because it describes what the system does when the door opens</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The 30-second window constrains how the identification step performs, so it belongs with reliability/performance of the access function — and it is exactly the kind of constraint that has no notational home on a use case diagram." data-bad="">Non-functional: it constrains how the identification function must perform rather than adding a new behaviour</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It is a requirement, not a design choice — the number comes from the specification and would have to be honoured by whatever design is chosen.">Neither — it is a design constraint that belongs in the architecture, not in requirements</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defects">
+  <h2 class="section-title">The five defects of a requirement statement</h2>
+  <p class="section-lead">The deck lists five issues with requirement statements, and the tutorial's ad hoc diagram section explains the consequences. Each defect has a mechanical test you can run before anyone builds anything.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Defect</th><th>What it looks like</th><th>The test that catches it</th><th>Repair</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Ambiguity</strong></td>
+          <td>&ldquo;The system shall notify the user promptly&rdquo;</td>
+          <td>Ask two readers to write the acceptance test. If they differ, it is ambiguous.</td>
+          <td>Name the channel and the bound: in-app banner within 2 seconds.</td>
+        </tr>
+        <tr>
+          <td><strong>Incompleteness</strong></td>
+          <td>The panic button is described, but nothing says what happens if the telephone line is down</td>
+          <td>Walk the scenario step by step and ask what happens when each step fails.</td>
+          <td>Add the extension scenario, with its own failure condition.</td>
+        </tr>
+        <tr>
+          <td><strong>Conflict</strong></td>
+          <td>&ldquo;The alarm shall always sound on intrusion&rdquo; and &ldquo;pressing panic shall not sound the alarm&rdquo;</td>
+          <td>Search the set for pairs whose conditions can hold simultaneously.</td>
+          <td>Scope one of them, or introduce the priority rule explicitly.</td>
+        </tr>
+        <tr>
+          <td><strong>Difference in priority</strong></td>
+          <td>Everything is &ldquo;shall&rdquo;; nothing says what is dropped if time runs out</td>
+          <td>Ask which requirement the customer would trade away first.</td>
+          <td>Record priority, and keep the reason with it.</td>
+        </tr>
+        <tr>
+          <td><strong>Perceived stakeholder urgency</strong></td>
+          <td>The loudest stakeholder's requirement is treated as the most important</td>
+          <td>Compare the stated urgency against the project's actual ranking.</td>
+          <td>Make the ranking explicit and agreed, so urgency is a decision rather than a default.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Why the informal specification is not sufficient (the deck's six reasons, turned into checks).</strong> You cannot, from prose alone: identify potential conflicts and inconsistencies between requirements; determine interdependencies between individual requirements; ensure all requirements are covered; understand precisely what needs to be implemented; trace requirements to implementation and vice versa; or provide a basis for comprehensive testing. The deck adds the operational reason: you also need the requirements in <em>electronic</em> form so they can be searched, linked and traced.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; mining the informal specification.</strong> The tutorial's secure-access prose is three paragraphs long. Extract the checkable requirements it already contains, and repair the two defects it hides.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Identify the subject and the trigger.</strong> Subject: the security system software. Triggers named in the prose: the monitor being powered on, the panic button, the door opening, the Enable button, and the motion detector reporting entry through a window. Five triggers is five requirement groups, not one paragraph.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Extract the measures.</strong> The prose contains three numbers and one identifier that are easy to read past: <em>within 30 seconds</em> of the door opening, <em>45 seconds</em> to leave after enabling, and the <em>8-digit id</em> registered with the police at installation. A statement without these numbers cannot be tested, so they belong in the requirement, not in the narrative.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Notice the deliberate asymmetry.</strong> On a panic press a message is sent and &ldquo;the audible alarm does not sound&rdquo;; on a failed scan or a window entry both happen. That is a genuine design decision, and it is the classic place where two requirements appear to conflict until you scope them by trigger.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Repair the incompleteness.</strong> Nothing in the prose says what happens if the telephone line to the police is unavailable. That is an extension scenario: retry, buffer the message, or fall back to a local alarm &mdash; and the choice is a requirement, not an implementation detail.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Repair the ambiguity.</strong> &ldquo;A room in which only authorized people are allowed to linger&rdquo; never defines <em>linger</em>. Either the system tracks duration and raises an occupancy violation, or it does not; the requirements document has to decide, because the motion detector's behaviour depends on the answer.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Write one requirement properly.</strong> &ldquo;When the door to the secured area is opened while the system is enabled, the system shall sound the audible alarm and send a message containing the 8-digit system id to the police station if no valid fingerprint is scanned within 30&nbsp;seconds of the door opening.&rdquo; Subject, trigger, response, object and measure &mdash; and a test falls straight out of it.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-worked">
+  <h2 class="section-title">Worked rewrites</h2>
+  <p class="section-lead">Four statements from the week's worked examples, rewritten so that each one names its condition, its obligation and its evidence.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Before &mdash; a capability list</h3>
+      <p>&ldquo;The AI health agent shall be user-friendly and provide accurate advice quickly.&rdquo; Three adjectives, three unmeasurable claims, and no way to tell a passing implementation from a failing one.</p>
+    </div>
+    <div class="col-card">
+      <h3>After &mdash; obligations with evidence</h3>
+      <p>Functional: &ldquo;The agent shall check reported symptoms for emergency warning signs before offering any advice.&rdquo; Non-functional: &ldquo;The agent shall return its triage summary with low latency and a high-accuracy model&rdquo; &mdash; and the deck's agentic list adds the human checkpoint: the response is prepared but not sent until a clinician approves.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Statement</th><th>Defect</th><th>Rewrite</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The agent should be helpful</td>
+          <td>Ambiguity &mdash; no measure, no condition</td>
+          <td>The agent shall state, for each recommendation, the approved clinical guidance it relied on</td>
+        </tr>
+        <tr>
+          <td>The system shall book an appointment</td>
+          <td>Incompleteness &mdash; no precondition, no failure branch</td>
+          <td>Given a patient whose symptoms require evaluation, the agent shall book the earliest slot the patient confirms; if no slot is available within 14 days it shall alert the clinician instead</td>
+        </tr>
+        <tr>
+          <td>The agent shall always answer immediately and shall always consult a clinician first</td>
+          <td>Conflict &mdash; the two obligations cannot both hold</td>
+          <td>The agent shall produce a draft response immediately and shall not send it until a clinician approves; the patient sees a status indication meanwhile</td>
+        </tr>
+        <tr>
+          <td>Every feature in the backlog is mandatory</td>
+          <td>Difference in priority &mdash; nothing can be traded</td>
+          <td>Split the backlog into must/should/could and record, for each must, which stakeholder goal it serves</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The binding thread.</strong> Requirements modelling is a small but crucial step in requirements engineering, and the deck's reason is traceability: models are what let a tool relate a requirement to the design that realises it and the test that demonstrates it. A prose document can be read; a model can be queried.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; classifying a mixed requirement set.</strong> Sort the deck's agentic-software requirements, then say what each classification commits you to.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>&ldquo;The agent shall check reported symptoms for emergency warning signs.&rdquo;</strong> Functional: it names an obligation to perform a check. Its evidence is a test case per warning-sign class, including the negative cases where no warning sign is present.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>&ldquo;Generate content based on natural language&rdquo; and &ldquo;conversation with human&rdquo;.</strong> Functional, and deliberately coarse. The use case model is where they become precise: actors, preconditions, a main success scenario and extension scenarios for unclear input.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>&ldquo;Low latency&rdquo;.</strong> Non-functional, and useless until quantified. Repair it into a percentile plus a load, then check whether the number is achievable given the model choice &mdash; if it is not, the constraint has just redefined the functional requirement.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>&ldquo;High accuracy LLM model (NLP and Computer Vision)&rdquo;.</strong> Non-functional, and the hardest to test. Accuracy needs a population, a metric and a threshold: on which cases, measured how, above what value. Without those three it is an aspiration.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>&ldquo;User-friendly CHI&rdquo;.</strong> Non-functional and unmeasurable as written. Convert to a task-completion measure with a population: a first-time patient completes the intake conversation without assistance.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>The agentic additions.</strong> <em>Authority</em> is functional in form but constrains the design space like a non-functional requirement, and it must be separated from capability: what the agent <em>may</em> do is not what it <em>can</em> do. <em>Human checkpoints</em> are functional obligations with a clear test: with approval absent, no advice is sent and a draft is saved.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Two requirements read: &ldquo;the alarm shall sound on any intrusion&rdquo; and &ldquo;a panic press shall message the police without sounding the alarm&rdquo;. Which defect is present, and what is the cleanest repair?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="There is nothing ambiguous here — both statements are specific. The problem is that they can apply to the same event.">Ambiguity; rewrite both with a time bound</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The conditions can hold together, so the set is in conflict. The cleanest repair is to scope each by its trigger, so the panic path is explicitly excluded from the intrusion rule." data-bad="">Conflict; scope each requirement by its trigger so the panic path is excluded from the intrusion rule</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing is missing — the deck's secure-room example defines both behaviours. The two statements simply overlap.">Incompleteness; add the missing failure conditions</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the notation card above is the exam-reproducible half; the study guide carries the three modelling approaches, the actor&ndash;goal framework and the scenario walkthroughs. Then attempt the Quiz Hub and the Flashcards for Week 3.
+  </div>
+</section>
+
+</div>
+
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2: Interaction Devices and Techniques — COMP5047</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter2-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 study guide for COMP5047: input and output as a dialogue, the six low-level interaction tasks, input device properties and taxonomies, transfer functions and chunking, device states, implicit interaction and intentionality, expected/sensed/desired, context recognition and proxemic interaction.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 2: Interaction Devices and Techniques — COMP5047">
+<meta property="og:description" content="Week 2 study guide for COMP5047: input device taxonomies, chunking and phrasing, low-intention and sensor-based interaction, implicit interaction, and proxemic interaction.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F5B1;</span>
+      <h2>Week 2</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-vocab" class="nav-link" data-section="vocab">Vocabulary</a></li>
+    <li><a href="#sec-tasks" class="nav-link" data-section="tasks">Low-Level Tasks</a></li>
+    <li><a href="#sec-devices" class="nav-link" data-section="devices">Device Properties</a></li>
+    <li><a href="#sec-control" class="nav-link" data-section="control">Control &amp; Chunking</a></li>
+    <li><a href="#sec-states" class="nav-link" data-section="states">Device States</a></li>
+    <li><a href="#sec-implicit" class="nav-link" data-section="implicit">Implicit Interaction</a></li>
+    <li><a href="#sec-esd" class="nav-link" data-section="esd">Expected / Sensed / Desired</a></li>
+    <li><a href="#sec-context" class="nav-link" data-section="context">Context Recognition</a></li>
+    <li><a href="#sec-proxemic" class="nav-link" data-section="proxemic">Proxemic Interaction</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 2 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5047 — Pervasive Computing</p>
+    <h1>Week 2: Interaction Devices and Techniques</h1>
+    <p class="hero-subtitle">Input device taxonomies, chunking and phrasing, low-intention and sensor-based interaction, implicit interaction, and proxemic interaction.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50C;</span>
+        <span>An input device is a transducer</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F446;</span>
+        <span>Select &middot; position &middot; orient &middot; path &middot; quantify &middot; text</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F39B;</span>
+        <span>Transfer functions, modes, chunking</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6AA;</span>
+        <span>Implicit interaction and proxemics</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter2-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter2-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 2 lecture deck (Velloso, <em>Interaction Devices and Techniques</em>), the Week 2 readings and the Week 2 assumption-storming tutorial</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-vocab" class="section" data-track="vocab">
+  <h2 class="section-title">The Vocabulary: Input, Output, Technique</h2>
+  <p class="section-lead">Week 2 opens by reframing interaction as a dialogue. The computer perceives through input and answers through output; the user acts on the output and perceives the result. Every other term this week is a refinement of those four words.</p>
+
+  <div class="concept-box">
+    <p><strong>The deck's opening diagram:</strong> <em>perception</em> sits opposite <em>output</em>, and <em>action</em> sits opposite <em>input</em>. It is one loop read from two sides &mdash; &ldquo;how computers see us&rdquo; is the input side, and the lecture's stated goal is to change it.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Five definitions to write exactly</div>
+    <p><strong>Input</strong> &mdash; sensed information about the environment. <strong>Input device</strong> &mdash; a transducer that senses physical properties of people, places, or things. <strong>Output</strong> &mdash; any emission or modification of the physical environment. <strong>Interaction technique</strong> &mdash; input + output: all hardware <em>and software</em> elements that provide a way for the user to accomplish a low-level task. <strong>Low-level interaction task</strong> &mdash; the low-level primitive inputs required from the user.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>What the definition commits you to</th><th>What it rules out</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Input device</strong></td><td>A transducer sensing physical properties of people, <em>places</em> or <em>things</em></td><td>Software that interprets readings; a camera sensing a room is still an input device</td></tr>
+        <tr><td><strong>Interaction technique</strong></td><td>Input <em>plus</em> output, hardware <em>plus</em> software, aimed at one low-level task</td><td>The bare device: a mouse with no mapping and no cursor is not yet a technique</td></tr>
+        <tr><td><strong>Low-level task</strong></td><td>A primitive input the user must supply (see the six below)</td><td>Goals such as &ldquo;book a flight&rdquo;; goals are composed from primitives</td></tr>
+        <tr><td><strong>Output</strong></td><td>Any emission or modification of the physical environment</td><td>Screens only &mdash; light, sound, motion and heat are all output</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Why the vocabulary is examinable:</strong> the definitions are what let you argue about devices without arguing about taste. &ldquo;Which input device is best?&rdquo; is unanswerable; &ldquo;which transducer and transfer function best support this low-level task in this context?&rdquo; is a question with evidence behind it.
+  </div>
+
+  <div class="insight-box">
+    <strong>Bill Buxton, quoted in the deck:</strong> &ldquo;Everything is best for something and worst for something else&hellip; Without an equally solid understanding of both the strengths and weaknesses of the technology &mdash; when, where, why, how, for what, and for whom it is and isn't suitable &mdash; one is gambling rather than practicing design.&rdquo; The deck pairs this with the <em>competitive landscape of devices</em> (one winner per task) and the <em>cooperative landscape</em> (devices combined to cover each other's weaknesses) &mdash; the Buxton Collection is the artefact catalogue behind the argument.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A shop counts passers-by with a passive infrared sensor mounted above the door. Which statement matches the lecture's definition of an <em>input device</em>?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The sensor is a transducer that senses a physical property of people and of a place — the definition covers people, places or things, not only the device the user holds." data-bad="">The sensor is a transducer sensing a physical property of people and of a place</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A display is output: any emission or modification of the physical environment. Input is sensed information about the environment.">The counter display in the window is the input device, because it shows the number</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing in the definition requires contact or a deliberate user action. Sensor-based input is exactly the case this week goes on to discuss.">Only devices a person deliberately touches count as input devices</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tasks" class="section" data-track="tasks">
+  <h2 class="section-title">The Six Low-Level Interaction Tasks</h2>
+  <p class="section-lead">Interaction techniques are judged by the primitive inputs they let a user supply. The deck names six, and every technique in this unit can be described as a combination of them.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Task</th><th>Lecture definition</th><th>Where you meet it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Selection</strong></td><td>Choosing from a set of alternatives</td><td>Tapping a menu item; dwelling your gaze on an icon</td></tr>
+        <tr><td><strong>Position</strong></td><td>Specify a position within a range</td><td>Pointing at a map; dragging a handle</td></tr>
+        <tr><td><strong>Orient</strong></td><td>Specify an angle or 3D orientation</td><td>Rotating a 3D object; tilting a phone to steer</td></tr>
+        <tr><td><strong>Path</strong></td><td>Specify a series of positions and orientations over time</td><td>Inking a stroke; steering a cursor through a pull-down menu</td></tr>
+        <tr><td><strong>Quantify</strong></td><td>Specify a numeric value</td><td>Turning a dial to 21&nbsp;&deg;C; typing a duration</td></tr>
+        <tr><td><strong>Text</strong></td><td>Enter symbolic data</td><td>Typing a street address rather than pointing at it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The primitives are not all at the same level</h3>
+      <p>Positioning an object in 2D is a single task with a mouse or a tablet. Change the transducer to a QWERTY keyboard and the same coordinates become <em>two</em> primitives: quantify X and quantify Y. The task did not change; the device did.</p>
+    </div>
+    <div class="col-card">
+      <h3>One gesture can collapse the sub-tasks</h3>
+      <p>Buxton's phrasing argument: &ldquo;Any concept or transaction that can be described in a single word or phrase should be able to be articulated by a single gesture.&rdquo; When the sub-tasks disappear from the user's model, novices start to perform like experts.</p>
+    </div>
+  </div>
+
+  <div id="ix-dissect"></div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; the drawing competition.</strong> The deck sets Etch-a-Sketch against Skedoodle and asks how you can always win. The answer given is a design lesson: <em>let your opponent pick the device while you pick the drawing.</em></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the low-level task.</strong> Drawing a picture is a <em>path</em> task &mdash; a series of positions over time &mdash; built out of continuous position input.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Decompose the Etch-a-Sketch.</strong> Two dials, each a one-dimensional control: quantify X gives 1D position and quantify Y gives 1D position. Diagonal and curved strokes require the two hands' worth of coordination from one pair of fingers, so the path is expressed through two coupled quantities rather than through pointing.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Decompose a direct pointing device.</strong> A stylus on a tablet senses position in two dimensions, so the same path is one position task articulated by one gesture. The primitives have collapsed into a chunk the user can perform automatically.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Draw the conclusion the deck wants.</strong> Neither device is better in the abstract. Choose the drawing whose structure matches the device you were given &mdash; mostly straight horizontal and vertical lines for the dial device, free curves for the pointing device. That is Buxton's point: strengths and weaknesses, not rankings.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A user turns a rotary dial until the display reads 21&nbsp;&deg;C. Which low-level task is being performed?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The device senses angle, but the task is not the property sensed. The user is specifying a number, not an orientation.">Orient &mdash; the dial rotates through an angle</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Quantify means specifying a numeric value; the dial is only the transducer that makes the number easy to sweep through." data-bad="">Quantify &mdash; the user is specifying a numeric value</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Position means specifying a position within a range, such as pointing at a location on a surface. A temperature setting is a quantity, not a place.">Position &mdash; the dial has a physical position in its range</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-devices" class="section" data-track="devices">
+  <h2 class="section-title">Properties of Input Devices</h2>
+  <p class="section-lead">Knowing that a device is a transducer tells you nothing about what it is good for. Four properties do most of the work: what property it senses, how many dimensions it senses, whether it is direct or indirect, and whether it is absolute or relative.</p>
+
+  <div class="def-box">
+    <div class="def-label">Property sensed</div>
+    <p>Most devices sense <strong>linear position, motion or force</strong>; rotary devices sense <strong>angle, change in angle and torque</strong>. The property sensed is not a detail &mdash; it determines which transfer function is appropriate, and therefore what the device can control well.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property sensed</th><th>Devices</th><th>What follows from it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Position</strong> (absolute)</td><td>Stylus or graphics tablet, touchscreen</td><td>A fixed mapping from surface to display, so no cursor is needed; a physical intermediary can disagree with the software's value (the <em>nulling problem</em>)</td></tr>
+        <tr><td><strong>Motion</strong> (relative)</td><td>Mouse, trackpad, trackball</td><td>The cursor makes position visible and can be decoupled from the device; limited physical space forces <em>clutching</em></td></tr>
+        <tr><td><strong>Force</strong></td><td>Isometric joystick (for example the TrackPoint)</td><td>Rate control: force maps to cursor velocity, and the stick self-centres, so releasing it stops the motion</td></tr>
+        <tr><td><strong>Angle / torque</strong></td><td>Rotary knob or dial</td><td>One angular dimension; the same form factor can be isotonic, isometric or elastic depending on resistance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Direct vs indirect</h3>
+      <p>A <strong>direct</strong> device has a unified input and display surface &mdash; a touchscreen, or a display tablet operated with a pen. A <strong>mouse is indirect</strong>: you move it on the desk to indicate a point on the screen. Direct is not automatically easier. Direct devices have no buttons to carry state transitions, and the finger or pen <em>occludes</em> the very thing being pointed at.</p>
+    </div>
+    <div class="col-card">
+      <h3>Absolute vs relative</h3>
+      <p>A <strong>position-sensing</strong> device is absolute; a <strong>motion-sensing</strong> device is relative. Relative devices cannot disagree with the software, but they need visual feedback and they run out of desk: the user lifts and repositions the device, which is clutching. Absolute devices have no such problem but can be silently out of step with the system's value.</p>
+    </div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-landscape"></div>
+  <script type="application/json" id="ix-landscape">
+  {
+    "title": "The pointing-device landscape from the Week 2 slide",
+    "subtitle": "Six transducers the lecture puts side by side. Click a marker to see the property each one senses and what that property forces on the designer.",
+    "svg": "<svg viewBox=\"0 0 820 440\" role=\"img\" aria-label=\"Six cards, one per pointing device: mouse, trackball, isometric joystick, stylus tablet, touchscreen and a six degree of freedom tracker\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"820\" height=\"440\" fill=\"#fbfdfe\"></rect><rect x=\"30\" y=\"30\" width=\"250\" height=\"175\" rx=\"14\" fill=\"#ffffff\" stroke=\"#cfe3e9\" stroke-width=\"2\"></rect><ellipse cx=\"155\" cy=\"96\" rx=\"24\" ry=\"33\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2\"></ellipse><path d=\"M155 63 L155 96\" stroke=\"#0e7490\" stroke-width=\"1.4\" fill=\"none\"></path><path d=\"M155 68 Q156 46 178 38\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"1.6\"></path><text x=\"155\" y=\"152\" font-family=\"monospace\" font-size=\"15\" font-weight=\"700\" fill=\"#141826\" text-anchor=\"middle\">Mouse</text><text x=\"155\" y=\"173\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">motion &#183; 2D &#183; relative</text><rect x=\"285\" y=\"30\" width=\"250\" height=\"175\" rx=\"14\" fill=\"#ffffff\" stroke=\"#cfe3e9\" stroke-width=\"2\"></rect><circle cx=\"410\" cy=\"98\" r=\"33\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2\"></circle><circle cx=\"410\" cy=\"98\" r=\"16\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"1.5\"></circle><circle cx=\"403\" cy=\"91\" r=\"4\" fill=\"#0891b2\" opacity=\"0.55\"></circle><text x=\"410\" y=\"152\" font-family=\"monospace\" font-size=\"15\" font-weight=\"700\" fill=\"#141826\" text-anchor=\"middle\">Trackball</text><text x=\"410\" y=\"173\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">motion &#183; 2D &#183; relative</text><rect x=\"540\" y=\"30\" width=\"250\" height=\"175\" rx=\"14\" fill=\"#ffffff\" stroke=\"#cfe3e9\" stroke-width=\"2\"></rect><circle cx=\"665\" cy=\"98\" r=\"31\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2\"></circle><circle cx=\"665\" cy=\"98\" r=\"10\" fill=\"#0891b2\"></circle><path d=\"M665 79 L665 62\" stroke=\"#0e7490\" stroke-width=\"1.6\"></path><path d=\"M660 68 L665 59 L670 68 Z\" fill=\"#0e7490\"></path><path d=\"M665 117 L665 134\" stroke=\"#0e7490\" stroke-width=\"1.6\"></path><path d=\"M660 128 L665 137 L670 128 Z\" fill=\"#0e7490\"></path><path d=\"M646 98 L629 98\" stroke=\"#0e7490\" stroke-width=\"1.6\"></path><path d=\"M635 93 L626 98 L635 103 Z\" fill=\"#0e7490\"></path><path d=\"M684 98 L701 98\" stroke=\"#0e7490\" stroke-width=\"1.6\"></path><path d=\"M695 93 L704 98 L695 103 Z\" fill=\"#0e7490\"></path><text x=\"665\" y=\"152\" font-family=\"monospace\" font-size=\"15\" font-weight=\"700\" fill=\"#141826\" text-anchor=\"middle\">Isometric joystick</text><text x=\"665\" y=\"173\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">force &#183; 2D &#183; relative</text><rect x=\"30\" y=\"235\" width=\"250\" height=\"175\" rx=\"14\" fill=\"#ffffff\" stroke=\"#cfe3e9\" stroke-width=\"2\"></rect><rect x=\"72\" y=\"268\" width=\"166\" height=\"72\" rx=\"8\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2\"></rect><circle cx=\"140\" cy=\"306\" r=\"5\" fill=\"#0891b2\"></circle><path d=\"M186 262 L208 240 L220 252 L198 274 Z\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2\"></path><path d=\"M186 262 L198 274 L176 284 Z\" fill=\"#0891b2\"></path><text x=\"155\" y=\"358\" font-family=\"monospace\" font-size=\"15\" font-weight=\"700\" fill=\"#141826\" text-anchor=\"middle\">Stylus tablet</text><text x=\"155\" y=\"379\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">position &#183; 2D &#183; absolute</text><rect x=\"285\" y=\"235\" width=\"250\" height=\"175\" rx=\"14\" fill=\"#ffffff\" stroke=\"#cfe3e9\" stroke-width=\"2\"></rect><rect x=\"322\" y=\"262\" width=\"176\" height=\"84\" rx=\"10\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2\"></rect><circle cx=\"410\" cy=\"304\" r=\"17\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2\"></circle><circle cx=\"410\" cy=\"304\" r=\"6\" fill=\"#0891b2\"></circle><path d=\"M382 304 A28 28 0 0 1 438 304\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.4\" stroke-dasharray=\"4 4\"></path><text x=\"410\" y=\"358\" font-family=\"monospace\" font-size=\"15\" font-weight=\"700\" fill=\"#141826\" text-anchor=\"middle\">Touchscreen</text><text x=\"410\" y=\"379\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">position &#183; 2D &#183; absolute</text><rect x=\"540\" y=\"235\" width=\"250\" height=\"175\" rx=\"14\" fill=\"#ffffff\" stroke=\"#cfe3e9\" stroke-width=\"2\"></rect><rect x=\"646\" y=\"258\" width=\"14\" height=\"78\" rx=\"7\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2\"></rect><circle cx=\"653\" cy=\"286\" r=\"5\" fill=\"#0891b2\"></circle><path d=\"M664 274 Q682 296 664 318\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.6\" stroke-dasharray=\"3 3\"></path><path d=\"M610 322 L610 292\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path><path d=\"M605 300 L610 290 L615 300 Z\" fill=\"#94a3b8\"></path><path d=\"M610 322 L640 322\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path><path d=\"M632 317 L642 322 L632 327 Z\" fill=\"#94a3b8\"></path><text x=\"665\" y=\"358\" font-family=\"monospace\" font-size=\"15\" font-weight=\"700\" fill=\"#141826\" text-anchor=\"middle\">6-DoF tracker</text><text x=\"665\" y=\"379\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">position + orientation</text></svg>",
+    "points": [
+      { "x": 18.9, "y": 13.2, "label": "Mouse", "detail": "Senses motion in two linear dimensions, so it is relative: position exists only after the movement is integrated and shown as a cursor. Everything the deck calls a transfer-function problem — clutching, quantisation, limb precision — follows from that choice." },
+      { "x": 51.2, "y": 13.2, "label": "Trackball", "detail": "Also relative motion in two dimensions, but the ball stays put: the footprint is tiny and the device works on an angled surface. The cost is frequent clutching, because the hand must lift and reposition after a short roll." },
+      { "x": 82.3, "y": 13.2, "label": "Isometric joystick", "detail": "Senses force, not movement. The property sensed dictates the mapping: force-to-velocity, so pressing harder moves faster and releasing stops the cursor. Most are stiff, which is why fine control takes practice." },
+      { "x": 18.9, "y": 59.8, "label": "Stylus tablet", "detail": "Senses the absolute position of a physical intermediary on a surface. There is a fixed mapping from tablet to display, which buys precision and handwriting — and introduces the nulling problem whenever the pen position and the software value disagree." },
+      { "x": 51.2, "y": 59.8, "label": "Touchscreen", "detail": "Direct and absolute: input and display share one surface, so pointing is literal. The price is that there are no buttons for state transitions and the finger occludes the target it is selecting." },
+      { "x": 82.3, "y": 59.8, "label": "6-DoF tracker", "detail": "Senses three position and three orientation dimensions at once. The deck's dimension scale runs 0, 1, 2, 3, 6, 9 — and every extra dimension is another signal that has to be chunked into a task the user can think about." }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Dimensions are a design decision, not a specification.</strong> A mouse senses two dimensions; a knob senses one angular dimension; a six-degree-of-freedom tracker senses three position plus three orientation dimensions. Pairing a mouse with a scroll wheel produces a multi-channel <em>2D+1D</em> device: two separate input dimensions that the user can address independently.
+  </div>
+
+  <div class="callout">
+    <strong>Watch the wording:</strong> &ldquo;absolute&rdquo; and &ldquo;direct&rdquo; are different axes. A stylus tablet is absolute but <em>indirect</em> (the display is elsewhere); a touchscreen is both absolute and direct; a mouse is relative and indirect. Exam answers lose marks by treating these as synonyms.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A tablet has been used to set a value, then the value is changed in software. The pen now sits at the top-left of the tablet while the indicator sits in the middle of the screen. What does this illustrate?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Position sensing makes the device absolute, so a physical intermediary can silently disagree with the software's value. The classic fix is to motorise the control or to null it on the next touch — relative devices cannot have this problem at all." data-bad="">The nulling problem: an absolute device has no way to resynchronise with a value changed in software</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Relative devices sense motion, so they cannot drift out of step with the software — there is no fixed physical position to disagree with.">The tablet is behaving as a relative device, so the cursor drifts while the pen is still</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A missing transfer function would mean no mapping at all. Here the mapping works perfectly; it is the physical position and the stored value that disagree.">The transfer function has not been defined, so no mapping exists from pen to screen</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-control" class="section" data-track="control">
+  <h2 class="section-title">Transfer Functions, Gain, Modes and Chunking</h2>
+  <p class="section-lead">Between the sensor and the tasks sits a mapping. Get the mapping wrong and the same hardware feels broken; get it right and the device stops being noticeable.</p>
+
+  <div class="def-box">
+    <div class="def-label">Transfer function</div>
+    <p>The mapping from device input to functionality in indirect interfaces. An <strong>appropriate mapping</strong> matches the property sensed: <em>position to position</em> for a tablet in absolute mode, <em>velocity to velocity</em> for a mouse, <em>force to velocity</em> for an isometric joystick. A common inappropriate mapping is computing a velocity from the cursor's screen position &mdash; for example to scroll a document &mdash; which is hard to control and is only necessary because the cursor is clipped to the screen edge. For self-centring devices, a nonlinear rate mapping of the form \(dx = K x^{\alpha}\) is used, with \(K\) and \(\alpha\) found experimentally.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Control-display gain</div>
+    <p>The deck's equation: <strong>CD gain = V<sub>cursor</sub> / V<sub>device</sub></strong> &mdash; how far the cursor travels per unit of device movement. Gain is also called the C:D ratio, and it is a rough metric because it conflates device size and display size into one number. In experiments, gain typically has little effect on the time to complete pointing movements; variable-gain functions mainly buy a smaller physical footprint.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Resistance: isotonic, isometric, elastic</div>
+    <p><strong>Isotonic</strong> &mdash; free movement, no resistance. <strong>Isometric</strong> &mdash; no movement; resistance as we press. <strong>Elastic</strong> &mdash; resistance changes with movement. <strong>Acquisition time</strong> (also called <em>homing time</em>) is the average time to pick up or put down an input device &mdash; the hidden cost of switching between keyboard and mouse.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Mode and chunking</div>
+    <p><strong>Mode</strong> &mdash; a context where user actions (keypresses, mouse clicks etc.) are treated in a specific way. <strong>Chunking</strong> &mdash; the integration of multiple degrees of freedom to support higher-level tasks.</p>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-pipe"></div>
+  <script type="application/json" id="ix-pipe">
+  {
+    "title": "From a physical property to a task the user can think about",
+    "subtitle": "Step through the chain that turns a physical property into a low-level task, then into a chunk the user performs without attending to it.",
+    "nodes": [
+      { "label": "Physical property", "note": "Position, motion, force, angle or torque — what exists in the world before anything is measured." },
+      { "label": "Transducer", "note": "The input device itself: it senses physical properties of people, places or things." },
+      { "label": "Transfer function", "note": "The mapping to functionality — position-to-position, velocity-to-velocity or force-to-velocity. The wrong class of mapping makes a good sensor feel broken." },
+      { "label": "Device state", "note": "Hover, tracking, dragging: the states and transitions that turn a continuous signal into discrete events." },
+      { "label": "Interaction technique", "note": "Input plus feedback, hardware plus software: everything that lets the user accomplish a low-level task." },
+      { "label": "Low-level task", "note": "Selection, position, orient, path, quantify or text — what the user was actually trying to specify." },
+      { "label": "Chunked task", "note": "Several degrees of freedom integrated into one higher-level task, so the sub-tasks leave the user's model." }
+    ]
+  }
+  </script>
+
+  <div data-ix="matcher" data-ix-src="#ix-terms"></div>
+  <script type="application/json" id="ix-terms">
+  {
+    "title": "Match the term to the commitment it makes",
+    "subtitle": "Click a term on the left, then the consequence it forces on the design on the right.",
+    "pairs": [
+      ["Transfer function", "The mapping from input signal to functionality: position-to-position, velocity-to-velocity or force-to-velocity"],
+      ["CD gain", "Cursor velocity divided by device velocity — how far the cursor travels per unit of device movement"],
+      ["Isotonic", "Free movement with no resistance; the device reports its angle of deflection"],
+      ["Isometric", "No movement at all; the device reports the force you press with"],
+      ["Elastic", "Resistance that changes as the device is moved"],
+      ["Acquisition (homing) time", "The average time to pick up or put down the device — the cost of switching between keyboard and mouse"],
+      ["Clutching", "Lifting and repositioning a relative device because it has run out of physical space"]
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why modes are not automatically bad</h3>
+      <p>The deck's own example is the pop-up menu: pressing the button, navigating to the item and releasing are three sub-tasks glued together by the tension of holding the button down. The held button is a temporary mode, and it gives constant physical feedback that you are in it. The conclusion: design phrasing so that the concluding action is the natural consequence of the initial one.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why chunking is the goal</h3>
+      <p>Novices attend to low-level details; experts perform them automatically and think in bigger chunks. Chunking is how a device with many degrees of freedom becomes usable: if position, orientation and scale are integrated into one grasp, the user thinks &ldquo;place the object here&rdquo; rather than solving six control problems.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A designer gives a force-sensing isometric joystick a position-to-position transfer function. What is the consequence?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Transfer functions are not cosmetic: they decide whether the user can control speed and stop predictably. Choosing the wrong class is a control failure, not a taste issue.">Nothing measurable &mdash; transfer functions only change the feel of the device</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Force is not position. A device with no movement and a self-centring rest position needs a force-to-velocity (rate) mapping; with position-to-position the user gets no usable control of speed." data-bad="">The mapping contradicts the property sensed: a self-centring force device needs a force-to-velocity rate mapping</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The joystick cannot report position at all — it senses force. That is exactly why the property sensed has to determine the mapping.">The device will begin reporting absolute screen coordinates instead of forces</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-states" class="section" data-track="states">
+  <h2 class="section-title">Device States: Turning a Signal into Events</h2>
+  <p class="section-lead">A continuous signal is not yet an interface. What makes a device usable is its state machine: which states exist, and which transitions produce events the system can act on.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Device</th><th>States in the deck's diagram</th><th>Transitions</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Mouse</strong></td><td>0: button up &nbsp;|&nbsp; 1: button down (dragging)</td><td>Button down enters dragging; button up leaves it. Two states are enough because the device never leaves the desk.</td></tr>
+        <tr><td><strong>Touch</strong></td><td>Out of range &nbsp;|&nbsp; 0: touch &nbsp;|&nbsp; 1: tracking</td><td>Touch begins a contact; release ends it; leaving sensing range is a third condition the system must handle.</td></tr>
+        <tr><td><strong>Stylus</strong></td><td>Out of range &nbsp;|&nbsp; 0: stylus hover &nbsp;|&nbsp; 1: tip touches (tracking) &nbsp;|&nbsp; 2: dragging</td><td>Lift stylus and tip releases are separate transitions, which is what makes hover previews possible.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-states"></div>
+
+  <div data-ix="sequence" data-ix-src="#ix-stylus-seq"></div>
+  <script type="application/json" id="ix-stylus-seq">
+  {
+    "title": "Rebuild the stylus state sequence",
+    "subtitle": "Place the events in the order the stylus passes through them, from first contact with the tablet to the end of a stroke.",
+    "steps": [
+      "Out of range: the tablet senses nothing",
+      "Hover: the tip is close and the position is reported while button 0 is up",
+      "Tip touches: contact begins and tracking starts",
+      "Dragging: the tip stays down while it moves, so state 2 is active",
+      "Lift stylus: the tip leaves the surface but the pen is still sensed",
+      "Tip releases: back to hover, ready for the next stroke"
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Read a state machine as a design tool, not as firmware.</strong> Every state is a promise about what the system can distinguish. The mouse can tell &ldquo;moving&rdquo; from &ldquo;dragging&rdquo; but cannot tell &ldquo;the user is thinking&rdquo; from &ldquo;the user is idle&rdquo;; the stylus can tell hover from contact, which is what lets an interface preview a target before the user commits to it.
+  </div>
+</section>
+
+<section id="sec-implicit" class="section" data-track="implicit">
+  <h2 class="section-title">Implicit Interaction and Intentionality</h2>
+  <p class="section-lead">Everything so far assumed the user approaches the system with a clear intention. The pervasive turn is to treat actions that were never aimed at the system as input anyway &mdash; and then to be careful about it.</p>
+
+  <div class="def-box">
+    <div class="def-label">Implicit interaction &mdash; Albrecht Schmidt, quoted in the deck</div>
+    <p>&ldquo;An action, performed by the user, that is not primarily aimed to interact with a computerized system, but which such a system understands as input.&rdquo;</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Intentionality</th><th>What it means</th><th>Lighting example (deck)</th><th>Curious Rituals example (deck)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Intentional</strong></td><td>The user acts in order to make the system do something</td><td>You press the light switch</td><td>You put make-up on and make a specific face to turn on the car</td></tr>
+        <tr><td><strong>Expected</strong></td><td>Actions we expect the user to carry out &mdash; the outcome is anticipated even though it was not commanded</td><td>You walk into the room knowing the lights will turn on</td><td>You look into the mirror and expect the car to turn on</td></tr>
+        <tr><td><strong>Incidental</strong></td><td>The system reads an action the user never aimed at it</td><td>You walk into the room and, unbeknownst to you, the A/C increases</td><td>The car turns on automatically when you take a seat</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-intent"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The cost of being wrong goes up</h3>
+      <p>An interface that misreads an explicit command can be retried. An interface that misreads an incidental action has already acted on the world &mdash; the air conditioner is running, the door is unlocked, the diary entry exists. Incidental interaction needs a fallback and a way to see what the system believes.</p>
+    </div>
+    <div class="col-card">
+      <h3>The reward is a shorter dialogue</h3>
+      <p>If the system can recognise the situation, the user stops issuing commands. The MediaCup needs no input at all: filling a mug is the interaction, and colleagues become aware that someone is taking a break.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; unlocking the door, explicitly then implicitly.</strong> The deck draws the door as a state machine with states 0, 1 and 2, transitions labelled <em>hand recognised</em>, <em>gesture recognised</em>, <em>hand not recognised</em>, <em>no gesture</em>, and a final state <em>hand off</em>, moving from LOCKED to UNLOCKED. It then asks: what is missing?</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>What the state machine does not say.</strong> It describes which states exist and which transitions fire, but not what the system is <em>for</em>. It never states the expected action, the desired outcome, or which phenomena are sensed. Without those three, the diagram cannot be evaluated.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Restate it as expected, desired, sensed.</strong> <em>Expected:</em> pull the handle to open the door. <em>Desired:</em> unlock when the right person pulls it. <em>Sensed:</em> a fingerprint sensor built into the handle. The interaction is now implicit: pulling a handle is an action aimed at the door, not at a computer.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Answer the deck's follow-up (&ldquo;any problems?&rdquo;).</strong> Three are immediate. A wrong inference lets the wrong person in or locks out the right one, and the failure is physical. Wet, gloved or injured hands break the sensing the user never agreed to rely on. And there is no visible mode: the user cannot tell whether the door is thinking, locked, or broken.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Design the recovery.</strong> Keep the explicit path as a fallback (a key, a code, a phone), make the door's state legible (a lock that audibly clicks), and make the sensing range match the expected action &mdash; the handle the user already grips &mdash; rather than adding a new surface to aim at.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A meeting room raises the blinds when the light sensor reads above 400&nbsp;lx, whether or not anyone is in the room. Where does this sit on the intentionality spectrum?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nobody intended the sunlight, and the sunlit room is not an action the user performs at all — a deliberate command would require someone to press something.">Intentional &mdash; someone deliberately let the light in</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Expected means the user carries out an action and anticipates the system's response — walking into a room expecting the lights to come on. Here there is no user action to expect anything from.">Expected &mdash; the room's occupants anticipate the blinds opening</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. This is the incidental end of the spectrum: the system reads a phenomenon nobody directed at it. The design question is what happens when the inference is wrong and who notices." data-bad="">Incidental &mdash; the system acts on a phenomenon nobody aimed at it</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-esd" class="section" data-track="esd">
+  <h2 class="section-title">Expected, Sensed, Desired</h2>
+  <p class="section-lead">The checkable version of the last section: write down three sets and compare them before building anything. The mismatches are where the design work is.</p>
+
+  <div class="def-box">
+    <div class="def-label">The three sets (Benford et al., Week 2 reading)</div>
+    <p><strong>Expected</strong> &mdash; actions we expect the user to carry out. <strong>Sensed</strong> &mdash; phenomena the system is able to measure. <strong>Desired</strong> &mdash; what we would like the application to do.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Relationship</th><th>What it looks like</th><th>Design response</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Expected &cap; Sensed</strong></td><td>The natural movement is measurable</td><td>This is ordinary interaction design: make the match as tight as possible in range, speed and accuracy.</td></tr>
+        <tr><td><strong>Expected, not sensed</strong></td><td>A natural movement the sensors miss</td><td>Do not treat it as dead space. Lifting a mouse to re-centre is clutching; the same gap gives rest spaces, physical preparation and follow-through, and expressive latitude.</td></tr>
+        <tr><td><strong>Sensed, not expected</strong></td><td>Something measurable that users would not naturally do</td><td>Use it as error detection (a sensor fault, a device being misused) or as a deliberately hidden advanced mode.</td></tr>
+        <tr><td><strong>Desired, but neither</strong></td><td>The application wants what the interface cannot yet ask for</td><td>The redesign signal: change the interface, change the sensors, or change the ambition.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-esd-pass"></div>
+  <script type="application/json" id="ix-esd-pass">
+  {
+    "title": "The three-set design pass",
+    "subtitle": "Six stages, in the order the framework asks you to work. Use it on any sensor-based idea before you write code.",
+    "events": [
+      { "label": "1", "title": "Enumerate expected movements", "detail": "What can and will users physically do here? Range, speed, accuracy and stability in each degree of freedom — including the less expected movements, so you know what is out there." },
+      { "label": "2", "title": "Enumerate sensed movements", "detail": "What can the sensors actually measure, across the same properties? Be specific about where sensing stops: out of range, occluded, saturated, too fast to follow." },
+      { "label": "3", "title": "Compare expected with sensed", "detail": "Sort every movement into expected and sensed, expected but not sensed, sensed but not expected, or neither. Each cell has its own design responses." },
+      { "label": "4", "title": "Enumerate desired movements", "detail": "What does this application need from the user? Desired comes from design work with people, not from the sensor datasheet." },
+      { "label": "5", "title": "Resolve the mismatches", "detail": "Constrain expected movement to what is sensed, communicate the limits, exploit the gaps for rest and performance, or extend the sensing. Name which one you chose and why." },
+      { "label": "6", "title": "Evaluate in the situation", "detail": "Check that the inference holds in the wild. The MediaCup's cues only mean something because the surrounding applications can read them and act on them." }
+    ]
+  }
+  </script>
+
+  <div class="info-card">
+    <h4>MediaCup: an everyday object as a context source</h4>
+    <p>The deck's MediaCup slide lists temperature, motion detection, communication with nearby cups, predictive machine learning and battery, and asks the three questions of any context-aware system: <em>what to infer, how to react, and how it informs design</em>. In the reading, the cup's sensors sample acceleration every 50&nbsp;ms and temperature every 3&nbsp;s, heuristics map those readings to cues &mdash; stationary, drinking, fiddling; filled up, cooled off, actual temperature &mdash; and the cues are broadcast over infrared roughly every 15&nbsp;s. The purpose is not the drink: it is colleague awareness, which is exactly the kind of low-salience, incidental output the last section described.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Users naturally rest their hand on the table between strokes, and the sensor reports nothing at all while they do. Which relationship is this, and what should the designer do?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This movement is expected — it is something users naturally do. The gap is on the sensing side, not the expected side.">Sensed but not expected &mdash; treat the stillness as a sensor fault and raise a warning</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Expected but not sensed. Treat it as a resource rather than a bug: it is a rest space, a moment of physical preparation and follow-through, and a place where the interface deliberately does not react." data-bad="">Expected but not sensed &mdash; keep it unsensed and treat it as a rest space and a moment of preparation</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Desired but neither means the application needs a movement the user would not perform and the sensors cannot read. Here the user performs it happily; only the sensing is missing.">Desired but neither expected nor sensed &mdash; change the application so the pause becomes the input</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-context" class="section" data-track="context">
+  <h2 class="section-title">Context Recognition: What the System Has to Know</h2>
+  <p class="section-lead">Incidental interaction only works if the system can recognise the situation it is in. The deck puts three definitions of context side by side and then maps which signals can be sensed and which have to be inferred.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Abowd &mdash; the minimal set</h3>
+      <p><em>Who, what, where, when, why</em>: a good minimal set of necessary context. Practical and easy to remember, and it maps directly onto the categories in the table below.</p>
+    </div>
+    <div class="col-card">
+      <h3>Dey &mdash; the operational definition</h3>
+      <p>Any information that can be used to characterise the situation of an entity, the entity being any person, place or object relevant to the interaction. Dourish adds the counterweight: context is a <em>relational</em> property, defined dynamically rather than fixed in advance.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Category</th><th>Typical signals</th><th>Sensed or inferred</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Identity</strong></td><td>Who is present; who is acting</td><td>Both &mdash; sensed from a tag or device, inferred from a voice or gait</td></tr>
+        <tr><td><strong>Spatial</strong></td><td>Location, co-location, orientation</td><td>Sensed</td></tr>
+        <tr><td><strong>Temporal</strong></td><td>Clock time, duration, schedule</td><td>Sensed (time) and inferred (schedule)</td></tr>
+        <tr><td><strong>Environmental</strong></td><td>Light, sound, temperature</td><td>Sensed</td></tr>
+        <tr><td><strong>Social</strong></td><td>Who is with whom; a group activity</td><td>Inferred from proximity and co-presence</td></tr>
+        <tr><td><strong>Resource availability</strong></td><td>Network bandwidth, power, storage</td><td>Sensed from the computing environment</td></tr>
+        <tr><td><strong>Computing</strong></td><td>Available screens, speakers, memory</td><td>Sensed</td></tr>
+        <tr><td><strong>Physiological</strong></td><td>Heart rate and other body signals &mdash; the 2002 Commonwealth Games baton flashed an electronic flame in time with its bearer's heart rate</td><td>Sensed</td></tr>
+        <tr><td><strong>Activity</strong></td><td>Driving, walking, drinking coffee</td><td>Inferred &mdash; the MediaCup's acceleration cues are the textbook case</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Chalmers' seven uses of context</strong> (the reading behind the deck's &ldquo;using context&rdquo; slide): context display, contextual augmentation, context-aware configuration, context-triggered actions, contextual mediation, contextual adaptation of the environment, and context-aware presentation. The last five are usually grouped as <em>contextual adaptation</em>. If an exam question asks what a system does with context, answer with the use, not with the sensor.
+  </div>
+
+  <div class="callout">
+    <strong>Task is not activity.</strong> A task is a practical goal &mdash; enjoying the museum, making deliveries. An activity is what the body is doing &mdash; walking, driving. Systems infer activities well and tasks badly, which is why &ldquo;the system knows what I am doing&rdquo; usually means &ldquo;the system knows how I am moving&rdquo;.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A system uses an accelerometer to decide that its wearer is walking, and dims notifications accordingly. Which pair of labels is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Raw accelerometer samples are sensed data, but the label 'walking' is not something a sensor reports — it is a conclusion drawn from the samples.">The activity is sensed, and the dimming is context</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The accelerometer reading is sensed; the activity is inferred from it; and the dimming is the system's use of that context — a context-triggered action." data-bad="">The activity is inferred from sensed signals, and the dimming is a context-triggered action</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Walking is not a task in this framework. A task is a practical goal such as making deliveries; walking is an activity, and the distinction is examinable.">Walking is the user's task, so the system is performing task recognition</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-proxemic" class="section" data-track="proxemic">
+  <h2 class="section-title">Proxemic Interaction: Distance as Context</h2>
+  <p class="section-lead">The deck closes by asking how proxemics could be used as contextual information. The reading's answer is a set of dimensions a system can measure continuously, and a set of zones that tell it how to behave.</p>
+
+  <div class="def-box">
+    <div class="def-label">Proxemics</div>
+    <p>Edward Hall's term (1966) for the ways people use interpersonal distance to mediate engagement and intimacy: closer distances lead to closer engagement. Proxemic interaction applies the same idea to the distance between people, devices and the fixed and semi-fixed features of a room.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Proxemic dimension</th><th>What it measures</th><th>Design question it answers</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Distance</strong></td><td>How far apart two entities are &mdash; continuous, or bucketed into zones</td><td>Should this surface show anything to this person at all?</td></tr>
+        <tr><td><strong>Orientation</strong></td><td>Facing toward, somewhat toward or away; a yaw angle between objects</td><td>Is the person addressing this display, or merely standing near it?</td></tr>
+        <tr><td><strong>Movement</strong></td><td>Change of distance and orientation over time, and speed</td><td>Are they approaching, passing through, or leaving?</td></tr>
+        <tr><td><strong>Identity</strong></td><td>Who the entity is and what attributes they carry</td><td>Whose media, notes or preferences belong on this surface?</td></tr>
+        <tr><td><strong>Location</strong></td><td>The physical place, including fixed and semi-fixed features</td><td>What does this room afford, and where are the thresholds?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-zones"></div>
+  <script type="application/json" id="ix-zones">
+  {
+    "title": "Hall's four proxemic zones as distances",
+    "subtitle": "The thresholds Greenberg et al. use when they adapt Hall's interpersonal zones to interaction design. Bars are drawn on a linear scale, from the near edge of each zone to the far edge.",
+    "max": 25,
+    "rows": [
+      { "name": "Intimate (less than 1.5 ft)", "value": 1.5, "display": "under 0.46 m" },
+      { "name": "Personal (1.5 to 4 ft)", "value": 4, "display": "0.46 – 1.22 m" },
+      { "name": "Social (4 to 12 ft)", "value": 12, "display": "1.22 – 3.66 m" },
+      { "name": "Public (12 to 25 ft)", "value": 25, "display": "3.66 – 7.62 m" }
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Ambient: the outermost zone</h3>
+      <p>At the far edge, the right output is barely an output: a display that can be read without being attended to, carrying information that is useful precisely because it does not interrupt. This is the calm-technology argument from Week 1, made measurable.</p>
+    </div>
+    <div class="col-card">
+      <h3>Explicit: the innermost zone</h3>
+      <p>Close up, and only then, the surface becomes personal: it identifies you, reveals your content and accepts direct manipulation. The reading cites four interaction zones &mdash; ambient display at the outermost, explicit personal interaction at the innermost &mdash; so that behaviour changes with approach instead of with a login.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why proximity is a good signal:</strong> it is continuous, it is already meaningful to people, and it does not require the user to issue anything. The design obligation that comes with it is the one from the ESD framework: decide what happens when the inference is wrong, and make sure the user can see which zone the system thinks they are in.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A lobby screen recognises a staff member's phone at 20&nbsp;feet and immediately shows their personal calendar. Which proxemic mistake is being made?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Identity answers 'whose content?', not 'how much, and to whom?'. Knowing who someone is does not license personal content at every distance.">None &mdash; once identity is known, distance stops mattering</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Twenty feet is Hall's public zone and the outermost interaction zone, where the right behaviour is ambient display at most. Personal content belongs in the innermost, explicit zone, when the person has actually approached and oriented to the surface." data-bad="">It treats the outermost zone as if it were the innermost: personal content is shown at a public distance, to anyone nearby</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Movement is one proxemic dimension among five, not a replacement for distance. Approach speed would help decide when to change behaviour, not whether distance matters.">It should have used movement instead of distance to decide what to show</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Tutorial exercise &mdash; assumption storming a proxemic unlock.</strong> The Week 2 tutorial treats every design as a stack of assumptions and sorts them by type (problem, solution, implementation) and by risk against confidence. Worked pass on the idea: <em>a door that unlocks as the right person approaches it</em>.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Problem assumptions.</strong> That carrying keys or phones is a real burden; that people approach their own door in a predictable way; that the current lock is the thing making entry slow. Plausible, but each is a statement of fact without evidence yet.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Solution assumptions.</strong> That proximity is the right signal (rather than identity alone, or a deliberate gesture); that distance alone is enough or that orientation and movement are also needed; that an unlocked door which the person does not open is safe.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Implementation assumptions.</strong> That the sensing range can be tuned to the right zone; that the lock can be driven reliably from a battery; that a false accept is detectable after the fact; that the whole thing survives a Sydney summer on a north-facing door.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Place them on the risk-by-confidence grid.</strong> High risk and low confidence is where the research goes first: a false accept (someone the system mistakes for you) is high risk and the confidence in current sensing is low, so it is the first thing to test. Low risk and high confidence &mdash; that the door has a handle &mdash; can be assumed and ignored.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Turn the survivors into research questions.</strong> &ldquo;At what distance do residents expect the door to unlock?&rdquo; is a study with a method (observation at the door, interviews, a logged prototype) and a deliverable number. That is the tutorial's research plan: every objective paired with a method and a tool, and every assumption either tested or explicitly parked.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 2 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>A device is a transducer; a technique is input plus output</h4>
+        <p>Input is sensed information about the environment; an input device senses physical properties of people, places or things; an interaction technique is everything that lets the user accomplish a low-level task.</p>
+        <div class="flip-hint">Vocabulary</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Six low-level tasks, and the device changes their shape</h4>
+        <p>Selection, position, orient, path, quantify, text. Position is one task on a mouse and two primitives (quantify X, quantify Y) on a keyboard &mdash; the same task, a different transducer.</p>
+        <div class="flip-hint">Decomposition</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Properties, not rankings</h4>
+        <p>Property sensed (position, motion, force, angle/torque), number of dimensions, direct vs indirect, absolute vs relative. The property sensed dictates the transfer function: position-to-position, velocity-to-velocity, force-to-velocity.</p>
+        <div class="flip-hint">Device properties</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Implicit interaction is a spectrum, and the cost of error is physical</h4>
+        <p>Intentional, expected, incidental. Write the expected action, the desired outcome and the sensed phenomena, then compare the three sets: expected but not sensed is a resource, sensed but not expected is a warning or a hidden mode.</p>
+        <div class="flip-hint">Implicit and ESD</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recall"></div>
+  <script type="application/json" id="ix-recall">
+  {
+    "title": "Six terms to recall before the exam",
+    "subtitle": "Say the definition out loud, then flip the card to check yourself.",
+    "cards": [
+      { "front": "Input device", "back": "A transducer that senses physical properties of people, places, or things.", "hint": "Definition" },
+      { "front": "Interaction technique", "back": "All hardware and software elements that provide a way for the user to accomplish a low-level task — input plus output.", "hint": "Definition" },
+      { "front": "Mode", "back": "A context where user actions (keypresses, mouse clicks etc.) are treated in a specific way.", "hint": "Structure" },
+      { "front": "Chunking", "back": "The integration of multiple degrees of freedom to support higher-level tasks.", "hint": "Structure" },
+      { "front": "Implicit interaction", "back": "An action performed by the user that is not primarily aimed at interacting with a computerised system, but which that system understands as input.", "hint": "Schmidt" },
+      { "front": "Expected, sensed, desired", "back": "What users naturally do, what the system can measure, and what the application needs. The mismatches between the three sets are the design work.", "hint": "Framework" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's vocabulary into exact definitions, a design-space taxonomy, the models behind pointing (Fitts, Hick, steering, CD gain) and a worked classification routine. Then attempt the Quiz Hub and the Flashcards for Week 2.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you define input device, interaction technique and mode; name the six low-level tasks; and explain why a mouse is relative while a tablet is absolute?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Bring one interaction idea and its assumption stack: problem, solution and implementation assumptions, each placed on the risk-by-confidence grid and paired with the method that would test it.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

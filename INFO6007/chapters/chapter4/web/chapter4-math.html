@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 4: Cost Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter4-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 foundations for INFO6007: the exact definitions, the WBS-to-cost and critical-path arithmetic, estimating formulas including three-point PERT, the budget stack, the full earned value formulas with worked examples, and the exam answer template.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 4: Cost Management">
+<meta property="og:description" content="Week 4 foundations for INFO6007: cost and EVM definitions, metric formulas, worked three-point, critical-path, baseline and earned-value examples, and an exam answer template.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter4-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 4 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+  </ul>
+  <div class="toc-group">Arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-wbs" class="toc-link">WBS, cost roll-up and the critical path</a></li>
+    <li><a href="#sec-m-estimating" class="toc-link">Estimating formulas</a></li>
+    <li><a href="#sec-m-baseline" class="toc-link">The budget stack</a></li>
+    <li><a href="#sec-m-evm" class="toc-link">Earned value, fully worked</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">The exam answer template</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial self-assessment</a></li>
+  </ul>
+  <a href="chapter4-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO6007 &mdash; Week 4 supplement</p>
+  <h1>Foundations: the cost arithmetic behind Week 4</h1>
+  <p class="hero-desc">Week 4 is the quantitative half of the semester. This page pins down the definitions that must be word-perfect, then works the numbers: rolling a WBS up into a bottom-up estimate, three-point (PERT) estimating, the budget stack, the critical path that drives duration-dependent cost, and the full earned value chain from PV, EV and AC through to EAC and the variance at completion.</p>
+  <div class="chip-list">
+    <span>Every formula worked with lecture figures</span>
+    <span>Critical path and EVM animated</span>
+    <span>Exam answer template at the end</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Cost questions are marked on wording as much as on arithmetic. Each definition below is written so that the consequence is included, because the consequence is what the marker is looking for.</p>
+
+  <div class="def-box">
+    <div class="def-label">Cost</div>
+    <p>A resource sacrificed or foregone to achieve a specific objective, or something given up in exchange. Costs are usually measured in monetary units such as dollars.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Project cost management</div>
+    <p>The processes involved in planning, estimating, budgeting, financing, funding, managing and controlling costs so that the project can be completed within the approved budget.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Cost baseline</div>
+    <p>The <strong>approved, time-phased budget</strong> for the project, built by summing estimated costs by work package and scheduling them over time. It includes direct costs, indirect costs and contingency reserves, and it is the benchmark against which actual performance is measured. Because it is time-phased, the planned spend to any date is the <strong>Planned Value</strong>.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Contingency reserve vs management reserve</div>
+    <p>A <strong>contingency reserve</strong> allows for future situations that <em>may be partially planned for</em> and is included <em>inside</em> the project cost baseline. A <strong>management reserve</strong> allows for future situations that are <em>unpredictable</em> and sits <em>outside</em> the cost baseline, inside the total project budget.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Planned Value, Earned Value, Actual Cost</div>
+    <p><strong>PV</strong> &mdash; the budgeted cost of work <em>planned</em> to be done by a certain date. <strong>EV</strong> &mdash; the budgeted cost of work <em>actually completed</em> by a certain date; the value of the physical work done. <strong>AC</strong> &mdash; the <em>real expenditure</em> for the work performed, including direct and indirect costs.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Cost baseline</td><td>Approved <em>and</em> time-phased; includes contingency</td><td>Calling the whole budget the baseline, management reserve included</td></tr>
+        <tr><td>Contingency reserve</td><td>Identified, partially planned risk; inside the baseline</td><td>Treating it as spare money for any new request</td></tr>
+        <tr><td>Management reserve</td><td>Unpredictable risk; outside the baseline</td><td>Assuming the project manager may spend it without approval</td></tr>
+        <tr><td>Earned Value</td><td>Budgeted cost of work <em>completed</em></td><td>Confusing EV with the money received or invoiced</td></tr>
+        <tr><td>Actual Cost</td><td>Real expenditure for work performed</td><td>Using committed cost (purchase orders raised) as AC</td></tr>
+        <tr><td>Schedule Variance</td><td>Expressed in money: EV &minus; PV</td><td>Saying SV is measured in days or weeks</td></tr>
+        <tr><td>EAC</td><td>A forecast, with the assumption stated</td><td>Quoting BAC ÷ CPI without saying what you assume about the remaining work</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture writes these relationships in prose and in worked examples. The symbols below are a revision aid introduced here so the arithmetic can be written compactly; they are standard earned value notation rather than lecture-specific notation.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(PV\)</div><div class="sym-cell">planned value</div><div class="sym-cell">Budgeted cost of the work scheduled by now &mdash; the time-phased baseline up to today</div>
+    <div class="sym-cell">\(EV\)</div><div class="sym-cell">earned value</div><div class="sym-cell">Budgeted cost of the work actually completed: \(EV = \%\,\text{complete} \times BAC\)</div>
+    <div class="sym-cell">\(AC\)</div><div class="sym-cell">actual cost</div><div class="sym-cell">Real expenditure on the work performed, direct plus indirect</div>
+    <div class="sym-cell">\(BAC\)</div><div class="sym-cell">budget at completion</div><div class="sym-cell">Total planned budget from the cost baseline</div>
+    <div class="sym-cell">\(CV = EV - AC\)</div><div class="sym-cell">cost variance</div><div class="sym-cell">Positive &rarr; under budget; negative &rarr; over budget</div>
+    <div class="sym-cell">\(SV = EV - PV\)</div><div class="sym-cell">schedule variance</div><div class="sym-cell">Positive &rarr; ahead of schedule; negative &rarr; behind (in dollars of work)</div>
+    <div class="sym-cell">\(CPI = EV/AC\)</div><div class="sym-cell">cost performance index</div><div class="sym-cell">Value earned per dollar spent; below 1 is an overrun</div>
+    <div class="sym-cell">\(SPI = EV/PV\)</div><div class="sym-cell">schedule performance index</div><div class="sym-cell">Progress rate as a fraction of plan; below 1 is behind</div>
+    <div class="sym-cell">\(EAC\)</div><div class="sym-cell">estimate at completion</div><div class="sym-cell">Forecast final cost under a stated assumption about the remaining work</div>
+    <div class="sym-cell">\(ETC = EAC - AC\)</div><div class="sym-cell">estimate to complete</div><div class="sym-cell">Money still required to finish</div>
+    <div class="sym-cell">\(VAC = BAC - EAC\)</div><div class="sym-cell">variance at completion</div><div class="sym-cell">Forecast overrun (negative) or underspend (positive) at the end</div>
+    <div class="sym-cell">\(O, M, P\)</div><div class="sym-cell">optimistic, most likely, pessimistic</div><div class="sym-cell">The three inputs to three-point (PERT) estimating</div>
+    <div class="sym-cell">\(R\)</div><div class="sym-cell">hourly or unit rate</div><div class="sym-cell">The rate in the cost management plan that turns effort into money</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about the cost baseline is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The management reserve is deliberately excluded from the cost baseline; it is added on top to give the total project budget.">It is the total project budget, including the management reserve</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The cost baseline is the approved, time-phased budget including direct costs, indirect costs and contingency reserves — and it is what PV is measured against." data-bad="">It is the approved, time-phased budget including contingency reserves, and it defines Planned Value</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Cost estimates alone are not a baseline: without contingency and without time-phasing there is nothing to measure performance against.">It is the sum of the work-package cost estimates before reserves are added</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-wbs">
+  <h2 class="section-title">WBS, cost roll-up and the critical path</h2>
+  <p class="section-lead">Cost management sits on top of Week 3's work. The WBS gives you the units to estimate, and the critical path tells you which durations actually drive the schedule &mdash; and therefore which delays drive cost.</p>
+
+  <div class="theorem-box">
+    <h3>1. The critical path is the longest path, not the shortest</h3>
+    <p>For each path of dependent activities, add the durations. The path with the longest total duration is the critical path; activities on it normally have zero float, so they cannot be delayed without delaying the project.</p>
+    <p>The lecture's online booking website has two paths:</p>
+    \[ \text{Requirements} \to \text{Interface design} \to \text{Development} \to \text{Testing and launch} = 13\ \text{days} \]
+    \[ \text{Requirements} \to \text{Hosting setup} \to \text{Content preparation} \to \text{Testing and launch} = 12\ \text{days} \]
+    <p style="margin-top:0.6rem;">The first path is critical. The second has \(13 - 12 = 1\) day of float, so it could slip by one day without moving the launch date.</p>
+  </div>
+
+  <div id="ix-critical-path"></div>
+
+  <div class="theorem-box">
+    <h3>2. The tutorial's activity-on-node chain</h3>
+    <p>Requirements (2 weeks) &rarr; Design (3) &rarr; Development (6) &rarr; Testing (4) &rarr; Deployment (2). With a single chain every activity is on the critical path, so the project duration is the sum:</p>
+    \[ D = 2 + 3 + 6 + 4 + 2 = 17\ \text{weeks} \]
+    <p>If development takes 8 weeks instead of 6, the duration becomes:</p>
+    \[ D' = 2 + 3 + 8 + 4 + 2 = 19\ \text{weeks} \]
+    <p style="margin-top:0.6rem;">The critical path is unchanged &mdash; with one chain there is nothing else it could be &mdash; and the project finishes two weeks later.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why this belongs on a cost page.</strong> A two-week slip on the critical path is not only a schedule event. If six people work on that path at 40 hours a week and the plan's rate is $60/hour, the extra direct cost is \(2 \times 6 \times 40 \times \$60 = \$28{,}800\) before any re-planning or penalty. Duration and cost are the same decision seen from two sides.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A network has two paths: path A totals 17 weeks and path B totals 14 weeks. Development on path B slips by 2 weeks. What happens to the project duration?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A 2-week slip takes path B to 16 weeks, which is still shorter than the 17-week critical path, so the project end date does not move.">The project duration increases by 2 weeks</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Path B now totals 16 weeks, still inside the 17-week critical path, so it consumes float rather than extending the project." data-bad="">The project duration is unchanged, because path B still has float</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A slip of 3 weeks or more would take path B past 17 weeks and change the critical path; at 2 weeks the float absorbs it.">Path B becomes the new critical path</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; rolling a WBS up into a bottom-up estimate.</strong> The Week 4 tutorial builds a three-level WBS for an HR management system. Give each work package an effort and a rate from the cost management plan, then roll the numbers up.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Write the WBS by deliverable.</strong> Requirements (gathering, validation), Design (architecture, UI/UX), Development (front-end, back-end, integration), Testing (unit, system, UAT), Deployment (training and documentation, production deployment). Costs are assigned at the work-package level, which is what makes a bottom-up estimate accurate.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p><strong>Estimate effort and multiply by the rate.</strong> Using $60/hour for build work and $50/hour for test and documentation work:</p>
+          <div class="table-responsive">
+            <table class="styled-table">
+              <thead><tr><th>Work package</th><th>Effort</th><th>Rate</th><th>Cost</th></tr></thead>
+              <tbody>
+                <tr><td>1.1 Requirement gathering</td><td>60 h</td><td>$60</td><td>$3,600</td></tr>
+                <tr><td>1.2 Requirement validation</td><td>40 h</td><td>$60</td><td>$2,400</td></tr>
+                <tr><td>2.1 System architecture design</td><td>80 h</td><td>$60</td><td>$4,800</td></tr>
+                <tr><td>2.2 UI/UX design</td><td>120 h</td><td>$60</td><td>$7,200</td></tr>
+                <tr><td>3.1 Front-end development</td><td>400 h</td><td>$60</td><td>$24,000</td></tr>
+                <tr><td>3.2 Back-end development</td><td>480 h</td><td>$60</td><td>$28,800</td></tr>
+                <tr><td>3.3 Integration</td><td>200 h</td><td>$60</td><td>$12,000</td></tr>
+                <tr><td>4.1 Unit testing</td><td>120 h</td><td>$50</td><td>$6,000</td></tr>
+                <tr><td>4.2 System testing</td><td>160 h</td><td>$50</td><td>$8,000</td></tr>
+                <tr><td>4.3 User acceptance testing</td><td>100 h</td><td>$50</td><td>$5,000</td></tr>
+                <tr><td>5.1 Training &amp; documentation</td><td>90 h</td><td>$50</td><td>$4,500</td></tr>
+                <tr><td>5.2 Production deployment</td><td>60 h</td><td>$60</td><td>$3,600</td></tr>
+                <tr><td><strong>Subtotal</strong></td><td>&mdash;</td><td>&mdash;</td><td><strong>$109,900</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Add contingency for identified risk.</strong> A 10% contingency on the subtotal gives \(0.10 \times \$109{,}900 = \$10{,}990\), so the cost baseline would be <strong>$120,890</strong>. A management reserve, if the sponsor sets one, is added on top of that and is not part of the baseline.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Say what the number is for.</strong> The baseline is now the benchmark: PV is this amount scheduled across the project timeline, and every future CV, SV, CPI and SPI calculation compares performance against it rather than against the original guess.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-estimating">
+  <h2 class="section-title">Estimating formulas</h2>
+  <p class="section-lead">Three relationships cover almost every estimating question: effort times rate, a weighted three-point average, and a benchmark rate applied to a count.</p>
+
+  <div class="theorem-box">
+    <h3>1. Bottom-up: effort &times; rate, then roll up</h3>
+    <p>Each work package cost is the effort multiplied by the rate in the cost management plan, and the estimate is their sum:</p>
+    \[ C = \sum_{i=1}^{n} \left( e_i \times r_i \right) \]
+    <p>The lecture's mobile banking app example: \(120 \times \$60 = \$7{,}200\) for login, \(300 \times \$60 = \$18{,}000\) for payments, \(200 \times \$50 = \$10{,}000\) for testing and \(\$12{,}000\) for a year of cloud hosting.</p>
+    \[ C = 7{,}200 + 18{,}000 + 10{,}000 + 12{,}000 = \$47{,}200 \]
+    \[ \text{Contingency} = 0.10 \times 47{,}200 = \$4{,}720 \qquad \text{Baseline} = \$51{,}920 \]
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Three-point (PERT) estimating</h3>
+    <p>Weight the most likely value four times, and give the extremes one weight each:</p>
+    \[ E = \frac{O + 4M + P}{6} \]
+    <p>For the lecture's cloud infrastructure setup with \(O = \$8{,}000\), \(M = \$12{,}000\) and \(P = \$20{,}000\):</p>
+    \[ E = \frac{8{,}000 + 4(12{,}000) + 20{,}000}{6} = \frac{76{,}000}{6} = \$12{,}666.67 \approx \$12{,}667 \]
+    <p style="margin-top:0.6rem;">A standard extension (beyond the deck's example, but useful for showing the spread) is the activity standard deviation \(\sigma = (P - O)/6\), which here is \((20{,}000 - 8{,}000)/6 = \$2{,}000\). The point estimate is $12,667 with roughly $2,000 of one-sigma uncertainty around it &mdash; which is the honest way to quote a PERT result.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Parametric and benchmarking relations</h3>
+    <p>A parametric estimate applies a rate to a measurable driver, and benchmarking supplies that rate from history or industry averages:</p>
+    \[ C = \text{driver} \times \text{rate per unit} \]
+    <p>The lecture's benchmarks: \(\$150\)&ndash;\(\$250\) per user migrated to cloud services, a cost per function point or story point, and \(\$40{,}000\)&ndash;\(\$60{,}000\) for a two-week agile sprint.</p>
+    <p style="margin-top:0.6rem;">Applied to the digital licence project's rollout, which the deck sizes at 18,500+ trial users:</p>
+    \[ 18{,}500 \times \$150 = \$2{,}775{,}000 \qquad 18{,}500 \times \$250 = \$4{,}625{,}000 \]
+    <p style="margin-top:0.6rem;">That range is not an estimate to put in a baseline. It is a sanity check: an estimate outside \(\$2.8\text{m}\)&ndash;\(\$4.6\text{m}\) for that migration needs a written explanation.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-technique"></div>
+  <script type="application/json" id="ix-m-technique">
+  {
+    "title": "Match the estimating technique to what it needs",
+    "subtitle": "Click a technique on the left, then the condition that makes it work on the right.",
+    "pairs": [
+      ["Analogous estimating", "A comparable past project whose actual cost you can reuse"],
+      ["Parametric estimating", "A statistical or quantitative model, such as cost per user or per story point"],
+      ["Bottom-up estimating", "A stable WBS so that every work package can be estimated, then rolled up"],
+      ["Three-point (PERT) estimating", "Optimistic, most likely and pessimistic values for work with real uncertainty"],
+      ["Expert judgement", "A domain expert or consultant who has done this kind of work before"],
+      ["Rolling-wave estimating", "Detailed estimates only for the near term, refined as the work approaches"],
+      ["Benchmarking", "Historical or industry averages that anchor the estimate in a realistic range"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A cloud setup is estimated at optimistic $8,000, most likely $12,000 and pessimistic $20,000. What is the three-point estimate?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the simple average of the three values, which ignores the fourfold weight the most likely value carries.">$13,333</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. E = (O + 4M + P) ÷ 6 = (8,000 + 48,000 + 20,000) ÷ 6 = $12,667." data-bad="">$12,667</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the most likely value itself. Three-point estimating deliberately moves the estimate off M to reflect the pessimistic tail.">$12,000</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-baseline">
+  <h2 class="section-title">The budget stack</h2>
+  <p class="section-lead">Three lines of arithmetic turn estimates into an authorised budget. Getting the boundary between contingency and management reserve right is the single most examined detail of the week.</p>
+
+  <div class="theorem-box">
+    <h3>1. From estimates to total budget</h3>
+    \[ \text{Cost baseline} = \text{cost estimates} + \text{contingency reserve} \]
+    \[ \text{Total project budget} = \text{cost baseline} + \text{management reserve} \]
+    <p>Reserves are normally expressed as a percentage of the estimate base, so \(\text{contingency} = p_c \times \text{estimates}\) and \(\text{management reserve} = p_m \times \text{estimates}\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Worked on the student portal case study</h3>
+    <p>The lecture's case: a six-month online student portal, planned cost of $180,000 by month, with a 10% contingency reserve and a 5% management reserve.</p>
+    \[ \text{Contingency} = 0.10 \times 180{,}000 = \$18{,}000 \qquad \text{Cost baseline} = \$198{,}000 \]
+    \[ \text{Management reserve} = 0.05 \times 180{,}000 = \$9{,}000 \qquad \text{Total budget} = \$207{,}000 \]
+    <p style="margin-top:0.6rem;">Note the exam convention. When a question gives you a &ldquo;total budget&rdquo; and then a monthly plan that adds up to that same number, the monthly plan is being used as the estimate base &mdash; so BAC for the earned value arithmetic is $180,000, and the reserves are stacked on top of it. State your reading in the answer; examiners mark the reasoning as well as the number.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Time-phasing creates Planned Value</h3>
+    <p>Spreading the baseline across the schedule is what turns a total into a PV curve. Cumulative planned cost to the end of month \(k\) is:</p>
+    \[ PV_k = \sum_{i=1}^{k} \text{planned cost in month } i \]
+    <p>For the student portal: \(PV_1 = \$20{,}000\), \(PV_2 = \$55{,}000\), \(PV_3 = \$85{,}000\), \(PV_4 = \$120{,}000\), \(PV_5 = \$150{,}000\), \(PV_6 = \$180{,}000\).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Month</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Planned cost</td><td>$20,000</td><td>$35,000</td><td>$30,000</td><td>$35,000</td><td>$30,000</td><td>$30,000</td><td><strong>$180,000</strong></td></tr>
+        <tr><td>Cumulative PV</td><td>$20,000</td><td>$55,000</td><td>$85,000</td><td>$120,000</td><td>$150,000</td><td>$180,000</td><td>&mdash;</td></tr>
+        <tr><td>Cumulative PV with 10% contingency</td><td>$22,000</td><td>$60,500</td><td>$93,500</td><td>$132,000</td><td>$165,000</td><td>$198,000</td><td>&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Estimates total $250,000. Contingency is set at 8% and management reserve at 4%. What is the cost baseline?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Baseline = $250,000 + (0.08 × $250,000) = $250,000 + $20,000 = $270,000. The management reserve of $10,000 is added on top to give a $280,000 total budget." data-bad="">$270,000</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That figure includes the management reserve, which sits outside the cost baseline.">$280,000</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the estimate base before any reserve is added; the baseline must include the contingency reserve.">$250,000</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; the full student portal case.</strong> Six-month portal, $180,000 planned, contingency 10%, management reserve 5%. At the end of Month 3 the course registration module is fully done and exam scheduling is 50% complete; EV is $80,000 and AC is $85,000. PV is the sum of the first three months' planned costs. Calculate CV, SV, CPI, SPI and EAC (assuming CPI continues), then interpret.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Establish the three inputs.</strong> \(PV = 20{,}000 + 35{,}000 + 30{,}000 = \$85{,}000\). \(EV = \$80{,}000\) (given). \(AC = \$85{,}000\) (given). \(BAC = \$180{,}000\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Variances.</strong> \(CV = EV - AC = 80{,}000 - 85{,}000 = -\$5{,}000\): over budget by $5,000. \(SV = EV - PV = 80{,}000 - 85{,}000 = -\$5{,}000\): behind schedule by $5,000 worth of work.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Indexes.</strong> \(CPI = EV/AC = 80{,}000/85{,}000 = 0.9412\): about 94 cents of value per dollar spent. \(SPI = EV/PV = 80{,}000/85{,}000 = 0.9412\): progressing at about 94% of the planned rate.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Forecast.</strong> With current cost performance continuing, \(EAC = BAC/CPI = 180{,}000/0.9412 = \$191{,}250\). So \(VAC = BAC - EAC = -\$11{,}250\), an overrun of about $11,250, and \(ETC = EAC - AC = 191{,}250 - 85{,}000 = \$106{,}250\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Interpret both dimensions together.</strong> The project is marginally over budget and marginally behind schedule, and the two are consistent with each other: the same under-delivery that shows up in SV is showing up as unrecovered cost in CV.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Check the reserves.</strong> Spend to date is $85,000 of a $198,000 baseline including contingency &mdash; about 43%. The 10% contingency ($18,000) is still largely intact, and the forecast overrun of $11,250 is inside it, so no management reserve release is needed <em>yet</em>. If CPI falls further, that changes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">7</div>
+        <div class="step-body"><p><strong>State the alternative reading.</strong> If the examiner intends BAC to include contingency, then \(EAC = 198{,}000/0.9412 = \$210{,}375\). The interpretation does not change; only the size of the overrun does. Show the assumption you used and you will not lose the mark either way.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-evm">
+  <h2 class="section-title">Earned value, fully worked</h2>
+  <p class="section-lead">Every earned value question is the same four steps: identify PV, EV and AC; subtract for variances; divide for indexes; then forecast with a stated assumption. Here is the whole chain on the lecture's figures.</p>
+
+  <div class="theorem-box">
+    <h3>1. The formulas</h3>
+    \[ EV = \%\,\text{complete} \times BAC \qquad PV = \%\,\text{planned} \times BAC \]
+    \[ CV = EV - AC \qquad SV = EV - PV \]
+    \[ CPI = \frac{EV}{AC} \qquad SPI = \frac{EV}{PV} \]
+    \[ EAC = \frac{BAC}{CPI} \qquad EAC = AC + (BAC - EV) \qquad EAC = AC + \frac{BAC - EV}{CPI \times SPI} \]
+    \[ ETC = EAC - AC \qquad VAC = BAC - EAC \]
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Worked: an IT project with BAC $100,000 over six months</h3>
+    <p>At the end of month 2 the team has completed 30% of the work and spent $40,000, while the plan says 35% should be complete.</p>
+    \[ BAC = \$100{,}000 \qquad AC = \$40{,}000 \]
+    \[ EV = 0.30 \times 100{,}000 = \$30{,}000 \qquad PV = 0.35 \times 100{,}000 = \$35{,}000 \]
+    \[ CV = 30{,}000 - 40{,}000 = -\$10{,}000 \quad \text{(over budget by } \$10{,}000\text{)} \]
+    \[ SV = 30{,}000 - 35{,}000 = -\$5{,}000 \quad \text{(behind by } \$5{,}000 \text{ of work)} \]
+    \[ CPI = \frac{30{,}000}{40{,}000} = 0.75 \qquad SPI = \frac{30{,}000}{35{,}000} = 0.857 \]
+    \[ EAC = \frac{100{,}000}{0.75} = \$133{,}333 \qquad VAC = 100{,}000 - 133{,}333 = -\$33{,}333 \]
+    <p style="margin-top:0.6rem;">Reading: for every $1 spent the project earns only $0.75 of value, and it is progressing at 85.7% of the planned rate. If nothing changes, it finishes about $33,333 over budget.</p>
+  </div>
+
+  <div id="ix-evm-bars"></div>
+
+  <div class="theorem-box">
+    <h3>3. Choosing the EAC formula is the exam question</h3>
+    <p>All three formulas are correct; they encode different beliefs about the remaining work.</p>
+    <div class="table-responsive">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Assumption</th><th>Formula</th><th>Worked on PV $150k, EV $130k, AC $120k, BAC $520k</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Current cost performance continues</td><td>\(BAC/CPI\)</td><td>\(520{,}000/1.0833 = \$480{,}000\)</td></tr>
+          <tr><td>The variance was a one-off; remaining work follows the plan</td><td>\(AC + (BAC - EV)\)</td><td>\(120{,}000 + 390{,}000 = \$510{,}000\)</td></tr>
+          <tr><td>Both cost and schedule performance persist</td><td>\(AC + \dfrac{BAC - EV}{CPI \times SPI}\)</td><td>\(120{,}000 + \dfrac{390{,}000}{1.0833 \times 0.8667} = \$535{,}385\)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.6rem;">The lecture's own conclusion for this data set is the CPI case: with \(CPI = 1.0833\), \(EAC = \$480{,}000\), which is \(520{,}000 - 480{,}000 = \$40{,}000\) below the original budget, on the assumption that the current level of cost efficiency continues.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A project reports PV $200,000, EV $180,000 and AC $150,000. What are CV, SV and CPI?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. CV = 180,000 − 150,000 = +$30,000 (under budget); SV = 180,000 − 200,000 = −$20,000 (behind schedule); CPI = 180,000 ÷ 150,000 = 1.20." data-bad="">CV +$30,000; SV −$20,000; CPI 1.20</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The variances have been swapped. Cost variance compares EV with AC; schedule variance compares EV with PV.">CV −$20,000; SV +$30,000; CPI 0.83</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="CPI is EV ÷ AC, not AC ÷ EV. Dividing the wrong way round turns an underspend into an apparent overrun.">CV +$30,000; SV −$20,000; CPI 0.83</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">The exam answer template</h2>
+  <p class="section-lead">Earned value questions are long-answer questions in disguise: the arithmetic is small, and the marks are in the sequence and the interpretation. Run this order every time.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the cost-analysis answer",
+    "subtitle": "Rebuild the sequence that turns a scenario into a full-mark earned value answer.",
+    "steps": [
+      "Write down the given values and label them PV, EV, AC and BAC",
+      "Convert any percentage complete into EV and PV using BAC",
+      "Compute CV and SV, and state what each sign means",
+      "Compute CPI and SPI, and state what each ratio means",
+      "Choose an EAC formula, state the assumption, and compute EAC and VAC",
+      "Recommend an action: reforecast, descope, or release a reserve"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>If the question says&hellip;</th><th>Reach for</th><th>Watch out for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;Are we over or under budget?&rdquo;</td><td>CV = EV &minus; AC, then CPI = EV &divide; AC</td><td>Sign convention: negative CV is bad for cost</td></tr>
+        <tr><td>&ldquo;Are we ahead of or behind schedule?&rdquo;</td><td>SV = EV &minus; PV, then SPI = EV &divide; PV</td><td>SV is in dollars of work, not days</td></tr>
+        <tr><td>&ldquo;Given 30% complete and 35% planned&rdquo;</td><td>Multiply both percentages by BAC to get EV and PV</td><td>Multiplying the percentage by the wrong baseline</td></tr>
+        <tr><td>&ldquo;What will it cost at the end?&rdquo;</td><td>Pick the EAC formula that matches the stated expectation</td><td>Quoting a formula without an assumption</td></tr>
+        <tr><td>&ldquo;What is left to spend?&rdquo;</td><td>ETC = EAC &minus; AC</td><td>Reporting remaining budget instead of remaining work</td></tr>
+        <tr><td>&ldquo;Should the sponsor worry?&rdquo;</td><td>VAC = BAC &minus; EAC, plus the reserve position</td><td>Answering yes or no without the number behind it</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial self-assessment</h2>
+  <p class="section-lead">The Week 4 tutorial is a scope-and-schedule session that every part of can be re-read through a cost lens: unrequested features become unrequested cost, the WBS becomes the estimating unit, and the critical path becomes the cost driver.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Part A &mdash; scope creep risks</h3>
+      <p>Three risks of accepting new features at a fixed budget: <strong>delivery delays</strong> as the extra features extend development, <strong>budget overruns</strong> as unplanned work consumes resources and testing, and <strong>reduced quality</strong> as the same team absorbs more work in the same time.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Part A &mdash; two strategies</h3>
+      <p>A <strong>formal change control process</strong> so every new request is evaluated for its impact on time, cost and resources, and a <strong>clear scope statement with validation</strong> so inclusions and exclusions are agreed early and signed off at milestones.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Part B &mdash; the WBS</h3>
+      <p>Three levels for the HR system: Requirements (gathering, validation), Design (architecture, UI/UX), Development (front-end, back-end, integration), Testing (unit, system, UAT), Deployment (training and documentation, production deployment).</p>
+    </div>
+    <div class="glance-card">
+      <h3>Part C &mdash; dependencies</h3>
+      <p>Requirements (2) &rarr; Design (3) &rarr; Development (6) &rarr; Testing (4) &rarr; Deployment (2) = <strong>17 weeks</strong>. With development at 8 weeks the duration becomes <strong>19 weeks</strong> and the critical path is unchanged.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; the cost of the tutorial's scope-creep request.</strong> The client asks for a mobile app, payroll analytics and multilingual support with <em>no change to budget or timeline</em>. Answer the question the tutorial actually asks, but in the language of Week 4.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Quantify before you negotiate.</strong> The three features are three new work packages. At the rates in the cost management plan, an illustrative costing is: mobile app 200 h &times; $60 = $12,000; payroll analytics 150 h &times; $60 = $9,000; multilingual support 120 h &times; $60 = $7,200; integration and regression testing 150 h &times; $50 = $7,500. Subtotal <strong>$35,700</strong>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Attach the risk cost, not just the build cost.</strong> Integration risk is now identified, so contingency is legitimate: 10% of $35,700 = $3,570, for <strong>$39,270</strong>. The management reserve is not available for this: the request is known, not unpredictable.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Trace it to the schedule.</strong> The work is additive and lands on development and testing, which are on the critical path. Two extra weeks of a six-person team at 40 hours and $60/hour is \(2 \times 6 \times 40 \times \$60 = \$28{,}800\) of direct labour before the new features are built at all &mdash; which is why accepting scope at a fixed deadline costs more than the feature list suggests.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Apply the two strategies.</strong> Send the request through formal change control (impact on time, cost, resources, and a decision), and validate scope at the next milestone against a scope statement that named these features as exclusions.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Offer the three honest options.</strong> Sponsor funds the change and the baseline is re-approved; the team delivers the same value by descoping lower-priority items; or the features wait for a later release. Absorbing them silently converts identified contingency into unidentified scope, which is precisely how the overruns in the lecture's case studies began.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: formulas and what they commit you to",
+    "subtitle": "Cover the answer, say it out loud, then flip.",
+    "cards": [
+      { "front": "Cost baseline", "back": "Approved, time-phased budget: cost estimates + contingency reserve. It defines PV and is the benchmark for all variance analysis.", "hint": "Definition" },
+      { "front": "Contingency vs management reserve", "back": "Contingency covers identified, partially planned risk and sits inside the baseline. Management reserve covers unpredictable risk and sits outside the baseline, inside the total budget.", "hint": "Reserves" },
+      { "front": "Three-point (PERT)", "back": "E = (O + 4M + P) ÷ 6. For O $8,000, M $12,000, P $20,000 the estimate is $12,667.", "hint": "Estimating" },
+      { "front": "Earned value core", "back": "EV = % complete × BAC; PV = % planned × BAC. CV = EV − AC and SV = EV − PV; CPI = EV ÷ AC and SPI = EV ÷ PV.", "hint": "EVM" },
+      { "front": "EAC under three assumptions", "back": "BAC ÷ CPI when the cost trend continues; AC + (BAC − EV) when the variance was a one-off; AC + (BAC − EV) ÷ (CPI × SPI) when both trends persist.", "hint": "Forecast" },
+      { "front": "Critical path", "back": "The longest path of dependent activities; activities on it normally have zero float, so their delays move the project end date — and therefore the cost.", "hint": "Schedule link" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide covers the four processes, the cost management plan, traditional versus agile budgeting and the case evidence; this page covers the definitions and the arithmetic. Then attempt the Quiz Hub and the Flashcards for Week 4.
+  </div>
+</section>
+
+</div>
+
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

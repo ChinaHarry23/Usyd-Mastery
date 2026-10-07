@@ -49,6 +49,16 @@
     apply();
   }
 
+  function syncLangAttr() {
+    try {
+      document.documentElement.setAttribute("lang", lang === "zh" ? "zh-CN" : "en");
+    } catch (e) {}
+  }
+
+  /* Announce the language change to assistive technology. Without this the
+     Chinese content keeps the page's lang="en", so a screen reader reads it
+     with English pronunciation rules. The portal toggle already did this;
+     the hub and chapter toggles did not. */
   function toggle() {
     set(lang === "en" ? "zh" : "en");
   }
@@ -208,6 +218,7 @@
   /* ── main apply ──────────────────────────────────────── */
 
   function apply() {
+    syncLangAttr();
     applySectionTranslations();
     applyDataI18n();
     applySelectorArrays();
@@ -241,6 +252,9 @@
 
   ensureButton();
   updateButton();
+  // A returning Chinese reader should get lang="zh-CN" on first paint, not
+  // only after pressing the toggle.
+  syncLangAttr();
 
   if (lang === "zh") {
     if (document.readyState === "complete") {

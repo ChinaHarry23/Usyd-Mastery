@@ -54,7 +54,14 @@
       );
     }
 
+    function syncLangAttr() {
+      try {
+        document.documentElement.setAttribute("lang", lang === "zh" ? "zh-CN" : "en");
+      } catch (e) {}
+    }
+
     function apply() {
+      syncLangAttr();
       document.querySelectorAll("[data-i18n]").forEach(function(el) {
         var key = el.getAttribute("data-i18n");
         if (!saved[key]) saved[key] = el.innerHTML;
@@ -82,6 +89,17 @@
       return n;
     }
 
+    /*
+     * Weighted chapter mastery, renormalised over the dimensions that exist.
+     *
+     * A chapter with no tutorial self-assessments (or no quick checks) has no
+     * denominator for that dimension. Scoring it as 0 would cap the chapter
+     * permanently below 100% — e.g. a chapter with no `.solution-toggle` could
+     * never pass 70% however well it was studied. Dimensions with a zero
+     * denominator are dropped and the remaining weights renormalised to 1.
+     *
+     * The quiz dimension always participates: its denominator is 0-100.
+     */
     function chapterPercent(progress, ch) {
       var key  = "ch" + ch;
       var data = progress[key] || {};
@@ -93,11 +111,21 @@
       var quizBest     = data.quizBest != null ? Math.max(0, Math.min(100, data.quizBest)) : 0;
       var tutorialDone = countTrue(data.tutorials);
       var tutorialTotal= TOTALS.tutorials[ch] || 0;
-      var secR      = secTotal      ? Math.min(1, secDone / secTotal)           : 0;
-      var checkR    = checksTotal   ? Math.min(1, checksDone / checksTotal)     : 0;
-      var quizR     = Math.min(1, quizBest / 100);
-      var tutorialR = tutorialTotal ? Math.min(1, tutorialDone / tutorialTotal) : 0;
-      return Math.round(100 * (0.2 * secR + 0.25 * checkR + 0.25 * quizR + 0.3 * tutorialR));
+
+      var dims = [
+        { w: 0.20, done: secDone,      total: secTotal },
+        { w: 0.25, done: checksDone,   total: checksTotal },
+        { w: 0.25, done: quizBest,     total: 100 },
+        { w: 0.30, done: tutorialDone, total: tutorialTotal }
+      ];
+      var weightSum = 0;
+      var acc = 0;
+      dims.forEach(function (d) {
+        if (!(d.total > 0)) return;
+        weightSum += d.w;
+        acc += d.w * Math.min(1, d.done / d.total);
+      });
+      return weightSum > 0 ? Math.round(100 * (acc / weightSum)) : 0;
     }
 
     function collectActivityDays(progress) {

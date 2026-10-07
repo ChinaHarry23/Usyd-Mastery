@@ -20,7 +20,7 @@
     });
   });
 
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch(function () {});
-  }
+  /* Service-worker registration lives in shared/site-reset.js so that every
+     page registers it (not just the portal) using a path that survives being
+     hosted under a sub-path. */
 })();

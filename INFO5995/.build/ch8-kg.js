@@ -1,0 +1,34 @@
+{
+  nodes: [
+    ["w8-software-security", 8, 1, "Software security", "Security as an engineering property across the complete software lifecycle - design, develop, test and maintain software so it resists attack and protects users' data. The deck keeps two halves together: prevent vulnerabilities before deployment, and continue protecting the system after deployment.", "../chapters/chapter8/web/chapter8-study.html#sec-software"],
+    ["w8-lifecycle-defects", 8, 2, "Lifecycle defects", "A vulnerability can be introduced or removed at every lifecycle stage, and each stage has a characteristic defect: an omitted abuse case, a missed trust boundary, unsafe data handling, a skipped adversarial path, an insecure default or a delayed patch. The later a defect is discovered, the more architecture, data and operations already depend on it.", "../chapters/chapter8/web/chapter8-study.html#sec-lifecycle"],
+    ["w8-owasp-top10", 8, 2, "OWASP Top 10 and its root cause", "The deck names five headline weaknesses - SQL injection, cross-site scripting, broken access control, security misconfiguration and vulnerable components - and collapses them into one sentence: the system trusts data, identity, configuration or dependencies more than it should. The full OWASP 2021 list runs from A01 Broken Access Control to A10 Server-Side Request Forgery.", "../chapters/chapter8/web/chapter8-study.html#sec-owasp"],
+    ["w8-broken-access-control", 8, 2, "Broken access control (A01)", "Identity is mistaken for authority: a valid session is trusted as a permission, so users act outside their intended permissions through missing checks, insecure direct object references or privilege escalation. A valid session says who the caller is; an authorisation check on every object is what says what they may do.", "../chapters/chapter8/web/chapter8-study.html#sec-owasp"],
+    ["w8-defence-in-depth", 8, 3, "Defence in depth", "Six layers of controls that work together across the lifecycle - secure coding, testing, static analysis, dynamic analysis, monitoring, and IDS/IPS - so one missed defect does not become a successful attack. The layers only pay off when they are genuinely independent: one vulnerable library sitting in three tiers defeats three layers at once.", "../chapters/chapter8/web/chapter8-study.html#sec-defence"],
+    ["w8-database-security", 8, 2, "Database security", "A database is a managed system for storing, relating, querying and updating persistent data, and it concentrates the crown jewels: personal data, financial records, credentials and intellectual property. A compromise affects not only the stored records but every application and decision that depends on them, so the objective is controlled, correct and dependable use of data rather than merely keeping attackers outside.", "../chapters/chapter8/web/chapter8-study.html#sec-database"],
+    ["w8-sql-injection", 8, 1, "SQL injection", "Malicious input changes the SQL query executed by an application: the attack succeeds when user-controlled text is interpreted as SQL syntax, so data becomes a database command. Attackers exploit insecure application code, not the database itself - the database faithfully executes the statement it was given.", "../chapters/chapter8/web/chapter8-study.html#sec-injection"],
+    ["w8-parameter-binding", 8, 2, "Prepared statements and parameter binding", "The structural fix keeps data out of the statement: the SQL structure is fixed before user data is supplied, the value travels separately and is bound into a placeholder, so the statement is a constant and the parameter can never be parsed as SQL. Validation decides what a field may contain, but only binding decides how the statement is assembled.", "../chapters/chapter8/web/chapter8-study.html#sec-injection"],
+    ["w8-inference-attack", 8, 3, "Inference attack", "An indirect database threat in which the adversary does not bypass access control but learns sensitive information by combining answers to legitimate queries: the existence of a result answers the question even though the secret value is never disclosed. Each answer carries at most one bit, and inference risk grows as the anonymity set becomes smaller.", "../chapters/chapter8/web/chapter8-study.html#sec-inference"],
+    ["w8-xss", 8, 2, "Cross-site scripting", "The vulnerable site delivers attacker-controlled JavaScript to a trusted user's browser - stored, reflected, or written by the page's own script - so content becomes browser code. XSS does not hack the browser; it abuses the browser's trust in a vulnerable application, and the control is contextual output encoding behind sanitising, safe frameworks and CSP.", "../chapters/chapter8/web/chapter8-study.html#sec-xss"],
+    ["w8-system-hardening", 8, 2, "Hardening a deployed system", "Running securely changes the problem: the system is now reachable, observable and continuously attacked. Hardening means secure defaults and baselines, removing services, accounts and debug endpoints that are not needed, least privilege, segmentation and egress control, centralised logging with retention, and MFA on every administrative path.", "../chapters/chapter8/web/chapter8-study.html#sec-system"],
+    ["w8-vulnerability-management", 8, 2, "Vulnerability management", "A security control rather than housekeeping: identify components with an inventory and scans, prioritise by severity combined with internet exposure, exploit availability and asset value, remediate, verify by rescanning, and report the exposure window and mean time to remediate instead of ticket counts.", "../chapters/chapter8/web/chapter8-study.html#sec-system"],
+    ["w8-ids-ips", 8, 1, "IDS versus IPS", "Both inspect host or network activity, and they differ in what they are allowed to do about it. An IDS sits on a monitoring path, is passive and alerts without automatically stopping the attack; an IPS sits inline and can intervene - inspect, decide, act - so an IDS lets an attack proceed while the team reads the alert, and an IPS turns a false positive into an outage.", "../chapters/chapter8/web/chapter8-study.html#sec-detect"]
+  ],
+  edges: [
+    ["w8-software-security", "w8-lifecycle-defects", 8],
+    ["w8-lifecycle-defects", "w8-owasp-top10", 7],
+    ["w8-owasp-top10", "w8-broken-access-control", 8],
+    ["w8-owasp-top10", "w8-sql-injection", 8],
+    ["w8-owasp-top10", "w8-xss", 8],
+    ["w8-sql-injection", "w8-parameter-binding", 9],
+    ["w8-sql-injection", "w8-xss", 5],
+    ["w8-software-security", "w8-defence-in-depth", 7],
+    ["w8-defence-in-depth", "w8-vulnerability-management", 6],
+    ["w8-defence-in-depth", "w8-ids-ips", 7],
+    ["w8-database-security", "w8-sql-injection", 8],
+    ["w8-database-security", "w8-inference-attack", 7],
+    ["w8-lifecycle-defects", "w8-vulnerability-management", 6],
+    ["w8-vulnerability-management", "w8-system-hardening", 6],
+    ["w8-system-hardening", "w8-ids-ips", 7]
+  ]
+}

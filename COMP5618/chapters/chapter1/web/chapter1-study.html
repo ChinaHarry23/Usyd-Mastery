@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 1: Security Fundamentals and Tooling — COMP5618</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter1-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 1 study guide for COMP5618 Applied Cybersecurity: the security mindset and the CIA triad, adversaries and threat models, consent and transparency before testing, the law and its consequences, and the isolated Kali and Ubuntu lab built in Tutorial 1.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 1: Security Fundamentals and Tooling — COMP5618">
+<meta property="og:description" content="Week 1 study guide for COMP5618 Applied Cybersecurity: the security mindset and the CIA triad, adversaries and threat models, consent and transparency before testing, the law and its consequences, and the isolated Kali and Ubuntu lab built in Tutorial 1.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F6E1;</span>
+      <h2>Week 1</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-mindset" class="nav-link" data-section="mindset">Security Mindset</a></li>
+    <li><a href="#sec-adversaries" class="nav-link" data-section="adversaries">Adversaries</a></li>
+    <li><a href="#sec-ethics" class="nav-link" data-section="ethics">Consent &amp; Ethics</a></li>
+    <li><a href="#sec-law" class="nav-link" data-section="law">Rudeness &amp; Prison</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="lab">The Lab</a></li>
+    <li><a href="#sec-toolkit" class="nav-link" data-section="toolkit">Basic Tools</a></li>
+    <li><a href="#sec-workflow" class="nav-link" data-section="workflow">Testing Workflow</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter1-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter1-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Week 1 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5618 — Applied Cybersecurity</p>
+    <h1>Week 1: Security Fundamentals and Tooling</h1>
+    <p class="hero-subtitle">The security mindset and the CIA triad, the adversaries you are defending against, the consent and transparency that make testing ethical, the law and its consequences, and the isolated Kali and Ubuntu lab the whole semester is built on.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6E1;</span>
+        <span>CIA triad and the security mindset</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F465;</span>
+        <span>Adversaries, not stereotypes</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2696;</span>
+        <span>Consent, transparency, impact</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F427;</span>
+        <span>Kali and Ubuntu in VirtualBox</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter1-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter1-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 1 decks (<em>Administrivia</em>, <em>Basic Tools</em>, <em>Ethics, Rudeness, and Prison</em>) and the Week 1 tutorial</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-mindset" class="section" data-track="mindset">
+  <h2 class="section-title">The Security Mindset</h2>
+  <p class="section-lead">Week 1 opens with the unit's own framing: <em>&ldquo;With great power comes great responsibility.&rdquo;</em> Knowledge of how attackers operate is power, and the course treats the responsibility that comes with it as course content rather than as a disclaimer.</p>
+
+  <div id="ix-lab"></div>
+
+  <div class="insight-box">
+    <strong>Why the course teaches the tools at all:</strong> the decks state the argument directly. We learn attacker tooling because we need to test the integrity of our own networks and applications, so that we can be assured we have made it as difficult as possible for others to do us harm. You cannot defend against a technique you refuse to understand.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Script kiddie (skid)</div>
+    <p>Someone who uses existing tools and scripts to penetrate a system, <strong>often without understanding how they work</strong>. The unit names this explicitly as the thing to move beyond: the marks in this course come from explaining what a tool did and why it worked, not from running it.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>The common theme</th><th>What the deck says about it</th><th>Where it shows up in assessment</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Ethics and the law</strong></td><td>Ethics, rudeness, lawsuits and prison &mdash; the consequences of using these tools badly</td><td>Every finding you report must be defensible</td></tr>
+        <tr><td><strong>Industry standard tools</strong></td><td>How to be a script kiddie, and how to move beyond</td><td>Tutorial tasks and the penetration-test assignment</td></tr>
+        <tr><td><strong>Hacker techniques</strong></td><td>Network traversal and automatic exploitation tools</td><td>Weeks 2&ndash;6 build these up layer by layer</td></tr>
+        <tr><td><strong>Identifying weaknesses</strong></td><td>Issues in common languages &mdash; Python, Perl, PHP, Java, .NET, JavaScript</td><td>The written analysis in the incident review</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">The CIA triad: the three properties you are protecting</h3>
+  <p>Everything else in the unit is a means to one of three ends. When you write up a finding, name the property it breaks &mdash; that single sentence is usually the difference between a description and an impact statement.</p>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Confidentiality</h4>
+      <p>Information is readable only by those authorised to read it. Broken by disclosure: reading private data, exfiltrating a database, sniffing credentials off an unencrypted link.</p>
+    </div>
+    <div class="why-card con" style="background:var(--blue-bg); border-color:rgba(37,99,235,0.3);">
+      <h4>Integrity</h4>
+      <p>Information and systems are changed only in authorised ways. Broken by modification: altering a record, tampering with a log, substituting a file in transit.</p>
+    </div>
+    <div class="why-card pro" style="background:var(--yellow-bg); border-color:rgba(245,158,11,0.35);">
+      <h4>Availability</h4>
+      <p>Systems and data are usable when authorised users need them. Broken by denial: flooding a service, exhausting resources, encrypting files and withholding the key.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The triad is a question generator, not a definition to recite.</strong> Faced with an unfamiliar system, ask in order: who can read this, who can change it, and who can stop it working? Those three answers are a threat model in outline.
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-cia-deck"></div>
+  <script type="application/json" id="ix-cia-deck">
+  {
+    "title": "Which property does this break?",
+    "subtitle": "Read the scenario, decide which leg of the triad it attacks, then flip the card.",
+    "cards": [
+      { "front": "A tester reads the customer table on a production database", "back": "Confidentiality — private data was disclosed to someone not authorised to see it. The deck's polite-testing rule names e-mail addresses, internal e-mail and credit cards as things you never read or copy.", "hint": "Read, not changed" },
+      { "front": "A tester edits one row to prove write access, then forgets to revert it", "back": "Integrity — the system now holds a value the owner never authorised. The 'don't modify or delete data' rule exists precisely because a proof of write access is already enough.", "hint": "Changed, not merely read" },
+      { "front": "A scan with aggressive timing makes the target unresponsive for ten minutes", "back": "Availability — the service stopped being usable. The deck's warning about slamming servers and increasing response times is about this leg, and it is the reason permission usually forbids denial-of-service testing.", "hint": "Nobody can use it" },
+      { "front": "An intruder leaves a hidden backdoor so they can return later", "back": "Confidentiality and integrity, and eventually availability — a persistent, unauthorised change that keeps granting access. The deck's condition for ethical testing is the reverse: no hidden backdoors, no undisclosed data collection.", "hint": "Persistence, not a single breach" },
+      { "front": "A tester reports an embarrassing finding honestly instead of quietly deleting it", "back": "None of the three — this is the transparency obligation. Findings are disclosed even when they are embarrassing for the client, because a suppressed finding leaves all three properties at risk.", "hint": "About the report, not the system" },
+      { "front": "Encrypting the lab VM's partition, including swap", "back": "Confidentiality, and a course requirement rather than a suggestion. Swap can hold fragments of anything you were working on, so encrypting only the root volume leaves the data recoverable.", "hint": "Protects the tester too" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">During an authorised test you find that a single request lets you read another customer's invoice. Which leg of the CIA triad have you demonstrated, and what is the correct next step?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing was changed, so integrity is not the property at issue. Mislabelling the finding weakens the report.">Integrity &mdash; revert the change and document it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Reading data you are not authorised to read is a confidentiality breach. The next step is to stop, record the minimum evidence needed, and write it up — the deck's rules are explicit that you do not read or copy private data beyond the proof." data-bad="">Confidentiality &mdash; stop, capture the minimum evidence, and report it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Availability is about the service being unusable. No denial occurred here, and DoS testing is normally out of scope anyway.">Availability &mdash; check whether the service is still up</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-adversaries" class="section" data-track="adversaries">
+  <h2 class="section-title">Adversaries and Threat Models</h2>
+  <p class="section-lead">The deck's instruction is precise: avoid generalising large groups of people and focus on particular threats. An adversary is not a personality type &mdash; it is anyone who uses network technologies to gain unauthorised access to a system.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>Our <strong>adversaries</strong> are those who use network technologies to gain <strong>unauthorised access</strong> to a system. The word doing the work is <em>unauthorised</em>: the same action, performed inside a signed scope, is professional testing; performed without permission, it is an offence.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Adversary</th><th>What they typically want</th><th>Why they are hard to model</th><th>Defensive focus</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>State-sponsored attackers</strong></td><td>Intelligence, persistence, strategic access</td><td>Resourced, patient, and willing to develop their own tooling</td><td>Detection and attribution over prevention alone</td></tr>
+        <tr><td><strong>Hackers / hacktivists</strong></td><td>Publicity, disruption, ideological outcomes</td><td>Motivation is visible, but targeting is opportunistic</td><td>Availability, and the reputational cost of an outage</td></tr>
+        <tr><td><strong>Insiders &mdash; inadvertent</strong></td><td>Nothing; they are trying to do their job</td><td>They hold legitimate access, so controls cannot simply deny them</td><td>Least privilege, review, and good defaults</td></tr>
+        <tr><td><strong>Insiders &mdash; malicious</strong></td><td>Money, revenge, or a shortcut</td><td>Already past the perimeter; logs are their main obstacle</td><td>Audit trails and separation of duties</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">What a threat model actually contains</h3>
+  <p>Threat modelling is the discipline of writing those columns down before you build or test anything. A workable model answers four questions in order, and stops when the answers stop changing.</p>
+
+  <div class="diagram-flow">
+    <div class="flow-node">What are we building?</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">What can go wrong?</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">What are we going to do about it?</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Did we do a good job?</div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Assets and properties</h3>
+      <p>Name the thing being protected and which leg of the triad it belongs to. &ldquo;The exam results database&rdquo; is an asset; &ldquo;its integrity&rdquo; is the property; &ldquo;students changing their own marks&rdquo; is the threat.</p>
+    </div>
+    <div class="col-card">
+      <h3>Boundaries and trust</h3>
+      <p>Draw the line between what you control and what you do not. Every place data crosses that line &mdash; a login form, a file upload, an API call &mdash; is a place where input you did not write can arrive.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> never answer &ldquo;the threat is hackers&rdquo;. The markable version names a specific adversary, the asset they want, the property they would break, and the control that stands in the way &mdash; and then says what evidence would tell you the control failed.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A hospital's patient-record system is reviewed after a clerk accidentally e-mails a spreadsheet to the wrong distribution list. Which row of the adversary table does this belong to, and what follows for the control you would recommend?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. An inadvertent insider holds legitimate access and no malicious intent, so the control cannot be 'deny access'. It has to be least privilege plus a review of how large an export a single clerk can make." data-bad="">An inadvertent insider &mdash; so the control must limit what legitimate access can reach, not deny access</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="There is no unauthorised access here; the clerk was authorised. Treating every incident as an external attack is the modelling error the deck warns about.">A state-sponsored attacker &mdash; so the control is network monitoring</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Malicious insiders act deliberately. Nothing in the scenario suggests intent, and assuming malice points you at the wrong controls.">A malicious insider &mdash; so the control is audit trails and dismissal</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-ethics" class="section" data-track="ethics">
+  <h2 class="section-title">Consent, Transparency and Informing Impact</h2>
+  <p class="section-lead">The <em>Ethics, Rudeness, and Prison</em> deck reduces the whole legal question to one line: <strong>the difference between legal and illegal hacking is permission.</strong> But permission alone is not enough &mdash; the deck pairs it with two further obligations.</p>
+
+  <div class="def-box">
+    <div class="def-label">The three obligations</div>
+    <p><strong>Consent</strong> &mdash; written authorisation (a signed scope or rules of engagement) before any testing begins. <strong>Transparency</strong> &mdash; be upfront about the tools, techniques and methodology you plan to use, and disclose findings honestly. <strong>Informing impact</strong> &mdash; explain likely side effects before testing and report real-world consequences afterwards.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Obligation</th><th>What it requires</th><th>What it rules out</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Consent</strong></td><td>A signed scope covering exactly which systems, IP addresses and time windows are in scope</td><td>Verbal permission; testing a host that merely resembles one on the list</td></tr>
+        <tr><td><strong>Transparency</strong></td><td>Telling the client which tools and methods you will use, and disclosing every finding</td><td>Hidden backdoors; undisclosed data collection; quietly dropping an embarrassing result</td></tr>
+        <tr><td><strong>Informing impact</strong></td><td>Warning about service disruption and account lockouts beforehand; agreeing an emergency contact and a stop condition</td><td>Discovering the outage together with the client's customers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The sentence worth memorising:</strong> permission without transparency isn't ethical testing &mdash; the client must understand what you are doing and why, before and after.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-ethics-match"></div>
+  <script type="application/json" id="ix-ethics-match">
+  {
+    "title": "Match each obligation to what it actually demands",
+    "subtitle": "Click a term on the left, then the requirement it imposes on the right.",
+    "pairs": [
+      ["Consent", "Written authorisation — a signed scope or rules of engagement — before any testing begins"],
+      ["Transparency", "Disclose the tools, techniques and methodology, and report findings honestly even when they embarrass the client"],
+      ["Informing impact", "Explain likely side effects first — service disruption, account lockouts — and agree a stop condition"],
+      ["Verbal permission", "Not enough on its own; the deck requires it in writing"],
+      ["Bug bounty policy", "A published programme that already grants permission, but with stated restrictions such as no denial of service"],
+      ["Reconnaissance", "Law enforcement may treat it as an offence in its own right, not just a preparation for one"]
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">How to be polite once you are inside</h3>
+  <p>The deck's &ldquo;Rudeness&rdquo; section is practical: most organisations watch server load and the volume and type of requests, and noisy tools are noticed. If response times start to climb, you are slamming their servers &mdash; and the client's likely responses are to shut you down, revoke the permissions they granted, decide you are in breach of their policy, or bring legal action.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Do</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li><strong>Ask permission</strong> &mdash; and keep the written record</li>
+        <li><strong>Be respectful</strong> of the people who run the systems you are testing</li>
+        <li><strong>Watch the signals</strong> &mdash; latency, error rates, lockouts</li>
+        <li><strong>Report promptly</strong> if something you did had a real effect</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Don't</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li><strong>Flood them with requests</strong> &mdash; the noise is what gets you caught and shut down</li>
+        <li><strong>Read or copy private data</strong> &mdash; e-mail addresses, internal e-mail, credit cards</li>
+        <li><strong>Modify or delete data</strong> &mdash; a proof of write access is already a finding</li>
+        <li><strong>Keep going</strong> past the agreed stop condition</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A client signs a scope and tells you verbally to &ldquo;have a go at anything else you can reach while you are in there&rdquo;. What is the correct action?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Verbal permission is exactly what the deck says is not enough. Acting on it puts you outside the signed scope.">Test the extra systems &mdash; you have the client's verbal permission</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Consent means written authorisation covering exactly which systems, IPs and time windows are in scope. Get the extension in writing — or leave those systems alone." data-bad="">Decline until the extra systems are added to the written scope, and record the exchange</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Testing the systems and disclosing afterwards is still testing without authorisation. Transparency does not retroactively create consent.">Test them, but disclose everything you touched in the final report</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-law" class="section" data-track="law">
+  <h2 class="section-title">Rudeness, Lawsuits and Prison</h2>
+  <p class="section-lead">The third Week 1 deck is deliberately blunt about where this ends. The material is not there to frighten you out of the field &mdash; it is there because the legal system's reaction to hacking is a risk you have to model like any other.</p>
+
+  <div class="concept-box">
+    <p><strong>Using penetration tools against any system on a public network, without prior permission, is unlawful.</strong> The deck extends this beyond attempts to penetrate a system: in the eyes of law enforcement it can reach reconnaissance activity as well. Looking is not automatically safe.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-law-seq"></div>
+  <script type="application/json" id="ix-law-seq">
+  {
+    "title": "What actually happens after an unauthorised test",
+    "subtitle": "Rebuild the sequence the deck describes, from the first complaint to the sentence.",
+    "steps": [
+      "You test a system you have no written permission to test",
+      "The organisation notices and can outspend you in court",
+      "The case turns on whether authorisation existed, not on how easy the system was to reach",
+      "The court does not understand the methods, but it does understand the hype",
+      "You are made an example of, to deter others",
+      "The penalty is harsh, public, and outlasts the sentence itself"
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>&ldquo;It was easy&rdquo; is not a defence</h3>
+      <p>The deck is explicit that some methods of hacking seem innocuous &mdash; perhaps you were only looking at something you should not have, perhaps it was trivially easy to get in. Once it reaches court, none of that matters. The legal system does not understand the methods or the associated risks, but it does understand the hype.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why sentences are harsh</h3>
+      <p>High-profile cases have scared decision makers, and the gap in understanding produces disproportionate outcomes. Because the field is new and the tools are easy to use, less responsible individuals can cause considerable impact without understanding the consequences &mdash; so courts have made examples of defendants to deter others.</p>
+    </div>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Consequences that outlast the sentence</h3>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Confiscated computer</h3>
+      <p>Those arrested for computer crime usually have their computers taken away and inspected in great detail. Everything on them is in scope, not just the one system you touched.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Excluded from employment</h3>
+      <p>Once convicted of computer crime &mdash; especially if it is classified as fraud &mdash; it becomes very difficult to get a job. That closes the career the skills were supposed to open.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Constantly watched</h3>
+      <p>After authorities identify you as a cyber criminal they watch you closely for a long time. You remain under scrutiny long after the case is over.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Public and permanent</h3>
+      <p>Penalties are frequently public, which compounds them: the reputational damage is often more lasting than the sentence itself.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The deck's own counter-argument, in its words:</strong> if you possess great IT skills it is very easy to make a comfortable living. You do not need to resort to hacking to earn money, and the extra cash is not worth watching your back for the rest of your life until you get caught. The comparative benefit is not worth the increased risk.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked answer &mdash; the incident review, planned backwards from the report.</strong> The Week 6 incident review asks you to identify how a real incident happened, what the impact was, and how to defend against it. Plan the answer with the Week 1 material and the structure writes itself.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Claim the incident, then reduce it to one sentence.</strong> &ldquo;An attacker reached <em>this asset</em> by <em>this route</em> and broke <em>this leg of the triad</em>.&rdquo; If you cannot fill all three blanks, you do not yet understand the incident well enough to write about it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Name the adversary and the assumption that failed.</strong> Use the four rows from the adversaries table. Most incidents are not defeated by a brilliant attack; they are enabled by a control that was never there, or an insider whose legitimate access was wider than it needed to be.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>State the impact in the triad's terms, then in the organisation's terms.</strong> Confidentiality, integrity or availability tells a security reader what happened; accounts, money or patients tells management why it mattered. Both sentences belong in the report.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Give the defence as a change, not a product.</strong> &ldquo;Encrypt the link&rdquo; and &ldquo;reduce the export size a single account can perform&rdquo; are changes. &ldquo;Deploy a better firewall&rdquo; is a purchase order, and it will not survive the question &ldquo;how would that have stopped this?&rdquo;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Add the disclosure sentence.</strong> Say what the organisation told the affected people and when. The Week 1 ethics material is a preview of the standard you are being held to as a professional: transparency, in both directions, even when the finding is embarrassing.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A student argues: &ldquo;I only ran a port scan against the university's public web server from home. I did not exploit anything, so no offence occurred.&rdquo; Which response matches the Week 1 material?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck states that using penetration tools against a system on a public network without prior permission is unlawful, and that this can extend to reconnaissance activity in the eyes of law enforcement." data-bad="">The scan is itself unauthorised activity &mdash; the deck says reconnaissance without permission can be treated as an offence</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Scanning is not passive. It sends traffic to someone else's system and is visible in their logs, which is exactly why the deck singles it out.">A scan is passive observation, so it falls outside the offence</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Intending no harm is not the test. The test is authorisation: whether the owners and administrators explicitly permitted it.">It is lawful provided no damage was intended</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-lab" class="section" data-track="lab">
+  <h2 class="section-title">Setting Up the Lab</h2>
+  <p class="section-lead">Week 1's <em>Basic Tools</em> deck and Tutorial 1 build a small, deliberately isolated world. Everything you do in this unit happens between your own Kali and Ubuntu guests, on a network that has no route to anybody else's machine.</p>
+
+  <div data-ix="hotspot" data-ix-src="#ix-lab-map"></div>
+  <script type="application/json" id="ix-lab-map">
+  {
+    "title": "The Tutorial 1 lab, annotated",
+    "subtitle": "Click each marker to see what it is for and which instruction in the tutorial sets it up.",
+    "svg": "<svg viewBox=\"0 0 800 430\" role=\"img\" aria-label=\"Diagram of a laptop running VirtualBox with a Kali guest and an Ubuntu guest joined by a host-only network\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"430\" fill=\"#fdf7f9\"></rect><rect x=\"40\" y=\"46\" width=\"720\" height=\"316\" rx=\"16\" fill=\"#ffffff\" stroke=\"#e11d48\" stroke-width=\"3\"></rect><text x=\"64\" y=\"78\" font-family=\"monospace\" font-size=\"15\" fill=\"#be123c\">your device &#8212; the hypervisor host</text><rect x=\"76\" y=\"102\" width=\"290\" height=\"132\" rx=\"12\" fill=\"rgba(225,29,72,0.10)\" stroke=\"#e11d48\" stroke-width=\"2\"></rect><text x=\"96\" y=\"128\" font-family=\"sans-serif\" font-size=\"17\" font-weight=\"700\" fill=\"#9f1239\">KALI LINUX</text><text x=\"96\" y=\"150\" font-family=\"monospace\" font-size=\"13\" fill=\"#565d75\">attacker workstation</text><rect x=\"96\" y=\"180\" width=\"250\" height=\"28\" rx=\"7\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.5\"></rect><text x=\"221\" y=\"199\" font-family=\"monospace\" font-size=\"13\" text-anchor=\"middle\" fill=\"#565d75\">host-only adapter</text><text x=\"96\" y=\"226\" font-family=\"monospace\" font-size=\"13\" fill=\"#565d75\">10.0.2.10</text><rect x=\"434\" y=\"102\" width=\"290\" height=\"132\" rx=\"12\" fill=\"rgba(37,99,235,0.10)\" stroke=\"#2563eb\" stroke-width=\"2\"></rect><text x=\"454\" y=\"128\" font-family=\"sans-serif\" font-size=\"17\" font-weight=\"700\" fill=\"#1e40af\">UBUNTU</text><text x=\"454\" y=\"150\" font-family=\"monospace\" font-size=\"13\" fill=\"#565d75\">target host</text><rect x=\"454\" y=\"180\" width=\"250\" height=\"28\" rx=\"7\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.5\"></rect><text x=\"579\" y=\"199\" font-family=\"monospace\" font-size=\"13\" text-anchor=\"middle\" fill=\"#565d75\">host-only adapter</text><text x=\"454\" y=\"226\" font-family=\"monospace\" font-size=\"13\" fill=\"#565d75\">10.0.2.20</text><rect x=\"76\" y=\"272\" width=\"648\" height=\"34\" rx=\"9\" fill=\"rgba(245,158,11,0.16)\" stroke=\"#f59e0b\" stroke-width=\"2\"></rect><text x=\"100\" y=\"294\" font-family=\"monospace\" font-size=\"14\" fill=\"#92400e\">host-only network &#8212; vboxnet0, no bridge and no NAT</text><path d=\"M221 238 L221 270\" stroke=\"#f59e0b\" stroke-width=\"2.5\" fill=\"none\"></path><path d=\"M579 238 L579 270\" stroke=\"#f59e0b\" stroke-width=\"2.5\" fill=\"none\"></path><circle cx=\"221\" cy=\"254\" r=\"4\" fill=\"#f59e0b\"></circle><circle cx=\"579\" cy=\"254\" r=\"4\" fill=\"#f59e0b\"></circle><path d=\"M366 158 L432 158\" stroke=\"#e11d48\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#ar)\"></path><path d=\"M432 196 L366 196\" stroke=\"#2563eb\" stroke-width=\"2.5\" fill=\"none\" marker-end=\"url(#ar2)\"></path><defs><marker id=\"ar\" markerWidth=\"9\" markerHeight=\"9\" refX=\"7\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L0,6 L8,3 z\" fill=\"#e11d48\"></path></marker><marker id=\"ar2\" markerWidth=\"9\" markerHeight=\"9\" refX=\"7\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L0,6 L8,3 z\" fill=\"#2563eb\"></path></marker></defs><text x=\"399\" y=\"146\" font-family=\"monospace\" font-size=\"12\" text-anchor=\"middle\" fill=\"#e11d48\">ping</text><text x=\"399\" y=\"216\" font-family=\"monospace\" font-size=\"12\" text-anchor=\"middle\" fill=\"#2563eb\">reply</text><rect x=\"40\" y=\"382\" width=\"720\" height=\"34\" rx=\"10\" fill=\"rgba(5,150,105,0.10)\" stroke=\"#059669\" stroke-width=\"2\"></rect><text x=\"64\" y=\"404\" font-family=\"monospace\" font-size=\"13\" fill=\"#065f46\">encrypted at rest: LUKS container &#8594; LVM &#8594; root + swap + home</text></svg>",
+    "points": [
+      { "x": 27.6, "y": 39.5, "label": "Kali Linux guest", "detail": "The attacker workstation and the only machine you run offensive tools from. The tutorial asks for the 64-bit Live Boot image rather than the prebuilt VirtualBox image, and warns that you may need to add tools and libraries the course requires." },
+      { "x": 72.4, "y": 39.5, "label": "Ubuntu guest", "detail": "The target. It exists to be scanned, logged into and copied from, so that every technique in the unit has somewhere safe to land. The Desktop image is the default; the Server image is the space-saving alternative." },
+      { "x": 27.6, "y": 59.1, "label": "Extra NIC set to host-only adapter", "detail": "Added in each guest's settings after shutdown, using the default VirtualBox host-only adapter. This is the single change that makes the lab safe: the guests can reach each other and nothing else." },
+      { "x": 50.0, "y": 68.8, "label": "The host-only network", "detail": "The host-only network manager defines one network, with an address range such as 192.168.56.1. Both guests should end up with an address inside that range — check with ifconfig on each." },
+      { "x": 50.0, "y": 24.7, "label": "The hypervisor host", "detail": "VirtualBox runs on your own device. The deck warns that the largest lab runs several VMs together, so budget roughly 60–80 GB of disk across the semester." },
+      { "x": 50.6, "y": 92.6, "label": "Encrypted at rest", "detail": "The VM partition must be encrypted, with LVM, and swap must be encrypted too. sdb1 is optional unencrypted space (and must come first if Windows is to recognise it), sdb2 holds boot, and sdb4 is the LUKS container holding the root, swap and home logical volumes." },
+      { "x": 27.6, "y": 47.9, "label": "The path you will capture", "detail": "Once the guests can ping each other, you can start a capture on the host-only interface and watch one ICMP exchange cross the link and return. That capture is what Tutorial 1 asks you to explain on video." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Piece</th><th>What the material specifies</th><th>Why it matters</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Hypervisor</strong></td><td>VirtualBox, installed on your own device</td><td>You need two machines that you can break and rebuild at will</td></tr>
+        <tr><td><strong>Attacker guest</strong></td><td>Kali Linux, 64-bit Live Boot image (not the prebuilt VirtualBox image)</td><td>Preinstalled security utilities, and a distribution you can modify</td></tr>
+        <tr><td><strong>Target guest</strong></td><td>Ubuntu Desktop, or Ubuntu Server if host disk is tight</td><td>A normal host to scan, log in to and copy files from</td></tr>
+        <tr><td><strong>Network</strong></td><td>One host-only network; a second NIC in each guest set to host-only adapter</td><td>Reachability between the guests with no path to anyone else's system</td></tr>
+        <tr><td><strong>Disk</strong></td><td>Encrypt the partition <em>and</em> swap, using LVM</td><td>Confidentiality at rest for a machine holding hostile traffic and notes</td></tr>
+        <tr><td><strong>Headroom</strong></td><td>Around 60&ndash;80 GB across the semester</td><td>The largest lab runs several VMs together</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+$ sudo fdisk -l | grep -E "sdb|volgroup"
+  sdb                        8:16   1   119.2G   0   disk
+  |-sdb1                     8:17   1    58.2G   0   part
+  |-sdb2                     8:18   1     202M   0   part
+  `-sdb4                     8:20   1    60.9G   0   part
+    `-usbstick             254:3    0    60.9G   0   crypt
+      |-volgroup-rootvol   254:4    0      12G   0   lvm
+      |-volgroup-swapvol   254:4    0       3G   0   lvm
+      `-volgroup-homevol   254:5    0    44.4G   0   lvm
+  </div>
+
+  <div class="insight-box">
+    <strong>Read the layout as three decisions.</strong> <em>sdb1</em> is optional unencrypted space, and it must be the first partition if Windows is ever to recognise the disk. <em>sdb2</em> is the boot partition that allows the encrypted volume to be decrypted. <em>sdb4</em> is the LUKS container, which LVM then divides into root, swap and home &mdash; and the deck is explicit that swap belongs inside it, not beside it.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You have installed Kali and Ubuntu as VirtualBox guests with the default NAT networking. Both can reach the internet, but neither can ping the other. What is the correct fix, and why is it the right one?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Bridging puts both guests directly on the network you happen to be sitting on. That is the opposite of the isolation the lab depends on.">Switch both guests to bridged networking so they share your local network</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Add a second NIC to each guest, set to host-only adapter on the default host-only network, then confirm both guests hold an address inside that range. The guests reach each other and have no route to anything else." data-bad="">Add a second NIC to each guest set to host-only adapter, and verify the addresses with ifconfig</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Port forwarding exposes a service on the target to your host network, which is not what the tutorial builds and not what the capture exercise needs.">Configure port forwarding rules on the NAT adapters</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-toolkit" class="section" data-track="toolkit">
+  <h2 class="section-title">Choosing Your Tools: Linux, Kali, VirtualBox</h2>
+  <p class="section-lead">The <em>Basic Tools</em> deck answers three questions in order: why Linux at all, why Kali specifically, and what Arch is for. The answers are about transparency and control rather than about which distribution is &ldquo;best&rdquo;.</p>
+
+  <div data-ix="timeline" data-ix-src="#ix-kali-line"></div>
+  <script type="application/json" id="ix-kali-line">
+  {
+    "title": "Why the course runs on Linux",
+    "subtitle": "The deck's argument, in the order it makes it.",
+    "events": [
+      { "label": "Structure", "title": "Linux fits security work", "detail": "The fundamental structure of Linux, and the philosophies surrounding its development, make it much easier to perform security-related tasks than the alternatives." },
+      { "label": "Open source", "title": "You can read the code", "detail": "The open-source nature of Linux means you can read the source code for almost any program you use — so a tool is never a black box you have to trust." },
+      { "label": "Diagnosis", "title": "You can fix what misbehaves", "detail": "If something is not behaving the way you want, it is relatively straightforward to read the code behind it, diagnose the issue and fix it." },
+      { "label": "Community", "title": "It is what practitioners use", "detail": "Linux is used by a lot of computer geeks and professionals, which is where the tooling, the documentation and the answers live." },
+      { "label": "Kali", "title": "A distribution with the toolkit preinstalled", "detail": "Kali Linux is a distribution of Linux that comes preinstalled with many useful security utilities. It is currently based on Debian, and it is the successor to Backtrack Linux. A live-boot version can be installed onto a USB drive." },
+      { "label": "Arch", "title": "The harder, more educational option", "detail": "Arch Linux is 'a lightweight and flexible Linux distribution that tries to Keep It Simple' — though using it is not as simple. The deck suggests it for students who want to learn more about Linux: highly customisable and manual, harder to use, but you learn much more about Linux." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Distribution</th><th>What the deck says</th><th>Choose it when</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Kali Linux</strong></td><td>Preinstalled with many useful security utilities; based on Debian; the successor to Backtrack Linux</td><td>Always, for the attacker workstation in this unit</td></tr>
+        <tr><td><strong>Ubuntu</strong></td><td>Not discussed in the deck beyond being the second guest the tutorial builds</td><td>For the target machine, which should be ordinary rather than exotic</td></tr>
+        <tr><td><strong>Arch Linux</strong></td><td>&ldquo;A lightweight and flexible Linux distribution that tries to Keep It Simple&rdquo; &mdash; using it is not as simple</td><td>When your goal is to learn Linux itself; harder to run, and you learn much more</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The line the deck quotes for Kali</div>
+    <p>&ldquo;The quieter you become, the more able you are to hear.&rdquo; It is worth reading as an instruction about method rather than as decoration: the point of the toolkit is to look and listen carefully, not to make the most noise.</p>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">The starting toolkit</h3>
+  <p>Four tools carry the first tutorial. Read them as four different questions asked of the same machine, not as four programs to memorise.</p>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>nmap</h4>
+        <p>A port-scanning tool. Basic usage is <code>nmap &lt;IP address&gt;</code>; the tutorial also has you try different scanning techniques such as <code>nmap -sS</code> and compare what each one puts on the wire.</p>
+        <div class="flip-hint">Reachability and services</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>wireshark / tshark</h4>
+        <p>A tool to capture network traffic. Capture while a ping or a scan runs in a parallel terminal, so that the packets you are explaining are the packets your own action produced.</p>
+        <div class="flip-hint">Evidence, not guesswork</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>ssh</h4>
+        <p>Remote login, enabled on the Ubuntu guest in Tutorial 1. Booting a VM gives you a console connection; SSH gives you a network session, which is what you actually need to test from Kali.</p>
+        <div class="flip-hint">Remote access</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>scp</h4>
+        <p>Copies files between servers securely. The tutorial has you move a file from Kali to the Ubuntu guest and verify it arrived &mdash; the simplest possible proof that the link works end to end.</p>
+        <div class="flip-hint">Transfer</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-tool-match"></div>
+  <script type="application/json" id="ix-tool-match">
+  {
+    "title": "Match each tool to the question it answers",
+    "subtitle": "Click a tool on the left, then the job it does on the right.",
+    "pairs": [
+      ["nmap", "Which hosts are up, and which ports are open on them"],
+      ["wireshark", "What actually crossed the wire while I was doing that"],
+      ["tshark", "The same capture, driven from the command line"],
+      ["ssh", "Get a remote login on the target guest from Kali"],
+      ["scp", "Move a file between the guests over that encrypted session"],
+      ["ifconfig", "Check which address each guest holds on the host-only network"],
+      ["ping", "Confirm the two guests can reach each other at all"],
+      ["VirtualBox", "Run the attacker and target machines side by side on one host"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Tutorial 1's own deliverable</strong> is a short screencast showing the network setup and both addresses, a ping in each direction, an SSH login from Kali into Ubuntu, a file copied with scp, and an explanation of the difference between a TCP ACK scan and an Xmas scan with the capture on screen. The explanation is the marked part &mdash; the tool output is just the evidence.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An <code>nmap</code> run against the Ubuntu guest reports port 22 open. What is the most useful next step in the Week 1 lab?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Port 22 is SSH, which Tutorial 1 deliberately enabled so that you can log in from Kali. Seeing the port and then using the service is the difference between scanning and understanding." data-bad="">Log in over SSH from Kali, because port 22 is the service the tutorial enabled for exactly that purpose</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Escalation is a Week 6 topic, and there is nothing to escalate from yet. In Week 1 you are still proving the lab works.">Immediately attempt to escalate privileges on the Ubuntu guest</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Re-scanning with a different technique is useful for the later part of the tutorial, but it does not tell you what the open port is for.">Re-run the same scan with a different technique to confirm the result</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-workflow" class="section" data-track="workflow">
+  <h2 class="section-title">The Testing Workflow</h2>
+  <p class="section-lead">Week 1 gives you the shape of a penetration test before it gives you any of the techniques. The order matters more than the individual steps: every frame is defensible only because the frame before it happened.</p>
+
+  <div id="ix-chain"></div>
+
+  <div data-ix="sequence" data-ix-src="#ix-workflow-seq"></div>
+  <script type="application/json" id="ix-workflow-seq">
+  {
+    "title": "Order the engagement",
+    "subtitle": "Click the steps to rebuild the procedure the unit uses from Week 1 onwards.",
+    "steps": [
+      "Agree the scope, rules of engagement and time window in writing",
+      "Reconnoitre only the systems named in that scope",
+      "Scan for reachable hosts and open ports",
+      "Enumerate each open service to learn what it is and what it accepts",
+      "Gain access using the least force that proves the finding",
+      "Establish how far that access reaches, and log the evidence",
+      "Report the finding, its impact and the fix, then hand back the environment"
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What each frame leaves behind</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li><strong>Scope</strong> &rarr; a document you can point at later</li>
+        <li><strong>Recon and scan</strong> &rarr; a list of targets and services</li>
+        <li><strong>Enumeration</strong> &rarr; a shortlist of weaknesses worth proving</li>
+        <li><strong>Access and escalation</strong> &rarr; captured evidence, and an impact</li>
+        <li><strong>Report</strong> &rarr; the only artefact the client keeps</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What a skipped frame costs you</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li>Skip scope &rarr; the work is unlawful, however careful it was</li>
+        <li>Skip enumeration &rarr; you run tools without knowing what they proved</li>
+        <li>Skip evidence &rarr; nobody can reproduce or fix the finding</li>
+        <li>Skip the report &rarr; the client is no safer than before you started</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where this unit goes next:</strong> Weeks 2 and 3 move down the stack to give the scan frames their underlying mechanics &mdash; Ethernet, ARP and switching, then IP, TCP, NAT and firewalls. Weeks 4 and 5 do the same for web applications, and Weeks 6 and 8 for Linux privilege and the Android security model.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You have written permission for a /24 subnet and a four-hour window. At hour three you notice the scan results include a host whose address belongs to the client's payment provider. What do you do?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An address that resolves inside the range you were given is still not a system you were authorised to test. The scope names systems, not just addresses.">Continue &mdash; the address fell inside the range you were given</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Consent covers exactly which systems, IPs and time windows are in scope. A third party's host is not in scope however it appeared in your results, so you record it, exclude it, and raise it with the client." data-bad="">Exclude the host immediately, record what you saw, and raise it with the client before continuing</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Silently finishing and mentioning it in the report means you took an action you were not authorised to take. Transparency is required before and after, not instead of consent.">Finish the scan quietly and mention it in the report afterwards</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 1 Recap</h2>
+  <p class="section-lead">Four claims carry the whole week. If you can state each one in a sentence and give one example, you are ready for the tutorial and for the assessment that follows it.</p>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Security is three properties</h4>
+        <p>Confidentiality, integrity and availability. Every finding you write up names the one it breaks, and every control you recommend names the one it protects.</p>
+        <div class="flip-hint">Core model</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Permission is the whole legal question</h4>
+        <p>The difference between legal and illegal hacking is permission &mdash; in writing, covering named systems, IPs and time windows. Verbal permission is not enough, and reconnaissance without it can be an offence on its own.</p>
+        <div class="flip-hint">Ethics and law</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Consent, transparency, impact</h4>
+        <p>Permission without transparency is not ethical testing. Say what you will do, disclose what you found &mdash; even when it embarrasses the client &mdash; and warn about side effects before they happen.</p>
+        <div class="flip-hint">Professional standard</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>The lab is deliberately small</h4>
+        <p>Kali and Ubuntu on a host-only network, disk and swap encrypted. Two guests that can reach each other and nothing else &mdash; the safety of the whole semester depends on that isolation.</p>
+        <div class="flip-hint">Environment</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.75rem;">How much of the unit this week is worth</h3>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="stat-label">Tutorial tasks, all weeks</div>
+      <div class="stat-value">10%</div>
+      <p style="font-size:0.85rem; color:var(--text-muted);">Group. Each class has a defined set of tasks; you complete the task, record a short video and submit it in Canvas.</p>
+    </div>
+    <div class="metric-card">
+      <div class="stat-label">Week 6 — incident review</div>
+      <div class="stat-value">10%</div>
+      <p style="font-size:0.85rem; color:var(--text-muted);">Group. Claim a real incident, explain how it happened, what the impact was, and how to defend against it.</p>
+    </div>
+    <div class="metric-card">
+      <div class="stat-label">Week 10 — penetration test</div>
+      <div class="stat-value">15%</div>
+      <p style="font-size:0.85rem; color:var(--text-muted);">Individual. Find your way into a provided VM, determine its critical flaws, and communicate the vulnerabilities and recommendations to management.</p>
+    </div>
+    <div class="metric-card">
+      <div class="stat-label">Final exam</div>
+      <div class="stat-value">50%</div>
+      <p style="font-size:0.85rem; color:var(--text-muted);">Two hours, restricted open book (one A4 page, both sides), supervised. At least 40% in the exam and 50 overall are required to pass the unit.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's vocabulary into exact definitions, a taxonomy of adversaries and controls, and the checklists that convert a vague answer into a markable one. Then attempt the Quiz Hub and the Week 1 flashcards.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the three properties of the CIA triad with one attack each, state the three obligations of ethical testing, and explain why a host-only adapter rather than NAT is what makes the lab safe?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Have both guests built, host-only adapters attached, addresses recorded, SSH working from Kali, and one file moved with scp. Practise explaining an ACK scan against an Xmas scan while a capture runs &mdash; that explanation is marked.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

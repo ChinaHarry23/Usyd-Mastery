@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 8: Software and System Security</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 foundations for INFO5995: the risk and residual-risk relationships behind defence in depth, exposure-window and vulnerability-management arithmetic, detection mathematics for IDS and IPS including the base-rate fallacy, inference and anonymity-set models, and the guessing cost of a brute-force attack.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 8: Software and System Security">
+<meta property="og:description" content="Week 8 foundations for INFO5995: the risk and residual-risk relationships behind defence in depth, exposure-window and vulnerability-management arithmetic, detection mathematics for IDS and IPS including the base-rate fallacy, inference and anonymity-set models, and the guessing cost of a brute-force attack.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter8-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 8 Foundations</h2>
+  </div>
+  <div class="toc-group">Model</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions and the risk model</a></li>
+    <li><a href="#sec-m-exposure" class="toc-link">Exposure windows and maintenance</a></li>
+  </ul>
+  <div class="toc-group">Run time</div>
+  <ul>
+    <li><a href="#sec-m-detection" class="toc-link">Detection arithmetic</a></li>
+    <li><a href="#sec-m-privacy" class="toc-link">Inference, anonymity and guessing</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Exam checklist and notation</a></li>
+  </ul>
+  <a href="chapter8-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 8 supplement</p>
+  <h1>Foundations: the arithmetic of building and running securely</h1>
+  <p class="hero-desc">Week 8 is a systems week, so this page does the quantitative work the lecture leaves implicit: one risk model that explains why layers help and why shared dependencies break them, the exposure-window arithmetic behind vulnerability management, the detection mathematics that explains why an IDS is noisy, and the anonymity model behind inference attacks. Every formula is a revision aid for the concepts on the study guide &mdash; the notation is introduced here, not taken from the deck.</p>
+  <div class="chip-list">
+    <span>Risk, residual risk and defence in depth</span>
+    <span>Exposure window, MTTR and prioritisation</span>
+    <span>TPR, FPR and the base-rate fallacy</span>
+    <span>Anonymity sets, entropy and guessing cost</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions and the risk model</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Fix the vocabulary first, then the relationship that makes defence in depth an argument rather than a slogan.</p>
+
+  <div class="def-box">
+    <div class="def-label">Vulnerability, exploit, threat, control</div>
+    <p>A <strong>vulnerability</strong> is a weakness that can be used to violate a security property. An <strong>exploit</strong> is the means of using it. A <strong>threat</strong> is the actor or event that would do so. A <strong>control</strong> is anything that reduces the chance of success or the impact. Note the deck's usage: the weakness lives in the application, so the fix usually does too.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Software security vs system security</div>
+    <p><strong>Software security</strong> builds secure software before deployment: focus, objective and activity all sit in development and testing. <strong>System security</strong> protects deployed systems: the objective changes from preventing vulnerabilities to detecting and responding to attacks, and the activity from development to operation and maintenance.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Access control vs inference</div>
+    <p><strong>Direct attacks</strong> (SQL injection) manipulate a query through unsafe input handling. <strong>Indirect attacks</strong> (inference) use queries the system permits and learn from what the answers reveal. The first is a defect in code; the second is a defect in what the system is willing to disclose.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. Risk as a product of three factors</h3>
+    <p>Week 1's risk language, applied to a software system:</p>
+    \[ R \;=\; T \times V \times I \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">where \(T\) is the likelihood that a threat acts, \(V\) the likelihood that a vulnerability is exploitable, and \(I\) the impact. The product form is the examinable part: driving any one factor to zero removes that path, and reducing one factor without the others gives the attacker an easy substitute.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Defence in depth, and when it is an illusion</h3>
+    <p>If a system has \(n\) independent controls and control \(i\) fails with probability \(p_i\), the chance that <em>all</em> of them fail is:</p>
+    \[ R_{\text{res}} \;=\; I \prod_{i=1}^{n} p_i \]
+    <p style="margin-top:0.6rem;">Three layers each failing with \(p = 0.3\) give \(0.3^{3} = 0.027\): the impact is reached in under 3% of attempts. But the product assumes independence, and in software it is exactly what fails. If one vulnerable library appears in three of the layers, those three failures share a single cause and the product collapses towards the largest of them:</p>
+    \[ R_{\text{res}} \;\ge\; I \prod_{i=1}^{n} p_i \qquad \text{with equality only when the layers are independent} \]
+    <p style="margin-top:0.6rem;">That inequality is why the deck treats vulnerable components and patch latency as security controls rather than housekeeping.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>Week 8 is written in prose and diagrams. The symbols below are a <em>revision aid</em> introduced here so that the week's relationships can be written compactly; they are not lecture notation and should not be quoted as such. The one exception is \(\mathrm{TPR}\) and \(\mathrm{FPR}\), which are standard detection terminology.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning and where it appears</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">threat likelihood</div><div class="sym-cell">How often an actor attempts the attack &mdash; risk model</div>
+    <div class="sym-cell">\(V\)</div><div class="sym-cell">vulnerability likelihood</div><div class="sym-cell">Whether the weakness is exploitable as found &mdash; risk model, prioritisation score</div>
+    <div class="sym-cell">\(I\)</div><div class="sym-cell">impact</div><div class="sym-cell">Consequence if the attack succeeds &mdash; risk and residual-risk models</div>
+    <div class="sym-cell">\(p_i\)</div><div class="sym-cell">layer failure probability</div><div class="sym-cell">Probability that control \(i\) fails &mdash; defence in depth</div>
+    <div class="sym-cell">\(W\)</div><div class="sym-cell">exposure window</div><div class="sym-cell">Days from exploitable to remediated &mdash; vulnerability management</div>
+    <div class="sym-cell">\(q\)</div><div class="sym-cell">daily compromise rate</div><div class="sym-cell">Probability an exposed host is compromised in a day &mdash; exposure risk</div>
+    <div class="sym-cell">\(\pi\)</div><div class="sym-cell">base rate</div><div class="sym-cell">Prior probability that an event is a real attack &mdash; detection arithmetic</div>
+    <div class="sym-cell">\(\mathrm{TPR}\)</div><div class="sym-cell">true positive rate</div><div class="sym-cell">Fraction of real attacks detected &mdash; detection arithmetic</div>
+    <div class="sym-cell">\(\mathrm{FPR}\)</div><div class="sym-cell">false positive rate</div><div class="sym-cell">Fraction of benign events flagged &mdash; detection arithmetic, IPS tuning</div>
+    <div class="sym-cell">\(k\)</div><div class="sym-cell">anonymity set</div><div class="sym-cell">Indistinguishable subjects behind a published view &mdash; inference and privacy</div>
+    <div class="sym-cell">\(H(X)\)</div><div class="sym-cell">entropy</div><div class="sym-cell">Information a signal carries, in bits &mdash; inference and privacy</div>
+    <div class="sym-cell">\(A, L, r\)</div><div class="sym-cell">alphabet, length, rate</div><div class="sym-cell">Secret alphabet size, secret length, guesses per second &mdash; brute-force costing</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team claims three independent layers, but all three run on the same unpatched base image. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The count of layers is not the point; independence is. Layers that share a cause fail together, so the product formula overstates the protection.">Three layers always multiply to 0.027, so the arithmetic still holds</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The product form assumes independence. A shared component is a common cause of failure, so the real residual risk is bounded below by the weakest shared dependency — which is why patch and dependency management count as security controls." data-bad="">The layers share a common cause of failure, so the product overstates the protection</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Adding more layers on the same dependency adds cost without adding independence. The missing control is dependency and patch management.">Adding a fourth layer on the same image restores the independence assumption</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-exposure">
+  <h2 class="section-title">Exposure windows and vulnerability management</h2>
+  <p class="section-lead">Equifax was an unpatched component; Log4Shell was a vulnerable library. Both are questions of time, and time can be measured.</p>
+
+  <div class="theorem-box">
+    <h3>1. The exposure window</h3>
+    <p>Let \(t_{\text{exploit}}\) be the moment exploitation becomes possible &mdash; public exploit code, or a scan that finds the service &mdash; and \(t_{\text{patch}}\) the moment the fix is deployed in production:</p>
+    \[ W \;=\; t_{\text{exploit}} - t_{\text{patch}} \qquad\text{(negative means remediation happened first)} \]
+    <p style="margin-top:0.6rem;">If an exposed host is compromised with daily probability \(q\), the chance it survives the whole window is:</p>
+    \[ P(\text{compromise}) \;=\; 1 - (1-q)^{W} \]
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>Worked example.</strong> An exploit is published on day 0. A patch is available on day 5, but the organisation's median deployment time is 30 days, so \(W = 30 - 0 = 30\) days for the affected hosts.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>Assume a 1% daily compromise rate</strong> for scanned, internet-facing and unpatched hosts (\(q = 0.01\)):</p>
+        \[ P(\text{compromise}) \;=\; 1 - 0.99^{30} \;\approx\; 1 - 0.740 \;=\; 0.26 \]
+        <p>Roughly a one-in-four chance per host, from timing alone.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>Now change one variable.</strong> Deploy the same patch in 7 days instead of 30: \(1 - 0.99^{7} \approx 0.068\), about 7%. Cutting the window by 77% cuts the risk by roughly 74%.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>Say what the model is not.</strong> \(q\) is a modelling assumption, not a measurement, and compromise events are correlated (one worm sweeps every exposed host). The examinable conclusion is the monotonic one: risk rises with the window, so <em>time to remediate is a security parameter</em>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Metrics that are actually about risk</h3>
+    <p>Mean time to remediate, coverage and a prioritisation score:</p>
+    \[ \overline{\text{MTTR}} \;=\; \frac{1}{n}\sum_{i=1}^{n} t_i \qquad\qquad C \;=\; \frac{\text{assets remediated}}{\text{assets affected}} \]
+    \[ S \;=\; \text{severity} \times \text{exposure} \times \text{exploitability} \]
+    <p style="margin-top:0.6rem;">Ticket counts and &ldquo;percentage of findings closed&rdquo; are activity measures: they improve when a team closes easy findings. \(W\), MTTR and \(C\) are exposure measures, and they improve only when the risky assets actually change.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-vulnmgmt"></div>
+  <script type="application/json" id="ix-m-vulnmgmt">
+  {
+    "title": "Order the vulnerability management loop",
+    "subtitle": "Rebuild the loop that turns a component inventory into a measured reduction in exposure.",
+    "steps": [
+      "Inventory the components and versions that are actually deployed",
+      "Prioritise by severity, internet exposure, exploit availability and asset value",
+      "Remediate: patch, upgrade, or apply a documented compensating control",
+      "Verify by rescanning and regression-testing the affected paths",
+      "Report exposure window, mean time to remediate and coverage - not ticket counts",
+      "Feed what was learned back into requirements, design and dependency policy"
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Two findings have the same CVSS severity. Finding A is on an internet-facing service with public exploit code; finding B is on an internal reporting host with no known exploit. Which do you fix first, and why?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Equal severity means the score has said all it can. Exposure and exploit availability are the variables that separate the two, and they are the ones that move the exposure window.">Finding B, because internal systems are harder to monitor</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Severity is one factor in the prioritisation score. Public exploit code plus internet exposure means A's window is already open and being scanned; B's risk is real but not yet reachable by an automated attacker." data-bad="">Finding A, because exploitability and internet exposure dominate when severity is equal</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Severity alone does not rank these two — that is precisely the weakness of prioritising on a single score.">Whichever is quicker to fix, to keep the closure rate high</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; ranking three findings with the prioritisation score.</strong> A monthly scan reports three issues on the same estate, each scored 1&ndash;5 on the three factors (illustrative values, invented for the exercise).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p><strong>The data.</strong></p>
+          <div class="table-responsive">
+            <table class="styled-table">
+              <thead><tr><th>Finding</th><th>Severity</th><th>Exposure</th><th>Exploitability</th><th>\(S\)</th></tr></thead>
+              <tbody>
+                <tr><td>Vulnerable library on the public web tier</td><td>4</td><td>5</td><td>5</td><td>100</td></tr>
+                <tr><td>Missing authorisation check on an internal admin API</td><td>4</td><td>2</td><td>4</td><td>32</td></tr>
+                <tr><td>Outdated TLS configuration on a legacy printer</td><td>3</td><td>1</td><td>1</td><td>3</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Read the score, do not just sort by it.</strong> \(S = 100\) for the library means an automated attacker can reach it today. \(S = 32\) for the authorisation gap is lower only because the API is not internet-facing &mdash; and a single foothold would change that exposure factor from 2 to 5, making it the top finding. Scores are a snapshot of the estate, not of the code.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Check the third finding for a real control gap.</strong> The printer's score is low, but if it holds credentials or is reachable from the user network, the <em>exposure</em> estimate is wrong, not the finding. The model is only as good as the exposure data behind it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Convert the decision into a window.</strong> If the library is patched in 3 days and the admin API in 14, the two exposure windows are \(W_1 = 3\) and \(W_2 = 14\) against the same \(q\), so the API's residual risk is the larger of the two even though its score is smaller. Ranking decides the order; the window decides the outcome.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-detection">
+  <h2 class="section-title">Detection arithmetic: why an IDS is noisy</h2>
+  <p class="section-lead">The deck's IDS detects and alerts, and it can detect by signature or by anomaly. This section is the arithmetic behind the trade-off, and behind the question every security team is asked: why are there so many alerts?</p>
+
+  <div class="theorem-box">
+    <h3>1. The confusion matrix, in rates</h3>
+    <p>For a detector over a stream of events, with attacks as the positive class:</p>
+    \[ \mathrm{TPR} \;=\; \frac{TP}{TP+FN} \qquad \mathrm{FPR} \;=\; \frac{FP}{FP+TN} \]
+    <p style="margin-top:0.6rem;">\(\mathrm{TPR}\) (the detection rate) is what the vendor quotes. \(\mathrm{FPR}\) is what determines the workload, because the numerator of the false-positive rate is multiplied by an enormous number of benign events.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Precision and the base-rate fallacy</h3>
+    <p>The question an analyst actually asks is &ldquo;given an alert, is it an attack?&rdquo;. With base rate \(\pi = P(\text{attack})\):</p>
+    \[ P(\text{attack} \mid \text{alert}) \;=\; \frac{\mathrm{TPR}\,\pi}{\mathrm{TPR}\,\pi + \mathrm{FPR}\,(1-\pi)} \]
+    <p style="margin-top:0.6rem;">This is Bayes' rule, and it is the reason a &ldquo;99% accurate&rdquo; detector can be wrong almost every time: when \(\pi\) is tiny, the second term in the denominator is dominated by the false-positive rate times the huge benign population.</p>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>Worked example.</strong> A network sensor sees \(N = 1{,}000{,}000\) events per day. One event in 10,000 is a genuine attack, so \(\pi = 10^{-4}\) and there are 100 attacks and 999,900 benign events.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>The detector:</strong> \(\mathrm{TPR} = 0.90\) and \(\mathrm{FPR} = 0.001\) &mdash; figures a vendor would be pleased to publish.</p>
+        \[ TP = 0.90 \times 100 = 90 \qquad FP = 0.001 \times 999{,}900 \approx 1000 \]
+        <p>So the team receives about \(1090\) alerts a day to find 90 real ones.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>Precision:</strong></p>
+        \[ P(\text{attack}\mid\text{alert}) \;=\; \frac{90}{1090} \;\approx\; 8.3\% \]
+        <p>Roughly eleven alerts for every real attack. This is not a broken detector; it is what a low base rate does to any detector.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>What actually improves the analyst's day.</strong> Halving the false-positive rate to \(0.0005\) doubles precision to about 15%. Raising the detection rate to 0.99 adds 10 more true positives out of ~1100 alerts. Neither is as effective as <em>reducing the event population</em>: filtering the sensor to the authentication and egress traffic that matters cuts \(N\) by an order of magnitude and improves precision in proportion.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <p><strong>Connect it back to the deck.</strong> Signature-based detection usually has a lower false-positive rate on known patterns; anomaly-based detection can reach attacks nobody wrote a signature for, at a much higher false-positive cost. Choosing between them is choosing a point on this curve &mdash; and an IPS makes the choice expensive, because a false positive inline becomes an outage rather than a wasted alert.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Alert capacity is a control parameter.</strong> If an analyst can triage \(c\) alerts per day, the number of sensors you can deploy is bounded by \(c\) divided by the alert rate \(A = N\left[\mathrm{TPR}\,\pi + \mathrm{FPR}(1-\pi)\right]\). Beyond that bound, real alerts are missed because they are queued behind noise &mdash; the failure mode the deck describes as an attack continuing while the team reads the alert.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A vendor offers a detector with \(\mathrm{TPR} = 0.99\) and \(\mathrm{FPR} = 0.01\) for a network where only 1 event in 100,000 is an attack. What should you expect?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="99% detection sounds excellent, but with a base rate of 1 in 100,000 the false positives swamp the true positives: precision is about 0.1%.">Roughly 99% of alerts will be real attacks</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. For every real attack the detector raises about 1000 false alerts, so only about 1 alert in 1000 is real. Detection rate alone says nothing about the analyst's workload — the base rate does." data-bad="">Almost every alert will be a false positive, because the base rate is tiny</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The false-positive rate times the benign population is what generates the noise. Adding more sensors multiplies both the coverage and the noise.">The alert volume will be unchanged because the false-positive rate is only 1%</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; tuning one sensor.</strong> A web-tier sensor generates 4,000 alerts a day. Sampled triage suggests 20 are real. The team can triage 400 a day. Decide what to change.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Measure precision before tuning anything.</strong> \(P(\text{attack}\mid\text{alert}) \approx 20/4000 = 0.5\%\). The problem is quantified, and it is not the team's speed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Decide which error is cheaper here.</strong> For a web-tier sensor with prevention already in place, a missed attack is recoverable (monitoring and logs still exist); 3,600 wasted alerts a day is not, because it hides the 20 that matter. On this sensor, reducing \(\mathrm{FPR}\) is worth more than raising \(\mathrm{TPR}\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Change the population and the rules, in that order.</strong> Restrict the sensor to authentication, authorisation failures and egress traffic; suppress signatures that can only fire on traffic the estate no longer runs; and require two conditions before alerting on a single event. Each step reduces the benign numerator that \(\mathrm{FPR}\) multiplies.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Set the target as precision, not sensitivity.</strong> A workable target on this sensor is precision above 20% at a volume under 400 alerts a day &mdash; that is, roughly 80 real detections a day. State the target, then re-measure. Without a written target, every tuning argument is about taste.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>If this sensor were an IPS, change the threshold again.</strong> Inline, a false positive is an outage, so the acceptable \(\mathrm{FPR}\) is far lower and the rules must be narrower. That asymmetry &mdash; not the technology &mdash; is the real difference between the deck's security camera and security guard.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-privacy">
+  <h2 class="section-title">Inference, anonymity and the cost of guessing</h2>
+  <p class="section-lead">Two quantitative ideas close the week: a sequence of permitted answers is a measurement, and a brute-force attack has a price.</p>
+
+  <div class="theorem-box">
+    <h3>1. Every yes/no answer is at most one bit</h3>
+    <p>The deck's salary example asks whether one person's salary exceeds a threshold. The response is a row or no row: one bit about that person. If the subject is one of \(k\) indistinguishable people (the <strong>anonymity set</strong>), then:</p>
+    \[ P(\text{identify}) \;\approx\; \frac{1}{k} \qquad\qquad k' \;=\; \frac{k}{2^{m}} \quad\text{after } m \text{ independent yes/no answers} \]
+    <p style="margin-top:0.6rem;">To isolate one individual from \(k\) candidates therefore takes about \(\lceil \log_2 k \rceil\) answers. This is why the deck says inference risk grows as the anonymity set becomes smaller, and why a combination of harmless signals is the dangerous case: each signal halves the field.</p>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>Worked example.</strong> A conference publishes a chart with 200 reviewers' progress lines, no names. The anonymity set is \(k = 200\), so a random guess identifies a given reviewer with probability \(1/200 = 0.5\%\).</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>Add the per-paper review counts.</strong> If counts reveal that a paper had 3 reviewers and the set of plausible reviewers for it is 20, that is the new anonymity set &mdash; a reduction of about 3.3 bits:</p>
+        \[ \log_2 200 - \log_2 20 \;=\; 7.64 - 4.32 \;\approx\; 3.3\ \text{bits of information gained} \]
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>Add behavioural fingerprints.</strong> If progress patterns fall into 8 distinguishable classes, that is \(\log_2 8 = 3\) more bits. Total leakage: about 6.3 bits, leaving an effective anonymity set of \(200/2^{6.3} \approx 2.5\) people. The linkage attack works because the bits <em>add</em>.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>Turn it into a release rule.</strong> For a target re-identification risk of at most 5%, the anonymity set must satisfy \(k \ge 1/0.05 = 20\) <em>after</em> every published signal is considered &mdash; which means suppressing counts below a threshold, binning the time axis, and evaluating views in combination rather than one at a time.</p>
+        \[ k_{\text{effective}} \;\ge\; \frac{1}{P_{\max}} \]
+      </div>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Entropy of a released signal</h3>
+    <p>For a signal whose values occur with probabilities \(p_i\), the information it carries is:</p>
+    \[ H(X) \;=\; -\sum_{i} p_i \log_2 p_i \]
+    <p style="margin-top:0.6rem;">Uniform over 8 classes gives \(H = 3\) bits; a highly distinctive pattern (say one class with \(p = 0.9\)) gives \(H \approx 0.57\) bits. Entropy is the right currency for inference because it composes: the combined leakage of independent signals is \(H(X) + H(Y)\), and it is bounded by the anonymity you intended to provide, \(\log_2 k\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. What a brute-force attack costs</h3>
+    <p>For a secret of length \(L\) drawn from an alphabet of size \(A\), the search space and the expected time to find it at \(r\) guesses per second are:</p>
+    \[ N = A^{L} \qquad\qquad T_{50} \;=\; \frac{A^{L}}{2r} \qquad\qquad H = L \log_2 A \ \text{bits} \]
+    <p style="margin-top:0.6rem;">The model assumes the secret is uniformly random. Real passwords are not, which is why an attacker uses a ranked list instead of an exhaustive search &mdash; and why rate limiting, lockout and MFA matter more than length alone.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Alphabet</th><th>Length \(L\)</th><th>Search space \(A^{L}\)</th><th>Entropy \(L\log_2 A\)</th><th>\(T_{50}\) at \(10^{4}\) guesses/s</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>10 (digits, a PIN)</td><td>4</td><td>\(10^{4}\)</td><td>13.3 bits</td><td>0.5 s</td></tr>
+        <tr><td>26 (lowercase)</td><td>8</td><td>\(2.1 \times 10^{11}\)</td><td>37.6 bits</td><td>121 days</td></tr>
+        <tr><td>36 (lowercase + digits)</td><td>8</td><td>\(2.8 \times 10^{12}\)</td><td>41.4 bits</td><td>4.5 years</td></tr>
+        <tr><td>62 (mixed case + digits)</td><td>12</td><td>\(3.2 \times 10^{21}\)</td><td>71.5 bits</td><td>\(5.1 \times 10^{9}\) years</td></tr>
+        <tr><td>94 (printable ASCII)</td><td>16</td><td>\(3.7 \times 10^{31}\)</td><td>104.9 bits</td><td>\(5.9 \times 10^{19}\) years</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>Worked example &mdash; exhaustive search.</strong> A random 8-character lowercase-plus-digit password has \(36^{8} \approx 2.8 \times 10^{12}\) candidates. At \(r = 10^{4}\) guesses per second off-line, \(T_{50} = 2.8\times10^{12}/(2\times10^{4}) \approx 1.4\times10^{8}\ \text{s} \approx 4.5\) years. Strong by this model.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>The same account, online.</strong> Rate limiting to 5 attempts per account per 15 minutes gives 480 attempts a day, so the expected time becomes \(1.4\times10^{12}/480 \approx 2.9\times10^{9}\) days &mdash; millions of years. Policy, not entropy, did the work.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>Now the attack that actually happens.</strong> Credential stuffing tries one leaked password against many accounts. With 10,000 accounts and 5 attempts each that is 50,000 attempts: about <em>5 seconds</em> at \(10^{4}\)/s, and per-account lockout never triggers because each account sees only five failures. The defence is checking credentials against breach lists and requiring MFA &mdash; not adding a character class.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>State the assumption.</strong> \(T_{50}\) measures a uniform search. If the password is one of the ten thousand most common, the expected time is seconds. Every brute-force answer should therefore name both the search model and the policy controls that bound online attempts.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A published report gives per-team counts, a time series per team, and the team roster. Which model explains why this is a privacy problem even though no individual value is shown?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing here is encrypted or decrypted; the disclosure comes from combining legitimate, aggregated-looking signals.">A cryptographic failure in the reporting pipeline</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Each published signal adds bits of information — the roster size sets the starting anonymity set, then the time series narrows which member it is. The bits add, so harmless views combine into an identification." data-bad="">Information accumulates: the signals together shrink the anonymity set below the intended size</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Availability is not at issue; the report is available to everyone. The problem is what it reveals, not whether it can be read.">A denial-of-service risk from publishing aggregate load</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; defending an internal analytics view.</strong> An operations dashboard for a 5,000-person organisation shows per-team activity counts, a daily time series, and a &ldquo;top contributor&rdquo; list capped at three names per team. Decide what changes.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Compute the baseline.</strong> For a team of 500, the anonymity set is \(k = 500\), so a random guess identifies a member with probability \(1/500 = 0.2\%\). That is the number the design intends to protect.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Follow the &ldquo;top contributor&rdquo; list.</strong> Naming three people out of 500 has already removed them from the set: for those individuals \(k = 1\), and \(P(\text{identify}) = 1\). A feature that names people cannot be anonymous, whatever the rest of the page does.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Add the time series.</strong> A daily series distinguishes a person who worked at 3 a.m. on one day. If a team's series is distinctive, \(\log_2\) of the number of distinguishable patterns is the extra leakage; with 16 patterns that is 4 more bits, cutting an effective \(k = 500\) to about 31.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Apply a threshold rule and test it.</strong> Require \(k_{\text{effective}} \ge 20\) after all signals are combined; suppress the named list, bin the series to weekly, and round counts. Then attempt the attack yourself: join two views, compare two days, and see whether the identity falls out. If it does, the threshold was wrong.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Remember the two-sided answer.</strong> The same reasoning defends the database: log the queries, reject filters that isolate fewer than \(k\) subjects, and treat aggregation as a disclosure decision rather than a reporting convenience. And note the link to the guessing model &mdash; \(A^{L}\) says a random secret is expensive to guess, while an anonymity set of size \(k\) says a person is cheap to isolate once the signals add up.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Exam checklist, controls and notation</h2>
+  <p class="section-lead">Most Week 8 questions are answered by placing a control correctly and justifying it with one quantity. Run the checklist, then the control matcher.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-hardening"></div>
+  <script type="application/json" id="ix-m-hardening">
+  {
+    "title": "Order the hardening review of a newly deployed service",
+    "subtitle": "The deployment-stage checks from the study guide, in the order that stops the most risk first.",
+    "steps": [
+      "Inventory what is actually exposed: services, ports, pages, accounts",
+      "Switch off everything unnecessary, including sample accounts and debug endpoints",
+      "Replace defaults: credentials, secrets, error verbosity and permissions",
+      "Apply least privilege to people, services and database accounts",
+      "Turn on centralised logging and confirm the alerts reach someone",
+      "Verify backups by restoring them, then re-scan and record the baseline"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Question to ask</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Classify the defect</td><td>Which lifecycle stage introduced it: requirements, design, implementation, testing, deployment or maintenance?</td><td>You describe the symptom but not the stage, so the fix cannot be targeted</td></tr>
+        <tr><td>2. Name what was trusted</td><td>Data, identity, configuration or dependency?</td><td>You list tools instead of the trust mistake the deck identifies</td></tr>
+        <tr><td>3. Fix structurally first</td><td>Does the fix make the statement, the output or the permission independent of untrusted input?</td><td>You offer a filter, a denylist or a firewall as the primary fix</td></tr>
+        <tr><td>4. Add layers, and check independence</td><td>Do the layers share a dependency or a single point of failure?</td><td>You claim defence in depth from three copies of the same control</td></tr>
+        <tr><td>5. Quantify the residual risk</td><td>What is the exposure window, the expected alert precision, or the anonymity set?</td><td>You answer with adjectives where the week gives you arithmetic</td></tr>
+        <tr><td>6. Place the run-time control</td><td>Detect (IDS, monitoring) or prevent inline (IPS)? What does a false positive cost?</td><td>You claim an IDS blocks an attack</td></tr>
+        <tr><td>7. Say how you would know it worked</td><td>Which log, metric or test is the evidence?</td><td>You end at &ldquo;apply the patch&rdquo; with no verification step</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-controls"></div>
+  <script type="application/json" id="ix-m-controls">
+  {
+    "title": "Match the control to the quantity it reduces",
+    "subtitle": "Click a control on the left, then the term it acts on in this week's models.",
+    "pairs": [
+      ["Prepared statements with bound parameters", "The chance that input is parsed as part of a command"],
+      ["Contextual output encoding", "The chance that stored content is parsed as browser code"],
+      ["Least privilege on database accounts", "The blast radius if an injection survives"],
+      ["Patch and dependency management", "The exposure window W"],
+      ["Rate limiting, lockout and MFA", "The number of online guesses an attacker can make"],
+      ["Logging with monitoring and IDS", "The time between an attack and someone noticing"],
+      ["Suppression and minimum anonymity set k", "The probability of re-identification, about 1/k"]
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Definitions to write out in full</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Software security</strong> &mdash; security as a lifecycle property; prevent before deployment, keep protecting after it</li>
+        <li><strong>Database</strong> &mdash; a managed system for storing, relating, querying and updating persistent data; more than files</li>
+        <li><strong>SQL injection</strong> &mdash; malicious input changes the query executed by an application, because user text is interpreted as SQL syntax</li>
+        <li><strong>Inference attack</strong> &mdash; no access-control bypass; sensitive information is derived from permitted answers</li>
+        <li><strong>IDS</strong> &mdash; observes host or network activity, alerts, does not automatically stop the attack</li>
+        <li><strong>IPS</strong> &mdash; observes like an IDS but sits inline and can automatically intervene</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Numbers worth remembering</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Equifax (2017): unpatched component, about 147 million people affected</li>
+        <li>Log4Shell (2021): vulnerable library, remote code execution, CVE-2021-44228</li>
+        <li>MOVEit (2023): SQL injection, mass data theft, CVE-2023-34362</li>
+        <li>Six lifecycle stages, six defence-in-depth layers, five threat classes, four XSS controls</li>
+        <li>Anonymity rule of thumb: \(k \ge 20\) holds re-identification near 5%</li>
+      </ul>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-glossary"></div>
+  <script type="application/json" id="ix-m-glossary">
+  {
+    "title": "Self-test: say the relationship before you flip the card",
+    "subtitle": "If you can state each of these from memory, the quantitative questions hold no surprises.",
+    "cards": [
+      { "front": "Risk", "back": "R = T x V x I: threat likelihood times vulnerability likelihood times impact. Driving any factor to zero removes that path.", "hint": "Model" },
+      { "front": "Residual risk with layers", "back": "R_res = I times the product of the layer failure probabilities, valid only when the layers are independent. Shared dependencies make the product an underestimate of risk.", "hint": "Defence in depth" },
+      { "front": "Exposure window", "back": "W = time to exploit minus time to patch. With a daily compromise probability q, P(compromise) = 1 - (1-q)^W.", "hint": "Vulnerability management" },
+      { "front": "Prioritisation score", "back": "S = severity x exposure x exploitability. Severity alone cannot rank two findings, because exposure and exploit availability decide whether the window is open.", "hint": "Maintenance" },
+      { "front": "Precision of a detector", "back": "P(attack | alert) = TPR x base rate divided by (TPR x base rate + FPR x (1 - base rate)). A tiny base rate destroys precision no matter how good the TPR is.", "hint": "Detection" },
+      { "front": "Inference from permitted answers", "back": "Each yes/no answer carries at most one bit, so about log2 k answers isolate one subject from an anonymity set of size k. Signals add, which is what makes linkage attacks work.", "hint": "Privacy" },
+      { "front": "Cost of guessing a secret", "back": "N = A^L candidates and T50 = A^L / 2r seconds at r guesses per second; the online case is bounded by policy such as lockout and MFA, not by entropy alone.", "hint": "Brute force" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the definitions and the lifecycle on the <a href="chapter8-study.html">study guide</a>, the animated SQL-injection, XSS and IDS/IPS walkthroughs there, then retrieval practice in the Quiz Hub and Flashcards for Week 8.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 8] foundations chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

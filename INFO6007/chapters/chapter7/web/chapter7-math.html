@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 7: Risk Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter7-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 7 foundations for INFO6007: the notation of risk quantification, probability and impact scales, risk score and net expected exposure arithmetic, expected monetary value on a decision tree, Monte Carlo and contingency sizing, and worked critical-path and earned-value examples as schedule and cost risk checks.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 7: Risk Management">
+<meta property="og:description" content="Week 7 foundations for INFO6007: the notation of risk quantification, probability and impact scales, risk score and net expected exposure arithmetic, expected monetary value on a decision tree, Monte Carlo and contingency sizing, and worked critical-path and earned-value examples as schedule and cost risk checks.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter7-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 7 Foundations</h2>
+  </div>
+  <div class="toc-group">Language of risk</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Notation you can write</a></li>
+    <li><a href="#sec-m-scoring" class="toc-link">Scores, scales &amp; exposure</a></li>
+  </ul>
+  <div class="toc-group">Quantifying</div>
+  <ul>
+    <li><a href="#sec-m-emv" class="toc-link">EMV and decision trees</a></li>
+    <li><a href="#sec-m-tools" class="toc-link">Simulation &amp; contingency</a></li>
+  </ul>
+  <div class="toc-group">Schedule &amp; cost risk</div>
+  <ul>
+    <li><a href="#sec-m-cpm" class="toc-link">WBS and the critical path</a></li>
+    <li><a href="#sec-m-evm" class="toc-link">Earned value as a risk signal</a></li>
+  </ul>
+  <a href="chapter7-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO6007 &mdash; Week 7 supplement</p>
+  <h1>Foundations: the arithmetic behind risk management</h1>
+  <p class="hero-desc">Week 7's case studies quote probabilities, cost effects, expected monetary values and a net exposure figure, and the lecture's closing questions ask you to compute one. This page supplies the notation, walks the NSW Digital Driver Licence numbers end to end, and then connects risk to the two quantitative techniques that feed it from the schedule and cost knowledge areas: the critical path through a WBS, and the earned-value indices that forecast an overrun before it happens.</p>
+  <div class="chip-list">
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Case-study figures are the deck's illustrative assumptions</span>
+    <span>Critical path and EVM examples are worked in full</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Notation you can write from memory</h2>
+  <p class="section-lead">The lecture is written in prose and worked examples. The symbols below are introduced here so that you can write about the week's relationships compactly; they are not lecture notation and should not be quoted as such.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(R_i\)</div><div class="sym-cell">risk \(i\)</div><div class="sym-cell">One identified risk or opportunity in the register</div>
+    <div class="sym-cell">\(p_i\)</div><div class="sym-cell">probability</div><div class="sym-cell">Likelihood that \(R_i\) occurs, as a decimal: \(0 \le p \le 1\)</div>
+    <div class="sym-cell">\(I_i\)</div><div class="sym-cell">impact</div><div class="sym-cell">Effect on an objective if it occurs, in money or days</div>
+    <div class="sym-cell">\(L_i,\; S_i\)</div><div class="sym-cell">likelihood, severity</div><div class="sym-cell">The 1&ndash;5 ordinal ratings used for qualitative scoring</div>
+    <div class="sym-cell">\(r_i = L_i \times S_i\)</div><div class="sym-cell">risk score</div><div class="sym-cell">Qualitative priority, compared against band thresholds</div>
+    <div class="sym-cell">\(\mathrm{EMV}_i\)</div><div class="sym-cell">expected monetary value</div><div class="sym-cell">\(p_i \cdot I_i\) &mdash; signed: negative for opportunities</div>
+    <div class="sym-cell">\(E_{\text{threat}}\)</div><div class="sym-cell">threat exposure</div><div class="sym-cell">Sum of positive EMVs across the threat risks</div>
+    <div class="sym-cell">\(E_{\text{opp}}\)</div><div class="sym-cell">opportunity benefit</div><div class="sym-cell">Sum of the magnitudes of the opportunity EMVs</div>
+    <div class="sym-cell">\(E_{\text{net}}\)</div><div class="sym-cell">net expected exposure</div><div class="sym-cell">\(E_{\text{threat}} - E_{\text{opp}}\), the figure the contingency answers to</div>
+    <div class="sym-cell">\(CR\)</div><div class="sym-cell">contingency reserve</div><div class="sym-cell">Budget held for known risks; a percentage of \(E_{\text{net}}\) or a chosen confidence level</div>
+    <div class="sym-cell">\(t_e,\; \sigma\)</div><div class="sym-cell">expected duration, sd</div><div class="sym-cell">Three-point estimate: \(t_e=(o+4m+p)/6\), \(\sigma=(p-o)/6\)</div>
+    <div class="sym-cell">\(\mathrm{ES},\mathrm{EF},\mathrm{LS},\mathrm{LF}\)</div><div class="sym-cell">network dates</div><div class="sym-cell">Earliest and latest start and finish from the CPM passes</div>
+    <div class="sym-cell">\(\text{float}\)</div><div class="sym-cell">slack</div><div class="sym-cell">\(\mathrm{LS}-\mathrm{ES}=\mathrm{LF}-\mathrm{EF}\); zero float marks the critical path</div>
+    <div class="sym-cell">\(\mathrm{PV},\mathrm{EV},\mathrm{AC}\)</div><div class="sym-cell">earned value trio</div><div class="sym-cell">Planned value, earned value, actual cost at a status date</div>
+    <div class="sym-cell">\(\mathrm{CPI},\mathrm{SPI}\)</div><div class="sym-cell">performance indices</div><div class="sym-cell">\(\mathrm{EV}/\mathrm{AC}\) and \(\mathrm{EV}/\mathrm{PV}\); below 1 means trouble</div>
+    <div class="sym-cell">\(z\)</div><div class="sym-cell">confidence factor</div><div class="sym-cell">Standard deviations for a target confidence: 1.28 for 90%, 1.65 for 95%</div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The two axes of every rating</div>
+    <p><strong>Probability</strong> is how likely the uncertain event is. <strong>Impact</strong> is how much it would matter against cost, time, scope and quality. Qualitative analysis multiplies ordinal ratings of the two; quantitative analysis multiplies a real probability by a real amount. Both end in the same sentence: <em>this risk is worth this much attention</em>.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why probability alone cannot triage a register.</strong> The NSW licence project rates R3 (privacy or security issue) at <em>low</em> probability but <em>very high</em> impact, and the result is still a HIGH priority. A register sorted by probability would bury it; a register sorted by score surfaces it. The mathematics of the product is what forces both axes into the conversation.
+  </div>
+</section>
+
+<section class="section" id="sec-m-scoring">
+  <h2 class="section-title">Scores, scales and net expected exposure</h2>
+  <p class="section-lead">Two calculations belong in every Week 7 answer: the ordinal risk score that sets priority, and the monetary expectation that sizes the reserve.</p>
+
+  <div class="theorem-box">
+    <h3>1. The risk score and its bands</h3>
+    <p>Rate likelihood \(L\) and severity \(S\) on the same 1&ndash;5 scale and multiply:</p>
+    \[ r_i = L_i \times S_i, \qquad r_i \in \{1,\dots,25\} \]
+    <p style="margin-top:0.6rem;">A workable banding is <strong>extreme</strong> at \(r \ge 15\), <strong>high</strong> at \(10 \le r < 15\), <strong>moderate</strong> at \(5 \le r < 10\), and <strong>low</strong> below that. The exact thresholds are a project decision recorded in the risk management plan &mdash; what matters is that thresholds exist, because &ldquo;set thresholds: what level of risk is acceptable&rdquo; is one of the stated objectives of planning risk management.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The probability&ndash;impact matrix, read as a grid</h3>
+    <p>With a 5-point scale on both axes, the matrix is just \(r = L \times S\) drawn as a grid. Probability runs up the side, impact runs across the bottom.</p>
+    \[ \begin{array}{c|ccccc} L \backslash S & 1 & 2 & 3 & 4 & 5 \\ \hline 5 & 5 & 10 & 15 & 20 & 25 \\ 4 & 4 & 8 & 12 & 16 & 20 \\ 3 & 3 & 6 & 9 & 12 & 15 \\ 2 & 2 & 4 & 6 & 8 & 10 \\ 1 & 1 & 2 & 3 & 4 & 5 \end{array} \]
+    <p style="margin-top:0.6rem;">The bands fall out of the grid as diagonal stripes, which is why a shaded matrix and a threshold table always agree. Marking a risk moves it up or down the stripes, and response planning is the work of moving marks down-left for threats and up-right for opportunities.</p>
+  </div>
+
+  <div id="ix-lexposure"></div>
+
+  <div class="theorem-box">
+    <h3>3. Net expected exposure</h3>
+    <p>Each risk contributes a signed expected value, \(\mathrm{EMV}_i = p_i \cdot I_i\), negative for opportunities because the benefit <em>reduces</em> exposure. The project's exposure is the sum:</p>
+    \[ E_{\text{net}} \;=\; \sum_{i \in \text{threats}} p_i I_i \;-\; \sum_{j \in \text{opps}} p_j I_j \;=\; E_{\text{threat}} - E_{\text{opp}} \]
+    <p style="margin-top:0.6rem;">The contingency reserve is then set against \(E_{\text{net}}\) &mdash; either as a percentage of it or as the value at a chosen confidence level from a simulation. A negative \(E_{\text{net}}\) is not an error: it means the identified opportunities outweigh the identified threats, and the project is carrying upside.</p>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Worked: the NSW Digital Driver Licence register</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Risk</th><th>\(L\)</th><th>\(S\)</th><th>\(r=L\times S\)</th><th>Band</th><th>\(p\)</th><th>Impact</th><th>EMV</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>R1 Peak launch demand</td><td>4 High</td><td>4 High</td><td>16</td><td><span class="badge">EXTREME</span></td><td>0.30</td><td>&minus;A$800k</td><td>&minus;A$240k</td></tr>
+        <tr><td>R2 Record integration errors</td><td>3 Medium</td><td>4 High</td><td>12</td><td><span class="badge badge-green">HIGH</span></td><td>0.25</td><td>&minus;A$500k</td><td>&minus;A$125k</td></tr>
+        <tr><td>R3 Privacy or security issue</td><td>2 Low</td><td>5 Very high</td><td>10</td><td><span class="badge badge-green">HIGH</span></td><td>0.15</td><td>&minus;A$1.2m</td><td>&minus;A$180k</td></tr>
+        <tr><td>R4 Trial insight reduces support <em>(opportunity)</em></td><td>3 Medium</td><td>3 Medium benefit</td><td>9</td><td><span class="badge badge-blue">MODERATE</span></td><td>0.40</td><td>+A$300k</td><td>+A$120k</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Threat exposure.</strong> \(E_{\text{threat}} = 240{,}000 + 125{,}000 + 180{,}000 = \mathrm{A}\$545{,}000\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>Opportunity benefit.</strong> \(E_{\text{opp}} = 0.40 \times 300{,}000 = \mathrm{A}\$120{,}000\). This is subtracted, not added, because the saving reduces what the project expects to lose.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Net expected exposure.</strong> \(E_{\text{net}} = 545{,}000 - 120{,}000 = \mathrm{A}\$425{,}000\) &mdash; the figure the deck quotes for the register's &ldquo;net expected exposure&rdquo;.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>Contingency implication.</strong> At a 10% risk factor, \(CR = 0.10 \times 425{,}000 = \mathrm{A}\$42{,}500\) of known-risk contingency on top of the cost baseline. Note what this is <em>not</em>: it is not the management reserve for unknown unknowns, and it is not a promise that only A$42,500 will be spent.</p></div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Two risks score the same 12 on a 1&ndash;5 scale: one is \(4\times3\), the other \(3\times4\). What should the register do with them?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The ordinal score is banded, and both sit in the same band. The product does not distinguish order of multiplication, and neither should the band.">Rank the high-probability risk above the high-impact one</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The score is the same, so the priority band is the same. The difference is in the response: a high-probability risk is usually attacked on probability (mitigation), a high-impact one on impact (contingency, transfer, or a fallback plan)." data-bad="">Give them the same priority, but choose responses that attack the larger factor</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Averaging discards information the register needs later. Impact ratings drive the contingency and the fallback plan, so they must be kept separately.">Average the two factors to a single 3.5 rating</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-emv">
+  <h2 class="section-title">EMV and decision trees</h2>
+  <p class="section-lead">Decision tree analysis combines <em>decision</em> branches (choices you make) with <em>chance</em> branches (outcomes you do not control) and computes an expected monetary value for each choice.</p>
+
+  <div class="theorem-box">
+    <h3>The decision rule</h3>
+    <p>A chance node's value is the probability-weighted sum of its outcomes; a decision node takes the best of its branches.</p>
+    \[ \mathrm{EMV}(\text{node}) = \sum_{k} p_k \, V_k, \qquad \text{decide} = \arg\max_{\text{branches}} \mathrm{EMV} \]
+    <p style="margin-top:0.6rem;">Costs are carried as negative values, so &ldquo;best&rdquo; means the largest (least negative) expected value. Subtract the cost of a branch <em>inside</em> that branch, before comparing, or the comparison is meaningless.</p>
+  </div>
+
+  <div id="ix-emv-tree-f"></div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Worked: build in-house or outsource?</h3>
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Decision point.</strong> The project must deliver an integration component. Option A: build in-house for A$400k, with a 70% chance of succeeding and a 30% chance of a rework cost of A$600k. Option B: outsource for A$600k, with a 90% chance of succeeding at that price and a 10% chance of remediation costing another A$200k.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>In-house chance node.</strong> \(\mathrm{EMV}_A = 0.70 \times (-400{,}000) + 0.30 \times (-400{,}000 - 600{,}000) = -280{,}000 - 300{,}000 = -\mathrm{A}\$580{,}000\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Outsource chance node.</strong> \(\mathrm{EMV}_B = 0.90 \times (-600{,}000) + 0.10 \times (-600{,}000 - 200{,}000) = -540{,}000 - 80{,}000 = -\mathrm{A}\$620{,}000\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>Decision.</strong> Building in-house has the higher expected value (&minus;A$580k beats &minus;A$620k), so a risk-neutral decision maker builds in-house. The <em>downside</em>, however, is worse: A$1.0m versus A$0.8m. That asymmetry is the whole reason risk appetite matters &mdash; a risk-averse organisation can rationally buy the A$40k of expected value for A$200k less downside exposure.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">5</div>
+      <div class="step-body"><p><strong>What to say in an exam.</strong> State the EMV of each branch, name the higher one, and then name the qualitative caveat: EMV assumes risk neutrality and repeatable decisions, and this decision is neither.</p></div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A vendor offers a fixed A$50,000 SLA-backed integration service. The in-house alternative has an EMV of &minus;A$45,000 and a 20% chance of a A$200,000 failure. Which statement is defensible?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="EMV is not the only criterion. The in-house branch is cheaper in expectation by A$5,000 but carries a A$200,000 tail; a decision maker's appetite decides whether that trade is acceptable.">In-house is always correct because its EMV is higher</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The A$5,000 expected difference is small against a A$200,000 downside, so transferring via the SLA is defensible for a risk-averse organisation — and the transfer strategy is exactly what an SLA-backed vendor contract implements." data-bad="">Outsourcing is defensible: the A$5,000 expected saving does not compensate for the A$200,000 tail risk</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Transfer moves the consequence to a third party; it does not remove the risk from the register. The project still owns integration quality, and residual risk remains.">Outsourcing removes the risk from the project entirely</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tools">
+  <h2 class="section-title">Simulation, samples and the contingency</h2>
+  <p class="section-lead">EMV handles one risk at a time. Monte Carlo simulation handles all of them at once, by sampling every uncertain input together and reading the distribution of outcomes.</p>
+
+  <div class="theorem-box">
+    <h3>How a Monte Carlo answer is read</h3>
+    <p>Run the model \(N\) times and sort the outcomes. The value at the \(c\)-th percentile is the <strong>\(c\)% confidence estimate</strong>; the contingency is the gap between it and the deterministic baseline.</p>
+    \[ D_{c} = F^{-1}(c), \qquad CR_{c} = D_{c} - D_{\text{base}}, \qquad D_{c} \approx \mu + z_c \sigma \ \ (\text{normal approximation}) \]
+    <p style="margin-top:0.6rem;">with \(z_{0.90}=1.28\) and \(z_{0.95}=1.65\). The normal approximation is only a sanity check on the simulated numbers &mdash; the simulation itself makes no normality assumption, which is the point of using it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Worked: a P90 contingency in three lines</h3>
+    <p>A simulation of the delivery schedule returns a mean duration of 23 days with a standard deviation of 2.2 days.</p>
+    \[ D_{90} \approx 23 + 1.28 \times 2.2 = 25.8\ \text{days} \qquad CR_{90} = 25.8 - 23 = 2.8\ \text{days} \]
+    <p style="margin-top:0.6rem;">The reading: commit to 27 days and hold roughly four days of schedule reserve, or commit to 23 days and accept a 50% chance of being late. Both are legitimate; only the second is a promise the data does not support.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Define variables</h3>
+      <p>Identify the uncertain factors &mdash; task durations, costs, risk impacts &mdash; and assign each a probability distribution: Normal, Triangular, Beta, or an empirical one drawn from history. The distribution is the model's only place for optimism to hide, so it is where the argument happens.</p>
+    </div>
+    <div class="col-card">
+      <h3>Run, then analyse</h3>
+      <p>Software samples within each distribution and runs the schedule or cost model thousands of times. You then read a range of possible outcomes instead of a single estimate: the probability of finishing by a date, the expected overrun, and the confidence level that a given reserve buys.</p>
+    </div>
+  </div>
+
+  <div id="ix-worked-mc"></div>
+
+  <div class="callout">
+    <strong>What simulation changes about the conversation.</strong> A single-point estimate invites the question &ldquo;will we hit it?&rdquo;, which has a yes-or-no answer nobody can give. A distribution invites &ldquo;what does 90% confidence cost, and is it worth buying?&rdquo; &mdash; a question with a number attached, and one that a risk-averse or risk-seeking organisation will answer differently.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked solution &mdash; the five-risk cloud migration from the Week 7 case study.</strong> Compute the EMV of the data-loss risk, then decide what the numbers license you to claim.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Extract the inputs.</strong> Probability \(p = 0.25\); impact \(I = \$200{,}000\). Everything else in the scenario &mdash; vendor delay, regulation, developer attrition, AI monitoring &mdash; has no stated probability attached, and an EMV without a probability is not computable.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Compute.</strong> \(\mathrm{EMV} = p \times I = 0.25 \times 200{,}000 = \$50{,}000\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Interpret.</strong> $50,000 is the average exposure this risk contributes across many comparable migrations. It is not a forecast that $50,000 will be spent: in the single run that happens, the cost is the full $200,000; in the runs that do not, it is zero. The expected value is the right input to a contingency calculation and the wrong input to a cash-flow forecast for one project.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Extend to the whole register.</strong> If all five risks had probabilities and impacts, \(E_{\text{net}} = \sum p_i I_i\) with the opportunity's contribution subtracted, and the contingency would answer to that total. That is precisely the calculation the NSW licence register demonstrates.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the limitation.</strong> Risks are not independent: a vendor delay raises the odds of a rushed migration, which raises the odds of data loss. Adding EMVs treats them as independent, so a simulation is the better tool when the dependencies matter &mdash; and saying so is worth marks.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-f-tools-match"></div>
+  <script type="application/json" id="ix-f-tools-match">
+  {
+    "title": "Match each quantity to what it is for",
+    "subtitle": "Every one of these appears in a quantitative risk answer. Click a term, then its use.",
+    "pairs": [
+      ["Risk score L &times; S", "Sets the qualitative priority band in the register"],
+      ["Expected monetary value", "Sizes the contribution of one risk to the contingency reserve"],
+      ["Net expected exposure", "The total the project faces once opportunity benefits are netted off"],
+      ["Contingency reserve", "Budget held for identified risks, above the cost baseline"],
+      ["Management reserve", "Budget held for unidentified risks, controlled above the project manager"],
+      ["Monte Carlo simulation", "Produces a distribution of outcomes so a confidence level can be chosen"],
+      ["Three-point estimate", "Turns optimistic, most likely and pessimistic durations into an expected duration and a standard deviation"],
+      ["Critical path", "The longest chain of dependent activities; its length is the shortest project duration"]
+    ]
+  }
+  </script>
+</section>
+
+<section class="section" id="sec-m-cpm">
+  <h2 class="section-title">WBS, network and the critical path</h2>
+  <p class="section-lead">Schedule risk has its own arithmetic, and it starts from the work breakdown structure: you cannot estimate, sequence or crash work that has not been decomposed. This is the Week 3 toolkit, worked here because it is the schedule half of quantitative risk analysis.</p>
+
+  <div class="def-box">
+    <div class="def-label">Why this belongs on a risk page</div>
+    <p>The critical path is the chain with <strong>zero float</strong> &mdash; the activities that, if any one of them slips, move the project end date. That makes it the schedule-risk map: risk responses, buffers and monitoring attention all go where the float is zero, because float is the only schedule shock absorber the network has.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>ID</th><th>Work package</th><th>Duration</th><th>Predecessors</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>Float</th><th>Critical?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td>Scope and requirements baseline</td><td>4</td><td>&mdash;</td><td>0</td><td>4</td><td>0</td><td>4</td><td>0</td><td><span class="badge">Yes</span></td></tr>
+        <tr><td>B</td><td>Vendor selection</td><td>3</td><td>A</td><td>4</td><td>7</td><td>8</td><td>11</td><td>4</td><td>No</td></tr>
+        <tr><td>C</td><td>Integration design</td><td>5</td><td>A</td><td>4</td><td>9</td><td>4</td><td>9</td><td>0</td><td><span class="badge">Yes</span></td></tr>
+        <tr><td>D</td><td>Security review</td><td>2</td><td>B</td><td>7</td><td>9</td><td>11</td><td>13</td><td>4</td><td>No</td></tr>
+        <tr><td>E</td><td>Data migration</td><td>4</td><td>C</td><td>9</td><td>13</td><td>9</td><td>13</td><td>0</td><td><span class="badge">Yes</span></td></tr>
+        <tr><td>F</td><td>Test and assurance</td><td>6</td><td>E, D</td><td>13</td><td>19</td><td>13</td><td>19</td><td>0</td><td><span class="badge">Yes</span></td></tr>
+        <tr><td>G</td><td>Staged rollout</td><td>4</td><td>F</td><td>19</td><td>23</td><td>19</td><td>23</td><td>0</td><td><span class="badge">Yes</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-cpm"></div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Forward pass.</strong> \(\mathrm{EF} = \mathrm{ES} + \text{duration}\), and \(\mathrm{ES}\) is the largest \(\mathrm{EF}\) among predecessors. For E: \(\max(\mathrm{EF}_C, \mathrm{EF}_D) = \max(9, 9) = 9\), so E runs 9&rarr;13. The project finishes at \(\mathrm{EF}_G = 23\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>Backward pass.</strong> Set \(\mathrm{LF}_G = 23\) and walk right to left: \(\mathrm{LS} = \mathrm{LF} - \text{duration}\), and \(\mathrm{LF}\) is the smallest \(\mathrm{LS}\) among successors. For C, whose only successor is E: \(\mathrm{LF}_C = \mathrm{LS}_E = 9\), so \(\mathrm{LS}_C = 4\). For D, whose only successor is F: \(\mathrm{LF}_D = \mathrm{LS}_F = 13\), so \(\mathrm{LS}_D = 11\). For B: \(\mathrm{LF}_B = \mathrm{LS}_D = 11\), so \(\mathrm{LS}_B = 8\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Float.</strong> \(\text{Float} = \mathrm{LS} - \mathrm{ES} = \mathrm{LF} - \mathrm{EF}\). Zero for A, C, E, F and G &mdash; which is the critical path &mdash; and 4 for both B and D.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>Three-point estimates.</strong> Replace each single duration with \(t_e = (o + 4m + p)/6\): A 4.0, B 3.0, C 5.0, D 2.0, E 4.0, F 6.0, G 4.0 &mdash; the same durations, so the deterministic path still runs 23 days.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">5</div>
+      <div class="step-body"><p><strong>Schedule uncertainty.</strong> Sum the variances of the critical activities only &mdash; A, C, E, F and G &mdash; because the other branches have float and therefore do not drive the finish date: \(\sigma^2 = 0.44+0.25+0.69+1.00+0.44 = 2.82\), so \(\sigma = \sqrt{2.82} = 1.68\) days. A 90% confidence date is \(23 + 1.28 \times 1.68 = 25.2\) days &mdash; roughly <strong>two to three days of schedule reserve</strong> on this chain, and none of it needed on B or D while their float holds.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">6</div>
+      <div class="step-body"><p><strong>The risk reading.</strong> B and D each show four days of float, but they are drawing on the <em>same</em> four days: D cannot start until B finishes and F cannot start until D does, so a three-day slip on B consumes three of the four for both. This is the classic trap: float is <em>shared</em>, not owned. If B is a vendor-dependent activity, that is where the response &mdash; expediting, a performance bond, or a second supplier &mdash; earns its cost.</p></div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Activities B and D each show 4 days of float, and D follows B. B slips by 3 days. What happens to the project end date?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The slip is absorbed, but the float is not untouched: only one of the four shared days is left.">Nothing changes at all &mdash; the slip is absorbed and the float is untouched</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. B and D measure the same slack, so the three-day slip leaves exactly one day of buffer on the whole chain &mdash; not four plus four. A further slip beyond one day delays F and the finish date." data-bad="">The end date still holds, but only 1 day of shared float remains; a further slip beyond one day would delay the finish</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Four shared days absorb a three-day slip, so the finish date holds &mdash; what changes is how much buffer is left, and that is the number worth reporting.">The project end date slips by 3 days immediately</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-evm">
+  <h2 class="section-title">Earned value as a cost-risk signal</h2>
+  <p class="section-lead">Earned value management converts three numbers into a forecast. In risk terms it is the monitor-and-control instrument: it tells you that a cost threat has already materialised, while there is still time to respond.</p>
+
+  <div class="theorem-box">
+    <h3>The definitions, exactly</h3>
+    <p>At a status date: \(\mathrm{PV}\) is the budgeted value of the work <em>planned</em> by then, \(\mathrm{EV}\) the budgeted value of the work actually <em>completed</em>, and \(\mathrm{AC}\) what that completed work has <em>actually cost</em>.</p>
+    \[ \mathrm{CV} = \mathrm{EV} - \mathrm{AC}, \qquad \mathrm{SV} = \mathrm{EV} - \mathrm{PV}, \qquad \mathrm{CPI} = \frac{\mathrm{EV}}{\mathrm{AC}}, \qquad \mathrm{SPI} = \frac{\mathrm{EV}}{\mathrm{PV}} \]
+    <p style="margin-top:0.6rem;">A negative variance means trouble; an index below 1 means trouble. A negative <em>SV on a project with a critical path that cannot move</em> is a schedule risk that has already converted into a threat, which is why SV and SPI belong in the risk review even though they are cost-area metrics.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Forecasting the overrun</h3>
+    \[ \mathrm{EAC}_{\mathrm{CPI}} = \frac{\mathrm{BAC}}{\mathrm{CPI}}, \qquad \mathrm{EAC}_{\text{atypical}} = \mathrm{AC} + (\mathrm{BAC} - \mathrm{EV}), \qquad \mathrm{ETC} = \mathrm{EAC} - \mathrm{AC}, \qquad \mathrm{VAC} = \mathrm{BAC} - \mathrm{EAC} \]
+    <p style="margin-top:0.6rem;">The choice between the two EAC forms <em>is</em> a risk judgement. Dividing by CPI assumes the current cost performance continues &mdash; the pessimistic case, and the right one when the cause is systemic. Adding the remaining budget assumes the deviation was a one-off &mdash; defensible only when you can name the one-off.</p>
+  </div>
+
+  <div id="ix-evm"></div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Worked: a ten-day, A$100,000 project at day 4</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Quantity</th><th>Symbol</th><th>Value at day 4</th><th>Reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Budget at completion</td><td>\(\mathrm{BAC}\)</td><td>A$100,000</td><td>The baseline</td></tr>
+        <tr><td>Planned value</td><td>\(\mathrm{PV}\)</td><td>A$40,000</td><td>40% of the work was scheduled by now</td></tr>
+        <tr><td>Earned value</td><td>\(\mathrm{EV}\)</td><td>A$35,000</td><td>Only 35% of the budgeted work is actually done</td></tr>
+        <tr><td>Actual cost</td><td>\(\mathrm{AC}\)</td><td>A$40,000</td><td>The completed work has consumed $40k</td></tr>
+        <tr><td>Cost variance</td><td>\(\mathrm{CV}\)</td><td>&minus;A$5,000</td><td>Over budget on the work completed</td></tr>
+        <tr><td>Schedule variance</td><td>\(\mathrm{SV}\)</td><td>&minus;A$5,000</td><td>Behind the plan in value terms</td></tr>
+        <tr><td>Cost performance index</td><td>\(\mathrm{CPI}\)</td><td>0.875</td><td>85 cents of value per dollar spent</td></tr>
+        <tr><td>Schedule performance index</td><td>\(\mathrm{SPI}\)</td><td>0.875</td><td>6 of 10 days' worth of work done at day 4 is consistent with this</td></tr>
+        <tr><td>Estimate at completion</td><td>\(\mathrm{EAC}_{\mathrm{CPI}}\)</td><td>A$114,286</td><td>If the trend continues: a $14,286 overrun</td></tr>
+        <tr><td>Estimate to complete</td><td>\(\mathrm{ETC}\)</td><td>A$74,286</td><td>What is left to spend if the cost trend continues</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Indices.</strong> \(\mathrm{CPI} = 35{,}000/40{,}000 = 0.875\) and \(\mathrm{SPI} = 35{,}000/40{,}000 = 0.875\). Identical values here only because \(\mathrm{PV} = \mathrm{AC}\) by coincidence of the example; do not read a relationship into it.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>Forecast, pessimistic.</strong> \(\mathrm{EAC} = 100{,}000 / 0.875 = \mathrm{A}\$114{,}286\), so \(\mathrm{VAC} = 100{,}000 - 114{,}286 = -\mathrm{A}\$14{,}286\) and \(\mathrm{ETC} = 114{,}286 - 40{,}000 = \mathrm{A}\$74{,}286\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Forecast, atypical.</strong> If the overrun was a one-off, \(\mathrm{EAC} = 40{,}000 + (100{,}000 - 35{,}000) = \mathrm{A}\$105{,}000\) and the overrun is only $5,000.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>The risk framing.</strong> Forecast the two numbers and quote them as a range: &ldquo;A$105,000 if the deviation was a one-off, A$114,286 if it is systemic.&rdquo; Then say which risk in the register would decide it &mdash; here, whether the cause is the same integration or capacity risk that R2 already tracks.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">5</div>
+      <div class="step-body"><p><strong>Link back to the register.</strong> An overrun is not a new risk; it is a <em>realised</em> one. The correct move is to close or re-rate the entry that predicted it, release or reallocate the contingency that was held against it, and check whether the response worked &mdash; the monitor-and-control step from the study page.</p></div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A project reports \(\mathrm{CPI} = 0.80\) and \(\mathrm{SPI} = 0.95\) at the halfway point. Which risk reading is most defensible?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="SPI is above CPI but both are below 1, and CPI being the lower and more persistent of the two makes the cost threat the dominant one — not a rounding error to ignore.">The schedule is the problem; the cost index is close enough to 1 to ignore</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Both indices are below 1, so cost and schedule threats have already materialised. CPI is lower, meaning $1.25 is being spent per $1 of value earned, and at the halfway point that trend is exactly the systemic case where EAC = BAC / CPI applies." data-bad="">Both threats have materialised; the cost one is severe, and a halfway-point CPI this low justifies the systemic EAC</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="EVM indices are ratio measures of performance against the baseline, not a percentage of the budget spent. Reading CPI as “80% of the budget used” is a common and costly mistake.">80% of the budget has been spent, so the project is fine</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked solution &mdash; choosing a contingency and defending it.</strong> A project has a cost baseline of A$2.0m. Simulation gives a mean completion cost of A$2.1m with a standard deviation of A$150k. Risk appetite is documented as &ldquo;risk-averse: commit at 90% confidence or better&rdquo;.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Translate appetite into a percentile.</strong> &ldquo;90% confidence or better&rdquo; means the \(D_{90}\) figure, not the mean. Appetite is not decoration: it selects which point of the distribution becomes the commitment.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Compute the point estimate.</strong> \(D_{90} = 2{,}100{,}000 + 1.28 \times 150{,}000 = 2{,}100{,}000 + 192{,}000 = \mathrm{A}\$2{,}292{,}000\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Size the reserve.</strong> Against the baseline, \(CR_{90} = 2{,}292{,}000 - 2{,}000{,}000 = \mathrm{A}\$292{,}000\). Against the mean it is A$192,000 &mdash; so the two components are worth separating: A$100,000 closes the gap between baseline and mean (the expected drift), and A$192,000 buys the confidence the appetite demands.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Name what the reserve is not.</strong> Contingency answers identified risks and sits under the project manager's control. Unidentified risks are answered by the management reserve, which is controlled above the project manager. Quoting one figure for both is the error this step exists to prevent.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Sanity-check the response.</strong> If a A$292,000 reserve is unaffordable, the answer is not to lower the confidence target silently &mdash; it is to change the risks. Re-plan the highest-EMV threats, then re-run the simulation and read the new \(D_{90}\).</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO6007ChapterUI) return;
+    try {
+      window.initINFO6007ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO6007 chapter 7] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

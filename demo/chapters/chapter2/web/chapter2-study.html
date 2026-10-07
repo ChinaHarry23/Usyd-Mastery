@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Widgets — DEMO101</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script>window.PROGRESS_TRACKER_CONFIG = { storageKey: "demo101", numChapters: 3, unitNoun: "Week" };</script>
+<script defer src="chapter2-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mount steppers, matchers, diagrams, decks, bars and pipelines from a JSON block, and learn the strict rules that JSON follows.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Interactive Widgets — DEMO101">
+<meta property="og:description" content="Mount steppers, matchers, diagrams, decks, bars and pipelines from a JSON block, and learn the strict rules that JSON follows.">
+<meta property="og:locale" content="en_AU">
+<body>
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F9E9;</span>
+      <h2>Week 2</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-declare" class="nav-link" data-section="declare">Declarative widgets</a></li>
+    <li><a href="#sec-json" class="nav-link" data-section="json">Strict JSON rules</a></li>
+    <li><a href="#sec-stepper" class="nav-link" data-section="stepper">Steppers</a></li>
+    <li><a href="#sec-match" class="nav-link" data-section="match">Matching pairs</a></li>
+    <li><a href="#sec-spotlight" class="nav-link" data-section="spotlight">Hotspot diagrams</a></li>
+    <li><a href="#sec-cards" class="nav-link" data-section="cards">Flip-card decks</a></li>
+    <li><a href="#sec-compare" class="nav-link" data-section="compare">Comparison bars</a></li>
+    <li><a href="#sec-flow" class="nav-link" data-section="flow">Pipelines</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+    <div class="progress-text">Week 2 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <p class="hero-course">DEMO101 &mdash; Building a Study Hub</p>
+  <h1>Week 2: Interactive Widgets</h1>
+  <p class="hero-subtitle">A widget is a placeholder plus a JSON config. This chapter mounts six of the engine's eight interactive types on one page &mdash; five declared in JSON and one animated canvas stepper built in a chapter script &mdash; explains what each config key means, and shows the strict JSON rules that decide whether the widget appears at all.</p>
+</section>
+
+<section id="sec-declare" class="section" data-track="declare">
+  <h2 class="section-title">Declarative widgets</h2>
+  <p class="section-lead">You describe the widget; you do not build it. Two elements do all the work.</p>
+  <p>Every interactive block in this course is declared the same way. First a placeholder element names a widget type and points at a config block. Then a script block of type <code>application/json</code> holds the configuration. On load, the engine scans the page for placeholders, reads each config, and mounts the interaction in place of the empty div.</p>
+  <p><span class="badge badge-blue">Declarative</span> No JavaScript is required in the chapter script, the config is data rather than code, and a broken widget fails in one place instead of taking the page down with it.</p>
+  <p>The table below is the whole catalogue, read from the renderer rather than invented. The middle column lists the keys a widget cannot work without; the right column gives the shape of one item in the widget's list, because that is where most authoring mistakes live.</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th><code>data-ix</code></th><th>Required keys</th><th>One item of the list</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>sequence</code></td><td><code>title</code>, <code>steps[]</code></td><td>a plain string: <code>"Draft the study page"</code></td></tr>
+      <tr><td><code>matcher</code></td><td><code>title</code>, <code>pairs[]</code></td><td>two strings: <code>["stepper", "animated canvas frames"]</code></td></tr>
+      <tr><td><code>timeline</code></td><td><code>title</code>, <code>events[]</code></td><td><code>{ "label": "Stage 1", "title": "Draft", "detail": "&hellip;" }</code></td></tr>
+      <tr><td><code>hotspot</code></td><td><code>title</code>, <code>svg</code> <em>or</em> <code>img</code>, <code>points[]</code></td><td><code>{ "x": 12, "y": 42, "label": "Sidebar", "detail": "&hellip;" }</code> &mdash; x and y are percentages</td></tr>
+      <tr><td><code>deck</code></td><td><code>title</code>, <code>cards[]</code></td><td><code>{ "front": "&hellip;", "back": "&hellip;" }</code>, with an optional <code>hint</code></td></tr>
+      <tr><td><code>race</code></td><td><code>title</code>, <code>max</code>, <code>rows[]</code></td><td><code>{ "name": "Prose", "value": 120, "display": "120 min" }</code> &mdash; <code>max</code> is a number</td></tr>
+      <tr><td><code>pipeline</code></td><td><code>title</code>, <code>nodes[]</code></td><td><code>{ "label": "Fetch the fragment", "note": "&hellip;" }</code></td></tr>
+      <tr><td><code>stepper</code></td><td colspan="2">not declarative at all: its <code>frames</code> carry <code>draw(ctx, w, h, k)</code> functions, and JSON cannot hold a function. Mount it from the chapter script with <code>Interactive.stepper(id, cfg)</code>.</td></tr>
+    </tbody>
+  </table>
+  <div class="def-box">
+    <h3>Placeholder</h3>
+    <p>An empty element carrying <code>data-ix="type"</code> and <code>data-ix-src="#config-id"</code>. The engine replaces its contents with the mounted widget; the element itself stays in place, so layout does not shift.</p>
+  </div>
+  <div class="insight-box">
+    <h3>The config is content</h3>
+    <p>Because a widget config is data, it can live next to the prose it illustrates, be reviewed like prose, and be diffed like prose. That is the reason the declarative path exists at all: a widget you can review is a widget that stays correct.</p>
+  </div>
+</section>
+
+<section id="sec-json" class="section" data-track="json">
+  <h2 class="section-title">Strict JSON rules</h2>
+  <p class="section-lead">Widget configs are parsed, not interpreted. A single stray character costs you the whole block.</p>
+  <p>Three rules cover almost every failure. First, every key and every string value is wrapped in double quotes; JSON has no bare words. Second, a double quote <em>inside</em> a string must be escaped with a backslash, because an unescaped quote ends the string early and leaves the rest of the line as syntax errors. Third, a string may not contain a raw line break: keep a value on one line, and use the structure of the config &mdash; more steps, more cards, more rows &mdash; when an idea needs more room.</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Mistake</th><th>What the parser sees</th><th>Fix</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>"label": "the "main" step"</code></td><td>The string ends after <code>the </code>; the next token is unexpected.</td><td>Escape both quotes: <code>\"main\"</code></td></tr>
+      <tr><td>A value that wraps to a second line</td><td>A control character inside a string.</td><td>Rewrite as one line, or split into two steps.</td></tr>
+      <tr><td>Trailing comma after the last item</td><td>An empty element where a value was expected.</td><td>Remove the comma; JSON forbids trailing commas.</td></tr>
+      <tr><td><code>data-ix-src="#typo"</code></td><td>No config block with that id, so nothing mounts.</td><td>Match the id exactly, including the <code>#</code>.</td></tr>
+    </tbody>
+  </table>
+  <p>An empty widget area is nearly always one of these four problems, and the page itself will not tell you which. Parse the block on its own before you go looking for a styling fault: the failure is almost never in the stylesheet.</p>
+  <div class="quick-check">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">A deck widget renders as an empty box. Its config block looks correct at a glance. Which check is most likely to find the fault first?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-bad="Styling cannot prevent a mount. If the config parsed and the placeholder resolved, the widget would appear even with no stylesheet at all.">Inspect the element to see whether the deck styles loaded</div>
+      <div class="qc-opt" data-correct="false" data-bad="A wrong widget name usually produces a visible console complaint, and the placeholder type is the easiest thing on the page to read correctly.">Re-read the <code>data-ix</code> attribute for a misspelling</div>
+      <div class="qc-opt" data-correct="true" data-good="Parsing is the step that fails silently. Feed the block to a JSON parser on its own and you get an exact position for the offending character.">Parse the config block on its own and read the error position</div>
+      <div class="qc-opt" data-correct="false" data-bad="Renaming the config id changes which block the placeholder looks for, but it does not fix a block that fails to parse.">Give the config block a new id and reload</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-stepper" class="section" data-track="stepper">
+  <h2 class="section-title">Steppers</h2>
+  <p class="section-lead">A stepper is the one widget that cannot be declared. Its frames are functions, so it is built in the chapter script instead.</p>
+  <p>Every other widget on this page is a placeholder plus a JSON block. A <code>stepper</code> is different: each frame carries a <code>draw(ctx, w, h, k)</code> function that paints the canvas, and a function cannot be written in JSON at all. Its placeholder therefore carries a plain <code>id</code> and no <code>data-ix</code> attribute, and the chapter script mounts it by hand:</p>
+  <pre><code>Interactive.stepper("ix-ch2-stepper", {
+  title: "How complete is your chapter?",
+  height: 240,
+  frames: [
+    { title: "Empty folder", caption: "chapters/04 exists and holds nothing.",
+      draw: function (ctx, w, h, k) { k.clear(); /* paint this frame */ } }
+  ]
+});</code></pre>
+  <p>The renderer supplies the frame dots, the transport buttons and the caption line; your <code>draw</code> function only paints the picture. Inside it, <code>k</code> is a kit of canvas helpers &mdash; <code>box()</code>, <code>label()</code>, <code>bar()</code>, <code>dot()</code>, <code>arrow()</code>, <code>highlight()</code> &mdash; and the same placeholder can be rebuilt in place by calling <code>Interactive.destroy(id)</code> first, which is what a language swap needs.</p>
+  <p>The example below is mounted by <code>chapters/02/study.js</code> and walks the seven milestones from an empty folder to a validated pack. Every frame paints the same scale with the current milestone marked, so the position changes while the layout stays put. That ratio is the subject of the foundations page for this week.</p>
+  <div id="ix-ch2-stepper"></div>
+  <div class="callout">
+    <p><strong>Declarative first, imperative second.</strong> Reach for a stepper only when the widget has to draw something. If the content is a list of strings or records, one of the seven declarative types above expresses it, and the config stays reviewable as data.</p>
+  </div>
+</section>
+
+<section id="sec-match" class="section" data-track="match">
+  <h2 class="section-title">Matching pairs</h2>
+  <p class="section-lead">A matcher is the cheapest way to test whether a reader can tell similar things apart.</p>
+  <p>Each entry in <code>pairs</code> is a two-element array: the left-hand item first, then its partner. The engine shuffles the right column, and the reader works left to right until every pair is joined. Because the pairing is the answer, a matcher is only fair when the two columns are genuinely distinguishable: eight interchangeable definitions make a guessing game rather than a test.</p>
+  <p>The pairs below are the catalogue from the first section, restated as a recall task. If you can complete this without scrolling up, you know the config shapes well enough to author a widget without a reference open.</p>
+  <div data-ix="matcher" data-ix-src="#ix-ch2-matcher"></div>
+  <script type="application/json" id="ix-ch2-matcher">
+{
+  "title": "Match the widget to its config",
+  "subtitle": "Six widget types, six shape descriptions.",
+  "pairs": [
+    ["stepper", "frames carrying draw() functions, mounted from the chapter script"],
+    ["sequence", "an array of plain strings, ordered by the reader"],
+    ["timeline", "events with a label, a title and a detail sentence"],
+    ["hotspot", "an inline svg string plus points placed by x and y percentages"],
+    ["race", "a max and rows carrying a name, a value and a display string"],
+    ["pipeline", "nodes with a label and a note, played in order"]
+  ]
+}
+  </script>
+</section>
+
+<section id="sec-spotlight" class="section" data-track="spotlight">
+  <h2 class="section-title">Hotspot diagrams</h2>
+  <p class="section-lead">A hotspot widget puts numbered markers on a picture you supply and explains each one on demand.</p>
+  <p>The config carries the drawing itself in the <code>svg</code> key as an inline SVG string &mdash; or a bitmap in the <code>img</code> key, never both &mdash; plus a list of <code>points</code>. Each point has <code>x</code> and <code>y</code> coordinates expressed as percentages of the drawing box, a <code>label</code>, and a <code>detail</code> sentence. Percentages rather than pixels mean the diagram keeps working when the page is narrow, which is the whole reason the coordinates are relative.</p>
+  <p>The wireframe below is a chapter page as the engine sees it. Click each marker to see which authoring decision it represents.</p>
+  <div data-ix="hotspot" data-ix-src="#ix-ch2-hotspot"></div>
+  <script type="application/json" id="ix-ch2-hotspot">
+{
+  "title": "Anatomy of a chapter page",
+  "subtitle": "Four regions you control from a content pack.",
+  "svg": "<svg viewBox='0 0 640 360' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Wireframe of a chapter page'><rect width='640' height='360' fill='#111827'/><rect x='16' y='16' width='128' height='328' rx='10' fill='#1f2937' stroke='#4b5563'/><rect x='36' y='40' width='88' height='10' rx='5' fill='#6b7280'/><rect x='36' y='66' width='72' height='8' rx='4' fill='#374151'/><rect x='36' y='88' width='80' height='8' rx='4' fill='#374151'/><rect x='36' y='110' width='64' height='8' rx='4' fill='#374151'/><rect x='36' y='132' width='76' height='8' rx='4' fill='#374151'/><rect x='168' y='16' width='456' height='96' rx='10' fill='#312e81' stroke='#6366f1'/><rect x='192' y='44' width='180' height='14' rx='7' fill='#a5b4fc'/><rect x='192' y='72' width='300' height='9' rx='4' fill='#818cf8'/><rect x='168' y='132' width='456' height='92' rx='10' fill='#1f2937' stroke='#4b5563'/><rect x='192' y='156' width='150' height='12' rx='6' fill='#9ca3af'/><rect x='192' y='182' width='380' height='8' rx='4' fill='#4b5563'/><rect x='192' y='200' width='330' height='8' rx='4' fill='#4b5563'/><rect x='168' y='240' width='456' height='104' rx='10' fill='#1f2937' stroke='#4b5563'/><rect x='192' y='264' width='170' height='12' rx='6' fill='#9ca3af'/><rect x='192' y='292' width='408' height='36' rx='8' fill='#0f172a' stroke='#f59e0b' stroke-dasharray='6 5'/><text x='396' y='315' font-family='system-ui, sans-serif' font-size='13' fill='#fbbf24' text-anchor='middle'>widget mounts here</text></svg>",
+  "points": [
+    { "x": 12, "y": 42, "label": "Sidebar", "detail": "Generated from the section tracks. You never write navigation markup; you write section headings and the sidebar follows." },
+    { "x": 50, "y": 18, "label": "Hero", "detail": "The first section, always. It carries id=hero and data-track=hero, and it is the one section the sidebar does not list." },
+    { "x": 48, "y": 50, "label": "Section body", "detail": "The h2 with class section-title opens every other section, and its text becomes the navigation label. Keep it to two to four words." },
+    { "x": 62, "y": 86, "label": "Widget slot", "detail": "A placeholder div with data-ix and data-ix-src, followed by the JSON config it points at. The dashed box is empty until a valid config mounts." }
+  ]
+}
+  </script>
+  <div class="insight-box">
+    <h3>Draw for one idea</h3>
+    <p>A diagram that needs six markers is usually three diagrams. If two markers explain the same relationship, the drawing is carrying two lessons and the reader will only remember one of them.</p>
+  </div>
+</section>
+
+<section id="sec-cards" class="section" data-track="cards">
+  <h2 class="section-title">Flip-card decks</h2>
+  <p class="section-lead">A deck is a light recall tool: a prompt on the front, the answer on the back, one card at a time.</p>
+  <p>Each entry in <code>cards</code> supplies a <code>front</code> and a <code>back</code>. Unlike the course-wide flashcard data, which is scored and scheduled, a deck widget is unscored and immediate: it belongs inside a section when the reader needs to rehearse something before continuing. Keep fronts short enough to read at a glance, and keep backs to a single idea.</p>
+  <p>These five cards cover the JSON mistakes from earlier in the chapter. Flip each one and decide whether you would have said the same thing out loud.</p>
+  <div data-ix="deck" data-ix-src="#ix-ch2-deck"></div>
+  <script type="application/json" id="ix-ch2-deck">
+{
+  "title": "Five JSON habits worth keeping",
+  "subtitle": "Click a card to flip it.",
+  "cards": [
+    { "front": "What does data-ix-src point at?", "back": "The id of a script block on the same page, written with a leading #. The engine reads that block's text content and parses it as JSON." },
+    { "front": "Can a JSON string contain a line break?", "back": "No. A literal newline inside a string is invalid. Keep each value on one line and split long ideas into more steps, cards or rows." },
+    { "front": "How do you write a quote inside a string?", "back": "Escape it with a backslash, so the value reads \\\" like this \\\" on one line. An unescaped quote ends the string early and the block fails to parse." },
+    { "front": "Two placeholders, one config id?", "back": "Both placeholders mount the same configuration independently. Occasionally useful for a before-and-after pair, usually a copy-paste slip worth fixing." },
+    { "front": "Where should the config block sit?", "back": "Immediately after its placeholder, so a reviewer reads the widget and its data together. Order on the page does not matter to the engine, only to humans." }
+  ]
+}
+  </script>
+</section>
+
+<section id="sec-compare" class="section" data-track="compare">
+  <h2 class="section-title">Comparison bars</h2>
+  <p class="section-lead">A race widget turns a small table of numbers into bars that a reader can compare without reading the numbers.</p>
+  <p>The config declares a <code>max</code> and a list of <code>rows</code>. Each row carries a <code>name</code>, a numeric <code>value</code>, and a <code>display</code> string that names the unit. Bars are drawn as a fraction of the maximum, so the scale is set by you rather than by the data: setting <code>max</code> above the largest value leaves visual headroom, and setting it below the largest value quietly clips the leader.</p>
+  <p>The rows below are an honest account of where the minutes went while writing this chapter. The widget is a comparison, not a claim about your own work, so the numbers are illustrative.</p>
+  <div data-ix="race" data-ix-src="#ix-ch2-race"></div>
+  <script type="application/json" id="ix-ch2-race">
+{
+  "title": "Where the authoring minutes went",
+  "subtitle": "One chapter, from empty folder to validated pack.",
+  "max": 120,
+  "rows": [
+    { "name": "Writing prose", "value": 120, "display": "120 min" },
+    { "name": "Tuning widget configs", "value": 45, "display": "45 min" },
+    { "name": "Data files and anchors", "value": 60, "display": "60 min" },
+    { "name": "Validation and preview", "value": 15, "display": "15 min" }
+  ]
+}
+  </script>
+  <div class="callout">
+    <p><strong>Prose is the slow part, and that is fine.</strong> Configs and data files fail loudly and get fixed in minutes. Explanations fail quietly, which is why they deserve the largest share of the budget.</p>
+  </div>
+</section>
+
+<section id="sec-flow" class="section" data-track="flow">
+  <h2 class="section-title">Pipelines</h2>
+  <p class="section-lead">A pipeline is a sequence with a point: the nodes run in order and each one hands something to the next.</p>
+  <p>The config is a <code>title</code> and a list of <code>nodes</code>, each with a <code>label</code> and a <code>note</code> sentence. Use it for processes where order is meaningful and the output of one node is the input of the next. If a reader could reorder your nodes without changing the meaning, you want a <code>sequence</code> widget instead, where reordering is the exercise.</p>
+  <p>Below is what happens between a browser requesting a chapter page and a reader seeing a mounted widget. It is the same five-node path every declarative widget in this course has taken.</p>
+  <div data-ix="pipeline" data-ix-src="#ix-ch2-flow"></div>
+  <script type="application/json" id="ix-ch2-flow">
+{
+  "title": "From request to mounted widget",
+  "subtitle": "Five nodes that run every time a chapter page loads.",
+  "nodes": [
+    { "label": "Fetch the fragment", "note": "The generator wraps your study.html fragment in the page shell and the browser receives one complete document." },
+    { "label": "Derive the navigation", "note": "Every section with a data-track becomes a sidebar entry, labelled by its section-title heading and linked by its id." },
+    { "label": "Scan for placeholders", "note": "The engine collects all elements carrying data-ix, then resolves each data-ix-src reference against the document." },
+    { "label": "Parse and mount", "note": "Each config block is parsed and handed to the matching widget renderer, which fills the placeholder in place." },
+    { "label": "Render maths and restore progress", "note": "KaTeX typesets the delimiters, and saved progress marks the tracks this reader has already visited." }
+  ]
+}
+  </script>
+  <p>When a widget does not appear, this pipeline is also the debugging order: confirm the section reached the page, confirm the placeholder survived the build, confirm the config parses, then confirm the widget renderer exists for that type name.</p>
+  <p>That check is mechanical enough to automate, which makes it a good first imperative widget. The panel below is mounted by <code>chapters/02/study.js</code>: it walks every placeholder on this page, parses the config block each one points at, checks the required keys and the shape of each list item, and reports the result. It shares its script with the stepper above, and between them they are the two widgets on this page that JSON cannot declare.</p>
+  <div id="ix-lint-report"></div>
+  <button type="button" class="solution-toggle" data-target="sol-ch2-debug">Show solution</button>
+  <div class="solution-body" id="sol-ch2-debug">
+    <p><strong>Worked answer &mdash; a widget that refuses to mount.</strong> A pipeline widget shows its title but no nodes. Diagnose it in the order the pipeline runs, and stop as soon as a stage explains the symptom.</p>
+    <ol>
+      <li><strong>Section reached the page.</strong> The title is visible, so the placeholder mounted and the section was built. Skip the build entirely.</li>
+      <li><strong>Placeholder survived.</strong> The title comes from the config, which means the config was found and parsed. A missing config cannot produce a title.</li>
+      <li><strong>Config shape.</strong> The renderer drew a shell and then found nothing to draw inside it, which points at the list key rather than the header keys. A pipeline reads <code>nodes</code>; <code>steps</code> is the key a sequence reads.</li>
+      <li><strong>The fix.</strong> Rename the list to <code>nodes</code>, and rename each item's <code>detail</code> to <code>note</code>, which is the key the pipeline reads for the second line. Every label stays as it is.</li>
+      <li><strong>Prevent the repeat.</strong> Add the widget type to your validation script with the list key it requires. A one-line check turns a silent empty box into a named error at the point the block is parsed.</li>
+    </ol>
+    <p>The general lesson is worth more than the fix: <em>a widget that renders its frame has parsed successfully</em>. Failures before that point produce an empty placeholder; failures after it produce a frame with missing parts, which narrows the search to a single key.</p>
+  </div>
+</section>
+
+</main>
+
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

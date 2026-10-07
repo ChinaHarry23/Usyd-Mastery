@@ -172,11 +172,22 @@ function chapterPercent(progress, ch, TOTALS) {
   var quizBest     = data.quizBest != null ? Math.max(0, Math.min(100, data.quizBest)) : 0;
   var tutorialDone = countTrue(data.tutorials);
   var tutorialTotal= TOTALS.tutorials[ch] || 0;
-  var secR      = secTotal      ? Math.min(1, secDone / secTotal)           : 0;
-  var checkR    = checksTotal   ? Math.min(1, checksDone / checksTotal)     : 0;
-  var quizR     = Math.min(1, quizBest / 100);
-  var tutorialR = tutorialTotal ? Math.min(1, tutorialDone / tutorialTotal) : 0;
-  return Math.round(100 * (0.2 * secR + 0.25 * checkR + 0.25 * quizR + 0.3 * tutorialR));
+  // Mirrors shared/mission-control.js: dimensions with no items are dropped and
+  // the remaining weights renormalised, so a chapter without (say) tutorial
+  // self-assessments can still reach 100%.
+  var dims = [
+    { w: 0.20, done: secDone,      total: secTotal },
+    { w: 0.25, done: checksDone,   total: checksTotal },
+    { w: 0.25, done: quizBest,     total: 100 },
+    { w: 0.30, done: tutorialDone, total: tutorialTotal }
+  ];
+  var weightSum = 0, acc = 0;
+  dims.forEach(function (d) {
+    if (!(d.total > 0)) return;
+    weightSum += d.w;
+    acc += d.w * Math.min(1, d.done / d.total);
+  });
+  return weightSum > 0 ? Math.round(100 * (acc / weightSum)) : 0;
 }
 
 console.log("\n── chapterPercent ──");
@@ -257,11 +268,21 @@ test("chapterPercent: neither split nor combined → 0 checks", function() {
 
 function weightedChapterPct(sv, st, qcd, qct, quizBestPct, tuDone, tuTotal) {
   var W = { sections: 0.20, qc: 0.25, quiz: 0.25, tutorials: 0.30 };
-  var secR = st > 0 ? Math.min(1, sv / st) : 0;
-  var qcR  = qct > 0 ? Math.min(1, qcd / qct) : 0;
-  var qzR  = quizBestPct != null && quizBestPct >= 0 ? Math.min(1, quizBestPct / 100) : 0;
-  var tutR = tuTotal > 0 ? Math.min(1, tuDone / tuTotal) : 0;
-  return W.sections * secR + W.qc * qcR + W.quiz * qzR + W.tutorials * tutR;
+  // Mirrors shared/progress-dashboard.js: dimensions with a zero denominator are
+  // dropped and the remainder renormalised.
+  var dims = [
+    { w: W.sections,  done: sv, st: st },
+    { w: W.qc,        done: qcd, st: qct },
+    { w: W.quiz,      done: quizBestPct != null && quizBestPct >= 0 ? quizBestPct : 0, st: 100 },
+    { w: W.tutorials, done: tuDone, st: tuTotal }
+  ];
+  var weightSum = 0, acc = 0;
+  dims.forEach(function (d) {
+    if (!(d.st > 0)) return;
+    weightSum += d.w;
+    acc += d.w * Math.min(1, d.done / d.st);
+  });
+  return weightSum > 0 ? acc / weightSum : 0;
 }
 
 console.log("\n── weightedChapterPct ──");
@@ -286,9 +307,47 @@ test("weightedChapterPct: null quizBest treated as 0", function() {
   assert.ok(Math.abs(result - expected) < 0.001);
 });
 
-test("weightedChapterPct: zero totals → 0 ratio, no division by zero", function() {
+test("weightedChapterPct: dimensions with no items are dropped, not scored zero", function() {
+  // Only the quiz dimension exists here, so it carries the whole weight and a
+  // 50% quiz score means 50% mastery — not 12.5%.
   var result = weightedChapterPct(0, 0, 0, 0, 50, 0, 0);
-  assert.strictEqual(result, 0.25 * 0.5);
+  assert.strictEqual(result, 0.5);
+});
+
+test("weightedChapterPct: a chapter with no tutorials can still reach 100%", function() {
+  var result = weightedChapterPct(10, 10, 5, 5, 100, 0, 0);
+  assert.strictEqual(result, 1.0);
+});
+
+test("weightedChapterPct: missing tutorial dimension renormalises the rest", function() {
+  // sections 100%, checks 50%, quiz 100%, no tutorials
+  var result = weightedChapterPct(10, 10, 5, 10, 100, 0, 0);
+  var expected = (0.2 * 1 + 0.25 * 0.5 + 0.25 * 1) / (0.2 + 0.25 + 0.25);
+  assert.ok(Math.abs(result - expected) < 0.001, "got " + result + " expected " + expected);
+});
+
+test("weightedChapterPct: nothing present at all scores 0", function() {
+  assert.strictEqual(weightedChapterPct(0, 0, 0, 0, null, 0, 0), 0);
+});
+
+console.log("\n── mastery renormalisation (chapterPercent) ──");
+
+test("chapterPercent: a chapter with no tutorials can reach 100%", function() {
+  var totals = { sections: { 1: 4 }, checks: { 1: 6 }, tutorials: { 1: 0 } };
+  var progress = {
+    ch1: {
+      sections: { a: 1, b: 2, c: 3, d: 4 },
+      quickChecksStudy: 6,
+      quizBest: 100
+    }
+  };
+  assert.strictEqual(chapterPercent(progress, 1, totals), 100);
+});
+
+test("chapterPercent: missing section/check dimensions renormalise", function() {
+  var totals = { sections: { 1: 0 }, checks: { 1: 0 }, tutorials: { 1: 0 } };
+  var progress = { ch1: { quizBest: 75 } };
+  assert.strictEqual(chapterPercent(progress, 1, totals), 75);
 });
 
 // ═══════════════════════════════════════════════════

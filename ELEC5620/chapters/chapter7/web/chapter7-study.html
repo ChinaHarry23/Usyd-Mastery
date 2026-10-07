@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 7: Model Organisation — ELEC5620</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter7-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 7 study guide for ELEC5620: how to partition a large UML model — names and namespaces, visibility, packages, models and model libraries, import/access/merge semantics, and how behaviour is organised inside a model.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 7: Model Organisation — ELEC5620">
+<meta property="og:description" content="Week 7 study guide for ELEC5620: how to partition a large UML model — names and namespaces, visibility, packages, models and model libraries, import/access/merge semantics, and how behaviour is organised inside a model.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F4E6;</span>
+      <h2>Week 7</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-names" class="nav-link" data-section="names">Names &amp; Namespaces</a></li>
+    <li><a href="#sec-visibility" class="nav-link" data-section="visibility">Visibility</a></li>
+    <li><a href="#sec-packages" class="nav-link" data-section="packages">Packages</a></li>
+    <li><a href="#sec-models" class="nav-link" data-section="models">Models &amp; Libraries</a></li>
+    <li><a href="#sec-relations" class="nav-link" data-section="relations">Package Relations</a></li>
+    <li><a href="#sec-agent" class="nav-link" data-section="agent">Case Study</a></li>
+    <li><a href="#sec-behaviour" class="nav-link" data-section="behaviour">Organising Behaviour</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter7-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter7-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 7 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">ELEC5620 &mdash; Model-Based Software Engineering</p>
+    <h1>Week 7: Model Organisation</h1>
+    <p class="hero-subtitle">A model that models a real system is too large to read as one flat list. This week is the machinery that keeps it navigable: names and namespaces, visibility, packages, models and model libraries, and the import, access and merge relationships between them.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4C1;</span>
+        <span>Names &amp; namespaces: every named element lives in one</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F441;</span>
+        <span>Visibility: + &minus; # ~ decide who can reference what</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4E6;</span>
+        <span>Packages group the model; they model nothing themselves</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F517;</span>
+        <span>&laquo;import&raquo;, &laquo;access&raquo;, &laquo;merge&raquo;: a design-time view</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter7-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter7-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 7 lecture deck <em>Model Organisation</em> (D. Yuan), the Week 7 tutorial on behaviour modelling and the Week 7 laboratory note</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-names" class="section" data-track="names">
+  <h2 class="section-title">Names and Namespaces</h2>
+  <p class="section-lead">Everything in this week's deck is built on one small idea: a named element is owned by exactly one namespace, and a qualified name is the path you walk to reach it.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; namespace</div>
+    <p>A <strong>namespace</strong> is a collection of <em>owned</em> model elements that may be identified by their names. The features of a class (its attributes, operations, and so on) form a namespace; so do a package, a class, a state and a behaviour. Many different manifestations of the namespace concept exist in UML, and the rules below hold for all of them unless a profile tightens them.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; name</div>
+    <p>A UML <strong>name</strong> is specified by a string. There is no pre-defined character set and no size limit, so <em>Alice</em>, <em>R2-&gt;D2</em>, <em>4 Sale</em>, <em>&#1089;&#1077;&#1083;&#1080;&#1115;</em>, <em>&#x591A;&#x97F3;&#x5B57;</em> are all legal. Note the consequence the deck spells out: <strong>an empty name is a valid name</strong>.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Rule 1 &mdash; uniqueness is preferred, not required</h3>
+      <p>Names in a namespace are <em>not necessarily unique</em>. UML tolerates:</p>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>two operations with the same name but different parameter sets (overloading), and</li>
+        <li>an operation and an attribute of the same class sharing a name.</li>
+      </ul>
+      <p>Because uniqueness is only preferred, a name alone is not always enough to identify an element &mdash; which is exactly why the qualified name exists.</p>
+    </div>
+    <div class="col-card">
+      <h3>Rule 2 &mdash; namespaces nest, so names qualify</h3>
+      <p>Namespaces can contain other namespaces, which makes the name space hierarchical. A <strong>qualified name</strong> joins the levels with a double colon:</p>
+      <p style="font-family:var(--font-mono); font-size:0.92rem; margin-top:0.6rem;">System<strong>::</strong>CoolingSubsystem<strong>::</strong>ACUnit</p>
+      <p>Read it as a path: from the outermost namespace inwards, to the element itself. Anything you can say about a filesystem path you can say about it &mdash; there is a root, there are intermediate containers, and there is a leaf.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> do not answer &ldquo;names must be unique&rdquo;. The defensible statement is &ldquo;names within a namespace need not be unique &mdash; overloading and attribute/operation collisions are legal &mdash; but uniqueness is preferred, and a qualified name disambiguates&rdquo;.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A class has an attribute <code>balance</code> and an operation <code>balance()</code>. The model is validated. What does UML say?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Uniqueness is preferred, not enforced. The deck's own example says an operation and an attribute of a class may share a name.">The model is invalid: names inside a namespace must be unique</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Names in a namespace are not necessarily unique — the deck allows both overloading and an attribute colliding with an operation name, which is why qualified names matter." data-bad="">It is legal, because names in a namespace are not necessarily unique</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An empty name is legal, but it is a different rule. Here both elements have names; the point is that the two names may coincide.">It is legal only because one of the two elements has an empty name</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-visibility" class="section" data-track="visibility">
+  <h2 class="section-title">The Concept of Visibility</h2>
+  <p class="section-lead">Names tell you what an element is called. Visibility tells you who is allowed to say it.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; visibility</div>
+    <p>Every named element owned by a UML namespace has a defined <strong>visibility</strong>: the capacity for that element to be <em>referenced</em> by other model elements, possibly in other namespaces. Visibility is therefore a property of the <em>reference</em>, not of the element's meaning.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Kind</th><th>Symbol</th><th>Who may reference it</th><th>Deck's example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Public</strong></td><td><code>+</code></td><td>All elements that can access its namespace</td><td>A class exposed as part of a package's API</td></tr>
+        <tr><td><strong>Private</strong></td><td><code>&minus;</code></td><td>Only elements within the namespace that owns it</td><td>A helper attribute used by the class's own operations</td></tr>
+        <tr><td><strong>Protected</strong></td><td><code>#</code></td><td>Only elements in its <em>extended</em> namespace</td><td>A class attribute visible to all subclasses of that class</td></tr>
+        <tr><td><strong>Package</strong></td><td><code>~</code></td><td>Only other elements in the same package</td><td>A class attribute visible to all elements in the same package as the class</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The distinction that gets marked:</strong> <em>private</em> is bounded by the owning namespace; <em>protected</em> is bounded by the owning namespace <em>plus</em> everything that extends it (subclasses); <em>package</em> is bounded by the enclosing package, regardless of inheritance. Two elements can therefore both be &ldquo;not public&rdquo; and still differ in who can see them.
+  </div>
+
+  <div id="ix-visibility"></div>
+
+  <div class="diagram-flow">
+    <div class="flow-node">Class</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node flow-highlight">owns its features</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">attributes and operations are named members</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">each carries one of <code>+</code> <code>&minus;</code> <code>#</code> <code>~</code></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A class <code>Account</code> declares <code># auditTrail</code> and <code>&minus; salt</code>. A subclass <code>SavingsAccount</code> in the same package tries to reference both. What happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. '#' is visible to elements in the extended namespace, so subclasses may reference it; '-' is visible only inside the namespace that owns it, so the subclass cannot." data-bad="">It can reference <code>auditTrail</code> but not <code>salt</code></div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Subclassing extends the namespace, which is precisely what '#' grants access to. Only '-' is confined to the owning namespace.">It can reference neither, because both are non-public</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="'~' is the package-scoped kind. Here the attribute is '#', and the rule for '#' is about the extended namespace, not about package membership.">It can reference both, because both classes are in the same package</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; marking up a class and reading the result.</strong> Take this class body as the model gives it and decide what each member's visibility buys you.</p>
+    <div class="code-block">
+Account
+&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;
++ id : String
+- salt : String
+# auditTrail : Log
+~ feeSchedule : Money
++ debit(amount : Money) : Boolean
+- hash(p : String) : String
+    </div>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong><code>+ id</code> and <code>+ debit()</code> are the API.</strong> They are referenceable by anything that can reach the <code>Account</code> namespace, so they are the only members a collaborating class in another package may name.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong><code>- salt</code> and <code>- hash()</code> are the implementation.</strong> Private members are referenceable only inside <code>Account</code>'s own namespace. A subclass cannot reach <code>salt</code>, so it cannot break the hashing scheme by accident.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong><code># auditTrail</code> is the inheritance contract.</strong> Protected members are referenceable from the extended namespace, so every subclass may append to the audit trail while unrelated classes still cannot see it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong><code>~ feeSchedule</code> is the package contract.</strong> Package visibility is a sibling of class visibility, not a weaker form of it: a class <em>outside</em> the package fails even if it inherits from <code>Account</code>, and a class <em>inside</em> the package succeeds even if it does not.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The exam sentence.</strong> &ldquo;Visibility constrains which model elements may reference a named element: <code>+</code> for all elements that can access its namespace, <code>&minus;</code> for the owning namespace only, <code>#</code> for its extended namespace, and <code>~</code> for the enclosing package.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-packages" class="section" data-track="packages">
+  <h2 class="section-title">UML Packages</h2>
+  <p class="section-lead">Packages are the workhorse of model organisation: a means for grouping the parts of a model so that a human can find them.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; package</div>
+    <p>A <strong>Package</strong> is a means for grouping the parts of a model. A package is a kind of <strong>namespace</strong>: public elements from other packages can be <em>imported</em> into the package namespace, which is analogous to &ldquo;external&rdquo; declarations in programming.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>The sentence students lose marks on:</strong> packages are (typically) <em>not intended to model anything</em>. They are analogous to file-system folders &mdash; an organisational device for the modeller, not a claim about the system being modelled. The moment a package is presented as a domain concept, the model has smuggled an implementation decision into the analysis.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What goes in a package</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Classes, interfaces, data types and enumerations</li>
+        <li>Other packages &mdash; containment nests, so a package may hold packages</li>
+        <li>Associations and other relationships, as owned model elements</li>
+        <li>Diagrams, as partial views of the contents</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>How a package appears in a diagram</h3>
+      <p>In diagrams a package is A rectangle with a small tab. Packages are often drawn with their <em>(partial)</em> contents inside, and those contents may themselves be packages. &ldquo;Partial&rdquo; is the load-bearing word: a package frame on a diagram is a view, never a complete inventory.</p>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>Two equivalent ways to show containment</h3>
+    <div class="algo-diagram">
+      <svg viewBox="0 0 760 300" width="100%" height="auto" role="img" aria-label="Two equivalent notations for package containment: nesting the packages, and drawing a cross-circle containment symbol on a line">
+        <defs>
+          <marker id="c7-cx-open" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M1 1 L10 6 L1 11" fill="none" stroke="#565d75" stroke-width="1.6"/>
+          </marker>
+        </defs>
+        <rect width="760" height="300" fill="#fbfbff"/>
+        <text x="30" y="26" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#4f46e5">FORM 1 — NESTING</text>
+        <path d="M40 48 h96 v20 h-96 z" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.6"/>
+        <rect x="40" y="68" width="300" height="162" fill="#ffffff" stroke="#4f46e5" stroke-width="1.8" rx="3"/>
+        <text x="56" y="88" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#4f46e5">Warehouse</text>
+        <path d="M60 106 h80 v18 h-80 z" fill="#dcfce7" stroke="#059669" stroke-width="1.4"/>
+        <rect x="60" y="124" width="116" height="34" fill="#ffffff" stroke="#059669" stroke-width="1.5" rx="2"/>
+        <text x="118" y="145" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#141826">Location</text>
+        <path d="M204 106 h80 v18 h-80 z" fill="#dcfce7" stroke="#059669" stroke-width="1.4"/>
+        <rect x="204" y="124" width="116" height="34" fill="#ffffff" stroke="#059669" stroke-width="1.5" rx="2"/>
+        <text x="262" y="145" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#141826">Item</text>
+        <text x="190" y="196" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#565d75">nested packages are drawn inside the owner</text>
+        <text x="420" y="26" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#4f46e5">FORM 2 — CONTAINMENT SYMBOL</text>
+        <path d="M430 62 h96 v20 h-96 z" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.6"/>
+        <rect x="430" y="82" width="140" height="34" fill="#ffffff" stroke="#4f46e5" stroke-width="1.8" rx="3"/>
+        <text x="500" y="103" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#141826">Warehouse</text>
+        <line x1="570" y1="99" x2="634" y2="99" stroke="#565d75" stroke-width="1.6" marker-end="url(#c7-cx-open)"/>
+        <circle cx="602" cy="99" r="7" fill="#ffffff" stroke="#565d75" stroke-width="1.6"/>
+        <line x1="596" y1="93" x2="608" y2="105" stroke="#565d75" stroke-width="1.6"/>
+        <line x1="608" y1="93" x2="596" y2="105" stroke="#565d75" stroke-width="1.6"/>
+        <text x="602" y="82" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" fill="#565d75">namespace containment</text>
+        <path d="M644 62 h80 v20 h-80 z" fill="#dcfce7" stroke="#059669" stroke-width="1.4"/>
+        <rect x="644" y="82" width="90" height="34" fill="#ffffff" stroke="#059669" stroke-width="1.5" rx="2"/>
+        <text x="689" y="103" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#141826">Location</text>
+        <text x="600" y="176" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#565d75">The two forms say exactly the same thing.</text>
+        <text x="600" y="200" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#dc2626">Q: why not the black diamond?</text>
+        <text x="600" y="220" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#141826">A: the black diamond is used for run-time containment —</text>
+        <text x="600" y="238" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#141826">a whole owning its parts while the system executes.</text>
+        <text x="380" y="278" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#7b829a">Namespace containment is a design-time filing decision; composition is a run-time ownership claim.</text>
+      </svg>
+    </div>
+    <p class="arch-caption">Both forms are namespace containment. The filled (&ldquo;black&rdquo;) diamond is reserved for run-time containment &mdash; composition of <em>instances</em> &mdash; and reusing it here would conflate a design-time grouping decision with a run-time ownership claim.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-notation-match"></div>
+  <script type="application/json" id="ix-notation-match">
+  {
+    "title": "Match the notation to what it commits you to",
+    "subtitle": "Click a notation on the left, then the meaning on the right.",
+    "pairs": [
+      ["Package", "A grouping device and a namespace — typically not intended to model anything"],
+      ["Model", "A package with a viewpoint attribute, drawn with a triangle icon"],
+      ["«modelLibrary»", "A package tagged as holding reusable model fragments"],
+      ["Namespace containment", "Line with a circle-and-cross at the owner end"],
+      ["Black diamond", "Run-time containment — a whole owning its parts at execution time"],
+      ["«import»", "The public contents of the target become available in the source namespace"],
+      ["«merge»", "The contents of the target are combined with the source"]
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Partitioning question to ask yourself:</strong> the deck's first question is <em>how to partition your model</em>. A defensible partition follows a stable seam &mdash; a subsystem, a layer, a viewpoint &mdash; and can be explained in one sentence. A partition that follows whoever happened to draw each class produces a model that only its author can navigate.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the deck insist that a package is <em>not</em> intended to model anything?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Packages can own classes and other packages, so they carry plenty of structure. The claim is about intent, not about content.">Because packages cannot own classes or other model elements</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A package is an organisational device analogous to a file-system folder; treating it as a domain concept would let an implementation grouping masquerade as a claim about the system." data-bad="">Because it is an organisational device analogous to a file-system folder, not a claim about the system</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A Model is a special package with a viewpoint attribute. That is a distinguishing feature of Model, not the reason packages are said not to model.">Because only a Model may carry a viewpoint attribute</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-models" class="section" data-track="models">
+  <h2 class="section-title">Models and Model Libraries</h2>
+  <p class="section-lead">Two special kinds of package do the heavy lifting in a large model: the <em>Model</em> that gives a whole model its viewpoint, and the <em>model library</em> that makes fragments reusable.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Package</th><th>Model</th><th>&laquo;modelLibrary&raquo;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Semantics</strong></td><td>Groups the parts of a model</td><td>No substantive semantic difference from any other package</td><td>No special semantics</td></tr>
+        <tr><td><strong>Extra feature</strong></td><td>&mdash;</td><td>One additional attribute: <em>viewpoint</em></td><td>A special tag (stereotype)</td></tr>
+        <tr><td><strong>Notation</strong></td><td>Rectangle with a tab</td><td>Distinguished graphically by a <em>triangle</em> icon</td><td>Rectangle with the tag <code>&laquo;modelLibrary&raquo;</code></td></tr>
+        <tr><td><strong>Typical position</strong></td><td>Anywhere in the containment tree</td><td>Typically the top-level package &mdash; but it can still be contained in another package</td><td>Imported by the packages that reuse its fragments</td></tr>
+        <tr><td><strong>Intended use</strong></td><td>Organise</td><td>Frame a whole model by viewpoint</td><td>Model <em>reusable</em> model fragments</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-model-deck"></div>
+  <script type="application/json" id="ix-model-deck">
+  {
+    "title": "Self-test: three containers, three commitments",
+    "subtitle": "Say the answer out loud before you flip the card.",
+    "cards": [
+      { "front": "Model", "back": "A special kind of package with no substantive semantic difference from any other package; its one additional attribute is the viewpoint, and it is drawn with a triangle icon. Typically top level, but it may still be contained in another package.", "hint": "Package + viewpoint" },
+      { "front": "Model library", "back": "Just another package with a special tag. It has no special semantics, but it is intended to model reusable model fragments.", "hint": "Reuse" },
+      { "front": "Viewpoint", "back": "The attribute that distinguishes a Model from a plain package, and the reason two models of the same system can legitimately differ while both being correct.", "hint": "Why two models may disagree" },
+      { "front": "Namespace", "back": "A collection of owned model elements identifiable by name. Package, Class, State and Behaviour are all manifestations of it.", "hint": "Core concept" },
+      { "front": "Design-time vs run-time", "back": "«import», «access» and «merge» are design-time views of how model content is assembled; the black diamond is the run-time relationship. Do not mix them.", "hint": "Which diamond" }
+    ]
+  }
+  </script>
+
+  <div class="algo-card">
+    <h3>Package relations in one picture</h3>
+    <div class="algo-diagram">
+      <svg viewBox="0 0 760 300" width="100%" height="auto" role="img" aria-label="Package diagram showing a model library, an import, a merge, and a further import chain">
+        <defs>
+          <marker id="c7-ar-open" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M1 1 L10 6 L1 11" fill="none" stroke="#4f46e5" stroke-width="1.6"/>
+          </marker>
+          <marker id="c7-ar-solid" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M1 1 L10 6 L1 11" fill="#4f46e5" stroke="#4f46e5" stroke-width="1.2"/>
+          </marker>
+        </defs>
+        <rect width="760" height="300" fill="#fbfbff"/>
+        <path d="M300 42 h120 v22 h-120 z" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+        <rect x="300" y="64" width="140" height="44" fill="#ffffff" stroke="#059669" stroke-width="1.8" rx="3"/>
+        <text x="370" y="90" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" fill="#059669">«modelLibrary»</text>
+        <text x="370" y="142" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#141826">UtilityClasses</text>
+        <path d="M40 196 h96 v20 h-96 z" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.6"/>
+        <rect x="40" y="216" width="130" height="40" fill="#ffffff" stroke="#4f46e5" stroke-width="1.8" rx="3"/>
+        <text x="105" y="241" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#141826">Kernel</text>
+        <path d="M290 216 h130 v20 h-130 z" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.6"/>
+        <rect x="290" y="236" width="150" height="40" fill="#ffffff" stroke="#4f46e5" stroke-width="1.8" rx="3"/>
+        <text x="365" y="261" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#141826">ExtendedKernel</text>
+        <path d="M580 216 h90 v20 h-90 z" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.6"/>
+        <rect x="580" y="236" width="120" height="40" fill="#ffffff" stroke="#4f46e5" stroke-width="1.8" rx="3"/>
+        <text x="640" y="261" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#141826">Top</text>
+        <path d="M370 108 L370 172 Q370 196 200 196" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#c7-ar-open)"/>
+        <text x="382" y="150" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#4f46e5">«import»</text>
+        <path d="M168 236 L286 236" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#c7-ar-open)"/>
+        <text x="227" y="226" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#4f46e5">«merge»</text>
+        <path d="M440 256 L576 256" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#c7-ar-open)"/>
+        <text x="508" y="246" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600" fill="#4f46e5">«import»</text>
+        <text x="380" y="292" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" fill="#565d75">all three are design-time relationships between namespaces</text>
+      </svg>
+    </div>
+    <p class="arch-caption">The chain the deck draws: <code>Kernel</code> merges into <code>ExtendedKernel</code>, <code>ExtendedKernel</code> imports <code>Top</code>, and <code>Top</code> imports the <code>&laquo;modelLibrary&raquo; UtilityClasses</code>. Read the arrowheads as &ldquo;content flows in this direction&rdquo;.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">What is the only substantive difference between a <code>Model</code> and an ordinary package?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A model library is the package with a special tag. A Model's distinguishing feature is an attribute, not a stereotype.">It carries the tag <code>&laquo;modelLibrary&raquo;</code></div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. There is no substantive semantic difference from any other package; a Model simply has one additional attribute — the viewpoint — and is drawn with a triangle icon." data-bad="">It has one additional attribute, the viewpoint, and is drawn with a triangle icon</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Containment is not restricted: a Model is typically top level, but the deck notes it can still be contained in another package.">It must be the outermost package and can never be contained in another</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team wants to share a set of domain classes between three projects. Which mechanism does this week give them?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. A «modelLibrary» is just a package with a special tag and no special semantics, but it is intended to model reusable model fragments — exactly this use case." data-bad="">Put the classes in a package tagged <code>&laquo;modelLibrary&raquo;</code> and import it where needed</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Merging two packages fuses their contents. That is the wrong direction for reuse and it destroys the ability to keep the fragments independently versioned.">Merge the three projects' packages together into one</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A Model's distinguishing attribute is the viewpoint, which frames a model rather than packaging reusable fragments.">Mark the containing package as a Model with the viewpoint attribute</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-relations" class="section" data-track="relations">
+  <h2 class="section-title">Package Import, Access and Merge</h2>
+  <p class="section-lead">Three relationships assemble model content across namespaces. They differ in <em>what</em> becomes visible and in whether the imported element is <em>owned</em> afterwards.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Package Import &mdash; <code>&laquo;import&raquo;</code></h3>
+      <p>The importing namespace gains the <strong>public</strong> contents of the target. In the deck's example, after <code>X</code> imports <code>Y</code>, namespace <code>X</code> contains the names:</p>
+      <p style="font-family:var(--font-mono); font-size:0.9rem; margin-top:0.4rem;">A, B, C, Y::C, E</p>
+      <p>&hellip; but <strong>not <code>D</code></strong>, because <code>D</code> is private. And note the second half of the rule: <code>Y::C</code> and <code>E</code> are <em>not owned</em> by <code>X</code>. Importing makes names available; it does not transfer ownership.</p>
+    </div>
+    <div class="col-card">
+      <h3>Package Access &mdash; <code>&laquo;access&raquo;</code></h3>
+      <p>Access is the private-import variant: the target's public contents become available <em>to the accessing namespace</em> without being re-exported from it. This is why the deck's access example asks two different questions &mdash; what <code>X</code> contains after accessing <code>Y</code>, and what a third namespace <code>H</code> can then see:</p>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><code>X</code> sees the public contents of <code>Y</code>, including the alias <code>Y::C</code>.</li>
+        <li><code>H</code> sees <code>X</code>'s own public names, and does <em>not</em> inherit <code>X</code>'s access to <code>Y</code>.</li>
+      </ul>
+      <p>The question mark over <code>D</code> in the deck's slide is the point: private elements stay private under every one of these relationships.</p>
+    </div>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Element import &mdash; alias and local visibility</h3>
+  <p>An imported element can be given a <strong>local alias</strong> and a <strong>local visibility</strong>. The deck shows the same class imported twice with different results, and asks you to notice the difference:</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>In <code>X</code></th><th>What was imported</th><th>How <code>X</code> now refers to it</th><th>Local visibility</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>First form</td><td><code>Y::C</code> imported with the alias <code>B</code></td><td><code>B</code> &mdash; the local name, not <code>Y::C</code></td><td><code>{-C}</code>: private within <code>X</code>, so nobody outside <code>X</code> gains the name</td></tr>
+        <tr><td>Second form</td><td><code>Y::E</code> imported under its own name</td><td><code>Y::E</code> &mdash; the qualified name is kept</td><td><code>+Y::E</code>: public, so it becomes part of <code>X</code>'s exported surface</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Element merge &mdash; <code>&laquo;merge&raquo;</code></div>
+    <p>Merging <em>combines</em> the contents of the target with the source rather than making them visible: in the deck's diagram, <code>Y</code>'s <code>A</code> and <code>C</code> appear in <code>X</code> alongside <code>X</code>'s own <code>D</code> and <code>B</code>. Merge is the relationship you use when two models of the same thing have to become one.</p>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-toolchain"></div>
+  <script type="application/json" id="ix-toolchain">
+  {
+    "title": "The model-driven toolchain, organised around packages",
+    "subtitle": "Walk the chain and watch where organisation decisions are made.",
+    "nodes": [
+      { "label": "Model library", "note": "Reusable fragments — types, units, common classes — packaged and tagged «modelLibrary»." },
+      { "label": "Import", "note": "A package imports the library's public contents into its own namespace. Names become available; ownership does not move." },
+      { "label": "Merge", "note": "Two packages describing overlapping content are combined into one, so the model has a single definition of each element." },
+      { "label": "Model + viewpoint", "note": "The assembled packages sit under a Model whose viewpoint says what this model is for." },
+      { "label": "Alias and visibility", "note": "Individual imported elements are given local aliases and local visibilities to keep each namespace's public surface small." },
+      { "label": "Consistency check", "note": "Qualified names, visibility and the direction of every «import»/«access»/«merge» are checked before the model is regenerated into artefacts." }
+    ]
+  }
+  </script>
+
+  <div id="ix-namespace"></div>
+
+  <div class="quick-check">
+    <div class="qc-question">Namespace <code>X</code> imports namespace <code>Y</code>. Which statement about the result is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Ownership does not move on import. The deck is explicit that Y::C and E are not owned by X after the import.">X now owns every element it can name from Y</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. X contains the public names of Y — including qualified references such as Y::C — but X does not own them, and Y's private elements such as D stay invisible." data-bad="">X can name Y's public elements, including qualified names such as <code>Y::C</code>, but does not own them and cannot see <code>D</code></div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Private elements are never brought across by an import. The deck lists the names X gains — A, B, C, Y::C, E — and then says '...but not D'.">X can name <code>D</code> as well, because import copies the whole target namespace</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; predicting the contents of a namespace after import.</strong> Given <code>Y</code> with <code>+B</code>, <code>+C</code>, <code>&minus;D</code> and <code>+E</code>, and <code>X</code> with its own <code>A</code>, <code>C</code> and an <code>&laquo;import&raquo;</code> to <code>Y</code>:</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>List what X had.</strong> <code>A</code> and <code>C</code> are owned by <code>X</code> and stay exactly as they were. Import never deletes or renames the importer's own elements.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Add Y's public names.</strong> <code>B</code> and <code>E</code> become nameable in <code>X</code>, because they are public in <code>Y</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Handle the collision honestly.</strong> <code>C</code> now exists twice: <code>X</code>'s own <code>C</code> and <code>Y</code>'s <code>C</code>. UML resolves this with the qualified name, so the imported one is written <code>Y::C</code>. That is why the deck's answer reads &ldquo;A, B, C, Y::C, E&rdquo; rather than listing <code>C</code> once.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Exclude the private element.</strong> <code>D</code> is <code>&minus;</code> in <code>Y</code>, so it is visible only inside the namespace that owns it. <code>X</code> cannot name it, and no import changes that.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State ownership separately from nameability.</strong> <code>Y::C</code> and <code>E</code> are nameable in <code>X</code> but <em>owned</em> by <code>Y</code>. If the answer to an exam question is the set of names <code>X</code> contains, the set is <code>{A, B, C, Y::C, E}</code>; if the question is what <code>X</code> owns, the answer excludes the last two.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; choosing between import, access and merge.</strong> Three situations, three relationships. Deciding which one applies is the whole skill.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Situation A: the reporting package needs to read the domain types.</strong> Use <code>&laquo;import&raquo;</code> if the reporting package's own clients should be able to name those types, because import makes the public contents part of the importer's namespace surface.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Situation B: the reporting package needs the types internally, but must not re-export them.</strong> Use <code>&laquo;access&raquo;</code>. The names are available to the accessing namespace without becoming part of what its own clients see &mdash; the deck's <code>H</code> cannot reach <code>Y</code> through <code>X</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Situation C: two teams modelled the same subsystem and the model must contain it once.</strong> Use <code>&laquo;merge&raquo;</code>. Merge combines contents rather than granting visibility, so the elements of the target appear in the source and the model keeps a single definition of each element.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Then tighten the surface.</strong> For any element that did cross a boundary, give it a local alias and an explicit local visibility &mdash; the deck's <code>{-C}</code> and <code>+Y::E</code>. An alias keeps the local namespace readable; a local visibility keeps it honest.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Note the cycle you have to avoid.</strong> If <code>X</code> imports <code>Y</code> and <code>Y</code> merges <code>X</code>, the definitions are no longer layered. Draw the relationships first and check that the graph is acyclic; a cycle here is a design defect, not a tooling problem.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-agent" class="section" data-track="agent">
+  <h2 class="section-title">Case Study: A Smart Health Agent</h2>
+  <p class="section-lead">The deck's worked example applies everything above to one system: a smart health agent that helps patients book doctor appointments &mdash; understanding symptoms, checking available doctors and schedules, booking appointments, sending reminders and follow-ups.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Package</th><th>Responsibility</th><th>Key classes from the deck</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Patient Interaction</strong></td><td>Everything the patient touches: conversation, reminders, follow-up</td><td><code>MobileAppUI</code>, <code>ChatBotInterface</code>, <code>ReminderService</code></td></tr>
+        <tr><td><strong>Core Agent</strong></td><td>The agent's own reasoning loop</td><td><code>BeliefManager</code>, <code>GoalManager</code>, <code>IntentionScheduler</code></td></tr>
+        <tr><td><strong>Health Data &amp; Profile</strong></td><td>The patient facts the agent reasons over</td><td><code>PatientProfile</code>, <code>SymptomHistory</code></td></tr>
+        <tr><td><strong>Appointment Booking</strong></td><td>Turning an intention into a booked slot</td><td>&mdash;</td></tr>
+        <tr><td><strong>Doctor &amp; Schedule Management</strong></td><td>Availability of clinicians and slots</td><td>&mdash;</td></tr>
+        <tr><td><strong>Generic User Data</strong></td><td>Reusable fragments shared with other systems</td><td>&mdash; tagged as a model library in the dependency list</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Dependencies in the Smart Health Agent (verbatim from the deck)</div>
+    <ul style="padding-left:1.1rem; line-height:1.8;">
+      <li>Appointment Booking <code>&laquo;import&raquo;</code> &rarr; Doctor &amp; Schedule Management</li>
+      <li>Core Agent <code>&laquo;import&raquo;</code> &rarr; Health Data/Profile</li>
+      <li>Patient Interaction <code>&laquo;import&raquo;</code> &rarr; Core Agent</li>
+      <li>Health Data/Profile <code>&laquo;merge&raquo;</code> &rarr; Generic User Data</li>
+    </ul>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-agent-map"></div>
+  <script type="application/json" id="ix-agent-map">
+  {
+    "title": "The Smart Health Agent as a package diagram",
+    "subtitle": "Click a marker to see what that package or relationship contributes to the organisation of the model.",
+    "svg": "<svg viewBox=\"0 0 720 540\" role=\"img\" aria-label=\"Package diagram of the Smart Health Agent with four import dependencies, one merge into a model library, and two packages shown with their partial contents\" xmlns=\"http://www.w3.org/2000/svg\">\n<defs>\n<marker id=\"c7-agent-open\" viewBox=\"0 0 12 12\" refX=\"10\" refY=\"6\" markerWidth=\"9\" markerHeight=\"9\" orient=\"auto-start-reverse\">\n<path d=\"M1 1 L10 6 L1 11\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.6\"/>\n</marker>\n<marker id=\"c7-agent-merge\" viewBox=\"0 0 12 12\" refX=\"10\" refY=\"6\" markerWidth=\"9\" markerHeight=\"9\" orient=\"auto-start-reverse\">\n<path d=\"M1 1 L10 6 L1 11\" fill=\"none\" stroke=\"#059669\" stroke-width=\"1.6\"/>\n</marker>\n</defs>\n<rect x=\"0\" y=\"0\" width=\"720\" height=\"540\" fill=\"#fbfbff\"/>\n<path d=\"M30 48 h112 v20 h-112 z\" fill=\"#e0e7ff\" stroke=\"#4f46e5\" stroke-width=\"1.6\"/>\n<rect x=\"30\" y=\"68\" width=\"200\" height=\"112\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\" rx=\"3\"/>\n<text x=\"130\" y=\"90\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#4f46e5\">Patient Interaction</text>\n<line x1=\"42\" y1=\"100\" x2=\"218\" y2=\"100\" stroke=\"#c7d2fe\" stroke-width=\"1.2\"/>\n<text x=\"130\" y=\"118\" text-anchor=\"middle\" font-family=\"'JetBrains Mono', monospace\" font-size=\"10.5\" fill=\"#141826\">MobileAppUI</text>\n<text x=\"130\" y=\"136\" text-anchor=\"middle\" font-family=\"'JetBrains Mono', monospace\" font-size=\"10.5\" fill=\"#141826\">ChatBotInterface</text>\n<text x=\"130\" y=\"154\" text-anchor=\"middle\" font-family=\"'JetBrains Mono', monospace\" font-size=\"10.5\" fill=\"#141826\">ReminderService</text>\n<text x=\"130\" y=\"172\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10\" fill=\"#7b829a\">partial contents</text>\n<path d=\"M210 240 h110 v20 h-110 z\" fill=\"#dcfce7\" stroke=\"#059669\" stroke-width=\"1.6\"/>\n<rect x=\"210\" y=\"260\" width=\"176\" height=\"50\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.8\" rx=\"3\"/>\n<text x=\"298\" y=\"282\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#059669\">Core Agent</text>\n<text x=\"298\" y=\"299\" text-anchor=\"middle\" font-family=\"'JetBrains Mono', monospace\" font-size=\"10.5\" fill=\"#141826\">BeliefManager, GoalManager</text>\n<path d=\"M470 48 h126 v20 h-126 z\" fill=\"#fef3c7\" stroke=\"#d97706\" stroke-width=\"1.6\"/>\n<rect x=\"470\" y=\"68\" width=\"220\" height=\"64\" fill=\"#ffffff\" stroke=\"#d97706\" stroke-width=\"1.8\" rx=\"3\"/>\n<text x=\"580\" y=\"88\" text-anchor=\"middle\" font-family=\"'JetBrains Mono', monospace\" font-size=\"10.5\" font-weight=\"600\" fill=\"#d97706\">«modelLibrary»</text>\n<text x=\"580\" y=\"106\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#d97706\">Generic User Data</text>\n<text x=\"580\" y=\"123\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10\" fill=\"#7b829a\">reusable fragments</text>\n<path d=\"M420 300 h116 v20 h-116 z\" fill=\"#f3e8ff\" stroke=\"#9333ea\" stroke-width=\"1.6\"/>\n<rect x=\"420\" y=\"320\" width=\"120\" height=\"60\" fill=\"#ffffff\" stroke=\"#9333ea\" stroke-width=\"1.8\" rx=\"3\"/>\n<text x=\"480\" y=\"342\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#9333ea\">Appointment</text>\n<text x=\"480\" y=\"358\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#9333ea\">Booking</text>\n<text x=\"480\" y=\"374\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10\" fill=\"#7b829a\">intention to slot</text>\n<path d=\"M580 300 h140 v20 h-140 z\" fill=\"#fee2e2\" stroke=\"#dc2626\" stroke-width=\"1.6\"/>\n<rect x=\"580\" y=\"320\" width=\"120\" height=\"60\" fill=\"#ffffff\" stroke=\"#dc2626\" stroke-width=\"1.8\" rx=\"3\"/>\n<text x=\"640\" y=\"342\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#dc2626\">Doctor &amp;</text>\n<text x=\"640\" y=\"358\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#dc2626\">Schedule Mgmt</text>\n<text x=\"640\" y=\"374\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10\" fill=\"#7b829a\">availability</text>\n<path d=\"M520 120 h140 v20 h-140 z\" fill=\"#e0f2fe\" stroke=\"#0284c7\" stroke-width=\"1.6\"/>\n<rect x=\"520\" y=\"140\" width=\"150\" height=\"72\" fill=\"#ffffff\" stroke=\"#0284c7\" stroke-width=\"1.8\" rx=\"3\"/>\n<text x=\"595\" y=\"162\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#0284c7\">Health Data</text>\n<text x=\"595\" y=\"178\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" font-weight=\"700\" fill=\"#0284c7\">&amp; Profile</text>\n<text x=\"595\" y=\"196\" text-anchor=\"middle\" font-family=\"'JetBrains Mono', monospace\" font-size=\"10.5\" fill=\"#141826\">PatientProfile</text>\n<path d=\"M230 92 L470 92\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\" stroke-dasharray=\"7 5\" marker-end=\"url(#c7-agent-open)\"/>\n<text x=\"350\" y=\"84\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10.5\" font-weight=\"600\" fill=\"#4f46e5\">«import»</text>\n<path d=\"M220 124 L510 176\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\" stroke-dasharray=\"7 5\" marker-end=\"url(#c7-agent-open)\"/>\n<text x=\"358\" y=\"142\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10.5\" font-weight=\"600\" fill=\"#4f46e5\">«import»</text>\n<path d=\"M595 136 L595 108\" fill=\"none\" stroke=\"#059669\" stroke-width=\"1.8\" stroke-dasharray=\"7 5\" marker-end=\"url(#c7-agent-merge)\"/>\n<text x=\"632\" y=\"128\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10.5\" font-weight=\"600\" fill=\"#059669\">«merge»</text>\n<path d=\"M470 350 L536 350\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\" stroke-dasharray=\"7 5\" marker-end=\"url(#c7-agent-open)\"/>\n<text x=\"503\" y=\"341\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10.5\" font-weight=\"600\" fill=\"#4f46e5\">«import»</text>\n<path d=\"M298 314 L298 396 Q298 420 360 420 L640 420 Q680 420 680 400 L680 386\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.6\" stroke-dasharray=\"3 5\"/>\n<text x=\"470\" y=\"440\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"10\" fill=\"#7b829a\">lookup path used by the Core Agent — not an «import» in the deck's list</text>\n<text x=\"360\" y=\"500\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" fill=\"#565d75\">Six packages, four declared dependencies, one of them a «merge» into a model library</text>\n<text x=\"360\" y=\"520\" text-anchor=\"middle\" font-family=\"'Plus Jakarta Sans', sans-serif\" font-size=\"11\" fill=\"#565d75\">The packages group the model; the classes inside them describe the system</text>\n</svg>",
+    "points": [
+      { "x": 18.1, "y": 16.9, "label": "Patient Interaction (imports Core Agent)", "detail": "The top of the dependency chain. It owns MobileAppUI, ChatBotInterface and ReminderService — the classes the patient actually meets — and imports Core Agent so it can delegate reasoning instead of implementing it." },
+      { "x": 41.4, "y": 52.8, "label": "Core Agent", "detail": "BeliefManager, GoalManager and IntentionScheduler. This package holds the agent's reasoning loop, and it imports Health Data/Profile: the reasoning reads patient facts but does not own them." },
+      { "x": 80.6, "y": 14.8, "label": "Generic User Data «modelLibrary»", "detail": "Tagged as a model library: no special semantics beyond the tag, but intended to hold reusable fragments. It is the target of a «merge», not an «import», so its contents are combined with Health Data/Profile rather than merely made visible." },
+      { "x": 82.6, "y": 32.6, "label": "Health Data & Profile", "detail": "PatientProfile and SymptomHistory — the facts the agent reasons over. It is the only package with a «merge» in the dependency list, which is the honest choice when two packages describe overlapping patient data and the model must end up with one definition of each element." },
+      { "x": 66.7, "y": 64.8, "label": "Appointment Booking imports Doctor & Schedule Management", "detail": "Booking needs availability and slot information, so it imports the package that manages clinicians and schedules. The arrow direction is the design decision: Booking depends on scheduling, never the reverse." },
+      { "x": 42.2, "y": 24.1, "label": "Patient Interaction «import» Core Agent", "detail": "An ordinary package import: Core Agent's public elements become nameable in Patient Interaction, but Patient Interaction does not own them and cannot see Core Agent's private elements." },
+      { "x": 14.2, "y": 62.0, "label": "The layering the arrows describe", "detail": "Interaction → Agent → Data, with Booking → Scheduling alongside. Read the graph as layering: every arrow points from the thing that changes more often to the thing that changes less often. A cycle across these arrows would collapse the layers." },
+      { "x": 50.6, "y": 24.9, "label": "Partial contents are shown deliberately", "detail": "Packages are drawn with their partial contents, which is why Patient Interaction shows only three classes. The notation is a view: absence of a class from the frame is not a claim that the class does not exist." }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Why the deck uses this example:</strong> a clean package diagram answers the two questions a large model always raises &mdash; <em>where does this element live?</em> and <em>who depends on whom?</em> The agent case shows both: six packages give every class a home, and the four dependency arrows give the whole model a direction of change.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In the Smart Health Agent, Health Data/Profile <code>&laquo;merge&raquo;</code> Generic User Data. Why is <code>&laquo;merge&raquo;</code> rather than <code>&laquo;import&raquo;</code> the right relationship here?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Merge combines the target's contents with the source so the model ends up with a single definition of the overlapping element; an import would only have made the library's public names visible." data-bad="">Because the two packages describe overlapping user data and the model must end up with one combined definition</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Import already handles visibility. The choice between import and merge is about whether contents are combined or merely made nameable.">Because <code>&laquo;import&raquo;</code> cannot cross a model-library boundary</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Private elements are excluded by every one of these relationships. Merge does not give access to private contents either.">Because <code>&laquo;merge&raquo;</code> is the only relationship that gives access to private elements</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-behaviour" class="section" data-track="behaviour">
+  <h2 class="section-title">Organising Behaviour Inside the Model</h2>
+  <p class="section-lead">Packages partition structure. The same model also has to partition behaviour &mdash; and behaviour has its own containers, which follow the same namespace rules.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Behaviour</th><th>What it describes (Week 7 tutorial)</th><th>Where it lives in an organised model</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Activity</strong></td><td>A parameterised behaviour represented as a coordinated flow of actions, with action, object and control nodes; the diagram shows the flow of execution between actions, object nodes and control nodes</td><td>Owned by the package or class whose behaviour it describes; reusable activities are candidates for a model library</td></tr>
+        <tr><td><strong>Interaction</strong></td><td>The communications between collaborating instances via messages; it requires a prior definition of a collaboration structure that defines the context</td><td>Owned by the collaboration or use case it realises; nested inside the package that owns the participating classifiers</td></tr>
+        <tr><td><strong>State machine</strong></td><td>Discrete, event-driven behaviour of part of the designed system through finite state transitions, with initial pseudostate, state, trigger, transition, behaviour and final state</td><td>Owned by the classifier whose lifecycle it describes &mdash; a class namespace contains its states just as it contains its attributes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The state is a namespace too</h3>
+      <p>The deck's list of namespace manifestations is explicit: <em>Package, Class, State, Behaviour</em>. A composite state owns its substates, its entry and exit behaviours and its internal transitions, so the qualified name of a nested state is a path through the state machine &mdash; and the same uniqueness and visibility rules apply inside it.</p>
+    </div>
+    <div class="col-card">
+      <h3>Event vocabulary you must keep straight</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Event</strong> &mdash; an instantaneous change of state in the system.</li>
+        <li><strong>Message event</strong> &mdash; an object receives a call of an operation or a signal.</li>
+        <li><strong>Change event</strong> &mdash; a change in the system configuration.</li>
+        <li><strong>Time event</strong> &mdash; occurs at the specified time.</li>
+        <li><strong>Event occurrence</strong> &mdash; an instance of an event: it occurs at a particular time instant and has no duration.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="ix-behaviour"></div>
+
+  <div data-ix="sequence" data-ix-src="#ix-behaviour-seq"></div>
+  <script type="application/json" id="ix-behaviour-seq">
+  {
+    "title": "Order the steps of organising a week's worth of behaviour",
+    "subtitle": "Click the steps in the order that keeps the model consistent.",
+    "steps": [
+      "Decide which package owns the class whose behaviour this is",
+      "Give each participating classifier a home in exactly one namespace",
+      "Define the collaboration structure that gives the interaction its context",
+      "Attach the activity, interaction or state machine to the element it describes",
+      "Give imported participants a local alias and a local visibility",
+      "Check that every triggered event is either a message, change or time event",
+      "Check that no package now depends on a package that depends on it"
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A state machine has a composite state <code>Connected</code> containing a substate <code>Authenticated</code>. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="States are not just diagram bubbles. The deck lists State and Behaviour among the manifestations of the namespace concept in UML.">Substates are a drawing convenience and create no namespace structure</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. State is one of the manifestations of the namespace concept, so a composite state owns its substates and they are addressed as a qualified path — with the ordinary uniqueness and visibility rules inside." data-bad="">A composite state owns its substates, so the state behaves as a namespace and the substate has a qualified name</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Only elements in a namespace are identifiable by name, but that does not prevent states from being namespaces — the deck's list explicitly includes State.">Substates belong to the enclosing package directly, so no state is ever a namespace</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 7 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>A namespace owns names</h4>
+        <p>Names are strings with no character-set or length limit, and an empty name is legal. Uniqueness is preferred but not required, which is why nested namespaces give you qualified names with <code>::</code>.</p>
+        <div class="flip-hint">Naming</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Visibility is about reference</h4>
+        <p><code>+</code> for all who can access the namespace, <code>&minus;</code> for the owning namespace, <code>#</code> for the extended namespace, <code>~</code> for the enclosing package.</p>
+        <div class="flip-hint">Access control</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Packages organise, they do not model</h4>
+        <p>Analagous to file-system folders &mdash; a namespace, not a claim about the system. Public elements of other packages can be imported into it.</p>
+        <div class="flip-hint">Partitioning</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Model = package + viewpoint</h4>
+        <p>Drawn with a triangle, typically top level but still containable. A <code>&laquo;modelLibrary&raquo;</code> is just a tagged package intended for reusable fragments.</p>
+        <div class="flip-hint">Special packages</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Import makes visible; merge combines</h4>
+        <p>After <code>X</code> imports <code>Y</code>, <code>X</code> contains <code>A, B, C, Y::C, E</code> but not <code>D</code>, and it does not own what it imported. Aliases and local visibility then trim the surface.</p>
+        <div class="flip-hint">Relationships</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>The black diamond is run-time</h4>
+        <p>Namespace containment uses the circle-and-cross. The filled diamond means run-time containment, so the two must never be swapped.</p>
+        <div class="flip-hint">Notation trap</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The one-sentence version:</strong> model organisation is the discipline of putting every named element in exactly one namespace, deciding who may reference it, and drawing the design-time relationships that assemble a large model out of packages, models and libraries without ever confusing that assembly with run-time structure.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the four visibility kinds with their symbols, explain why <code>Y::C</code> appears in the import example, and say what a Model has that a package does not?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the lab</h3>
+      <p>The Week 7 laboratory asks for activity, interaction and state machine diagrams for your project. Before drawing, decide which package owns each one &mdash; that decision is what keeps the diagrams consistent with each other.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

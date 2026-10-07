@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 8: Procurement Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 foundations for INFO6007: exact definitions for procurement, the document and contract taxonomies, make-or-buy break-even, weighted vendor scoring, total cost of ownership, contract incentive arithmetic, the critical path through a procurement schedule, and risk exposure.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 8: Procurement Management">
+<meta property="og:description" content="Week 8 foundations for INFO6007: procurement definitions, taxonomies, break-even and weighted-scoring arithmetic, contract pricing, critical path and risk exposure worked examples.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter8-study.html" data-i18n="math_back_study">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link" data-i18n="math_back_home">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 8 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomy &amp; notation</a></li>
+  </ul>
+  <div class="toc-group">Arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-arithmetic" class="toc-link">Break-even, scoring and contracts</a></li>
+    <li><a href="#sec-m-schedule" class="toc-link">Critical path &amp; float</a></li>
+    <li><a href="#sec-m-risk" class="toc-link">Risk exposure</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Exam checklist</a></li>
+  </ul>
+  <a href="chapter8-study.html" class="back-to-study" data-i18n="math_back_study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO6007 &mdash; Week 8 supplement</p>
+  <h1>Foundations: the arithmetic behind buying well</h1>
+  <p class="hero-desc">Week 8 is a decision-making week, and most of its decisions can be made quantitative: whether to build or buy, which vendor scores highest, what a contract will actually cost, which dates have no slack, and how much contingency a procurement risk deserves. This page pins down the definitions first, then works the arithmetic through with the lecture's own case material &mdash; the NSW Digital Driver Licence and the TechSolutions ERP project.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 8 deck</span>
+    <span>Worked numbers are illustrative, and labelled as such</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Each of these is one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Project procurement management</div>
+    <p>The process of acquiring goods, services or results from <strong>outside the project team</strong> to meet project needs &mdash; deciding what to buy, how to buy it, who to buy it from, and how to ensure the contract is successfully completed.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Plan / Conduct / Control Procurements</div>
+    <p><strong>Plan:</strong> document procurement decisions, specify the approach and identify potential sellers. <strong>Conduct:</strong> obtain seller responses, evaluate them and award the contract. <strong>Control:</strong> manage vendor relationships, monitor contract performance and make changes so both parties meet their obligations.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Make-or-buy analysis</div>
+    <p>Deciding whether a product, service or result should be produced internally (make) or purchased or outsourced externally (buy), on the basis of cost, time, quality, expertise, control and confidentiality, and strategic importance.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Statement of Work (SOW)</div>
+    <p>A detailed description of the products, services or results to be delivered under a contract. It sets scope, deliverables, timelines and standards so both buyer and seller understand exactly what is expected, and it acts as the legal reference in a dispute.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Request for Proposal (RFP) vs Request for Quotation (RFQ)</div>
+    <p>An <strong>RFP</strong> invites potential sellers to submit proposals on <em>how</em> they would meet the project's requirements; proposals are evaluated on quality, approach, capability and price. An <strong>RFQ</strong> solicits price quotations for well-defined goods or services where scope and specifications are already fixed; it is evaluated mainly on cost and delivery.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Procurement schedule</div>
+    <p>A timeline of the key activities, milestones and deadlines for managing procurement activities, aligned with the overall project schedule so that vendor lead times do not become project delays. Elements: planning timeline, document preparation, vendor selection, contract award milestone, delivery and performance periods, monitoring and controlling, and procurement closure.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Procurement management</td><td>Goods, services or results obtained from <em>outside the project team</em>, managed through a contract</td><td>&ldquo;Buying things&rdquo; with no mention of the contract or the three processes</td></tr>
+        <tr><td>Make-or-buy</td><td>A cost, risk and benefit comparison, documented in the Procurement Management Plan</td><td>Choosing the cheapest option and ignoring control, confidentiality and strategic importance</td></tr>
+        <tr><td>SOW</td><td>Scope, deliverables, timelines and standards &mdash; the basis of proposals and disputes</td><td>Confusing the SOW with the RFP that carries it</td></tr>
+        <tr><td>RFP</td><td>A request for a <em>solution</em>, evaluated on technical and qualitative factors as well as price</td><td>Using RFP and RFQ interchangeably</td></tr>
+        <tr><td>RFQ</td><td>Price, delivery and payment terms for standardised, well-defined items</td><td>Issuing an RFQ for work that needs innovation or customisation</td></tr>
+        <tr><td>Contract type</td><td>How payment is structured, how risk is shared, how performance is measured</td><td>Claiming a fixed price removes risk rather than transferring it</td></tr>
+        <tr><td>Vendor scorecard</td><td>Retrospective, continuous KPI monitoring <em>after</em> award</td><td>Treating the scorecard as a selection tool used before award</td></tr>
+        <tr><td>Procurement governance</td><td>Policies, processes, roles and oversight that keep outsourced work aligned and accountable</td><td>Equating governance with a single contract signature</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which sentence would earn the mark for &ldquo;what is procurement management?&rdquo;</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Purchase orders are one instrument inside the process. The definition is about acquiring goods, services or results from outside the team and managing the contract that results.">Raising purchase orders for the goods a project consumes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: acquiring goods, services or results from outside the project team, planned, conducted and controlled so the contract is successfully completed." data-bad="">Acquiring goods, services or results from outside the project team, and managing the contract so it is successfully completed</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes Conduct Procurements only, and it stops before contract administration — the process with the longest duration.">Evaluating vendor proposals and awarding the contract to the best bidder</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomy &amp; notation</h2>
+  <p class="section-lead">Three axes organise the week: which document you need, which evaluation method fits, and which contract family carries the risk.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; the document</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Document</th><th>It answers</th><th>Evaluated on</th><th>Fails when</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>SOW</strong></td><td>What exactly is being delivered?</td><td>Not evaluated &mdash; it is the baseline others are measured against</td><td>It is vague, so scope creep and disputes follow</td></tr>
+        <tr><td><strong>RFP</strong></td><td>How would you solve this?</td><td>Quality, approach, capability and price</td><td>The requirements are actually standard, so the process is slow and expensive</td></tr>
+        <tr><td><strong>RFQ</strong></td><td>What would you charge?</td><td>Cost and delivery</td><td>The work needs innovation, so comparable quotes cannot exist</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; the evaluation method</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Weighted scoring model</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Best for complex procurements where multiple factors matter, not just price</li>
+        <li>Produces a defensible numeric comparison, but the weights are a judgement call</li>
+        <li>Cannot rescue a vendor that fails a mandatory requirement</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Checklist and scorecard</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Checklist:</strong> pass/fail screening when compliance to minimum standards (certifications, licences) is critical</li>
+        <li><strong>Scorecard:</strong> ongoing KPI reporting for long-term supplier relationships, after award</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 3 &mdash; the contract family</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Family</th><th>Payment</th><th>Risk on buyer</th><th>Risk on seller</th><th>Sub-types</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Fixed-price</strong></td><td>Agreed in advance, regardless of actual cost</td><td>Low</td><td>High</td><td>FFP, FPIF, FP-EPA</td></tr>
+        <tr><td><strong>Cost-reimbursable</strong></td><td>Actual costs plus a fee or profit</td><td>High</td><td>Low</td><td>CPFF, CPIF, CPAF</td></tr>
+        <tr><td><strong>Time and materials</strong></td><td>Per hour or day, plus materials</td><td>Medium</td><td>Medium</td><td>&mdash; (hybrid by nature)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-method-match"></div>
+  <script type="application/json" id="ix-m-method-match">
+  {
+    "title": "Match the instrument to the situation",
+    "subtitle": "Click the instrument on the left, then the situation it fits on the right.",
+    "pairs": [
+      ["Weighted scoring model", "Complex procurement where several factors matter and price is only one of them"],
+      ["Checklist", "Compliance with minimum standards such as food safety certifications, licences or insurance is the decisive requirement"],
+      ["Vendor scorecard", "Monthly monitoring of on-time delivery, defect rate and responsiveness for a supplier already under contract"],
+      ["Request for Quotation", "400 identical laptops with fixed specifications, decided on price and delivery"],
+      ["Request for Proposal", "Custom ERP integration where vendors must propose an approach"],
+      ["Make-or-buy analysis", "Deciding whether a capability stays internal or is purchased from the market"]
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose and in tables. The symbols below are a <em>revision aid</em> introduced here so the week's relationships can be written compactly; they are not lecture notation and should not be quoted as such.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(F\)</div><div class="sym-cell">fixed cost of making</div><div class="sym-cell">One-off cost of building the capability in-house: tooling, licences, hiring, setup</div>
+    <div class="sym-cell">\(v\)</div><div class="sym-cell">variable cost per unit</div><div class="sym-cell">Internal cost of delivering one more unit of the work (a test run, a report, a device)</div>
+    <div class="sym-cell">\(p\)</div><div class="sym-cell">vendor price per unit</div><div class="sym-cell">What the market charges for the same unit of work</div>
+    <div class="sym-cell">\(Q^{*}\)</div><div class="sym-cell">break-even quantity</div><div class="sym-cell">The volume at which making and buying cost the same: \(Q^{*} = F/(p-v)\)</div>
+    <div class="sym-cell">\(w_j,\ s_{ij}\)</div><div class="sym-cell">weight, score</div><div class="sym-cell">Weight of criterion \(j\) (summing to 1) and vendor \(i\)'s score on it</div>
+    <div class="sym-cell">\(S_i\)</div><div class="sym-cell">weighted total</div><div class="sym-cell">Vendor \(i\)'s weighted score, \(S_i=\sum_j w_j s_{ij}\)</div>
+    <div class="sym-cell">\(\text{TCO}\)</div><div class="sym-cell">total cost of ownership</div><div class="sym-cell">Acquisition plus running plus exit cost over the life of the deal</div>
+    <div class="sym-cell">\(C_t,\ f_t\)</div><div class="sym-cell">target cost, target fee</div><div class="sym-cell">The cost and fee agreed at the centre of an incentive contract</div>
+    <div class="sym-cell">\(C_a\)</div><div class="sym-cell">actual cost</div><div class="sym-cell">What the seller actually spent, reimbursed or compared against the target</div>
+    <div class="sym-cell">\(\alpha_s,\ \alpha_b\)</div><div class="sym-cell">share ratios</div><div class="sym-cell">Seller's and buyer's shares of a cost overrun or underrun, \(\alpha_b = 1-\alpha_s\)</div>
+    <div class="sym-cell">\(P_c,\ \text{PTA}\)</div><div class="sym-cell">ceiling, point of total assumption</div><div class="sym-cell">The maximum price, and the actual cost beyond which the seller absorbs every further dollar</div>
+    <div class="sym-cell">\(ES,\ EF\)</div><div class="sym-cell">early start, early finish</div><div class="sym-cell">Forward pass: the earliest an activity can run, given its predecessors</div>
+    <div class="sym-cell">\(LS,\ LF\)</div><div class="sym-cell">late start, late finish</div><div class="sym-cell">Backward pass: the latest an activity can run without moving the project finish</div>
+    <div class="sym-cell">\(TF\)</div><div class="sym-cell">total float</div><div class="sym-cell">Slack available: \(TF = LS - ES = LF - EF\). Zero float marks the critical path</div>
+    <div class="sym-cell">\(p_r,\ I_r\)</div><div class="sym-cell">probability, impact</div><div class="sym-cell">Likelihood of risk \(r\) and its consequence in dollars</div>
+    <div class="sym-cell">\(RE_r\)</div><div class="sym-cell">risk exposure</div><div class="sym-cell">Expected loss of risk \(r\): \(RE_r = p_r I_r\); the sum feeds the contingency reserve</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A project must engage a vendor for work whose requirements are still being discovered, and the team wants the vendor to have a real incentive to keep costs down. Which contract family fits best?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A firm fixed price on an undiscovered scope means the vendor either prices in a large risk premium or cuts corners — the lecture's stated fixed-price disadvantage.">Firm fixed price, because it caps the buyer's cost</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Cost-reimbursable suits uncertain requirements, and the incentive variant (CPIF) restores the cost-control pressure that a plain CPFF removes. FFP would be indefensible while the scope is unknown." data-bad="">Cost plus incentive fee &mdash; costs are reimbursed, but the fee varies with measured performance</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Time and materials is defensible for flexible staffing, but it carries overrun risk on both sides and gives no explicit cost-control incentive; the question asks for the incentive.">Time and materials, because the scope keeps changing</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-arithmetic">
+  <h2 class="section-title">Break-even, scoring and contract arithmetic</h2>
+  <p class="section-lead">Four pieces of arithmetic cover almost every quantitative procurement question: whether to build or buy, how to score vendors, what a solution really costs, and what an incentive contract will pay.</p>
+
+  <div class="theorem-box">
+    <h3>1. Make-or-buy break-even</h3>
+    <p>The internal option carries a fixed cost and a variable cost; the market option is priced per unit:</p>
+    \[ C_{\text{make}}(Q) = F + vQ, \qquad C_{\text{buy}}(Q) = pQ \]
+    <p>Setting them equal gives the break-even quantity, which exists only when the market price exceeds the internal variable cost:</p>
+    \[ Q^{*} = \frac{F}{p - v}, \qquad p > v \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Below \(Q^{*}\) buying is cheaper; above it, making is. When \(p \le v\) the internal option never breaks even on cost, and the decision must be argued on control, confidentiality, capability or strategic importance instead.</p>
+  </div>
+
+  <div id="ix-m-breakeven"></div>
+
+  <div class="insight-box">
+    <strong>Worked example (illustrative numbers).</strong> A team is deciding whether to build an automated regression-testing capability or buy test runs from a specialist vendor. Internal build: \(F = \$180{,}000\) of tooling, licences and setup, then \(v = \$40\) per test run to operate. The vendor charges \(p = \$100\) per run. Then \(Q^{*} = 180{,}000/(100-40) = 3{,}000\) runs, and the cost at break-even is \(3{,}000 \times \$100 = \$300{,}000\). At 600 runs a year the project breaks even on the build after 5 years &mdash; which may be longer than the project itself, and is exactly the kind of answer that must be paired with the non-cost factors from the lecture.
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Weighted vendor scoring</h3>
+    <p>Agree weights that sum to one, score every vendor on the same scale, then take the weighted total:</p>
+    \[ S_i = \sum_{j=1}^{n} w_j\, s_{ij}, \qquad \sum_{j=1}^{n} w_j = 1 \]
+    <p>If price is scored as a criterion rather than used as a gate, normalise it so the cheapest compliant bid scores full marks:</p>
+    \[ s_{\text{price},i} = 10 \times \frac{P_{\min}}{P_i} \]
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Criterion</th><th>Weight</th><th>Vendor A</th><th>Vendor B</th><th>A &times; w</th><th>B &times; w</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Capability</td><td>0.35</td><td>9</td><td>7</td><td>3.15</td><td>2.45</td></tr>
+        <tr><td>Security</td><td>0.30</td><td>9</td><td>6</td><td>2.70</td><td>1.80</td></tr>
+        <tr><td>Delivery</td><td>0.25</td><td>7</td><td>9</td><td>1.75</td><td>2.25</td></tr>
+        <tr><td>Price</td><td>0.10</td><td>5</td><td>9</td><td>0.50</td><td>0.90</td></tr>
+        <tr><td><strong>Weighted total</strong></td><td><strong>1.00</strong></td><td>&mdash;</td><td>&mdash;</td><td><strong>8.10</strong></td><td><strong>7.40</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Total cost of ownership</h3>
+    <p>The lecture's first evaluation criterion is total cost of ownership, not sticker price:</p>
+    \[ \text{TCO} = C_{\text{acq}} + \sum_{t=1}^{T} \frac{C_{\text{run},t}}{(1+r)^{t}} + C_{\text{exit}} \]
+    <p style="margin-top:0.6rem;">Acquisition cost, running cost over the life of the deal (discounted at rate \(r\) if you want to be precise; set \(r = 0\) for a simple sum), and the cost of exiting the arrangement &mdash; migration, data extraction, retraining. A cheaper licence with a higher support annuity and a punitive exit is frequently the more expensive purchase.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-tco"></div>
+  <script type="application/json" id="ix-m-tco">
+  {
+    "title": "Three-year total cost of ownership (illustrative)",
+    "subtitle": "Vendor Y quotes the lower licence price and still costs more over three years.",
+    "max": 220,
+    "rows": [
+      { "name": "Vendor X — acquisition", "value": 120, "display": "$120k" },
+      { "name": "Vendor X — support, 3 years @ $25k", "value": 75, "display": "$75k" },
+      { "name": "Vendor X — exit and migration", "value": 15, "display": "$15k" },
+      { "name": "Vendor Y — acquisition", "value": 80, "display": "$80k" },
+      { "name": "Vendor Y — support, 3 years @ $45k", "value": 135, "display": "$135k" },
+      { "name": "Vendor Y — exit and migration", "value": 40, "display": "$40k" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Reading the race:</strong> Vendor X TCO \(= 120 + 75 + 15 = \$210\text{k}\); Vendor Y TCO \(= 80 + 135 + 40 = \$255\text{k}\). The lower bid loses on ownership cost by $45k &mdash; the arithmetic that turns &ldquo;cost and pricing: total cost of ownership&rdquo; from a phrase into a decision.
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Incentive and reimbursable contract pricing</h3>
+    <p>In a fixed-price incentive fee contract the seller's fee moves with the actual cost, sharing the variance by the agreed ratio:</p>
+    \[ \text{fee}_{\text{final}} = f_t + \alpha_s\,(C_t - C_a), \qquad \text{price} = C_a + \text{fee}_{\text{final}} \]
+    <p>The price cannot exceed the ceiling \(P_c\). The point of total assumption is the actual cost at which the ceiling is reached and the seller begins to absorb every additional dollar:</p>
+    \[ \text{PTA} = \frac{P_c - (C_t + f_t)}{\alpha_b} + C_t, \qquad \alpha_b = 1 - \alpha_s \]
+    <p style="margin-top:0.6rem;">For a plain cost-plus-fixed-fee contract the buyer's expected cost under an uncertain overrun is an expectation rather than a formula:</p>
+    \[ \mathbb{E}[C_{\text{CPFF}}] = C_{\text{base}} + f + q\,O \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">where \(q\) is the probability of the overrun and \(O\) its size. Buy the fixed price only when \(P < \mathbb{E}[C_{\text{CPFF}}]\) &mdash; remembering that the fixed price already contains the seller's own risk premium, which is why the two are comparable at all.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked solution &mdash; the make-or-buy recommendation, written as an answer.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>State the model.</strong> Internal: \(C_{\text{make}}(Q) = 180{,}000 + 40Q\). Vendor: \(C_{\text{buy}}(Q) = 100Q\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Find the break-even.</strong> \(Q^{*} = \dfrac{F}{p-v} = \dfrac{180{,}000}{100-40} = 3{,}000\) runs. At that volume both options cost \(\$300{,}000\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Compare with the actual demand.</strong> The project forecasts 600 runs a year, so buying costs \(\$60{,}000\) a year while the build costs \(\$180{,}000\) up front plus \(\$24{,}000\) a year &mdash; roughly five years to recover the investment. If the project life is two years, <em>buy</em>. If the capability is needed permanently across a portfolio, the volume will pass 3,000 and <em>make</em> becomes cheaper.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Add the factors the arithmetic ignores.</strong> Independent security testing is periodic, specialist and benefits from external credibility, so confidentiality and control are not compromised by buying it. A capability that touches customer data continuously, or that is strategically differentiating, would push the decision the other way even at a higher cost.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Close the way the lecture does.</strong> &ldquo;Compare the options in terms of cost, risk and benefits, then document and justify the decision in the Procurement Management Plan.&rdquo; The number is evidence; the justification is the answer.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked solution &mdash; pricing an incentive contract and choosing between contract types.</strong> Target cost \(C_t = \$500{,}000\), target fee \(f_t = \$50{,}000\), seller's share \(\alpha_s = 30\%\), ceiling \(P_c = \$580{,}000\).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Target price.</strong> \(C_t + f_t = \$550{,}000\). That is what the buyer expects to pay if the seller hits the target.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>An overrun of $20k.</strong> \(\text{fee}_{\text{final}} = 50{,}000 + 0.30(500{,}000 - 520{,}000) = 50{,}000 - 6{,}000 = \$44{,}000\). Price \(= 520{,}000 + 44{,}000 = \$564{,}000\). The buyer pays $14k more than target while the seller's fee falls by $6k: the 70/30 split in action.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>The point of total assumption.</strong> \(\text{PTA} = \dfrac{580{,}000 - 550{,}000}{0.70} + 500{,}000 = 42{,}857 + 500{,}000 = \$542{,}857\). Check it: at that cost the fee is \(50{,}000 + 0.30(-42{,}857) = \$37{,}143\) and the price is \(542{,}857 + 37{,}143 = \$580{,}000\), exactly the ceiling. Beyond $542,857 of actual cost the seller absorbs 100% of every further dollar.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Fixed price versus cost plus fixed fee.</strong> Suppose the base cost is $500,000, the CPFF fee $50,000, and there is a 40% chance of a $100,000 overrun that a CPFF would have to reimburse. Then \(\mathbb{E}[C_{\text{CPFF}}] = 500{,}000 + 50{,}000 + 0.40(100{,}000) = \$590{,}000\). A firm fixed price of $570,000 is therefore the better buy &mdash; the seller is charging a $70,000 premium over target to carry the risk, and the buyer's expected cost is still $20,000 lower.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say the caveat.</strong> The expectation assumes the overrun probability is real and the fixed-price bidder can actually absorb the variance. If the seller is under-capitalised, the fixed price transfers a risk the seller cannot carry, and the buyer inherits a failed delivery instead of a cost overrun.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.75rem;">5. Contract progress: planned, earned and actual</h3>
+
+  <div class="theorem-box">
+    <h3>Vendor performance in three curves</h3>
+    <p>The cost-management toolkit applies unchanged to a contract: planned value \(PV\) is the value the contract schedules for the period, earned value \(EV\) is the value of work <em>formally accepted</em>, and actual cost \(AC\) is what has been invoiced.</p>
+    \[ SV = EV - PV, \qquad CV = EV - AC, \qquad SPI = \frac{EV}{PV}, \qquad CPI = \frac{EV}{AC} \]
+    <p style="margin-top:0.6rem;">In a procurement setting the interpretation is contractual rather than internal. \(EV\) can only be claimed for accepted deliverables, which is why &ldquo;verify before payment&rdquo; is what keeps \(EV\) honest &mdash; and why a negative \(SV\) at a milestone is a trigger to apply the schedule consequence rather than to keep paying.</p>
+  </div>
+
+  <div id="ix-m-curve"></div>
+
+  <div class="quick-check">
+    <div class="qc-question">Internal build costs $180,000 plus $40 per unit; the vendor charges $100 per unit. Forecast demand is 2,000 units. Which option is cheaper, and by how much?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="2,000 is below the break-even of 3,000 units, so buying is cheaper. Check the arithmetic: build = 180,000 + 80,000 = $260,000; buy = $200,000.">The internal build, because the fixed cost is spread over 2,000 units</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Build = 180,000 + 40(2,000) = $260,000; buy = 100(2,000) = $200,000. Buying is $60,000 cheaper because demand sits below the break-even quantity of 3,000." data-bad="">Buying, by $60,000, because 2,000 units is below the break-even of 3,000</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="They are equal only at the break-even volume of 3,000 units. At 2,000 units the vendor is cheaper.">The two options cost the same once the fixed cost is amortised</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-schedule">
+  <h2 class="section-title">The procurement schedule on the critical path</h2>
+  <p class="section-lead">A procurement schedule is a network like any other. The dates the vendors control need to be checked against the dates the project cannot move.</p>
+
+  <div class="theorem-box">
+    <h3>Forward pass, backward pass, float</h3>
+    <p>Give every activity \(i\) a duration \(d_i\) in weeks. The earliest an activity can run is set by its predecessors:</p>
+    \[ ES_i = \max_{j \in \text{pred}(i)} EF_j, \qquad EF_i = ES_i + d_i \]
+    <p>The latest it can run without moving the project finish \(T = \max_i EF_i\) is set by its successors:</p>
+    \[ LF_i = \min_{k \in \text{succ}(i)} LS_k, \qquad LS_i = LF_i - d_i \]
+    <p>Total float is the slack that makes schedule risk manageable:</p>
+    \[ TF_i = LS_i - ES_i = LF_i - EF_i \]
+    <p style="margin-top:0.6rem;">The critical path is the chain of activities with \(TF = 0\). A delay anywhere on it delays the project by the same amount; a delay off it consumes float first.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Activity (TechSolutions)</th><th>Duration</th><th>Depends on</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>TF</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>A</strong> Project initiation</td><td>1</td><td>&mdash;</td><td>0</td><td>1</td><td>0</td><td>1</td><td><strong>0</strong></td></tr>
+        <tr><td><strong>B</strong> Vendor selection (RFQ + RFP)</td><td>3</td><td>A</td><td>1</td><td>4</td><td>1</td><td>4</td><td><strong>0</strong></td></tr>
+        <tr><td><strong>C</strong> Contract award</td><td>1</td><td>B</td><td>4</td><td>5</td><td>4</td><td>5</td><td><strong>0</strong></td></tr>
+        <tr><td><strong>D</strong> ERP deployment</td><td>11</td><td>C</td><td>5</td><td>16</td><td>5</td><td>16</td><td><strong>0</strong></td></tr>
+        <tr><td><strong>E</strong> Testing and acceptance</td><td>2</td><td>D, P1, P2, P3</td><td>16</td><td>18</td><td>16</td><td>18</td><td><strong>0</strong></td></tr>
+        <tr><td><strong>F</strong> Project closure</td><td>2</td><td>E</td><td>18</td><td>20</td><td>18</td><td>20</td><td><strong>0</strong></td></tr>
+        <tr><td>P1 Hardware procurement (servers, network)</td><td>4</td><td>C</td><td>5</td><td>9</td><td>12</td><td>16</td><td>7</td></tr>
+        <tr><td>P2 Cybersecurity audit (nearshore)</td><td>3</td><td>C</td><td>5</td><td>8</td><td>13</td><td>16</td><td>8</td></tr>
+        <tr><td>P3 Data migration (outsourced)</td><td>6</td><td>C</td><td>5</td><td>11</td><td>10</td><td>16</td><td>5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Weeks are counted from zero, so activity D spans weeks 6&ndash;16 of the calendar schedule and finishes at the end of week 16; E occupies weeks 17&ndash;18 and F week 19&ndash;20, matching the project timeline in the case study: award in week 5, deployment weeks 6&ndash;16, testing and acceptance weeks 17&ndash;18, closure in week 20.</p>
+
+  <div id="ix-m-critical"></div>
+
+  <div class="insight-box">
+    <strong>Why the parallel branches matter.</strong> Hardware procurement, the cybersecurity audit and data migration can all slip by five to eight weeks without moving the project finish, because they must only be complete before testing starts. The ERP deployment cannot slip at all. That asymmetry is what a procurement schedule is for: it tells you which vendor conversation is urgent and which one can absorb a delay.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked solution &mdash; which dates move when a vendor slips.</strong> The offshore ERP vendor advises that deployment will take 14 weeks instead of 11.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Locate the activity.</strong> D is on the critical path (\(TF = 0\)), so a three-week slip moves the project finish one for one: \(T\) becomes 23 weeks and closure lands in week 23 instead of week 20.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Recompute the float on the branches.</strong> With E now starting at 19, \(LF\) for P1, P2 and P3 becomes 19: P1 float \(= 19 - 4 - 5 = 10\) weeks, P2 \(= 11\), P3 \(= 8\). The branches gain slack; the project loses three weeks. Float moving around like this is why it is recomputed after every change.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Can the branches pay for a recovery?</strong> No: they are not predecessors of D, so shortening the audit cannot pull deployment forward. Recovery has to come from D itself (more vendor resources, resequencing customisation), from overlapping testing with the last deployment increments at the team's own risk, or from accepting the slip.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>What the contract should already say.</strong> This is the scenario liquidated damages exist for: a schedule risk priced in advance. The control response is to record the delay against the milestone, apply the agreed consequence formally, and re-baseline the schedule through change control &mdash; not to negotiate a verbal understanding.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-risk">
+  <h2 class="section-title">Risk exposure and the contingency reserve</h2>
+  <p class="section-lead">Procurement risk becomes manageable when likelihood and impact are multiplied instead of argued about. The lecture's risk matrix is the qualitative version of the same calculation.</p>
+
+  <div class="theorem-box">
+    <h3>Expected loss per risk, and the reserve</h3>
+    <p>For each identified risk \(r\) with probability \(p_r\) and monetary impact \(I_r\):</p>
+    \[ RE_r = p_r \times I_r, \qquad \text{contingency} \ge \sum_{r} RE_r \]
+    <p>A response is worth its cost when it removes more expected loss than it costs:</p>
+    \[ \Delta RE = RE_{\text{before}} - RE_{\text{after}} > \text{cost of the response} \]
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Procurement risk</th><th>Category</th><th>\(p\)</th><th>\(I\)</th><th>\(RE = pI\)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Offshore ERP vendor delivers late</td><td>Schedule</td><td>0.40</td><td>$200k</td><td><strong>$80k</strong></td></tr>
+        <tr><td>Cloud hosting outage during rollout</td><td>Operational</td><td>0.20</td><td>$250k</td><td><strong>$50k</strong></td></tr>
+        <tr><td>IP dispute over customised code</td><td>Compliance and legal</td><td>0.10</td><td>$400k</td><td><strong>$40k</strong></td></tr>
+        <tr><td>Hardware prices rise before purchase</td><td>Cost</td><td>0.30</td><td>$60k</td><td><strong>$18k</strong></td></tr>
+        <tr><td><strong>Contingency reserve (expected-value basis)</strong></td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td><strong>$188k</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-exposure"></div>
+  <script type="application/json" id="ix-m-exposure">
+  {
+    "title": "Risk exposure ranked (probability × impact)",
+    "subtitle": "Illustrative figures for the TechSolutions vendor set. Ranking by exposure, not by impact alone, is what decides where the mitigation budget goes.",
+    "max": 80,
+    "rows": [
+      { "name": "Offshore ERP vendor delivers late", "value": 80, "display": "$80k" },
+      { "name": "Cloud hosting outage during rollout", "value": 50, "display": "$50k" },
+      { "name": "IP dispute over customised code", "value": 40, "display": "$40k" },
+      { "name": "Hardware prices rise", "value": 18, "display": "$18k" }
+    ]
+  }
+  </script>
+
+  <div data-ix="hotspot" data-ix-src="#ix-m-matrix"></div>
+  <script type="application/json" id="ix-m-matrix">
+  {
+    "title": "The same risks on a probability–impact matrix",
+    "subtitle": "Click a marker to see the rating and the response the lecture prescribes for that category.",
+    "svg": "<svg viewBox='0 0 700 500' role='img' aria-label='Five by five probability and impact risk matrix with six procurement risks plotted' xmlns='http://www.w3.org/2000/svg'><rect x='0' y='0' width='700' height='470' fill='#fbf9fe'/><rect x='120' y='60' width='100' height='80' fill='#bbf7d0'/><rect x='220' y='60' width='100' height='80' fill='#fde68a'/><rect x='320' y='60' width='100' height='80' fill='#fed7aa'/><rect x='420' y='60' width='100' height='80' fill='#fecaca'/><rect x='520' y='60' width='100' height='80' fill='#fca5a5'/><rect x='120' y='140' width='100' height='80' fill='#bbf7d0'/><rect x='220' y='140' width='100' height='80' fill='#fde68a'/><rect x='320' y='140' width='100' height='80' fill='#fed7aa'/><rect x='420' y='140' width='100' height='80' fill='#fecaca'/><rect x='520' y='140' width='100' height='80' fill='#fca5a5'/><rect x='120' y='220' width='100' height='80' fill='#dcfce7'/><rect x='220' y='220' width='100' height='80' fill='#fde68a'/><rect x='320' y='220' width='100' height='80' fill='#fde68a'/><rect x='420' y='220' width='100' height='80' fill='#fed7aa'/><rect x='520' y='220' width='100' height='80' fill='#fecaca'/><rect x='120' y='300' width='100' height='80' fill='#dcfce7'/><rect x='220' y='300' width='100' height='80' fill='#dcfce7'/><rect x='320' y='300' width='100' height='80' fill='#fde68a'/><rect x='420' y='300' width='100' height='80' fill='#fed7aa'/><rect x='520' y='300' width='100' height='80' fill='#fecaca'/><rect x='120' y='380' width='100' height='80' fill='#dcfce7'/><rect x='220' y='380' width='100' height='80' fill='#dcfce7'/><rect x='320' y='380' width='100' height='80' fill='#dcfce7'/><rect x='420' y='380' width='100' height='80' fill='#fde68a'/><rect x='520' y='380' width='100' height='80' fill='#fde68a'/><g stroke='#ffffff' stroke-width='1.5'><line x1='220' y1='60' x2='220' y2='460'/><line x1='320' y1='60' x2='320' y2='460'/><line x1='420' y1='60' x2='420' y2='460'/><line x1='520' y1='60' x2='520' y2='460'/><line x1='120' y1='140' x2='620' y2='140'/><line x1='120' y1='220' x2='620' y2='220'/><line x1='120' y1='300' x2='620' y2='300'/><line x1='120' y1='380' x2='620' y2='380'/></g><rect x='120' y='60' width='500' height='400' fill='none' stroke='#94a3b8' stroke-width='1.8'/><text x='370' y='30' text-anchor='middle' font-family='Space Grotesk, sans-serif' font-size='15' font-weight='700' fill='#141826'>Probability × impact</text><text x='370' y='498' text-anchor='middle' font-family='Plus Jakarta Sans, sans-serif' font-size='12' fill='#565d75'>Impact →  (1 low · 3 medium · 5 severe)</text><text x='70' y='255' text-anchor='middle' font-family='Plus Jakarta Sans, sans-serif' font-size='12' fill='#565d75' transform='rotate(-90 70 255)'>Probability →</text><text x='170' y='478' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>1</text><text x='270' y='478' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>2</text><text x='370' y='478' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>3</text><text x='470' y='478' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>4</text><text x='570' y='478' text-anchor='middle' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>5</text><text x='108' y='104' text-anchor='end' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>5</text><text x='108' y='184' text-anchor='end' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>4</text><text x='108' y='264' text-anchor='end' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>3</text><text x='108' y='344' text-anchor='end' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>2</text><text x='108' y='424' text-anchor='end' font-family='JetBrains Mono, monospace' font-size='11' fill='#7b829a'>1</text><circle cx='570' cy='180' r='11' fill='#dc2626' opacity='0.85'/><circle cx='470' cy='260' r='11' fill='#ea580c' opacity='0.85'/><circle cx='370' cy='260' r='11' fill='#d97706' opacity='0.85'/><circle cx='270' cy='260' r='11' fill='#65a30d' opacity='0.85'/><circle cx='470' cy='340' r='11' fill='#ea580c' opacity='0.85'/><circle cx='570' cy='420' r='11' fill='#d97706' opacity='0.85'/></svg>",
+    "points": [
+      { "x": 81.4, "y": 36.0, "label": "Offshore ERP vendor delivers late (P4 × I5)", "detail": "Highest exposure, $80k expected. Category: schedule. Mitigation: liquidated damages for delay, milestone-based payments, and strict acceptance criteria in the SOW — plus a pre-agreed multisourcing option." },
+      { "x": 67.1, "y": 52.0, "label": "Cloud hosting outage during rollout (P3 × I4)", "detail": "Operational risk, $50k expected. Mitigation: SLA-backed service levels, monitoring KPIs, a secondary provider in the contingency plan, and an escalation path agreed before go-live." },
+      { "x": 52.9, "y": 52.0, "label": "Data migration quality fails acceptance (P3 × I3)", "detail": "Quality risk. Mitigation: define strict acceptance criteria in the SOW and test them before payment — the control rule that turns a quality risk into a gate rather than an argument." },
+      { "x": 38.6, "y": 52.0, "label": "Hardware prices rise before purchase (P3 × I2)", "detail": "Cost risk, $18k expected. Mitigation: fixed-price contract with a short validity window, or hedging and multi-year agreements; the cheapest of the four to carry as contingency." },
+      { "x": 67.1, "y": 68.0, "label": "Single-supplier dependency (P2 × I4)", "detail": "Operational and schedule risk. Mitigation: contingency plans such as a secondary supplier, and the multisource arrangement the case study already uses across three vendors and three geographies." },
+      { "x": 81.4, "y": 84.0, "label": "IP dispute over customised code (P1 × I5)", "detail": "Compliance and legal risk: low probability, severe impact. Mitigation: contract terms on IP ownership, audit rights and dispute escalation; not economically sensible to buy insurance against, but never left unaddressed in the contract." }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Is the mitigation worth it?</strong> Suppose a second development vendor costs $30k and cuts the probability of a late ERP delivery from 0.40 to 0.15. Exposure falls from \(0.40 \times 200{,}000 = \$80\text{k}\) to \(0.15 \times 200{,}000 = \$30\text{k}\), a \(\Delta RE\) of $50k for a $30k response &mdash; worth doing on the numbers, and it also buys negotiation leverage. Compare that with the IP dispute: cutting a 0.10 probability further is expensive, so the rational spend is contract terms, not insurance.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Risk A has probability 0.5 and impact $40k; risk B has probability 0.1 and impact $300k. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That ranks by impact alone. Expected loss is $20k for A and $30k for B — B is the larger exposure even though it is far less likely.">A has the higher exposure because it is five times more likely</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. RE(A) = 0.5 × 40k = $20k; RE(B) = 0.1 × 300k = $30k. Ranking by probability × impact puts B first — though a low-probability, high-impact risk may still need a contract clause rather than a funded contingency." data-bad="">B has the higher expected loss, $30k against $20k, even though it is less likely</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Multiplying is exactly what the risk matrix does qualitatively: probability times impact, then prioritise high, medium or low.">Neither can be ranked, because likelihood and impact are different units</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Exam checklist for procurement answers</h2>
+  <p class="section-lead">Most Week 8 questions reduce to a decision plus a justification. Run the decision through these steps and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist-seq"></div>
+  <script type="application/json" id="ix-m-checklist-seq">
+  {
+    "title": "Order the checklist",
+    "subtitle": "Rebuild the order in which to interrogate a procurement scenario before you commit to an answer.",
+    "steps": [
+      "Identify which process the question is in: plan, conduct or control",
+      "Decide make or buy, and name the factors behind the decision",
+      "Choose the document: SOW, RFP or RFQ, and say what each would carry",
+      "Choose the contract type, and state where the cost risk lands",
+      "Name the evaluation method and the criteria it scores",
+      "Set the acceptance evidence that will release payment"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Which process</td><td>Planning artefacts, market interaction, or contract administration?</td><td>You describe &ldquo;procurement&rdquo; generically and never place the scenario</td></tr>
+        <tr><td>2. Make or buy</td><td>Cost, time, quality, expertise, control and confidentiality, strategic importance</td><td>You answer on price alone</td></tr>
+        <tr><td>3. The document</td><td>SOW for the &ldquo;what&rdquo;, RFP for solutions, RFQ for standardised price quotes</td><td>You use RFP and RFQ interchangeably</td></tr>
+        <tr><td>4. The contract type</td><td>Fixed-price, cost-reimbursable or T&amp;M, and the risk consequence</td><td>You claim a contract type removes risk instead of transferring it</td></tr>
+        <tr><td>5. Vendor evaluation</td><td>Weighted scoring, checklist or scorecard; mandatory gates before scores</td><td>You pick a method without saying what it is best for</td></tr>
+        <tr><td>6. Acceptance evidence</td><td>Milestones, SLAs, test reports, verified invoices</td><td>You let payment follow the invoice date rather than acceptance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-selfcheck"></div>
+  <script type="application/json" id="ix-m-selfcheck">
+  {
+    "title": "Self-test: say the answer before you flip",
+    "subtitle": "Six questions the week is built around.",
+    "cards": [
+      { "front": "Break-even quantity for make-or-buy", "back": "Q* = F / (p − v): the volume at which the internal fixed-plus-variable cost equals the vendor's unit price. Below it, buy; above it, make — before the non-cost factors are applied.", "hint": "Formula" },
+      { "front": "Weighted score of a vendor", "back": "S = Σ wⱼsⱼ with the weights summing to 1. Reweighting the criteria can change the winner, which is why criteria are published in the RFP.", "hint": "Formula" },
+      { "front": "Where the cost risk sits in each contract family", "back": "Fixed-price: low buyer, high seller. Cost-reimbursable: high buyer, low seller. Time and materials: medium on both sides.", "hint": "Risk transfer" },
+      { "front": "Point of total assumption", "back": "PTA = (Pc − (Ct + ft)) / αb + Ct. Beyond that actual cost the ceiling is reached and the seller absorbs every further dollar.", "hint": "Incentive contracts" },
+      { "front": "Total float", "back": "TF = LS − ES = LF − EF. Zero float marks the critical path; anything with float can absorb a delay before the project finish moves.", "hint": "Schedule" },
+      { "front": "Contingency reserve from risk exposure", "back": "Sum of p × I over the identified risks — an expected-value floor, not a guarantee, which is why responses are chosen by comparing ΔRE with the cost of the response.", "hint": "Risk" }
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you compute a break-even, reweight a scoring model, say where the risk sits in each contract family, and find the critical path through a procurement schedule?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Then go back to the week</h3>
+      <p>The study guide carries the definitions, the three processes, the document detail and the outsourcing material; this page carries the arithmetic and the checklists.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and taxonomies on this page, the three processes and the case studies on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO6007ChapterUI) return;
+    try {
+      window.initINFO6007ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO6007 chapter 8] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  initMathSteppers();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    initMathSteppers();
+    if (typeof window.renderKatex === "function") window.renderKatex();
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+
+  /* ── Animation 1: make-or-buy break-even ─────────────────────── */
+
+  function initMathSteppers() {
+    var host = document.getElementById("ix-m-breakeven");
+    if (!host || !window.Interactive) return;
+    if (host.dataset.mounted === "1") { host._ixRefresh && host._ixRefresh(); return; }
+    host.dataset.mounted = "1";
+
+    var F = 180000, V = 40, P = 100, QMAX = 6000, CMAX = 700000;
+
+    window.Interactive.stepper("ix-m-breakeven", {
+      title: "Make-or-buy break-even",
+      subtitle: "Fixed cost F = $180k, internal variable cost v = $40/run, vendor price p = $100/run. Q* = F ÷ (p − v) = 3,000 runs.",
+      height: 290,
+      frames: [
+        {
+          title: "Set up the axes",
+          caption: "Volume of work on the horizontal axis, cost on the vertical. Everything that follows is two straight lines on this grid.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawAxes(k, w, h, QMAX, CMAX);
+          }
+        },
+        {
+          title: "The vendor's line: C = 100Q",
+          caption: "Buying costs nothing up front and $100 for every unit, so the line starts at the origin and rises with volume. At 6,000 runs it would cost $600,000.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawAxes(k, w, h, QMAX, CMAX);
+            line(k, w, h, QMAX, CMAX, 0, 0, QMAX, P * QMAX, "#2563eb", 3);
+            k.label(plotX(w, 5200), plotY(h, CMAX, P * 5200) - 16, "buy: 100Q", { color: "#2563eb", size: 13, mono: true });
+            k.label(plotX(w, 3000), plotY(h, CMAX, P * 3000), "$300k at 3,000", { color: "#2563eb", size: 11.5 });
+          }
+        },
+        {
+          title: "The internal line: C = 180,000 + 40Q",
+          caption: "Making starts $180,000 in the red — tooling, licences, setup — but each additional run only costs $40 of variable effort, so the line rises more slowly.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawAxes(k, w, h, QMAX, CMAX);
+            line(k, w, h, QMAX, CMAX, 0, 0, QMAX, P * QMAX, "#2563eb", 3);
+            k.label(plotX(w, 5200), plotY(h, CMAX, P * 5200) - 16, "buy: 100Q", { color: "#2563eb", size: 13, mono: true });
+            line(k, w, h, QMAX, CMAX, 0, F, QMAX, F + V * QMAX, "#7c3aed", 3);
+            k.label(plotX(w, 4300), plotY(h, CMAX, F + V * 4300) - 16, "make: 180,000 + 40Q", { color: "#7c3aed", size: 13, mono: true });
+            k.label(plotX(w, 120), plotY(h, CMAX, F) + 14, "F = $180k", { color: "#7c3aed", size: 11.5, mono: true });
+          }
+        },
+        {
+          title: "Where the lines cross",
+          caption: "180,000 + 40Q = 100Q gives Q* = 3,000 runs. Both options cost $300,000 there — below it the vendor is cheaper, above it the internal build is.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawAxes(k, w, h, QMAX, CMAX);
+            line(k, w, h, QMAX, CMAX, 0, 0, QMAX, P * QMAX, "#2563eb", 3);
+            line(k, w, h, QMAX, CMAX, 0, F, QMAX, F + V * QMAX, "#7c3aed", 3);
+            var bx = plotX(w, 3000), by = plotY(h, CMAX, 300000);
+            k.arrow(bx, plotY(h, CMAX, 0), bx, by, { color: "#dc2626", dash: [5, 5], lw: 1.6 });
+            k.dot(bx, by, 7, { fill: "#dc2626", stroke: "#ffffff", lw: 2 });
+            k.label(bx + 12, by - 14, "Q* = 3,000 runs", { color: "#dc2626", size: 13, weight: "700", mono: true });
+            k.label(bx + 12, by + 6, "$300,000 either way", { color: "#565d75", size: 11.5 });
+          }
+        },
+        {
+          title: "Read the decision off the chart",
+          caption: "Left of Q* the blue line is lower: buy. Right of Q* the purple line is lower: make. At 600 runs a year the project would need five years to reach the break-even volume.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawAxes(k, w, h, QMAX, CMAX);
+            var bx = plotX(w, 3000);
+            k.box(plotX(w, 0), plotY(h, CMAX, CMAX), bx - plotX(w, 0), h - 46 - plotY(h, CMAX, CMAX), { fill: "rgba(37,99,235,0.10)" });
+            k.box(bx, plotY(h, CMAX, CMAX), plotX(w, QMAX) - bx, h - 46 - plotY(h, CMAX, CMAX), { fill: "rgba(124,58,237,0.10)" });
+            line(k, w, h, QMAX, CMAX, 0, 0, QMAX, P * QMAX, "#2563eb", 3);
+            line(k, w, h, QMAX, CMAX, 0, F, QMAX, F + V * QMAX, "#7c3aed", 3);
+            k.label(plotX(w, 900), plotY(h, CMAX, CMAX) + 26, "BUY is cheaper", { color: "#2563eb", size: 13, weight: "700" });
+            k.label(plotX(w, 4200), plotY(h, CMAX, CMAX) + 26, "MAKE is cheaper", { color: "#7c3aed", size: 13, weight: "700" });
+            k.label(plotX(w, 3000), plotY(h, CMAX, 560000), "and then apply the non-cost factors:", { color: "#565d75", size: 11.5, align: "center" });
+            k.label(plotX(w, 3000), plotY(h, CMAX, 515000), "control, confidentiality, expertise, strategic importance", { color: "#565d75", size: 11.5, align: "center" });
+          }
+        }
+      ]
+    });
+
+    /* ── Animation 2: critical path through the procurement schedule ── */
+
+    var acts = [
+      { id: "A", label: "Initiation", d: 1, es: 0, ef: 1, ls: 0, lf: 1, tf: 0, crit: true },
+      { id: "B", label: "Vendor selection", d: 3, es: 1, ef: 4, ls: 1, lf: 4, tf: 0, crit: true },
+      { id: "C", label: "Contract award", d: 1, es: 4, ef: 5, ls: 4, lf: 5, tf: 0, crit: true },
+      { id: "D", label: "ERP deployment", d: 11, es: 5, ef: 16, ls: 5, lf: 16, tf: 0, crit: true },
+      { id: "E", label: "Testing & acceptance", d: 2, es: 16, ef: 18, ls: 16, lf: 18, tf: 0, crit: true },
+      { id: "F", label: "Closure", d: 2, es: 18, ef: 20, ls: 18, lf: 20, tf: 0, crit: true },
+      { id: "P1", label: "Hardware procurement", d: 4, es: 5, ef: 9, ls: 12, lf: 16, tf: 7, crit: false },
+      { id: "P2", label: "Cybersecurity audit", d: 3, es: 5, ef: 8, ls: 13, lf: 16, tf: 8, crit: false },
+      { id: "P3", label: "Data migration", d: 6, es: 5, ef: 11, ls: 10, lf: 16, tf: 5, crit: false }
+    ];
+
+    window.Interactive.stepper("ix-m-critical", {
+      title: "Critical path through the procurement schedule",
+      subtitle: "Top rows are the sequential chain; the three bottom rows are the parallel vendor activities with float.",
+      height: 320,
+      frames: [
+        {
+          title: "The network as bars",
+          caption: "Each bar starts at its early start and runs for its duration. The chain A → B → C → D → E → F ends at week 20.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawNetwork(k, w, h, acts, "bars");
+          }
+        },
+        {
+          title: "Forward pass: early start and early finish",
+          caption: "ES is the latest early finish among the predecessors; EF = ES + duration. Contract award cannot start until vendor selection ends, so it starts at week 4.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawNetwork(k, w, h, acts, "es");
+          }
+        },
+        {
+          title: "Backward pass: late start and late finish",
+          caption: "Working back from the project finish T = 20, LF = the earliest late start of the successors. The three parallel activities must all finish by week 16, when testing begins.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawNetwork(k, w, h, acts, "lf");
+          }
+        },
+        {
+          title: "Float: where the slack sits",
+          caption: "TF = LS − ES. Hardware procurement has 7 weeks, the audit 8, data migration 5 — delays there consume slack. The chain has none.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawNetwork(k, w, h, acts, "float");
+          }
+        },
+        {
+          title: "The critical path",
+          caption: "Six activities with zero float. A three-week slip in ERP deployment moves the project finish from week 20 to week 23 — which is what the liquidated-damages clause is priced against.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawNetwork(k, w, h, acts, "critical");
+          }
+        }
+      ]
+    });
+
+    /* ── Animation 3: contract progress against the S-curve ──────── */
+
+    var PV = [0, 4, 9, 16, 24, 34, 44, 54, 63, 71, 78, 84, 89, 93, 96, 98, 99, 100, 100, 100, 100];
+    var EV = [0, 3, 7, 13, 20, 28, 37, 46, 54, 62, 69, 75, 80, 84, 87, 89, 90, 96, 100, 100, 100];
+    var AC = [0, 5, 11, 19, 28, 39, 50, 61, 71, 80, 88, 95, 100, 104, 107, 109, 110, 115, 118, 120, 120];
+
+    window.Interactive.stepper("ix-m-curve", {
+      title: "Vendor progress: planned, earned and actual",
+      subtitle: "Illustrative cumulative percentages for the ERP deployment contract. PV is the plan, EV is the value of formally accepted work, AC is what has been invoiced.",
+      height: 300,
+      frames: [
+        {
+          title: "The plan: PV",
+          caption: "Planned value is the cumulative value the contract schedules for each week — the S-curve the payment milestones were written against.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawCurveAxes(k, w, h);
+            drawSeries(k, w, h, PV, "#2563eb", 3);
+            k.label(plotX(w, 12), plotY(h, 100, PV[12]) - 16, "PV", { color: "#2563eb", size: 13, weight: "700", mono: true });
+          }
+        },
+        {
+          title: "Add what has actually been earned: EV",
+          caption: "EV counts only work that has passed acceptance. It sits below the plan: the vendor is running roughly two weeks behind the schedule it signed.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawCurveAxes(k, w, h);
+            drawSeries(k, w, h, PV, "#2563eb", 3);
+            drawSeries(k, w, h, EV, "#059669", 3);
+            k.label(plotX(w, 12), plotY(h, 100, PV[12]) - 16, "PV", { color: "#2563eb", size: 13, weight: "700", mono: true });
+            k.label(plotX(w, 12), plotY(h, 100, EV[12]) - 16, "EV", { color: "#059669", size: 13, weight: "700", mono: true });
+            k.highlight(plotX(w, 0), plotY(h, 100, PV[0]) - 4, plotX(w, 18) - plotX(w, 0), 8, { color: "rgba(5,150,105,0.5)", lw: 1.4 });
+          }
+        },
+        {
+          title: "Add what has been invoiced: AC",
+          caption: "AC tracks the seller's actual cost and invoices. It is above EV, so the project is paying more than the value it has accepted — the classic overrun signal.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawCurveAxes(k, w, h);
+            drawSeries(k, w, h, PV, "#2563eb", 3);
+            drawSeries(k, w, h, EV, "#059669", 3);
+            drawSeries(k, w, h, AC, "#dc2626", 3);
+            k.label(plotX(w, 12), plotY(h, 100, PV[12]) - 16, "PV", { color: "#2563eb", size: 13, weight: "700", mono: true });
+            k.label(plotX(w, 12), plotY(h, 100, EV[12]) - 16, "EV", { color: "#059669", size: 13, weight: "700", mono: true });
+            k.label(plotX(w, 4), plotY(h, 100, AC[4]) - 16, "AC", { color: "#dc2626", size: 13, weight: "700", mono: true });
+          }
+        },
+        {
+          title: "Read the variances at week 12",
+          caption: "At week 12: PV = 89, EV = 80, AC = 100 (all percentages of the contract value).",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawCurveAxes(k, w, h);
+            drawSeries(k, w, h, PV, "#2563eb", 3);
+            drawSeries(k, w, h, EV, "#059669", 3);
+            drawSeries(k, w, h, AC, "#dc2626", 3);
+            var x = plotX(w, 12);
+            k.arrow(x, plotY(h, 100, 0), x, plotY(h, 100, 120), { color: "#94a3b8", dash: [4, 4], lw: 1.4 });
+            k.dot(x, plotY(h, 100, PV[12]), 5, { fill: "#2563eb" });
+            k.dot(x, plotY(h, 100, EV[12]), 5, { fill: "#059669" });
+            k.dot(x, plotY(h, 100, AC[12]), 5, { fill: "#dc2626" });
+            k.code(plotX(w, 1), plotY(h, 100, 30), [
+              "SV = EV - PV = 80 - 89 = -9",
+              "CV = EV - AC = 80 - 100 = -20"
+            ], { size: 12.5, color: "#141826" });
+          }
+        },
+        {
+          title: "The procurement response",
+          caption: "Behind schedule and over cost is a Control Procurements problem, not an accounting one: verify before payment, hold the milestone payment, and manage the recovery through formal change control.",
+          draw: function (ctx, w, h, k) {
+            k.clear();
+            drawCurveAxes(k, w, h);
+            drawSeries(k, w, h, PV, "#2563eb", 3);
+            drawSeries(k, w, h, EV, "#059669", 3);
+            drawSeries(k, w, h, AC, "#dc2626", 3);
+            k.highlight(plotX(w, 10), plotY(h, 100, 88) - 34, plotX(w, 18) - plotX(w, 10), 96, { color: "#dc2626", lw: 2 });
+            k.label(plotX(w, 14), plotY(h, 100, 118), "hold payment until acceptance", { color: "#dc2626", size: 12, weight: "700", align: "center" });
+            k.label(plotX(w, 9), plotY(h, 100, 20), "liquidated damages for the missed", { color: "#565d75", size: 11.5 });
+            k.label(plotX(w, 9), plotY(h, 100, 12), "milestone; recovery plan agreed formally", { color: "#565d75", size: 11.5 });
+          }
+        }
+      ]
+    });
+  }
+
+  /* ── canvas helpers for the three steppers ──────────────────── */
+
+  function plotX(w, q) {
+    var left = 74, right = w - 26;
+    return left + (right - left) * (q / 6000);
+  }
+
+  function plotY(h, cmax, c) {
+    var top = 26, bottom = h - 46;
+    return bottom - (bottom - top) * (c / cmax);
+  }
+
+  function drawAxes(k, w, h, qmax, cmax) {
+    var left = 74, right = w - 26, top = 26, bottom = h - 46;
+    k.box(left, top, right - left, bottom - top, { stroke: "#cbd5e1", lw: 1.4, r: 6 });
+    for (var i = 1; i <= 5; i++) {
+      var y = top + (bottom - top) * (i / 5);
+      k.arrow(left, y, right, y, { color: "rgba(148,163,184,0.35)", dash: [3, 5], lw: 1 });
+      k.label(left - 8, y, "$" + (cmax * i / 5 / 1000) + "k", { size: 10.5, align: "right", color: "#7b829a", mono: true });
+    }
+    for (var j = 1; j <= 6; j++) {
+      var x = left + (right - left) * (j / 6);
+      k.label(x, bottom + 14, String(qmax * j / 6), { size: 10.5, align: "center", color: "#7b829a", mono: true });
+    }
+    k.label(right, bottom + 30, "units of work (test runs) \u2192", { size: 11, align: "right", color: "#565d75" });
+    k.label(left - 8, top - 12, "cost \u2192", { size: 11, align: "left", color: "#565d75" });
+  }
+
+  function line(k, w, h, qmax, cmax, q1, c1, q2, c2, color, lw) {
+    k.arrow(plotX(w, q1), plotY(h, cmax, c1), plotX(w, q2), plotY(h, cmax, c2), { color: color, lw: lw, head: 4 });
+  }
+
+  function drawNetwork(k, w, h, acts, mode) {
+    var left = 108, right = w - 40, top = 34;
+    var rowH = (h - top - 34) / acts.length;
+    var barH = Math.min(20, rowH - 10);
+    var x0 = left, span = right - left;
+
+    for (var wk = 0; wk <= 20; wk += 5) {
+      var gx = x0 + span * (wk / 20);
+      k.arrow(gx, top - 10, gx, h - 30, { color: "rgba(148,163,184,0.35)", dash: [3, 5], lw: 1 });
+      k.label(gx, top - 20, "wk " + wk, { size: 10, align: "center", color: "#7b829a", mono: true });
+    }
+
+    acts.forEach(function (a, i) {
+      var y = top + i * rowH;
+      var x = x0 + span * (a.es / 20);
+      var bw = Math.max(6, span * (a.d / 20));
+      var colour = a.crit ? "#dc2626" : "#7c3aed";
+
+      k.label(left - 12, y + barH / 2, a.id + "  " + a.label, { size: 11, align: "right", color: a.crit ? "#dc2626" : "#565d75" });
+
+      if (mode === "float") {
+        var fx = x0 + span * (a.es / 20);
+        var fw = span * ((a.lf - a.es) / 20);
+        k.box(fx, y, fw, barH, { fill: "rgba(148,163,184,0.22)", stroke: "#94a3b8", lw: 1, r: 5 });
+        k.box(x, y, bw, barH, { fill: a.crit ? "#fecaca" : "#ddd6fe", stroke: colour, lw: 1.6, r: 5 });
+        k.label(x + fw + 6, y + barH / 2, "TF = " + a.tf + (a.tf === 0 ? "  (critical)" : " wk"), { size: 10.5, color: colour, mono: true });
+      } else {
+        k.box(x, y, bw, barH, { fill: a.crit && mode === "critical" ? "#fecaca" : (a.crit ? "#fee2e2" : "#ede9fe"), stroke: colour, lw: mode === "critical" && a.crit ? 2.4 : 1.6, r: 5 });
+        var note = "";
+        if (mode === "bars") note = "d = " + a.d + " wk";
+        else if (mode === "es") note = "ES " + a.es + "  EF " + a.ef;
+        else if (mode === "lf") note = "LS " + a.ls + "  LF " + a.lf;
+        else note = a.crit ? "critical, TF = 0" : "TF = " + a.tf + " wk";
+        k.label(x + bw + 8, y + barH / 2, note, { size: 10.5, color: colour, mono: true });
+      }
+    });
+
+    if (mode === "critical") {
+      k.label(right, h - 14, "project finish T = 20 weeks", { size: 11.5, align: "right", color: "#dc2626", weight: "700" });
+    } else {
+      k.label(right, h - 14, "weeks from project start", { size: 11, align: "right", color: "#7b829a" });
+    }
+  }
+
+  function drawCurveAxes(k, w, h) {
+    var left = 74, right = w - 26, top = 26, bottom = h - 40;
+    k.box(left, top, right - left, bottom - top, { stroke: "#cbd5e1", lw: 1.4, r: 6 });
+    for (var i = 1; i <= 4; i++) {
+      var y = bottom - (bottom - top) * (i / 4);
+      k.arrow(left, y, right, y, { color: "rgba(148,163,184,0.35)", dash: [3, 5], lw: 1 });
+      k.label(left - 8, y, (i * 25) + "%", { size: 10.5, align: "right", color: "#7b829a", mono: true });
+    }
+    for (var wk = 0; wk <= 20; wk += 4) {
+      var x = plotX(w, wk);
+      k.label(x, bottom + 14, "w" + wk, { size: 10.5, align: "center", color: "#7b829a", mono: true });
+    }
+    k.label(right, bottom + 30, "contract week \u2192", { size: 11, align: "right", color: "#565d75" });
+    k.label(left - 8, top - 12, "cumulative % of contract value \u2192", { size: 11, color: "#565d75" });
+  }
+
+  function drawSeries(k, w, h, series, colour, lw) {
+    for (var i = 1; i < series.length; i++) {
+      k.arrow(plotX(w, i - 1), plotY(h, 100, series[i - 1]), plotX(w, i), plotY(h, 100, series[i]), { color: colour, lw: lw, head: 1 });
+    }
+  }
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

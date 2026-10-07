@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 8: Software and System Security — INFO5995</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter8-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 study guide for INFO5995: software security as a lifecycle property, where vulnerabilities are introduced, the OWASP Top 10 weaknesses and their shared root cause, defence in depth across build and run time, database security, SQL injection and its structural fix, inference attacks and privacy leakage, cross-site scripting, hardening a deployed system, and IDS versus IPS.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 8: Software and System Security — INFO5995">
+<meta property="og:description" content="Week 8 study guide for INFO5995: software security as a lifecycle property, where vulnerabilities are introduced, the OWASP Top 10 weaknesses and their shared root cause, defence in depth across build and run time, database security, SQL injection and its structural fix, inference attacks and privacy leakage, cross-site scripting, hardening a deployed system, and IDS versus IPS.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F6E1;</span>
+      <h2>Week 8</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-software" class="nav-link" data-section="software">What It Is</a></li>
+    <li><a href="#sec-lifecycle" class="nav-link" data-section="lifecycle">Vulnerability Origins</a></li>
+    <li><a href="#sec-owasp" class="nav-link" data-section="owasp">OWASP Top 10</a></li>
+    <li><a href="#sec-defence" class="nav-link" data-section="defence">Defence in Depth</a></li>
+    <li><a href="#sec-database" class="nav-link" data-section="database">Databases</a></li>
+    <li><a href="#sec-injection" class="nav-link" data-section="injection">SQL Injection</a></li>
+    <li><a href="#sec-inference" class="nav-link" data-section="inference">Inference Attacks</a></li>
+    <li><a href="#sec-xss" class="nav-link" data-section="xss">Cross-Site Scripting</a></li>
+    <li><a href="#sec-system" class="nav-link" data-section="system">System Security</a></li>
+    <li><a href="#sec-detect" class="nav-link" data-section="detect">IDS &amp; IPS</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter8-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter8-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 8 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">INFO5995 — Cybersecurity</p>
+    <h1>Week 8: Software and System Security</h1>
+    <p class="hero-subtitle">Security as an engineering property of the whole software lifecycle: where vulnerabilities are introduced, the weaknesses that keep reappearing in the OWASP Top 10, and the detection and response controls that protect a system once it is deployed.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3D7;</span>
+        <span>Security across design, build, test, run</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F5C4;</span>
+        <span>Databases hold the crown jewels</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F489;</span>
+        <span>Injection and XSS: data trusted as code</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6E1;</span>
+        <span>IDS detects, IPS blocks</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter8-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter8-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 8 lecture deck (<em>Software and System Security</em>) with the OWASP Top 10 (2021) as the referenced weakness taxonomy</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-software" class="section" data-track="software">
+  <h2 class="section-title">What Software Security Is</h2>
+  <p class="section-lead">Week 8 opens with a deliberately broad definition, because the failures in the deck are spread across the whole lifecycle rather than concentrated in any one stage.</p>
+
+  <div class="concept-box">
+    <p><strong>The deck's working definition:</strong> security is an engineering property across the complete software lifecycle &mdash; <em>design, develop, test and maintain software so it resists attack and protects users' data</em>.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; software security</div>
+    <p>The set of engineering practices that keep a system trustworthy while it is under attack, applied continuously from requirements to maintenance. It has two halves that the deck keeps together: <strong>prevent vulnerabilities before deployment</strong>, and <strong>continue protecting the system after deployment</strong>.</p>
+  </div>
+
+  <p>The CIA triad from Week 1 becomes concrete once it is applied to software the organisation wrote or assembled itself:</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>At the software layer</th><th>Representative controls</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>C &mdash; Confidentiality</strong></td><td>Prevent unauthorised disclosure of the data the system stores, moves or logs</td><td>Authentication, authorisation, encryption in transit and at rest, masking, least privilege</td></tr>
+        <tr><td><strong>I &mdash; Integrity</strong></td><td>Prevent unauthorised change to data, to configuration and to the code path that processes them</td><td>Constraints, transactions, input validation, signed artefacts, audit logs</td></tr>
+        <tr><td><strong>A &mdash; Availability</strong></td><td>Sustain dependable access for authorised workloads</td><td>Replication, capacity planning, rate limiting, graceful degradation, DoS resistance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The security mindset the deck asks for</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Assume the input is hostile, the dependency is stale and the default is unsafe.</li>
+        <li>Ask what the system <em>trusts</em>, then ask why it should.</li>
+        <li>Treat security as a property of the process, not a feature to be added late.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Why secure systems still get hacked</h3>
+      <p>The deck's answer is blunt: a <strong>software weakness</strong>, a <strong>configuration issue</strong> or a <strong>dependency</strong> gave the attacker a way in. Many major breaches exploit software vulnerabilities rather than breaking cryptography &mdash; so &ldquo;we use TLS&rdquo; is not a security answer.</p>
+    </div>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-breaches"></div>
+  <script type="application/json" id="ix-breaches">
+  {
+    "title": "Three incidents, one pattern",
+    "subtitle": "The deck's examples of population-scale consequences from small implementation weaknesses. Sources cited by the lecture: FTC; CISA CVE-2021-44228; Progress CVE-2023-34362.",
+    "events": [
+      { "label": "2017", "title": "Equifax — unpatched component", "detail": "A known vulnerability in a web application component was not patched, and roughly 147 million people had personal data exposed. The weakness was not cryptographic; it was maintenance." },
+      { "label": "2021", "title": "Log4Shell — vulnerable library", "detail": "A widely used logging library (CVE-2021-44228) allowed remote code execution through crafted input. The risk was inherited by every application that bundled the dependency." },
+      { "label": "2023", "title": "MOVEit — SQL injection", "detail": "A managed file-transfer product was exploited through SQL injection (CVE-2023-34362) at scale, producing mass data theft. The vulnerable code was in the application, not the database engine." }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> never answer &ldquo;software security is encryption and penetration testing&rdquo;. The markable version names the lifecycle scope and the two halves &mdash; prevent before deployment, detect and respond after it &mdash; and then gives one example of each.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement matches the Week 8 deck's definition of software security?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Cryptography is one control among many. The deck's incidents (Equifax, Log4Shell, MOVEit) were exploited through software and dependency weaknesses, not by breaking encryption.">The practice of encrypting data at rest and in transit so that stolen files are unreadable</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Security is an engineering property maintained across the complete lifecycle — preventing vulnerabilities before deployment and continuing to protect the system after it." data-bad="">An engineering property maintained across the complete lifecycle, before and after deployment</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A penetration test is one layer of defence in depth: it challenges assumptions at build time but cannot carry the whole lifecycle, and it happens far too late to be the definition.">The final penetration test that certifies a release before it ships</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-lifecycle" class="section" data-track="lifecycle">
+  <h2 class="section-title">Where Vulnerabilities Come From</h2>
+  <p class="section-lead">The deck's central diagram: a vulnerability can be introduced &mdash; or removed &mdash; at every lifecycle stage, and each stage has a characteristic defect.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>Characteristic defect</th><th>What it looks like in the running system</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>0. Requirements</strong></td><td>Abuse case omitted</td><td>Nobody specified how the system must behave when a user lies, replays or escalates, so &ldquo;undefined&rdquo; becomes the behaviour</td></tr>
+        <tr><td><strong>1. Design</strong></td><td>Trust boundary missed</td><td>A component accepts data from a zone it was never meant to trust; privilege sits in the wrong tier</td></tr>
+        <tr><td><strong>2. Implementation</strong></td><td>Unsafe data handling</td><td>Input is concatenated into a command, or content is written into a page unencoded</td></tr>
+        <tr><td><strong>3. Testing</strong></td><td>Adversarial path skipped</td><td>Tests prove the happy path works; nobody tried to make the system fail in an interesting way</td></tr>
+        <tr><td><strong>4. Deployment</strong></td><td>Insecure default</td><td>A debug endpoint, sample account or permissive rule ships enabled because it was convenient in development</td></tr>
+        <tr><td><strong>5. Maintenance</strong></td><td>Patch delayed</td><td>A known vulnerability stays unpatched while a working exploit is public and scanning for it is automated</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-sdlc"></div>
+  <script type="application/json" id="ix-sdlc">
+  {
+    "title": "Order the secure development lifecycle",
+    "subtitle": "Rebuild the sequence in which each control turns an attacker's assumption into a design decision.",
+    "steps": [
+      "Elicit security requirements, including abuse cases and misuse scenarios",
+      "Model the threats and draw the trust boundaries between components",
+      "Implement against secure coding standards: separate data from code, fail safely",
+      "Test the adversarial paths, not only the happy path; review the risky code",
+      "Deploy hardened defaults with every unnecessary capability switched off",
+      "Maintain: patch, monitor, re-assess and feed findings back into requirements"
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The deck's cost argument:</strong> &ldquo;the later a defect is discovered, the more architecture, data and operations may already depend on it.&rdquo; A missing trust boundary found in design costs a conversation; the same defect found in production costs an incident, a migration and a disclosure.
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-cost"></div>
+  <script type="application/json" id="ix-cost">
+  {
+    "title": "Why shift left: relative cost of remediating one defect",
+    "subtitle": "Illustrative relative units from the standard textbook cost curve, not lecture data. The lecture's claim is the direction of the curve, not these numbers.",
+    "max": 100,
+    "rows": [
+      { "name": "Requirements and design", "value": 1, "display": "1x" },
+      { "name": "Implementation", "value": 6, "display": "6x" },
+      { "name": "Testing and review", "value": 15, "display": "15x" },
+      { "name": "Deployment", "value": 40, "display": "40x" },
+      { "name": "Production and maintenance", "value": 100, "display": "100x" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A service ships with the database vendor's sample administrator account still enabled and reachable from the internet. Which lifecycle defect is this, in the deck's vocabulary?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Unsafe data handling is the implementation-stage defect — concatenating input into a command, for example. This account was not created by bad data handling.">Unsafe data handling at the implementation stage</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Patch delayed is the maintenance-stage defect: a known vulnerability left unfixed. Here the problem is a capability that should never have been enabled at all.">Patch delayed at the maintenance stage</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. An insecure default is the deployment-stage defect: a capability that is unsafe but convenient ships enabled, and the attack surface grows without anyone deciding it should." data-bad="">Insecure default at the deployment stage</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-owasp" class="section" data-track="owasp">
+  <h2 class="section-title">Common Weaknesses and the OWASP Top 10</h2>
+  <p class="section-lead">The deck names five headline weaknesses and then collapses them into a single sentence. Learn the five, but answer the exam question with the sentence.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Weakness (deck)</th><th>One-line description</th><th>OWASP Top 10 (2021)</th><th>What the system trusts that it should not</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>SQL injection</strong></td><td>Data becomes a database command</td><td>A03: Injection</td><td>User input is trusted as SQL syntax</td></tr>
+        <tr><td><strong>Cross-site scripting</strong></td><td>Content becomes browser code</td><td>A03: Injection</td><td>User content is trusted as markup and script</td></tr>
+        <tr><td><strong>Broken access control</strong></td><td>Identity is mistaken for authority</td><td>A01: Broken Access Control</td><td>A valid session is trusted as a permission</td></tr>
+        <tr><td><strong>Security misconfiguration</strong></td><td>Unsafe capability is exposed</td><td>A05: Security Misconfiguration</td><td>Defaults are trusted to be safe</td></tr>
+        <tr><td><strong>Vulnerable components</strong></td><td>Inherited supply-chain risk</td><td>A06: Vulnerable and Outdated Components</td><td>A dependency is trusted to be current and benign</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The shared root cause, in the deck's words:</strong> the system trusts data, identity, configuration or dependencies more than it should.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.75rem;">The full 2021 list, with the deck's five marked</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>#</th><th>Category</th><th>What it means in practice</th><th>Deck</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A01</td><td>Broken Access Control</td><td>Users act outside their intended permissions: missing checks, insecure direct object references, privilege escalation</td><td><span class="badge badge-green">Illustrated</span></td></tr>
+        <tr><td>A02</td><td>Cryptographic Failures</td><td>Sensitive data exposed through weak, missing or misapplied cryptography and poor key handling</td><td><span class="badge badge-blue">Related</span></td></tr>
+        <tr><td>A03</td><td>Injection</td><td>Untrusted data is interpreted as part of a command or query: SQL, NoSQL, OS command, template, and XSS in the browser</td><td><span class="badge badge-green">Illustrated</span></td></tr>
+        <tr><td>A04</td><td>Insecure Design</td><td>The design itself misses abuse cases, trust boundaries or business-logic limits &mdash; no amount of correct code fixes it</td><td><span class="badge badge-green">Illustrated</span></td></tr>
+        <tr><td>A05</td><td>Security Misconfiguration</td><td>Unnecessary features, default accounts, verbose errors, missing hardening and permissive cloud or CORS settings</td><td><span class="badge badge-green">Illustrated</span></td></tr>
+        <tr><td>A06</td><td>Vulnerable and Outdated Components</td><td>Libraries, frameworks and platforms with known vulnerabilities that nobody tracked or patched</td><td><span class="badge badge-green">Illustrated</span></td></tr>
+        <tr><td>A07</td><td>Identification and Authentication Failures</td><td>Weak credential handling, absent MFA, session fixation and reusable credentials</td><td><span class="badge badge-blue">Related</span></td></tr>
+        <tr><td>A08</td><td>Software and Data Integrity Failures</td><td>Code and data accepted without verifying provenance: unsigned updates, insecure deserialisation, CI/CD supply chain</td><td><span class="badge badge-blue">Related</span></td></tr>
+        <tr><td>A09</td><td>Security Logging and Monitoring Failures</td><td>Breaches go undetected because nothing is logged, retained or alerted on &mdash; the run-time half of the week</td><td><span class="badge badge-blue">Related</span></td></tr>
+        <tr><td>A10</td><td>Server-Side Request Forgery</td><td>The server is tricked into making requests on the attacker's behalf, reaching internal services</td><td><span class="badge badge-blue">Related</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-rootcause"></div>
+  <script type="application/json" id="ix-rootcause">
+  {
+    "title": "Match the weakness to what the system wrongly trusts",
+    "subtitle": "Click a weakness on the left, then the trust mistake on the right.",
+    "pairs": [
+      ["SQL injection", "User input trusted as SQL syntax"],
+      ["Cross-site scripting", "User content trusted as browser code"],
+      ["Broken access control", "A valid session trusted as an authorisation decision"],
+      ["Security misconfiguration", "A default setting trusted to be safe"],
+      ["Vulnerable components", "A dependency trusted to be current and benign"],
+      ["Insecure design", "An abuse case or trust boundary that was never modelled"],
+      ["Logging and monitoring failures", "An attack trusted to announce itself"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which sentence states the shared root cause of the deck's five headline weaknesses?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Weak cryptography is a real category (A02), but the deck's five weaknesses are not cryptographic failures — Equifax, Log4Shell and MOVEit were exploited through software and dependency handling.">Attackers always find a way around weak cryptography</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct — the deck's own sentence. Every one of the five is a case of trusting data, identity, configuration or dependencies further than the evidence justifies." data-bad="">The system trusts data, identity, configuration or dependencies more than it should</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Developers do make mistakes, but that is a cause of individual bugs, not the structural explanation the deck gives for the whole list.">Developers are not trained to write secure code</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-defence" class="section" data-track="defence">
+  <h2 class="section-title">Defence in Depth: Build Time and Run Time</h2>
+  <p class="section-lead">The deck's answer to &ldquo;but we might miss something&rdquo; is six layers of controls that work together across the lifecycle. Layered controls stop one missed defect from becoming a successful attack.</p>
+
+  <div data-ix="pipeline" data-ix-src="#ix-layers"></div>
+  <script type="application/json" id="ix-layers">
+  {
+    "title": "Six layers, build time into run time",
+    "subtitle": "The deck's defence-in-depth bar, in order. Press play to walk the chain from prevention to detection.",
+    "nodes": [
+      { "label": "Secure coding", "note": "PREVENT — write code that keeps data separate from commands and fails safely" },
+      { "label": "Testing", "note": "CHALLENGE — attack your own assumptions with adversarial tests" },
+      { "label": "Static analysis", "note": "INSPECT — read code and data flow without running it (SAST)" },
+      { "label": "Dynamic analysis", "note": "PROBE — exercise the running system and its dependencies (DAST, fuzzing, scanning)" },
+      { "label": "Monitoring", "note": "OBSERVE — logs, metrics and traces; the evidence that something changed" },
+      { "label": "IDS / IPS", "note": "DETECT / BLOCK — signatures and anomalies, alerting or intervening inline" }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Layer</th><th>When</th><th>Strongest against</th><th>Blind to</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Secure coding</strong></td><td>Build</td><td>Whole classes of injection, encoding and authorisation mistakes</td><td>The mistakes you did not notice making</td></tr>
+        <tr><td><strong>Testing</strong></td><td>Build</td><td>Logic, specification and integration errors on the paths you thought of</td><td>The paths nobody thought to test</td></tr>
+        <tr><td><strong>Static analysis</strong></td><td>Build</td><td>Tainted data flow, unsafe APIs, known-bad patterns across the whole codebase</td><td>Configuration, runtime state; it also produces false positives that must be triaged</td></tr>
+        <tr><td><strong>Dynamic analysis</strong></td><td>Build / pre-release</td><td>Real behaviour: authorisation gaps, dependency versions, runtime errors</td><td>Code paths that the probe never reaches</td></tr>
+        <tr><td><strong>Monitoring</strong></td><td>Run</td><td>Knowing that something happened at all, and reconstructing it afterwards</td><td>Attacks that look like ordinary traffic</td></tr>
+        <tr><td><strong>IDS / IPS</strong></td><td>Run</td><td>Known attack patterns, and inline blocking of them</td><td>Novel behaviour; false positives that cost availability</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The honest caveat about layers:</strong> defence in depth only pays off when the layers are genuinely independent. If the same vulnerable library sits in the web tier, the job runner and the report generator, one supply-chain defect defeats three &ldquo;layers&rdquo; at once. That is why vulnerability management (later in this page) is a security control and not just housekeeping.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Management asks which layer can tell them that an attack is happening <em>right now</em>, rather than whether the code could be attacked. What is the correct answer?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Secure coding prevents; it produces no signal about the running system. Prevention and observation are different jobs — that is why the deck splits the bar into build time and run time.">Secure coding, because well-written code cannot be attacked</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Static analysis inspects source code before it runs. It can find a defect, but it cannot report that someone is exploiting it in production.">Static analysis, because it reads every line of code</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Monitoring and IDS/IPS are the run-time half of the deck's bar: monitoring supplies the evidence, IDS/IPS inspects activity and alerts (and, when inline as an IPS, blocks)." data-bad="">Monitoring plus IDS/IPS, the run-time half of the deck's bar</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-database" class="section" data-track="database">
+  <h2 class="section-title">Database Security: Crown-Jewel Data</h2>
+  <p class="section-lead">The lecture's second block moves from software in general to the component that concentrates everything worth stealing.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; database</div>
+    <p>A managed system for <strong>storing, relating, querying and updating persistent data</strong>. The deck stresses that a database is more than files: it enforces structure, relationships, transactions, concurrency and controlled access to shared state.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Relational</h3>
+      <p>Tables, rows, columns and constraints. Structure is declared up front and enforced by the engine; queries are expressed in SQL.</p>
+      <p><span class="badge badge-blue">PostgreSQL</span> <span class="badge badge-blue">MySQL</span></p>
+    </div>
+    <div class="col-card">
+      <h3>Non-relational</h3>
+      <p>Documents, key-value pairs, graphs or wide columns. Structure is often carried by the application, which moves part of the validation burden into code.</p>
+      <p><span class="badge badge-blue">MongoDB</span> <span class="badge badge-blue">Redis</span> <span class="badge badge-blue">Neo4j</span></p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Security implication from the deck:</strong> a compromise affects not only the stored records, but <em>every application and decision that depends on them</em>. The database is where the consequences of a small software defect become population-scale.
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>&#x1F464; Personal data</h3>
+      <p>Identity, contact and behavioural records &mdash; the material of identity theft and surveillance.</p>
+    </div>
+    <div class="metric-card">
+      <h3>&#x1F4B3; Financial data</h3>
+      <p>Payments, transactions and account history, which are also regulated.</p>
+    </div>
+    <div class="metric-card">
+      <h3>&#x1F511; Credentials</h3>
+      <p>Passwords, tokens and access secrets &mdash; stealing these converts one breach into many.</p>
+    </div>
+    <div class="metric-card">
+      <h3>&#x1F4A1; Intellectual property</h3>
+      <p>Research, source data and commercial knowledge, where the loss cannot be undone by reissuing a card.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Goal at the data layer</th><th>The deck's wording</th><th>Controls</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Confidentiality</strong></td><td>Only authorised subjects can view specific data</td><td>Authentication, least privilege, encryption, masking</td></tr>
+        <tr><td><strong>Integrity</strong></td><td>Data remains accurate, valid and traceable</td><td>Constraints, transactions, validation, audit logs</td></tr>
+        <tr><td><strong>Availability</strong></td><td>Authorised workloads can access data when required</td><td>Replication, backup, recovery, capacity and DoS resistance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The objective, in the deck's words:</strong> controlled, correct and dependable use of data &mdash; not merely keeping attackers outside. A database that nobody can query is not secure; it is unavailable.
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-db-map"></div>
+  <script type="application/json" id="ix-db-map">
+  {
+    "title": "One request, seven places to get it wrong",
+    "subtitle": "Click a marker on the architecture to see what that point has to protect and which control belongs there.",
+    "svg": "<svg viewBox=\"0 0 880 440\" role=\"img\" aria-label=\"Architecture diagram: a browser, a web application tier, a database server, backups, an operations path and a monitoring sensor\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"880\" height=\"440\" fill=\"#fbfdfe\"></rect><rect x=\"26\" y=\"40\" width=\"160\" height=\"80\" rx=\"12\" fill=\"#e6f6f0\" stroke=\"#059669\" stroke-width=\"2\"></rect><text x=\"106\" y=\"72\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#047857\">User / browser</text><text x=\"106\" y=\"94\" text-anchor=\"middle\" font-size=\"11\" fill=\"#565d75\">untrusted input</text><rect x=\"280\" y=\"26\" width=\"300\" height=\"180\" rx=\"14\" fill=\"#eef4ff\" stroke=\"#2563eb\" stroke-width=\"2\"></rect><text x=\"430\" y=\"50\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#1d4ed8\">Web application tier</text><rect x=\"304\" y=\"66\" width=\"252\" height=\"36\" rx=\"8\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"430\" y=\"89\" text-anchor=\"middle\" font-size=\"11\" fill=\"#334155\">input handling and validation</text><rect x=\"304\" y=\"112\" width=\"252\" height=\"36\" rx=\"8\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"430\" y=\"135\" text-anchor=\"middle\" font-size=\"11\" fill=\"#334155\">query construction</text><rect x=\"304\" y=\"158\" width=\"252\" height=\"36\" rx=\"8\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"430\" y=\"181\" text-anchor=\"middle\" font-size=\"11\" fill=\"#334155\">session and identity store</text><rect x=\"646\" y=\"26\" width=\"208\" height=\"180\" rx=\"14\" fill=\"#f3edff\" stroke=\"#7c3aed\" stroke-width=\"2\"></rect><text x=\"750\" y=\"50\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#6d28d9\">Database server</text><rect x=\"668\" y=\"64\" width=\"164\" height=\"34\" rx=\"8\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"750\" y=\"86\" text-anchor=\"middle\" font-size=\"11\" fill=\"#334155\">service accounts</text><rect x=\"668\" y=\"106\" width=\"164\" height=\"34\" rx=\"8\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"750\" y=\"128\" text-anchor=\"middle\" font-size=\"11\" fill=\"#334155\">crown-jewel tables</text><rect x=\"668\" y=\"148\" width=\"164\" height=\"34\" rx=\"8\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"750\" y=\"170\" text-anchor=\"middle\" font-size=\"11\" fill=\"#334155\">audit log</text><rect x=\"646\" y=\"256\" width=\"208\" height=\"76\" rx=\"12\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></rect><text x=\"750\" y=\"286\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"600\" fill=\"#334155\">Backups and replicas</text><text x=\"750\" y=\"308\" text-anchor=\"middle\" font-size=\"10\" fill=\"#565d75\">a second copy of everything</text><rect x=\"280\" y=\"256\" width=\"300\" height=\"110\" rx=\"12\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></rect><text x=\"430\" y=\"284\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"600\" fill=\"#334155\">Operations and admin path</text><text x=\"430\" y=\"306\" text-anchor=\"middle\" font-size=\"10\" fill=\"#565d75\">migrations, exports, support access</text><text x=\"430\" y=\"330\" text-anchor=\"middle\" font-size=\"10\" fill=\"#565d75\">legitimate access that can be abused</text><text x=\"430\" y=\"352\" text-anchor=\"middle\" font-size=\"10\" fill=\"#565d75\">and is rarely monitored as closely</text><rect x=\"26\" y=\"256\" width=\"200\" height=\"110\" rx=\"12\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></rect><text x=\"126\" y=\"284\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"600\" fill=\"#334155\">Monitoring and IDS</text><text x=\"126\" y=\"306\" text-anchor=\"middle\" font-size=\"10\" fill=\"#565d75\">log collection, alerting</text><text x=\"126\" y=\"330\" text-anchor=\"middle\" font-size=\"10\" fill=\"#565d75\">and detection of what</text><text x=\"126\" y=\"352\" text-anchor=\"middle\" font-size=\"10\" fill=\"#565d75\">prevention missed</text><path d=\"M186 80 L280 80\" stroke=\"#94a3b8\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arw)\"></path><path d=\"M580 80 L646 80\" stroke=\"#94a3b8\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arw)\"></path><path d=\"M750 206 L750 256\" stroke=\"#94a3b8\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arw)\"></path><path d=\"M376 256 L376 206\" stroke=\"#94a3b8\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arw)\"></path><path d=\"M226 300 L280 300\" stroke=\"#cbd5e1\" stroke-width=\"2\" stroke-dasharray=\"5 4\" fill=\"none\" marker-end=\"url(#arw)\"></path><defs><marker id=\"arw\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#94a3b8\"></path></marker></defs></svg>",
+    "points": [
+      { "x": 12.0, "y": 18.2, "label": "Untrusted input at the browser boundary", "detail": "Everything arriving from the client is attacker-controlled: form fields, headers, cookies, file names, JSON bodies. Validate for type, range and syntax before it is processed, and never treat client-side checks as a control." },
+      { "x": 48.9, "y": 30.7, "label": "Query construction", "detail": "The decisive point in the week: if the statement string is assembled from user data, input can become syntax. Fix the structure first and bind the data into it — the same rule that prevents injection." },
+      { "x": 48.9, "y": 41.1, "label": "Session and identity store", "detail": "Identity is not authority. A valid session says who the caller is; an authorisation check on every object is what says what they may do. Confusing the two is broken access control (OWASP A01)." },
+      { "x": 85.2, "y": 14.5, "label": "Database service accounts", "detail": "The application should connect with the least privilege it needs: a read-only account for reporting, no schema-changing rights for the web tier, no shared administrator credential. Least privilege limits the blast radius of any injection that survives." },
+      { "x": 85.2, "y": 29.5, "label": "Crown-jewel tables", "detail": "Personal data, financial records, credentials and intellectual property in one place. Controls: encryption at rest, column-level masking for non-production copies, and row-level access rules rather than application-only filtering." },
+      { "x": 85.2, "y": 40.9, "label": "Audit log", "detail": "Integrity needs traceability: who read or changed what, when, and under which identity. Audit records belong somewhere an attacker with application access cannot rewrite, and they are the raw material for detection." },
+      { "x": 85.2, "y": 66.8, "label": "Backups and replicas", "detail": "A second copy of everything, often with weaker controls and a different retention policy. Encrypt them, restrict who can restore them, and test the restore — an untested backup is a claim, not a control." },
+      { "x": 48.9, "y": 71.6, "label": "Operations and admin path", "detail": "Migrations, exports and support tooling hold legitimate, powerful access. Insider misuse lives here: least privilege, separation of duties, just-in-time access and the same logging standard as the application." },
+      { "x": 14.3, "y": 69.3, "label": "Monitoring and IDS sensor", "detail": "Prevention is not enough. Centralised logging plus host and network intrusion detection is what turns a quiet compromise into an alert — and the deck's run-time half of the defence-in-depth bar." }
+    ]
+  }
+  </script>
+</section>
+
+<section id="sec-injection" class="section" data-track="injection">
+  <h2 class="section-title">SQL Injection: When Data Becomes a Command</h2>
+  <p class="section-lead">The deck's first worked attack. The mechanism is small, the consequences are large, and the fix is structural rather than cosmetic.</p>
+
+  <div class="concept-box">
+    <p><strong>Mechanism:</strong> malicious input changes the SQL query executed by an application. The attack succeeds when user-controlled text is interpreted as SQL syntax.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Key message from the deck:</strong> attackers exploit insecure <em>application code</em> &mdash; not the database itself. The database faithfully executes the statement it was given; the application built the wrong statement.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>What happens</th><th>What the system sees</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1. Normal input</strong></td><td>The field carries a value: <span class="badge badge-blue">Username: alice</span></td><td>A username that matches one row</td></tr>
+        <tr><td><strong>2. Malicious input</strong></td><td>The value is written to end the string literal early and append a condition that is always true. The lecture's canonical illustration is the tautology <span class="badge badge-green">alice' OR '1'='1</span></td><td>Still just text in a form field</td></tr>
+        <tr><td><strong>3. Executed query</strong></td><td>The application concatenates the value into the statement, so the appended text is parsed as SQL rather than as data</td><td>A <code>WHERE</code> clause that is true for every row</td></tr>
+        <tr><td><strong>4. Result</strong></td><td>The query returns records it should not, or authenticates a caller who should not be</td><td>Authentication bypass, unauthorised data access</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size:0.85rem; color:var(--text-muted);">The illustration above is the classic teaching example used in the deck and in the OWASP guidance it cites. It is included to make the mechanism visible; the control that removes the mechanism is parameter binding, covered below.</p>
+
+  <div id="ix-injection"></div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.75rem;">The structural fix: keep data out of the statement</h3>
+  <div class="two-col">
+    <div class="col-card" style="border-color:rgba(220,38,38,0.35);">
+      <h3>&#x2715; String concatenation</h3>
+      <p>Input is merged into the command, so the value can change the command's grammar.</p>
+      <div class="code-block">"SELECT * FROM users WHERE username='" + username + "'"</div>
+      <p style="font-size:0.85rem; color:var(--text-muted);">The statement is a function of user input. Nothing separates the two.</p>
+    </div>
+    <div class="col-card" style="border-color:rgba(5,150,105,0.35);">
+      <h3>&#x2713; Prepared statement</h3>
+      <p>The SQL structure is fixed before user data is supplied; the value travels separately and is bound into the placeholder.</p>
+      <div class="code-block">cursor.execute(
+  "SELECT * FROM users WHERE username=?",
+  (username,)
+)</div>
+      <p style="font-size:0.85rem; color:var(--text-muted);">The statement is a constant. Only the parameter varies, and it can never be parsed as SQL.</p>
+    </div>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>The four controls the deck pairs with binding</h4>
+      <ul>
+        <li><strong>Prepared statements</strong> &mdash; the structural defence; use them everywhere, including in reporting and admin tooling</li>
+        <li><strong>Input validation</strong> &mdash; constrain what the field may contain (type, range, syntax)</li>
+        <li><strong>Least privilege</strong> &mdash; limit what the database account can do; a reporting account that cannot modify schema is not a route to mass deletion</li>
+        <li><strong>ORM frameworks</strong> &mdash; safe query APIs by default, but only when they are used correctly: raw fragments and string-built filters reintroduce the flaw</li>
+      </ul>
+    </div>
+    <div class="why-card con" style="background:var(--yellow-bg); border-color:rgba(245,158,11,0.35);">
+      <h4>What is <em>not</em> the fix</h4>
+      <ul>
+        <li>Escaping quotes by hand &mdash; encoding context varies and denylists are famously incomplete</li>
+        <li>Client-side validation alone &mdash; the attacker simply does not use your form</li>
+        <li>A web application firewall alone &mdash; a useful additional layer, but the code still trusts input as syntax</li>
+        <li>Hiding error messages &mdash; it reduces information leakage, not the injection</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Input</th><th>Validation rule</th><th>Safe handling</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Username</td><td>Letters and numbers only</td><td>Reject characters outside the allowlist</td></tr>
+        <tr><td>Age</td><td>Integer from 0 to 120</td><td>Parse as a number; enforce the range</td></tr>
+        <tr><td>Email</td><td>Valid email structure</td><td>Use a trusted email validator</td></tr>
+        <tr><td>Comments</td><td>Text, not executable markup</td><td>Encode HTML output; sanitise only if HTML is genuinely allowed</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Two rules to keep separate in an exam answer.</strong> Validation decides <em>what a field may contain</em>; parameter binding decides <em>how the statement is assembled</em>. Only the second removes the injection class, because validation can be bypassed by any path that reaches the query builder &mdash; an internal API, a batch job, a support tool. The deck's motto covers both: <em>separate user input from SQL commands</em>, and <em>validate input before processing, encode before output</em>.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team blocks single quotes and the word <code>OR</code> at the input boundary. Why is this not a fix for SQL injection?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Performance is not the issue; denylists are fragile because there are many equivalent encodings of the same syntax, and because not every path into the query builder passes through the filter.">Because input filtering slows down the request path</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A denylist attempts to enumerate bad syntax, which is a losing game: encodings vary, and any other route to the query builder (internal API, batch job, admin tool) bypasses it. Binding parameters fixes the structure, so input can never be syntax." data-bad="">Because denylists are incomplete and bypassable, while parameter binding makes the statement structure independent of input</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Hiding messages reduces information leakage but leaves the vulnerable statement construction in place — the injection still executes.">Because the fix is instead to hide database error messages from users</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; triaging a suspected injection defect.</strong> A user reports that a search field &ldquo;returns rows that do not match what I typed&rdquo;. Work the report the way the week's material implies.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Find the construction, not the payload.</strong> Locate every place the search value reaches the database. The question is not &ldquo;what did they type?&rdquo; but &ldquo;is the statement string a constant?&rdquo; If the value is concatenated, interpolated or formatted into the SQL text anywhere, the defect is confirmed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Check every route to that code.</strong> Injection is fixed per query builder, not per screen. The same helper is usually reachable from the UI, an internal API, a scheduled export and a support console &mdash; and the filter that exists on the UI screen does not protect the other three.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Fix structurally.</strong> Replace the assembled statement with a prepared statement: fixed SQL text, values bound to placeholders. Where dynamic identifiers are genuinely required (a sort column, for example), map them through an allowlist rather than binding them &mdash; parameters carry values, never structure.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Add the layers the deck lists.</strong> Validation on the field, least privilege on the database account (the web tier rarely needs <code>DROP</code> or unrestricted <code>SELECT</code> across schemas), ORM query APIs used correctly, and a regression test that asserts the structure is constant.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Assume it was used, then verify.</strong> An injection defect that has been reachable is a possible data exposure: review the audit log for unusual query patterns and volumes, check for unexpected schema or account changes, and confirm the fix in the deployed environment rather than only in the branch. Then ask the maintenance question &mdash; what dependency scanning or review step would have caught this before release?</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-inference" class="section" data-track="inference">
+  <h2 class="section-title">Inference Attacks and Privacy Leakage</h2>
+  <p class="section-lead">The second attack family in the deck does not need a vulnerability at all. It needs only queries the system is willing to answer.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; inference attack</div>
+    <p>An attack in which the adversary does <strong>not bypass access control</strong> but learns sensitive information indirectly, by combining answers to legitimate queries. The deck classifies it as an <em>indirect</em> database threat, next to SQL injection's direct manipulation of the query.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The deck's minimal example</h3>
+      <p>A permitted query filters on a secret it never returns: a query of the form <code>... WHERE username = 'alice' AND salary &gt; 100000</code> produces either a row or no row.</p>
+      <p>The salary is never disclosed. The <em>existence of a result</em> answers the question anyway.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why &ldquo;no result&rdquo; is still an answer</h3>
+      <p>Each answer carries little information &mdash; at most one bit. But a sequence of low-information answers can reveal a high-value secret, because the attacker chooses the questions and keeps the ones that narrow the space.</p>
+      <p>That is why the mitigation is about what the system is willing to answer, not only about who may ask.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Design consequence:</strong> aggregation and filtering are themselves disclosure decisions. If a view can isolate a group small enough to be identified, it is an inference channel even when every field in it is legitimate.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.75rem;">The conference-reviewing case study</h3>
+  <p>The deck's worked example is a peer-review system with three privacy rules in place: reviewers are anonymised, authors must not see discussion of their own submission, and reviewer identities are visible only to co-reviewers of the same paper. The system then publishes a procrastination chart of progress over time &mdash; and the privacy breaks anyway.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Leakage channel</th><th>What it reveals</th><th>Control</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Named progress lines</strong></td><td>Identity signal: the chart label attaches a person to a behaviour</td><td>Publish aggregate or binned series only; remove names before rendering</td></tr>
+        <tr><td><strong>Review counts per paper</strong></td><td>Assignment clue: how many reviewers a paper had, which narrows who they were</td><td>Suppress counts below a threshold, or bucket them coarsely</td></tr>
+        <tr><td><strong>Distinct progress patterns</strong></td><td>Behavioural fingerprint: a distinctive curve is recognisable even without a name</td><td>Bin the time axis, smooth the series, delay release until after decisions</td></tr>
+        <tr><td><strong>Combination of the three</strong></td><td>Linkage attack: match reviewer behaviour to per-paper counts to infer who reviewed what</td><td>Evaluate views in combination, not one at a time; apply a minimum anonymity-set size before release</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Two sentences to quote:</strong> &ldquo;individually harmless signals become identifying when combined&rdquo;, and &ldquo;inference risk grows as the anonymity set becomes smaller.&rdquo; Both are why the Foundations page treats anonymity as a number: a view over <em>k</em> indistinguishable people supports re-identification at a rate of roughly <em>1/k</em>.
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-inference"></div>
+  <script type="application/json" id="ix-inference">
+  {
+    "title": "Relative inference risk by publication choice",
+    "subtitle": "Illustrative 0-100 scores derived from the deck's conference example, not measured data. The ordering is the examinable part: each step removes a distinguishing signal or enlarges the anonymity set.",
+    "max": 100,
+    "rows": [
+      { "name": "Aggregate average progress, large cohort", "value": 8, "display": "low" },
+      { "name": "Coarse progress bins, no names, delayed", "value": 25, "display": "moderate" },
+      { "name": "Per-paper review counts published", "value": 45, "display": "elevated" },
+      { "name": "Named individual progress lines", "value": 85, "display": "identifying" },
+      { "name": "Named lines plus per-paper counts", "value": 100, "display": "linkable" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which published view is the clearest inference channel, even though it returns no secret value at all?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A total over a large population is the low-risk case: no individual can be isolated from the aggregate, which is exactly why the anonymity set matters.">A count of all submissions in the conference</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A filtered query whose answer is yes or no about one identifiable person leaks one bit per question, and the attacker chooses the questions — the deck's salary example in another form." data-bad="">A yes/no answer to a filtered query that isolates one person</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Masking removes the sensitive value from the response, but the attack in question never needed the value: it exploits the pattern of results and metadata around it.">A report in which the sensitive column is masked</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked answer &mdash; auditing an analytics dashboard before release.</strong> A team wants to publish a live operations dashboard built from the same tables that hold customer records. Decide what may ship.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Enumerate the views, not the tables.</strong> Write down every panel, filter and export the dashboard offers, because each one is a query the system is agreeing to answer. A dashboard is an access-control decision expressed as a layout.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Ask what each view reveals and to whom.</strong> For every panel: does it return a value, a count, an existence answer, or a pattern over time? Existence and timing answers are the ones teams forget, and they are precisely the deck's inference channel.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Find the join key.</strong> The dangerous step is combining two harmless views: behaviour plus metadata, or a pattern plus a count. If two panels can be joined on a person, a paper, an account or a time window, treat the combination as the release unit.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Change the view, not the honesty of the users.</strong> Suppress groups below a minimum size, bin or smooth the axes, delay publication until the outcome is fixed, and drop identifiers before rendering. Where a filtered query is the risk, replace it with a pre-aggregated result the requester cannot vary.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Write the release rule and test it adversarially.</strong> State the threshold (&ldquo;no published view may isolate fewer than <em>k</em> subjects&rdquo;), then try to break it as an insider would: vary the filters, combine the panels, compare two snapshots taken at different times. Log the queries so that anomalous enumeration is detectable after the fact.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-xss" class="section" data-track="xss">
+  <h2 class="section-title">Cross-Site Scripting: Content Becomes Code</h2>
+  <p class="section-lead">XSS is injection with the browser as the interpreter, and the asset being stolen is the user's trust in a site they have every reason to trust.</p>
+
+  <div class="concept-box">
+    <p><strong>Mechanism:</strong> the vulnerable site delivers attacker-controlled JavaScript to a trusted user's browser. The browser trusts the website, not the attacker &mdash; so if the website serves malicious code, the browser executes it anyway.</p>
+  </div>
+
+  <div id="ix-xss"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>One input, two outcomes</h3>
+      <p>The same comment field can display text or execute code, depending only on how the output is handled. If output is not encoded, <strong>data becomes code</strong>.</p>
+      <p>Content the field might hold &mdash; here the deck's harmless illustration:</p>
+      <div class="code-block">&lt;script&gt;alert("INFO5995")&lt;/script&gt;</div>
+    </div>
+    <div class="col-card">
+      <h3>Where the content comes from</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Stored</strong> &mdash; the site saves the content and serves it to other users later</li>
+        <li><strong>Reflected</strong> &mdash; the site copies the content from the request straight into the response</li>
+        <li><strong>Client-side</strong> &mdash; the page's own script writes untrusted data into the document (the unsafe-DOM case the deck warns about)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Why XSS is dangerous</th><th>What the attacker gets</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Session theft</strong></td><td>Steal tokens or impersonate the user without ever learning their password</td></tr>
+        <tr><td><strong>Unauthorised actions</strong></td><td>Submit requests as the victim, with the victim's permissions and audit trail</td></tr>
+        <tr><td><strong>Phishing</strong></td><td>Replace trusted content with a deceptive interface inside the real site's origin</td></tr>
+        <tr><td><strong>Data exfiltration</strong></td><td>Read the page data the victim can see and transmit it elsewhere</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The deck's framing to remember:</strong> XSS does not &ldquo;hack the browser&rdquo;. It abuses the browser's trust in a vulnerable application &mdash; code executes in the security context of the trusted website.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.75rem;">Preventing XSS: four layers</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>#</th><th>Control</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Encode output</strong></td><td>Convert <code>&lt;</code>, <code>&gt;</code>, <code>&amp;</code>, quotes and other characters to safe equivalents at the point of output, in the right context (HTML body, attribute, URL, script)</td></tr>
+        <tr><td>2</td><td><strong>Sanitise allowed HTML</strong></td><td>When rich text is genuinely required, run it through a proven sanitiser with a strict allowlist &mdash; never a hand-written filter</td></tr>
+        <tr><td>3</td><td><strong>Use safe frameworks</strong></td><td>Prefer auto-escaping templates and avoid unsafe DOM APIs that write strings as markup</td></tr>
+        <tr><td>4</td><td><strong>Add browser safeguards</strong></td><td>Content Security Policy as an additional layer, so an injected script that slips through has nowhere to load from</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The motto that covers SQL injection and XSS at once:</strong> validate input, encode output, keep data separate from code. Input validation is the same control in both cases; what changes is the interpreter whose grammar you must not let the data reach.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which control actually stops stored XSS from executing in a victim's browser?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Rejecting the word 'script' is a denylist: encodings, other elements and event attributes all reach the same interpreter. Filtering helps, but it is not the control that removes execution.">Rejecting any input containing the word &ldquo;script&rdquo;</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Contextual output encoding, applied automatically by an auto-escaping template, means the browser receives the content as text rather than as markup — the data never becomes code. CSP is the additional layer behind it." data-bad="">Contextual output encoding through an auto-escaping template</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Shorter sessions limit the window in which a stolen token is useful, but the injected code still runs and can act immediately — the mechanism is untouched.">Shortening session lifetimes to a few minutes</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-system" class="section" data-track="system">
+  <h2 class="section-title">System Security: Hardening the Deployed System</h2>
+  <p class="section-lead">The lecture's second half changes the subject from building securely to running securely. Deployment changes the problem: the system is now reachable, observable and continuously attacked.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Software security</th><th>System security</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Focus</strong></td><td>Build secure software</td><td>Protect deployed systems</td></tr>
+        <tr><td><strong>Objective</strong></td><td>Prevent vulnerabilities</td><td>Detect and respond to attacks</td></tr>
+        <tr><td><strong>When</strong></td><td>Development and testing</td><td>Operation and maintenance</td></tr>
+        <tr><td><strong>Examples</strong></td><td>SQL injection, XSS</td><td>IDS, IPS</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 860 220" role="img" aria-label="The deployment boundary: software security controls before deployment and system security controls after it">
+      <text x="215" y="22" class="node-label-sm">BEFORE DEPLOYMENT</text>
+      <text x="645" y="22" class="node-label-sm">AFTER DEPLOYMENT</text>
+      <rect x="24" y="40" width="120" height="52" rx="10" class="node-box"></rect>
+      <text x="84" y="58" class="node-label">Design</text>
+      <text x="84" y="76" class="node-label-sm">abuse cases, trust boundaries</text>
+      <rect x="156" y="40" width="120" height="52" rx="10" class="node-box"></rect>
+      <text x="216" y="58" class="node-label">Build</text>
+      <text x="216" y="76" class="node-label-sm">secure coding, review, SAST</text>
+      <rect x="288" y="40" width="120" height="52" rx="10" class="node-box"></rect>
+      <text x="348" y="58" class="node-label">Test</text>
+      <text x="348" y="76" class="node-label-sm">adversarial paths, DAST</text>
+      <rect x="438" y="34" width="24" height="64" rx="6" class="node-box-green"></rect>
+      <text x="450" y="66" class="node-label-sm">deploy</text>
+      <rect x="482" y="40" width="120" height="52" rx="10" class="node-box-purple"></rect>
+      <text x="542" y="58" class="node-label">Run</text>
+      <text x="542" y="76" class="node-label-sm">hardened defaults, least privilege</text>
+      <rect x="614" y="40" width="120" height="52" rx="10" class="node-box-purple"></rect>
+      <text x="674" y="58" class="node-label">Monitor</text>
+      <text x="674" y="76" class="node-label-sm">logs, alerts, IDS</text>
+      <rect x="746" y="40" width="92" height="52" rx="10" class="node-box-purple"></rect>
+      <text x="792" y="58" class="node-label">Respond</text>
+      <text x="792" y="76" class="node-label-sm">IPS, incident</text>
+      <path d="M144 66 L156 66" class="arrow-line"></path>
+      <path d="M276 66 L288 66" class="arrow-line"></path>
+      <path d="M408 66 L438 66" class="arrow-line"></path>
+      <path d="M462 66 L482 66" class="arrow-line"></path>
+      <path d="M602 66 L614 66" class="arrow-line"></path>
+      <path d="M734 66 L746 66" class="arrow-line"></path>
+      <path d="M60 140 Q430 108 800 140" class="arrow-line" stroke-dasharray="6 5"></path>
+      <text x="430" y="126" class="node-label-sm">attack surface changes with users, traffic, configuration and time</text>
+      <rect x="24" y="156" width="814" height="46" rx="10" class="node-box"></rect>
+      <text x="430" y="172" class="node-label">Prevention is not enough: the same lifecycle keeps going after the release</text>
+      <text x="430" y="190" class="node-label-sm">design - build - test - deploy - monitor - respond</text>
+    </svg>
+    <div class="arch-caption">The deck's split, drawn as a timeline. Everything left of the deployment boundary reduces the chance that a weakness exists; everything to the right reduces the time a weakness stays useful to an attacker.</div>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">The five threat classes the deck names</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Threat</th><th>Deck's description</th><th>Controls that change the odds</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Brute force</strong></td><td>Repeated login attempts against the same accounts</td><td>Rate limiting, lockout with backoff, MFA, breached-credential checks, detection of distributed attempts</td></tr>
+        <tr><td><strong>Malware</strong></td><td>Malicious code and ransomware</td><td>Patch management, least privilege, application control, endpoint detection, offline and tested backups</td></tr>
+        <tr><td><strong>Scanning</strong></td><td>Discovery of exposed services</td><td>Minimise the attack surface, close unused ports and paths, segment networks, remove version banners</td></tr>
+        <tr><td><strong>Denial of service</strong></td><td>Resource exhaustion</td><td>Capacity and quotas, upstream filtering, rate limits, graceful degradation, timeouts on expensive operations</td></tr>
+        <tr><td><strong>Insider misuse</strong></td><td>Abuse of legitimate access</td><td>Least privilege, separation of duties, just-in-time access, audit logging, review of privileged activity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Hardening a deployed system</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Secure defaults and baselines</strong> &mdash; the deployment-stage defect from earlier in the week</li>
+        <li><strong>Remove what is not needed</strong> &mdash; services, accounts, sample data, debug endpoints</li>
+        <li><strong>Least privilege</strong> &mdash; for people, services and the database accounts behind them</li>
+        <li><strong>Segmentation and egress control</strong> &mdash; so a single foothold is not a network position</li>
+        <li><strong>Centralised logging with retention</strong> &mdash; without it, detection and response have no raw material</li>
+        <li><strong>MFA on every administrative path</strong> &mdash; including the ones that &ldquo;are only internal&rdquo;</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Vulnerability management as a control</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Identify</strong> &mdash; inventory components (a software bill of materials), scan hosts and images, watch advisories</li>
+        <li><strong>Prioritise</strong> &mdash; combine severity with internet exposure, exploit availability and asset value</li>
+        <li><strong>Remediate</strong> &mdash; patch, upgrade, or apply a documented compensating control when patching is impossible</li>
+        <li><strong>Verify</strong> &mdash; rescan and regression-test; a closed ticket is not evidence</li>
+        <li><strong>Report</strong> &mdash; track exposure window and mean time to remediate, not ticket counts</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why this is examinable:</strong> Equifax was an unpatched component and Log4Shell was a vulnerable library. Neither was a clever attack on cryptography; both were failures of the maintenance and dependency processes described here. The Foundations page makes the exposure window a number you can compute.
+  </div>
+</section>
+
+<section id="sec-detect" class="section" data-track="detect">
+  <h2 class="section-title">Detection and Response: IDS and IPS</h2>
+  <p class="section-lead">The deck's closing block: two technologies that inspect the same activity and differ only in what they are allowed to do about it.</p>
+
+  <div class="two-col">
+    <div class="def-box" style="margin:0;">
+      <div class="def-label">IDS &mdash; Intrusion Detection System</div>
+      <p>Observes host or network activity and <strong>alerts</strong> on suspicious behaviour. It sits on a monitoring path rather than in the traffic flow, and it <em>does not automatically stop the attack</em>. Think security camera: it sees the intruder and raises the alarm.</p>
+    </div>
+    <div class="def-box" style="margin:0;">
+      <div class="def-label">IPS &mdash; Intrusion Prevention System</div>
+      <p>Observes traffic like an IDS but sits <strong>inline</strong> and can automatically intervene: <em>inspect &rarr; decide &rarr; act</em>. It can block malicious traffic, drop suspicious packets, reset connections and quarantine hosts. Think security guard: it sees the intruder and blocks the door.</p>
+    </div>
+  </div>
+
+  <div id="ix-detect"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Feature</th><th>IDS</th><th>IPS</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Purpose</strong></td><td>Detect attacks</td><td>Detect and block</td></tr>
+        <tr><td><strong>Action</strong></td><td>Generate alerts</td><td>Automatically intervene</td></tr>
+        <tr><td><strong>Deployment</strong></td><td>Monitoring path</td><td>Inline with traffic</td></tr>
+        <tr><td><strong>Response</strong></td><td>Passive</td><td>Active</td></tr>
+        <tr><td><strong>Failure mode</strong></td><td>An attack proceeds while the team reads the alert</td><td>A false positive becomes an outage, because the control is in the path</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Where it watches</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>HIDS</strong> &mdash; one computer or server: process, file, log and account activity</li>
+        <li><strong>NIDS</strong> &mdash; traffic across a network segment: connections, protocols and payloads</li>
+      </ul>
+      <p>Common tools named in the deck: <span class="badge badge-blue">Snort</span> <span class="badge badge-blue">Suricata</span> <span class="badge badge-blue">Zeek</span></p>
+    </div>
+    <div class="col-card">
+      <h3>How it detects</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Signature-based</strong> &mdash; matches known attack patterns. Precise and explainable, but blind to anything not yet written down</li>
+        <li><strong>Anomaly-based</strong> &mdash; flags deviation from normal behaviour. Can catch novel activity, at the cost of far more false positives</li>
+      </ul>
+      <p>Every deployment is a trade-off between the two, tuned against the base rate of real attacks on that network.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The deck's discussion question, answered:</strong> would an IDS alone stop a brute-force login attack? No. An IDS is passive by design &mdash; it detects failures and alerts the team while the thousands of attempts continue. Stopping it needs an active control: an inline IPS, rate limiting and lockout on the authentication path, or MFA so that a correct guess is not sufficient. The IDS still earns its place, because it is what tells you the prevention layers are being tested.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An IDS reports 2,000 failed logins from 300 source addresses and the attack is still succeeding. What is the correct conclusion?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Detecting the attempts is exactly what the IDS is for. The gap is that detection on a monitoring path cannot block traffic, by definition.">The IDS is misconfigured, because it should have blocked the sources</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. An IDS alerts and does not intervene; blocking needs an inline IPS or active controls on the authentication path (rate limiting, lockout with backoff, MFA). The distributed sources also show why per-IP blocking alone is insufficient." data-bad="">Detection worked and prevention was missing: an IDS is passive, so blocking requires an inline IPS or controls on the login path</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Repeated failed logins are the classic signature case and are easy to detect. The difficulty here is the distributed source addresses and the absence of an active control.">Signature databases cannot detect brute force, so nothing could have been done</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked scenario &mdash; designing the control set for a public login endpoint.</strong> The endpoint is internet-facing, serves customers in many countries, and is the only way into the account area. Lay out prevention, detection and response the way the week's material frames them.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Classify the threat.</strong> Repeated login attempts are brute force; attempts against many accounts with previously breached passwords are credential stuffing. The distinction matters because credential stuffing defeats complexity rules and per-account lockout, and shows up as a low failure rate per account spread over many accounts.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Prevention first (build time).</strong> Rate limiting per account, per source and per subnet; lockout with exponential backoff rather than a permanent lock that becomes its own denial of service; MFA so a correct password is not sufficient; checks against known-breached credential lists; generic error messages so the response does not confirm which usernames exist.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Detection second (run time).</strong> Alert on the patterns that separate an attack from forgetfulness: failure rate per account, distinct accounts per source, source diversity for one account, success immediately after a burst of failures, and authentication from an implausible location. Feed the web tier, the identity provider and the network sensor into the same timeline.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Response, decided in advance.</strong> An IPS or edge control can drop or throttle the sources and reset connections automatically; the identity provider can force a credential reset for accounts that show a successful login after a burst; the incident process preserves logs and notifies the account holders. Decide these actions before the incident, because an inline control that no one has tuned will eventually block a legitimate customer.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Measure what the control set actually buys.</strong> Track detection coverage, false-positive rate, alert volume against analyst capacity, time from first attempt to block, and the fraction of accounts protected by MFA. The deck's guiding question applies: <em>where should we place the next control to reduce risk most effectively?</em> With MFA coverage at 40%, enrolment usually beats another detection rule.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 8 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Prevent</h4>
+        <p>Design, develop and test securely: security is an engineering property of the whole lifecycle, not a stage at the end.</p>
+        <div class="flip-hint">Software security</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Protect data</h4>
+        <p>Databases concentrate personal data, money, credentials and intellectual property. A compromise reaches every decision that depends on them.</p>
+        <div class="flip-hint">Crown jewels</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Understand the attacks</h4>
+        <p>SQL injection (data becomes a command), inference attacks (legitimate answers leak), XSS (content becomes code).</p>
+        <div class="flip-hint">Threat models</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Build safely</h4>
+        <p>Parameters, validation, encoding and least privilege &mdash; the four controls that appear in every fix this week.</p>
+        <div class="flip-hint">Secure coding</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Assume exposure</h4>
+        <p>Risk continues after deployment, and the attack surface changes with users, traffic, configuration and time.</p>
+        <div class="flip-hint">System security</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Observe, detect, respond</h4>
+        <p>Monitoring supplies evidence, an IDS alerts, an IPS blocks inline. Prevention alone is not enough.</p>
+        <div class="flip-hint">Run time</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-node">Design</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Build</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Test</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Deploy</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Monitor</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Respond</div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Self-test: say the answer before you flip the card",
+    "subtitle": "Six statements that carry most of the marks in this week's questions.",
+    "cards": [
+      { "front": "Definition of software security", "back": "An engineering property maintained across the complete software lifecycle: design, develop, test and maintain software so it resists attack and protects users' data — before deployment and after it.", "hint": "Definition" },
+      { "front": "The shared root cause of the OWASP weaknesses", "back": "The system trusts data, identity, configuration or dependencies more than it should.", "hint": "One sentence" },
+      { "front": "The structural fix for SQL injection", "back": "Keep data separate from executable SQL: fix the statement structure first (prepared statements, bound parameters) and let only the values vary. Validation, least privilege and safe ORM APIs are the supporting layers.", "hint": "Injection" },
+      { "front": "Why inference attacks are indirect", "back": "They do not bypass access control or manipulate a query. The attacker asks permitted questions and combines low-information answers — existence, counts, timing — until a high-value secret is determined.", "hint": "Privacy" },
+      { "front": "The rule that prevents XSS", "back": "Encode output in the correct context so content is never parsed as markup; sanitise rich text with a proven library when HTML is genuinely required; prefer auto-escaping frameworks; add CSP as an extra layer.", "hint": "XSS" },
+      { "front": "IDS versus IPS", "back": "Both inspect activity. An IDS sits on a monitoring path, is passive and generates alerts; an IPS sits inline, is active and intervenes (block, drop, reset, quarantine).", "hint": "Run time" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>The single sentence that closes the deck:</strong> security is continuous &mdash; secure software + secure systems + continuous monitoring, from design through to response.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the six lifecycle stages and their characteristic defects, state the shared root cause of the OWASP weaknesses, explain why parameter binding removes injection, and give the one structural difference between an IDS and an IPS?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Where to go next</h3>
+      <p>The Foundations page turns this week's vocabulary into definitions, the risk and residual-risk relationships, exposure-window and detection arithmetic, and an anonymity-set model for inference. Then attempt the Quiz Hub and the Flashcards for Week 8.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

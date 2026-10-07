@@ -1,0 +1,211 @@
+<section id="hero" class="section hero-section" data-track="hero">
+  <p class="hero-course">DEMO101 &mdash; Building a Study Hub</p>
+  <h1>Week 3: Practice and Progress</h1>
+  <p class="hero-subtitle">A chapter is not finished when it reads well; it is finished when a reader can practise it. This chapter covers the four data files, the graph that connects concepts across chapters, and the review loop that turns both into progress.</p>
+</section>
+
+<section id="sec-loop" class="section" data-track="loop">
+  <h2 class="section-title">The practice loop</h2>
+  <p class="section-lead">Reading builds recognition. Practice builds recall. The difference only shows up when the page is closed.</p>
+  <p>Every course in this engine is designed around a four-step loop. A reader <em>reads</em> a section, <em>recalls</em> its shape from memory, <em>tests</em> that recall against questions, and <em>reviews</em> only what the test exposed. The content pack supports each step with a different file, and each file has a different shape because each one answers a different question.</p>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>quiz.json</h3>
+      <p>Multiple-choice entries with one correct option and an explanation of why it is correct.</p>
+    </div>
+    <div class="glance-card">
+      <h3>flashcards.json</h3>
+      <p>Prompt and answer pairs, scored and scheduled by the reader's own confidence.</p>
+    </div>
+    <div class="glance-card">
+      <h3>kg.json</h3>
+      <p>The concept graph: what the ideas are and how strongly they relate.</p>
+    </div>
+    <div class="glance-card">
+      <h3>mkg.json</h3>
+      <p>The same graph for the foundations pages, so formulas and definitions are reachable too.</p>
+    </div>
+  </div>
+  <div class="def-box">
+    <h3>Retrieval practice</h3>
+    <p>Recalling an idea without looking at it. It feels harder than re-reading and produces more durable memory, which is why every practice file in the pack asks the reader to produce an answer rather than recognise one.</p>
+  </div>
+  <div class="callout">
+    <p><strong>Write practice against a frozen page.</strong> Quiz entries and flashcards quote your anchors, and the concept graph links to them. Draft them while the page is still moving and you will rewrite the data twice.</p>
+  </div>
+</section>
+
+<section id="sec-quiz" class="section" data-track="quiz">
+  <h2 class="section-title">Writing quiz entries</h2>
+  <p class="section-lead">A quiz entry is four fields of content and two fields of bookkeeping. The bookkeeping is where mistakes live.</p>
+  <p>Each entry records the chapter it belongs to, whether it tests the study page or the foundations page, the question, four options, the index of the correct option, and an explanation. The explanation is not decoration: it is the part a reader actually learns from when they get the question wrong, so it should say why the right answer is right rather than restate it.</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Field</th><th>Meaning</th><th>Rule</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>ch</code></td><td>Chapter number.</td><td>Must match a chapter in the manifest.</td></tr>
+      <tr><td><code>type</code></td><td><code>"study"</code> or <code>"math"</code>.</td><td>Decides which page the entry is filed under.</td></tr>
+      <tr><td><code>q</code></td><td>The question.</td><td>One idea per question; no compound stems.</td></tr>
+      <tr><td><code>opts</code></td><td>Four options.</td><td>Exactly four, and all four must be distinct.</td></tr>
+      <tr><td><code>answer</code></td><td>Index of the correct option.</td><td>Zero-based: the first option is <code>0</code>.</td></tr>
+      <tr><td><code>exp</code></td><td>Why the correct answer is correct.</td><td>Explain the reason, not the position.</td></tr>
+    </tbody>
+  </table>
+  <p>The zero-based index is the single most common authoring error in the whole pack, because it is off by one from the way people count options out loud. It is also invisible: an entry whose answer points at the wrong option still renders perfectly.</p>
+  <div class="insight-box">
+    <h3>Vary the correct position</h3>
+    <p>If the correct option is third in every entry, a reader learns the pattern instead of the material. Six entries per chapter, with the answer spread across all four positions, is enough to keep the pattern from forming.</p>
+  </div>
+</section>
+
+<section id="sec-cards" class="section" data-track="cards">
+  <h2 class="section-title">Flashcards and decks</h2>
+  <p class="section-lead">Two things called cards: a deck widget for use inside a section, and scored flashcards for review.</p>
+  <p>The flashcard file stores one record per card with a chapter, a <code>front</code> and a <code>back</code>. Those cards are scored: the reader reports whether the recall was easy, close, or missed, and the engine schedules the next appearance. Five cards per chapter is deliberate. A deck of forty is a reading list in disguise and gets abandoned in a week.</p>
+  <p>The <strong>deck</strong> widget below is the unscored cousin. It lives inside a section, rehearses one idea at a time, and leaves no trace. Use it for material the reader needs <em>before</em> continuing: a definition they will need in the next paragraph, a rule they are about to apply.</p>
+  <div data-ix="deck" data-ix-src="#ix-ch3-deck"></div>
+  <script type="application/json" id="ix-ch3-deck">
+{
+  "title": "Five habits for practice material",
+  "subtitle": "Click a card to flip it.",
+  "cards": [
+    { "front": "What makes a quiz explanation good?", "back": "It gives the reason the correct option is correct, in a sentence a reader could repeat. Restating the option teaches nothing." },
+    { "front": "How many options per quiz entry?", "back": "Exactly four, all distinct. A fifth option usually means the question was carrying two ideas and should be split." },
+    { "front": "How many flashcards per chapter?", "back": "About five. Small decks get finished, and a finished deck is worth more than a comprehensive one that is abandoned." },
+    { "front": "What does a graph edge strength mean?", "back": "How strongly two concepts belong together, on a scale from 4 to 9. It is never a chapter number, and low values are simply not drawn." },
+    { "front": "When do you write the data files?", "back": "After the pages stop moving. Anchors are quoted by every practice file, so data written against a draft gets rewritten." }
+  ]
+}
+  </script>
+</section>
+
+<section id="sec-graph" class="section" data-track="graph">
+  <h2 class="section-title">Mapping concepts</h2>
+  <p class="section-lead">The concept graph is six values per node and three per edge. Most of the design work is in choosing the labels.</p>
+  <p>A node is written as a six-element tuple. The order is fixed, and every element earns its place: the identifier lets edges refer to the node, the chapter files it under a page, the difficulty scales how large it is drawn, the label is what the reader sees, the definition is the sentence they get on hover, and the link takes them to the section that teaches it.</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Position</th><th>Value</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0</td><td>Node id</td><td>Short, unique, and stable; edges refer to nodes by this string.</td></tr>
+      <tr><td>1</td><td>Chapter</td><td>The chapter the concept is taught in.</td></tr>
+      <tr><td>2</td><td>Difficulty</td><td>1 to 3. Drives the node radius, not the difficulty of the wording.</td></tr>
+      <tr><td>3</td><td>Label</td><td>The concept name, short enough to read at a glance.</td></tr>
+      <tr><td>4</td><td>Definition</td><td>One line, complete enough to stand alone.</td></tr>
+      <tr><td>5</td><td>Link</td><td>A relative path to a real anchor on one of your pages.</td></tr>
+    </tbody>
+  </table>
+  <p>An edge is a three-element tuple: the two node ids it joins, and a strength. The strength is the element that causes the most confusion, because in the node tuple the second position <em>is</em> a chapter. In an edge it is not:</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Edge element</th><th>Meaning</th><th>Range</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0</td><td>From node id</td><td>Must exist in the node list.</td></tr>
+      <tr><td>1</td><td>To node id</td><td>Must exist, and must not equal the first id.</td></tr>
+      <tr><td>2</td><td>Strength</td><td>4 to 9. A number outside this range draws nothing.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <p><strong>Why 4 and not 1.</strong> The graph view has a strength threshold, and its default hides anything weaker than 4. An edge tagged with a chapter number looks like a deliberate weak link and disappears; an edge tagged 4 or above is visible at the default setting.</p>
+  </div>
+  <p>The second graph, <code>mkg.json</code>, uses the same shape for the foundations pages. Its links point mostly at anchors of the form <code>math.html#sec-m-&hellip;</code>, so a reader who clicks a formula lands on the derivation rather than on the summary of it.</p>
+</section>
+
+<section id="sec-session" class="section" data-track="session">
+  <h2 class="section-title">Spacing a session</h2>
+  <p class="section-lead">The order of a review session matters more than its length. Twenty-five focused minutes beat an hour of re-reading.</p>
+  <p>The <strong>sequence</strong> widget below is a session plan. Put the steps in the order you would actually run them, then check. Every step is something the reader produces, not something they consume.</p>
+  <div data-ix="sequence" data-ix-src="#ix-ch3-session"></div>
+  <script type="application/json" id="ix-ch3-session">
+{
+  "title": "Order a twenty-five minute review",
+  "subtitle": "Six steps. Production first, review last.",
+  "steps": [
+    "Close the page and set a timer for twenty-five minutes",
+    "Sketch the chapter map from memory: headings, and the concepts under them",
+    "Open the page and mark the gaps in your map",
+    "Attempt the quiz without notes, all six entries before checking any",
+    "Read the explanation for every miss and name the idea you confused it with",
+    "Write tomorrow's recall prompt: the question you least want to be asked"
+  ]
+}
+  </script>
+  <div class="insight-box">
+    <h3>Gaps over scores</h3>
+    <p>A score tells you how the session went. A list of gaps tells you what to do next. Keep the list, and let the score look after itself.</p>
+  </div>
+</section>
+
+<section id="sec-progress" class="section" data-track="progress">
+  <h2 class="section-title">Measuring progress</h2>
+  <p class="section-lead">Progress is stored per course, keyed by the manifest, and measured in the units the reader actually completed.</p>
+  <p>The engine writes progress against the <code>storageKey</code> from the manifest, so two courses on the same machine never mix their records. Within a course, the units are concrete: sections visited, quick checks answered, quiz entries attempted, cards recalled. A reader's progress bar moves when they finish something, which means the author's job is to make sure the units are worth finishing.</p>
+  <p>The <strong>race</strong> widget below compares recall coverage across the three chapters. Bars are drawn as a proportion of the declared maximum, so a course-wide scale keeps the comparison honest.</p>
+  <div data-ix="race" data-ix-src="#ix-ch3-race"></div>
+  <script type="application/json" id="ix-ch3-race">
+{
+  "title": "Recall coverage after one week",
+  "subtitle": "Share of concepts recalled without notes, by chapter.",
+  "max": 100,
+  "rows": [
+    { "name": "Chapter 1 \u2014 structure", "value": 92, "display": "92%" },
+    { "name": "Chapter 2 \u2014 widgets", "value": 78, "display": "78%" },
+    { "name": "Chapter 3 \u2014 practice", "value": 54, "display": "54%" }
+  ]
+}
+  </script>
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Signals worth trusting</h4>
+      <ul>
+        <li>Sections a reader can summarise without opening.</li>
+        <li>Quiz entries answered correctly twice, a week apart.</li>
+        <li>Cards that moved from missed to easy.</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>Signals that flatter</h4>
+      <ul>
+        <li>Pages scrolled to the bottom.</li>
+        <li>Quick checks answered with the page still visible.</li>
+        <li>Cards rated easy on the first attempt.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="sec-wrap" class="section" data-track="wrap">
+  <h2 class="section-title">Wrapping up</h2>
+  <p class="section-lead">You now have the whole pack: a manifest, six pages, four data files, and one habit.</p>
+  <p>The course you have just read is the sample pack that ships with the engine. Everything in it was written the way this chapter describes: prose first, structure second, practice material last. If you are starting your own course, copy this pack, delete the chapters, and keep the manifest and the data shapes.</p>
+  <p>Before you do, answer one question about the graph files, and read the worked answer on repairing a dead link. Those two exercises cover the failures that are hardest to see.</p>
+  <div class="quick-check">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">An edge in <code>kg.json</code> reads <code>["hashmap", "load-factor", 2]</code>. What is wrong with it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-bad="Edge endpoints are node ids, and both of these look like ordinary ids. Node names are not checked against a vocabulary.">Nothing: two ids and a strength is the correct edge shape</div>
+      <div class="qc-opt" data-correct="false" data-bad="Chapter numbers belong to the node tuple, not to the edge. Edges carry no chapter at all.">The second id should be a chapter number</div>
+      <div class="qc-opt" data-correct="true" data-good="The third element is a strength and strengths run from 4 to 9. A value of 2 is below the default threshold, so the edge is silently dropped from the drawing.">The strength is below the 4-to-9 range, so the edge never draws</div>
+      <div class="qc-opt" data-correct="false" data-bad="Edges are three-element tuples, and this one has three elements. Length is not the problem here.">The tuple is missing a definition string</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+  <button type="button" class="solution-toggle" data-target="sol-ch3-repair">Show solution</button>
+  <div class="solution-body" id="sol-ch3-repair">
+    <p><strong>Worked answer &mdash; repairing a dead link.</strong> A node labelled "balance band" carries the link <code>../chapters/01/math.html#sec-m-budget</code>, and clicking it goes nowhere. Repair it in five steps.</p>
+    <ol>
+      <li><strong>Separate the path from the fragment.</strong> The reference splits into <code>../chapters/01/math.html</code> and <code>sec-m-budget</code>. One of the two is wrong, and they fail differently: a bad path finds no file, a bad fragment finds a file with no matching anchor.</li>
+      <li><strong>Check the file first.</strong> The path resolves from the folder that holds the data file, climbs one level to the pack root, and descends into the chapter 1 folder. That file exists, so the path is sound and the fragment is the suspect.</li>
+      <li><strong>Read the target's anchors.</strong> Chapter 1's foundations page has <code>sec-m-hero</code>, <code>sec-m-count</code>, <code>sec-m-budget</code>, <code>sec-m-ids</code>, <code>sec-m-anchors</code> and <code>sec-m-practice</code>. The fragment is present &mdash; so the fault is not in the page at all.</li>
+      <li><strong>Reconsider the meaning.</strong> The node is about the balance band, which is defined in the section titled "Counting a page", not in the reading-budget section. The link resolves, but it resolves to the wrong anchor. Broken links are not the only bad links; a link to the wrong section is worse, because it looks like it worked.</li>
+      <li><strong>Fix and re-verify.</strong> Point the node at <code>../chapters/01/math.html#sec-m-count</code>, then re-run the validation script that checks every node link against the anchors in its target file. That check catches both faults at once, which is why it belongs in the build rather than in a review.</li>
+    </ol>
+    <p>If you take one habit away from this chapter, take that one: <em>validate the links, then read the page as a reader would</em>. The script can prove that an anchor exists. Only a reader can tell you whether it was the right anchor.</p>
+  </div>
+  <div class="callout">
+    <p><strong>Where to go next.</strong> Copy the pack, keep <code>course.json</code>, and replace the three chapter folders one at a time. Chapter 1 told you what to write, chapter 2 told you how to make it move, and this chapter told you how to make it stick.</p>
+  </div>
+</section>

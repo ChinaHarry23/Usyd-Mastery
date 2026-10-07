@@ -1,0 +1,208 @@
+<section id="hero" class="section hero-section" data-track="hero">
+  <p class="hero-course">DEMO101 &mdash; Building a Study Hub</p>
+  <h1>Week 1: Content and Structure</h1>
+  <p class="hero-subtitle">A study hub is a folder of small, predictable files. This chapter introduces the content pack, the five pieces that make up one chapter, and the section rules the page generator reads when it builds your pages.</p>
+</section>
+
+<section id="sec-pack" class="section" data-track="pack">
+  <h2 class="section-title">The content pack</h2>
+  <p class="section-lead">Everything the engine needs sits inside one folder. Copy the folder, rewrite the words, and you have a second course.</p>
+  <p>A <strong>content pack</strong> is the unit of authoring. The engine never reads your files from scattered locations: it opens one pack, reads its manifest, and follows the paths that manifest describes. That constraint is what makes a course portable. You can zip the pack, hand it to a classmate, and their build produces the same pages yours did.</p>
+  <p>The demo course you are reading was written this way. Its pack contains a manifest, three chapter folders, and four data files:</p>
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>course.json</h3>
+      <p>The manifest. It names the course, sets the storage key, and lists the chapters in order.</p>
+    </div>
+    <div class="glance-card">
+      <h3>chapters/NN/</h3>
+      <p>One folder per chapter holding the study page, the foundations page, the mind map, and an optional script.</p>
+    </div>
+    <div class="glance-card">
+      <h3>data/</h3>
+      <p>Practice material that spans the whole course: quiz entries, flashcards, and two concept graphs.</p>
+    </div>
+    <div class="glance-card">
+      <h3>No build files</h3>
+      <p>Nothing is compiled. The pack is plain text, so a diff shows exactly what changed between drafts.</p>
+    </div>
+  </div>
+  <div class="def-box">
+    <h3>Definition &mdash; content pack</h3>
+    <p>A folder containing <code>course.json</code>, a <code>chapters/</code> tree, and a <code>data/</code> folder. Every page in the hub is generated from files inside that folder and nothing else.</p>
+  </div>
+  <p>Two consequences follow from that definition, and both are easy to feel while authoring. First, a missing file is a visible problem rather than a silent one: the generator either finds <code>chapters/01/study.html</code> or it does not. Second, filenames are part of the interface. Chapter folders are numbered with two digits so they sort correctly as text, and the page names inside them are fixed.</p>
+</section>
+
+<section id="sec-manifest" class="section" data-track="manifest">
+  <h2 class="section-title">The course manifest</h2>
+  <p class="section-lead">The manifest is the only file that knows about the course as a whole. Get it right and the rest of the pack has somewhere to belong.</p>
+  <p>The manifest is a single JSON object. Its top-level fields describe the course, and its <code>chapters</code> array describes each chapter in the order you want them displayed. The home card, the chapter numbering, and the progress keys all derive from this one object, so it is worth reading slowly the first time you edit it.</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Field</th><th>What it does</th><th>Watch out for</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>Short label shown in page headers, for example <code>DEMO101</code>.</td><td>Keep it stable; readers learn to recognise it.</td></tr>
+      <tr><td><code>slug</code></td><td>The folder-safe name of the course.</td><td>Lowercase, no spaces.</td></tr>
+      <tr><td><code>storageKey</code></td><td>Prefix for saved progress in the browser.</td><td>Change it and every reader starts fresh.</td></tr>
+      <tr><td><code>icon</code></td><td>An HTML entity rendered next to the title.</td><td>Escape it as an entity, not as a raw character.</td></tr>
+      <tr><td><code>cardClass</code></td><td>Colour theme for the home card.</td><td>Reuse a theme the engine already styles.</td></tr>
+      <tr><td><code>heroMetrics</code></td><td>Two to four headline numbers.</td><td>They are claims: keep them true.</td></tr>
+      <tr><td><code>chapters</code></td><td>Ordered list of chapter records.</td><td>Each record needs <code>n</code>, <code>week</code>, <code>title</code>, <code>summary</code> and <code>concepts</code>.</td></tr>
+    </tbody>
+  </table>
+  <div class="insight-box">
+    <h3>Keep the counts honest</h3>
+    <p>The demo manifest advertises three chapters and twelve widgets. Those numbers are only useful because they match the pack: twelve widget instances are mounted across the six content pages, and the manifest says so. A metric that drifts away from the material teaches readers to distrust every other number on the card.</p>
+  </div>
+</section>
+
+<section id="sec-sections" class="section" data-track="sections">
+  <h2 class="section-title">Writing a section</h2>
+  <p class="section-lead">A study page is a fragment: an ordered list of sections with no page furniture around them.</p>
+  <p>You do not write <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code>, a sidebar, or a script tag in a chapter page. The generator supplies all of that. Your file begins with your first section and ends with your last, which keeps the interesting part of the document &mdash; the teaching &mdash; free of boilerplate that every chapter repeats.</p>
+  <p>Four rules do the heavy lifting:</p>
+  <ol>
+    <li>The first section is the hero. It carries <code>id="hero"</code> and <code>data-track="hero"</code>.</li>
+    <li>Every other section carries a unique <code>id</code> of the form <code>sec-something</code> and a matching <code>data-track</code> value in lower case with no spaces.</li>
+    <li>Every section except the hero opens with an <code>&lt;h2 class="section-title"&gt;</code>. That heading text becomes the sidebar label, so keep it to two to four words.</li>
+    <li>A study page holds six to nine sections. The hero counts as one.</li>
+  </ol>
+  <p>The <code>data-track</code> attribute is what turns a section into a progress unit. As a reader scrolls, the engine records each track it has seen and fills the progress bar from the ratio of seen tracks to total tracks. A section without a track is still rendered, but it is invisible to progress: the reader can finish it and the counter will not move.</p>
+  <div class="callout">
+    <p><strong>Naming pays compound interest.</strong> Anchors such as <code>#sec-manifest</code> are quoted by mind maps, concept graphs, and cross-links in other chapters. A vague anchor works today and becomes a guessing game the moment somebody else needs to link to you.</p>
+  </div>
+  <div class="two-col">
+    <div class="def-box">
+      <h3>Fragment</h3>
+      <p>A partial document that the generator wraps in a full page. Chapter pages are fragments; the layout, navigation, and scripts are added at build time.</p>
+    </div>
+    <div class="def-box">
+      <h3>Section contract</h3>
+      <p>The four rules above, taken together: hero first, unique anchors, a short labelled heading, and a section count inside the allowed range.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-classes" class="section" data-track="classes">
+  <h2 class="section-title">Content classes</h2>
+  <p class="section-lead">You do not invent layout. You pick from a small vocabulary of blocks, and the stylesheet keeps them consistent across chapters.</p>
+  <p>The engine ships a set of content classes that are already styled, already responsive, and already tested against the dark theme. Using them is faster than writing markup from scratch, and it means a reader who learns one chapter can navigate every other chapter without re-learning the visual grammar.</p>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Class</th><th>Use it for</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>section-title</code></td><td>The heading the sidebar reads.</td><td>Required outside the hero; keep it short.</td></tr>
+      <tr><td><code>section-lead</code></td><td>One sentence that frames the section.</td><td>Place it directly after the heading.</td></tr>
+      <tr><td><code>def-box</code></td><td>A term and its definition.</td><td>One idea per box.</td></tr>
+      <tr><td><code>theorem-box</code></td><td>A result stated once, cleanly.</td><td>Reserve it for things worth quoting.</td></tr>
+      <tr><td><code>insight-box</code></td><td>A connection worth noticing.</td><td>Best when it changes how a reader reads the next paragraph.</td></tr>
+      <tr><td><code>callout</code></td><td>An aside, warning, or reminder.</td><td>Do not stack three in a row.</td></tr>
+      <tr><td><code>glance-grid</code> + <code>glance-card</code></td><td>A small set of parallel items.</td><td>Cards hold a short heading and a sentence or two.</td></tr>
+      <tr><td><code>two-col</code></td><td>Side-by-side comparison.</td><td>Collapses to one column on narrow screens.</td></tr>
+      <tr><td><code>why-card</code></td><td>Arguments for and against.</td><td>Add <code>pro</code> or <code>con</code> for the green and red treatments.</td></tr>
+      <tr><td><code>styled-table</code></td><td>Structured comparison.</td><td>Always include a header row.</td></tr>
+      <tr><td><code>badge</code></td><td>A short status or category tag.</td><td>Two or three words, no punctuation.</td></tr>
+      <tr><td><code>quick-check</code></td><td>A single self-test question.</td><td>Exactly one option is marked correct.</td></tr>
+      <tr><td><code>solution-toggle</code> + <code>solution-body</code></td><td>A worked answer behind a button.</td><td>The button names the target by id.</td></tr>
+    </tbody>
+  </table>
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Why a fixed vocabulary helps</h4>
+      <ul>
+        <li>Readers recognise the same block types in every chapter.</li>
+        <li>Responsive behaviour is solved once, not per page.</li>
+        <li>Reviews focus on the explanation rather than the markup.</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>Where it costs you</h4>
+      <ul>
+        <li>A genuinely new layout needs a new class in the stylesheet.</li>
+        <li>Two blocks that look alike may need different classes.</li>
+        <li>Overuse flattens emphasis: if everything is a callout, nothing is.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="sec-order" class="section" data-track="order">
+  <h2 class="section-title">From files to page</h2>
+  <p class="section-lead">Order matters when you add a chapter. Each step produces something the next step can check.</p>
+  <p>The <strong>sequence</strong> widget below is the first interactive block in this course. Move the steps into the order you would actually work in, then check your answer. It is a declarative widget: the markup is a placeholder plus a JSON config, and the engine mounts the interaction for you. Chapter 2 explains that mechanism in detail.</p>
+  <div data-ix="sequence" data-ix-src="#ix-ch1-order"></div>
+  <script type="application/json" id="ix-ch1-order">
+{
+  "title": "Order the authoring steps",
+  "subtitle": "Move each step into the position it belongs in.",
+  "steps": [
+    "Create the chapter folder, chapters/04, so every later path has somewhere to live",
+    "Draft study.html first, because the prose decides which sections and anchors exist",
+    "Draft math.html around the two or three results the study page assumes but never proves",
+    "Sketch mindmap.json, pointing every leaf at an anchor that already exists",
+    "Register the chapter in course.json so the hub home card can list it",
+    "Validate every JSON file before you look at the rendered page"
+  ]
+}
+  </script>
+  <div class="insight-box">
+    <h3>Prose first, data second</h3>
+    <p>It is tempting to start with the quiz and the concept graph because they are structured and satisfying to fill in. Resist it for one draft. Those files quote your anchors, so writing them against a moving target means rewriting them twice.</p>
+  </div>
+</section>
+
+<section id="sec-publish" class="section" data-track="publish">
+  <h2 class="section-title">A publishing timeline</h2>
+  <p class="section-lead">A chapter moves through five steps. The <strong>timeline</strong> widget walks them in order.</p>
+  <p>Step through the events below. Each event carries a short <code>label</code> for its marker on the track, a <code>title</code> headline, and a <code>detail</code> sentence, which is all the timeline widget needs. Notice that the steps are defined by what they produce, not by how long they take: a step you cannot tell you have finished is not really a step.</p>
+  <div data-ix="timeline" data-ix-src="#ix-ch1-publish"></div>
+  <script type="application/json" id="ix-ch1-publish">
+{
+  "title": "From first draft to published chapter",
+  "subtitle": "Five steps, each with something you can point at when it is done.",
+  "events": [
+    { "label": "Stage 1", "title": "Draft", "detail": "Every section exists and says something. Anchors are named, even if the prose around them is still rough." },
+    { "label": "Stage 2", "title": "Trim", "detail": "Cut the sections that repeat each other. A page with eight sharp sections beats one with fourteen soft ones." },
+    { "label": "Stage 3", "title": "Validate", "detail": "Parse the manifest, the widget JSON and the mind map. Fix broken anchors now, while you still remember what they meant." },
+    { "label": "Stage 4", "title": "Preview", "detail": "Read the rendered page on a narrow window. Check the sidebar labels, the tables and the maths at small widths." },
+    { "label": "Stage 5", "title": "Release", "detail": "Ship it, then add the practice material. Quiz entries and flashcards are written against a frozen page, not a draft." }
+  ]
+}
+  </script>
+</section>
+
+<section id="sec-check" class="section" data-track="check">
+  <h2 class="section-title">Checking your work</h2>
+  <p class="section-lead">Most broken chapters fail in one of four familiar ways. Learn to spot them and a review takes five minutes.</p>
+  <p>The fastest review is mechanical. Confirm the hero, confirm the anchors, confirm the heading in every section, then confirm the JSON. Only after those four checks does it make sense to read the page as a reader would.</p>
+  <div class="quick-check">
+    <div class="qc-h">Quick check</div>
+    <div class="qc-question">A section renders correctly but never appears in the sidebar and never advances the progress bar. What is the most likely cause?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-bad="The heading is visible in the page, so the class is present. A missing class would show up as unstyled text.">The heading is missing its <code>section-title</code> class</div>
+      <div class="qc-opt" data-correct="false" data-bad="Section order does not affect the sidebar. Only the hero is fixed to the first position.">The section is placed after the hero instead of before it</div>
+      <div class="qc-opt" data-correct="true" data-good="The sidebar and the progress bar are both derived from the section's track. Without a unique data-track there is nothing for either one to key on.">The section is missing a unique <code>data-track</code> value</div>
+      <div class="qc-opt" data-correct="false" data-bad="The content pack does not require a script per chapter; most chapters need none at all.">The chapter has no <code>study.js</code> file</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+  <p>Two of the four failure modes above are structural, and two are typographical. Structure is worth checking first because it is cheap: count the sections, scan the ids, and read the headings out loud. Typographical faults hide in long lists of markup, which is exactly where a script beats an eye.</p>
+  <button type="button" class="solution-toggle" data-target="sol-ch1-review">Show solution</button>
+  <div class="solution-body" id="sol-ch1-review">
+    <p><strong>Worked answer &mdash; a five-minute structural review.</strong> Run the checks in this order and stop at the first failure; later checks assume earlier ones passed.</p>
+    <ol>
+      <li><strong>Hero.</strong> The first section has <code>id="hero"</code> and <code>data-track="hero"</code>. If it does not, every relative anchor in the pack is suspect, because the rest of the page was numbered from a bad start.</li>
+      <li><strong>Count.</strong> Six to nine sections on a study page, five to seven on a foundations page. A tenth section usually means two sections were merged badly or one was never needed.</li>
+      <li><strong>Anchors.</strong> Every non-hero section has a unique <code>id</code> beginning with <code>sec-</code> and a track of lower-case words. Read them as a list and check that no two sound alike.</li>
+      <li><strong>Headings.</strong> Every non-hero section opens with an <code>h2</code> carrying <code>section-title</code>, and the text is two to four words long, because that text is the whole sidebar entry.</li>
+      <li><strong>Data.</strong> Parse every JSON file. A widget block that fails to parse usually fails silently: the placeholder stays an empty box on the page, which reads like a styling bug and wastes an hour.</li>
+    </ol>
+    <p>If all five pass, hand the page to a reader. Structure cannot tell you whether the explanation lands; it can only tell you that nothing is standing in the way of it landing.</p>
+  </div>
+  <div class="callout">
+    <p><strong>Next chapter.</strong> Structure gives you pages. Chapter 2 gives you pages that respond: eight declarative widget types, one small JSON contract, and the rules that keep the JSON valid.</p>
+  </div>
+</section>

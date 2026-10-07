@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 7: Haptic Interaction</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 7 foundations for COMP5047: exact haptic definitions and notation, the taxonomy of touch and actuators, the conservative power budget behind driving a motor, and a design checklist for haptic feedback.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 7: Haptic Interaction">
+<meta property="og:description" content="Week 7 foundations for COMP5047: exact haptic definitions and notation, the taxonomy of touch and actuators, the conservative power budget behind driving a motor, and a design checklist for haptic feedback.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter7-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#x1F4D0;</span>
+    <h2>Week 7 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomy of touch and actuators</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-notation" class="toc-link">Notation for haptic signals</a></li>
+    <li><a href="#sec-m-power" class="toc-link">The motor power chain</a></li>
+    <li><a href="#sec-m-circuits" class="toc-link">Reading the drive circuit</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-design" class="toc-link">Haptic design checklist</a></li>
+  </ul>
+  <a href="chapter7-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5047 &mdash; Week 7 supplement</p>
+  <h1>Foundations: the vocabulary, notation and budgets behind haptic interaction</h1>
+  <p class="hero-desc">Week 7 is only lightly mathematical, so this page does the equivalent job: it pins down the definitions the lecture relies on, gives you notation for describing a haptic signal and a conservative power budget for driving an actuator, and ends with a checklist that turns &ldquo;add a vibration motor&rdquo; into a defensible design decision.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 7 deck</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Power budget follows the lecture's rule of thumb</span>
+    <span>Five components, one driving chain</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">The Week 7 deck opens with a block of definitions because these words are used loosely everywhere else. Marks are lost on the distinctions, not on the topic.</p>
+
+  <div class="def-box">
+    <div class="def-label">Haptic interaction / haptic feedback</div>
+    <p>Interactive experiences involving the sense of touch. Haptic feedback is anything <em>relating to the sense of touch</em> &mdash; the widest of these terms.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Cutaneous, tactile and vibrotactile</div>
+    <p><strong>Cutaneous</strong> pertains to the skin itself or the skin as a sense organ, and includes pressure, temperature and pain. <strong>Tactile</strong> is the same sense narrowed to pressure rather than temperature or pain. <strong>Vibrotactile</strong> is vibration delivered to the skin &mdash; the only one of the three that names a stimulus rather than a sense.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Kinaesthetic, force feedback and proprioceptive</div>
+    <p><strong>Kinaesthetic</strong> relates to the feeling of motion and to sensations originating in muscles, tendons and joints. <strong>Force feedback</strong> relates to the mechanical production of information sensed by the human kinaesthetic system. <strong>Proprioceptive</strong> is the umbrella term for sensory information about the state of the body, including cutaneous, kinaesthetic and vestibular sensations.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Vestibular</div>
+    <p>Pertaining to the perception of head position, acceleration and deceleration. It is the one channel in this list that does not come from the skin, the muscles or the joints.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Haptic feedback</td><td>&ldquo;Relating to the sense of touch&rdquo; &mdash; the broad category</td><td>Treating it as a synonym for vibration</td></tr>
+        <tr><td>Force feedback</td><td>Mechanical production of information for the <em>kinaesthetic</em> system</td><td>Calling any strong vibration &ldquo;force feedback&rdquo;</td></tr>
+        <tr><td>Tactile</td><td>Cutaneous, and specifically pressure</td><td>Using tactile for temperature or pain, which belong to cutaneous but not to tactile</td></tr>
+        <tr><td>Proprioceptive</td><td>The state of the body, including cutaneous, kinaesthetic and vestibular</td><td>Restricting it to muscles and joints only</td></tr>
+        <tr><td>Acuity</td><td>Spatial resolution</td><td>Confusing acuity (space) with sensitivity (threshold)</td></tr>
+        <tr><td>Adaptation</td><td>How the response changes over time</td><td>Describing it as &ldquo;the device getting weaker&rdquo; rather than the percept fading</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement uses the week's vocabulary correctly?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Tactile is restricted to pressure. Temperature belongs to the cutaneous sense but not to the tactile one.">A Peltier element provides tactile feedback because it stimulates the skin</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Force feedback is defined by the system that receives the information — the kinaesthetic system of muscles, tendons and joints — not by the strength of the signal." data-bad="">A grounded linkage that resists your arm provides force feedback because it produces information for the kinaesthetic system</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Vestibular is about head position, acceleration and deceleration. A wristband does not touch that channel.">A wristband motor stimulates the vestibular system when it vibrates strongly</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomy of touch and actuators</h2>
+  <p class="section-lead">Exam questions usually ask you to place something: a device, a feedback channel, or a choice of motor. These three axes do that work.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; the receptor class a device targets</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Receptor class</th><th>Transduces</th><th>Device that addresses it</th><th>What it cannot tell you</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Thermoreceptors</td><td>Changes in skin temperature</td><td>Peltier element, fan, heating pad</td><td>Shape, weight, contact force</td></tr>
+        <tr><td>Mechanoreceptors</td><td>Pressure, vibration, slip, stretch</td><td>ERM or LRA vibration motor, pin array, textured surface</td><td>Weight, temperature, joint angle</td></tr>
+        <tr><td>Nociceptors</td><td>Pain: mechanical, thermal, chemical</td><td>Nothing by design &mdash; they define the safety envelope</td><td>&mdash;</td></tr>
+        <tr><td>Proprioceptors</td><td>Muscle length and tension, limb positions</td><td>Grounded force-feedback arm, exoskeleton, electrical muscle stimulation</td><td>Fine surface texture</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; the vibration parameters you can set</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Parameter</th><th>What it controls</th><th>Design note</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Frequency</td><td>Pitch of the buzz; how the mechanoreceptors respond</td><td>Choose it for the site, since sensitivity varies across the body</td></tr>
+        <tr><td>Duration</td><td>How long the signal lasts</td><td>Long signals adapt; use duration to encode urgency, not persistence</td></tr>
+        <tr><td>Amplitude</td><td>Strength</td><td>Must clear the detection threshold without becoming uncomfortable</td></tr>
+        <tr><td>Waveform</td><td>The shape of the driving signal</td><td>Determines which frequencies are actually present</td></tr>
+        <tr><td>Rhythm</td><td>The pattern over time</td><td>The main channel for categorical meaning &mdash; two short pulses versus one long one</td></tr>
+        <tr><td>ADSR</td><td>Attack, decay, sustain, release envelope</td><td>The mechanism that keeps a signal above the adaptation threshold</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 3 &mdash; which motor, decided by the information</h3>
+  <div data-ix="race" data-ix-src="#ix-m-motors"></div>
+  <script type="application/json" id="ix-m-motors">
+  {
+    "title": "Same 0–5 scale, four different jobs",
+    "subtitle": "Illustrative emphasis scores built from the deck's own descriptions of each motor. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Servo — positional accuracy", "value": 5, "display": "precise, ~180 deg" },
+      { "name": "Servo — range of travel", "value": 2, "display": "limited" },
+      { "name": "Stepper — positional accuracy", "value": 5, "display": "1.8 deg per step" },
+      { "name": "Stepper — need for feedback", "value": 1, "display": "open loop" },
+      { "name": "DC motor — positional accuracy", "value": 1, "display": "none" },
+      { "name": "Vibration motor — suitability for alerts", "value": 5, "display": "the standard" }
+    ]
+  }
+  </script>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Two vibration motor families</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>ERM</strong> &mdash; eccentric rotating mass, powered by a DC motor. The rotation of the off-centre mass makes it vibrate.</li>
+        <li><strong>LRA</strong> &mdash; linear resonant actuator: a mass on a spring driven by a coil, moving up and down.</li>
+      </ul>
+      <p>Both can easily draw 100&nbsp;mA, so the deck's advice is a transistor plus an external supply.</p>
+    </div>
+    <div class="col-card">
+      <h3>Three motor families and their control</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Servo</strong> &mdash; precise position, speed and torque; three wires; motor + pot + control circuit.</li>
+        <li><strong>Stepper</strong> &mdash; open loop, full rotation, 200 steps per rotation; one pulse, one step.</li>
+        <li><strong>DC</strong> &mdash; simplest, rotates 360 degrees, angle not controllable.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Your device must rotate a camera mount to an exact angle, 1.8 degrees at a time, without any position sensor. Which motor does the lecture's guidance point to?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A DC motor rotates 360 degrees but you cannot precisely control its angle, so it cannot hit an exact angle without extra sensing.">DC motor, because it is the simplest option</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A stepper is open-loop control with precise movement in small steps — 200 steps per rotation, so 1.8 degrees per pulse — which is exactly the 3D printer, CNC and camera case the deck names." data-bad="">Stepper motor, because open-loop steps give exact small increments with no feedback</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A servo has precise position control but a limited range, typically around 180 degrees, which is the wrong constraint for a continuously rotating mount.">Servo motor, because it has a potentiometer for feedback</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">Notation for haptic signals</h2>
+  <p class="section-lead">The lecture is written in prose. The symbols below are a <em>revision aid</em> introduced here so you can describe a signal and a threshold compactly; they are not lecture notation and should not be quoted as such.</p>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>Treat these as shorthand for writing answers and comparing designs. Every one of them maps onto a parameter or a property the deck names in words.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(H\)</div><div class="sym-cell">the haptic signal</div><div class="sym-cell">One vibration, described as a function of time</div>
+    <div class="sym-cell">\(H(t) = A(t)\,\sin(2\pi f t)\)</div><div class="sym-cell">amplitude times carrier</div><div class="sym-cell">Carrier frequency \(f\) sets the buzz; the envelope \(A(t)\) sets its shape</div>
+    <div class="sym-cell">\(A(t)\)</div><div class="sym-cell">the ADSR envelope</div><div class="sym-cell">Attack, decay, sustain and release &mdash; the reason a signal keeps being felt</div>
+    <div class="sym-cell">\(\theta_t\)</div><div class="sym-cell">detection threshold</div><div class="sym-cell">The stimulus strength at which the percept is reported half the time</div>
+    <div class="sym-cell">\(P(\text{detect} \mid s)\)</div><div class="sym-cell">psychometric function</div><div class="sym-cell">Probability of reporting a stimulus of strength \(s\), from 0.5 at chance to 1.0</div>
+    <div class="sym-cell">\(s_{50}, s_{75}\)</div><div class="sym-cell">threshold, clear percept</div><div class="sym-cell">In a 2AFC task, \(s_{50}\) is the threshold and \(s_{75}\) the conventional &ldquo;clearly perceived&rdquo; criterion</div>
+    <div class="sym-cell">\(\Delta\theta\)</div><div class="sym-cell">offset</div><div class="sym-cell">The angular manipulation applied to a reach, in degrees</div>
+    <div class="sym-cell">\(a\)</div><div class="sym-cell">acuity</div><div class="sym-cell">Spatial resolution: the smallest separation felt as two points rather than one</div>
+    <div class="sym-cell">\(\tau\)</div><div class="sym-cell">adaptation time constant</div><div class="sym-cell">How quickly a constant stimulus fades from perception</div>
+    <div class="sym-cell">\(E\)</div><div class="sym-cell">haptic expressiveness</div><div class="sym-cell">How much of a target property a channel can actually convey (used qualitatively here)</div>
+    <div class="sym-cell">\(I\)</div><div class="sym-cell">current</div><div class="sym-cell">What a motor draws &mdash; the number that forces an external supply</div>
+    <div class="sym-cell">\(I_{\text{pin}}\)</div><div class="sym-cell">pin current limit</div><div class="sym-cell">What a microcontroller output can safely source; the constraint in the power chain</div>
+    <div class="sym-cell">\(N\)</div><div class="sym-cell">steps per rotation</div><div class="sym-cell">200 for the deck's stepper, so one step is \(360/N = 1.8^\circ\)</div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. A vibration is a carrier plus an envelope</h3>
+    <p>Separating the two is what makes the deck's six parameters usable. Frequency and waveform describe the carrier; duration, rhythm and ADSR describe the envelope; amplitude couples them.</p>
+    \[ H(t) \;=\; A(t)\,\sin(2\pi f t), \qquad A(t) \;=\; \text{attack} \to \text{decay} \to \text{sustain} \to \text{release} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Practical consequence: two signals with the same frequency can carry completely different meanings, because meaning is carried by the envelope &mdash; a tap, a double pulse and a long rumble all use the same carrier.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Detection is a probability, not a boundary</h3>
+    <p>There is no stimulus strength below which nothing is ever felt and above which everything is. Detection rises smoothly, which is why the threshold is defined at a criterion:</p>
+    \[ P(\text{detect} \mid s) = 0.5 \;\Rightarrow\; s = s_{50} = \theta_t, \qquad P(\text{detect} \mid s) = 0.75 \;\Rightarrow\; s = s_{75} \]
+    <p style="margin-top:0.6rem;">In the lecture's 2AFC procedure the guessing rate is 0.5, so \(s_{50}\) is exactly the point at which performance leaves chance. Anything below \(s_{50}\) is manipulation the user cannot report &mdash; and in a retargeting prototype, that is the design space.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Adaptation means a constant signal stops counting</h3>
+    <p>Under a constant stimulus the perceived intensity decays with a time constant \(\tau\), so the effective signal is the change in the envelope, not the envelope itself:</p>
+    \[ H_{\text{felt}}(t) \;\propto\; \left| \frac{dA}{dt} \right| \quad \text{rather than} \quad A(t) \]
+    <p style="margin-top:0.6rem;">This is the formal reading of the deck's list. A steady amplitude is a signal that disappears; rhythm and ADSR keep \(\frac{dA}{dt}\) non-zero, which is why they are design parameters rather than decorations. A long steady buzz is the special case you should avoid.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Stepper resolution is exact arithmetic</h3>
+    <p>A stepper turns one step per pulse, so the smallest angle you can command is fixed by the motor rather than by your code:</p>
+    \[ \Delta\theta_{\text{step}} \;=\; \frac{360^\circ}{N}, \qquad N = 200 \;\Rightarrow\; \Delta\theta_{\text{step}} = 1.8^\circ \]
+    <p style="margin-top:0.6rem;">Open loop means the count <em>is</em> the position: no feedback is needed, and none is available if the motor is overloaded and slips. That is the trade a stepper makes, in contrast to a servo, which closes the loop internally with its potentiometer and returns an angle rather than a count.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Putting the four together.</strong> A haptic signal is a carrier shaped by an envelope \(A(t)\); it is perceived only above a probabilistic threshold \(s_{50}\); its envelope must keep changing or adaptation \(\tau\) will erase it; and if it is produced by a stepper, the resolution of the position it encodes is exactly \(360^\circ/N\).
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Two vibration patterns use the same frequency of 200&nbsp;Hz and the same peak amplitude. One is felt as a tap and the other as a rumble. What distinguishes them?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Frequency and amplitude are stated as identical, so neither can be the difference. Look at what shapes the signal over time.">The carrier frequency differs between the two patterns</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. With the carrier fixed, meaning is carried by the envelope A(t) — attack, decay, sustain and release — and by rhythm. A fast attack with a short release reads as a tap; a slow attack with a long sustain reads as a rumble." data-bad="">The envelope and rhythm differ: attack, decay, sustain and release</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Acuity is a property of the body site, not of the signal, and it governs spatial resolution rather than the character of a single vibration.">The acuity of the stimulated site differs</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; reading a psychometric curve.</strong> You run the lecture's 2AFC procedure: after each trial the participant is asked &ldquo;was there an offset? Yes / No.&rdquo; You test angular offsets of 0, 6, 12, 18, 24 and 30 degrees.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Set the baseline.</strong> With two alternatives and no offset present, a participant who perceives nothing still answers correctly half the time by guessing. So the floor of the curve is 0.5, not 0.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Locate the threshold.</strong> The offset at which the probability reaches 0.50 is \(s_{50}\), the detection threshold. Using the illustrative curve on the study page, that falls around 14 to 15 degrees: above that point the manipulation is being reported more often than chance.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Choose the criterion you will design against.</strong> \(s_{75}\), the conventional &ldquo;clearly perceived&rdquo; point, sits higher up the curve. Designing at \(s_{50}\) means half your users notice; designing well below it means the manipulation survives.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Report the limits of the measurement.</strong> The deck's curve is described as the default case: one direction of movement, one speed, one posture. Change the conditions and the curve moves, so any offset you quote needs the conditions attached to it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State what the number licenses.</strong> Offsets below \(s_{50}\) can be applied without the user reporting them, which is exactly what lets one physical prop stand in for several virtual objects &mdash; provided the user keeps their eyes on the virtual hand and moves slowly, as the technique requires.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-power">
+  <h2 class="section-title">The motor power chain</h2>
+  <p class="section-lead">This is the arithmetic behind the deck's rule of thumb. Nothing here is exotic; the point is to be able to justify, in numbers, why a motor never comes off a microcontroller pin.</p>
+
+  <div class="def-box">
+    <div class="def-label">The lecture's rule of thumb, in one sentence</div>
+    <p>If a load draws more than a trivial amount of current, switches on and off frequently, or is inductive (like a motor), it is safest to give it its own supply and use the microcontroller only to control it &mdash; via a transistor &mdash; rather than power it directly.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Quantity</th><th>What it is</th><th>Where the number comes from</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>\(V_{\text{motor}}\)</td><td>The motor's own supply voltage</td><td>The battery or bench supply: the deck's example is 9&nbsp;V</td></tr>
+        <tr><td>\(V_{\text{logic}}\)</td><td>The microcontroller's logic level</td><td>The board's supply &mdash; below the motor rail in the lecture's example</td></tr>
+        <tr><td>\(I_{\text{motor}}\)</td><td>Current the motor draws</td><td>Datasheet; a vibration motor can easily draw 100&nbsp;mA</td></tr>
+        <tr><td>\(I_{\text{pin}}\)</td><td>Current a GPIO pin can safely source</td><td>Datasheet, and always far below \(I_{\text{motor}}\) for a motor</td></tr>
+        <tr><td>\(R_{\text{DS(on)}}\)</td><td>Transistor on-resistance</td><td>Datasheet; sets the transistor's power loss when it is switching</td></tr>
+        <tr><td>\(V_f\)</td><td>Diode forward voltage</td><td>Datasheet; a flyback diode is normally reverse-biased and conducts only during the back-EMF spike</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. Why the pin cannot drive the motor</h3>
+    <p>The motor's demand and the pin's capability are two different orders of magnitude:</p>
+    \[ I_{\text{motor}} \;\gg\; I_{\text{pin}} \]
+    <p style="margin-top:0.6rem;">A vibration motor at 100&nbsp;mA against a pin rated for tens of milliamps is already a factor of several. The consequence is not a degraded experience but a damaged output driver, which is why the deck says the motor needs an external power supply controlled by a transistor.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The transistor is a current amplifier, not a power source</h3>
+    <p>Current through the motor is supplied by the battery; the gate only decides whether that path is open. In the ideal switch model the dissipated power is</p>
+    \[ P_{\text{sw}} \;=\; I_{\text{motor}}^2 \, R_{\text{DS(on)}} \]
+    <p style="margin-top:0.6rem;">Compare that with the power the motor itself consumes, \(P_{\text{motor}} \approx V_{\text{motor}} I_{\text{motor}}\): a good MOSFET makes \(P_{\text{sw}}\) a small fraction of it, so the switch stays cool while the motor does the work.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Why an inductive load needs a flyback diode</h3>
+    <p>A motor is an inductor. When the transistor opens, the collapsing magnetic field pushes current back, producing a spike of the opposite polarity across the switch. The diode provides the only path for it:</p>
+    \[ v_L \;=\; -L\,\frac{di}{dt} \]
+    <p style="margin-top:0.6rem;">The faster you interrupt the current, the larger the spike. The diode clamps it by giving the current somewhere to go, which is exactly the deck's formulation: the diode safely dissipates the back electromotive force when the motor is powered down. Without it, the spike burns the MOSFET.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Common ground is a shared reference, not a shared supply</h3>
+    <p>The gate signal is a voltage measured <em>relative to ground</em>. For the microcontroller to switch the transistor, the two circuits must agree on where zero is:</p>
+    \[ \text{GND}_{\text{battery}} \;\equiv\; \text{GND}_{\text{MCU}}, \qquad \text{VCC}_{\text{battery}} \;\not\equiv\; \text{VCC}_{\text{MCU}} \]
+    <p style="margin-top:0.6rem;">Connect the GND of the battery and the microcontroller; do <strong>not</strong> connect their VCC. Joining the positive rails would push motor current and back-EMF through the microcontroller's supply, which is the failure the separate rail exists to prevent.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>What the numbers say in one line.</strong> A motor takes \(I\) that a pin cannot give, so it gets its own \(V\); a transistor lets the logic decide without carrying the load; a diode handles the \(L\,di/dt\) the switch cannot; and a common ground lets the logic's decision mean something to the motor's circuit.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A student wires a motor, a transistor, a diode and a 9&nbsp;V battery, but forgets to connect the battery's ground to the microcontroller's ground. What happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The gate voltage is measured relative to ground, so without a shared reference the transistor never sees a defined gate-to-source voltage and the motor simply does not switch — nothing burns, but nothing works either." data-bad="">The gate signal has no common reference, so the transistor never switches reliably</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A missing ground does not create a short. The dangerous wiring mistake is the opposite one: connecting the two VCC rails together.">The 9&nbsp;V rail and the logic rail short together and destroy the microcontroller</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The flyback diode addresses the inductive kick when the motor powers down. It cannot substitute for the reference that the gate signal needs.">Nothing at all — the flyback diode supplies the missing reference</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-circuits">
+  <h2 class="section-title">Reading the drive circuit</h2>
+  <p class="section-lead">The lecture builds the circuit one component at a time, each time asking what is still wrong. Use this diagram to check that you can name every part and say what it is for.</p>
+
+  <div data-ix="hotspot" data-ix-src="#ix-m-circuit-map"></div>
+  <script type="application/json" id="ix-m-circuit-map">
+  {
+    "title": "Annotate the motor drive circuit",
+    "subtitle": "Click each marker to see what the component does and which failure it prevents.",
+    "svg": "<svg viewBox=\"0 0 800 440\" role=\"img\" aria-label=\"Schematic of a DC motor driven through an NMOS transistor from a separate battery, with a flyback diode and a common ground\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"440\" fill=\"#fbfdfe\"></rect><path d=\"M60 76 L742 76\" stroke=\"#dc2626\" stroke-width=\"3\" stroke-linecap=\"round\"></path><path d=\"M60 76 L60 116\" stroke=\"#dc2626\" stroke-width=\"2.4\" stroke-linecap=\"round\"></path><path d=\"M42 116 L78 116 M52 130 L68 130\" stroke=\"#dc2626\" stroke-width=\"2.6\" stroke-linecap=\"round\"></path><text x=\"88\" y=\"120\" font-family=\"monospace\" font-size=\"12\" fill=\"#b91c1c\">9 V battery</text><circle cx=\"400\" cy=\"152\" r=\"34\" fill=\"#f1ecfd\" stroke=\"#7c3aed\" stroke-width=\"2.4\"></circle><text x=\"400\" y=\"161\" font-family=\"monospace\" font-size=\"20\" fill=\"#6d28d9\" text-anchor=\"middle\">M</text><path d=\"M400 76 L400 116\" stroke=\"#dc2626\" stroke-width=\"2.2\"></path><path d=\"M400 186 L400 252\" stroke=\"#0e7490\" stroke-width=\"2.2\"></path><path d=\"M652 76 L652 110\" stroke=\"#dc2626\" stroke-width=\"2\"></path><path d=\"M636 132 L668 132 L652 110 Z\" fill=\"#fef3e2\" stroke=\"#f59e0b\" stroke-width=\"2\" stroke-linejoin=\"round\"></path><path d=\"M636 132 L668 132\" stroke=\"#f59e0b\" stroke-width=\"2.6\"></path><path d=\"M652 132 L652 186\" stroke=\"#0e7490\" stroke-width=\"2\"></path><path d=\"M400 186 C470 206 570 206 652 186\" stroke=\"#0e7490\" stroke-width=\"2\" fill=\"none\" stroke-dasharray=\"5 5\" opacity=\"0.7\"></path><text x=\"668\" y=\"126\" font-family=\"monospace\" font-size=\"12\" fill=\"#b45309\">flyback diode</text><rect x=\"252\" y=\"252\" width=\"104\" height=\"70\" rx=\"10\" fill=\"#fbfdfe\" stroke=\"#0e7490\" stroke-width=\"2.2\"></rect><text x=\"304\" y=\"288\" font-family=\"monospace\" font-size=\"12\" fill=\"#0e7490\" text-anchor=\"middle\">NMOS</text><text x=\"304\" y=\"304\" font-family=\"monospace\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">switch</text><path d=\"M400 252 L400 268 L356 268\" stroke=\"#0e7490\" stroke-width=\"2.2\"></path><path d=\"M252 300 L236 300\" stroke=\"#f59e0b\" stroke-width=\"2.2\"></path><path d=\"M356 350 L356 382\" stroke=\"#0e7490\" stroke-width=\"2.2\"></path><path d=\"M60 382 L742 382\" stroke=\"#0e7490\" stroke-width=\"3\" stroke-linecap=\"round\"></path><path d=\"M304 322 L304 382\" stroke=\"#0e7490\" stroke-width=\"2.2\"></path><rect x=\"64\" y=\"264\" width=\"136\" height=\"58\" rx=\"8\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2\"></rect><text x=\"132\" y=\"290\" font-family=\"monospace\" font-size=\"12\" fill=\"#0e7490\" text-anchor=\"middle\">MCU</text><text x=\"132\" y=\"308\" font-family=\"monospace\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">3.3-5 V logic</text><path d=\"M200 293 L228 293\" stroke=\"#f59e0b\" stroke-width=\"2.4\"></path><text x=\"216\" y=\"282\" font-family=\"monospace\" font-size=\"11\" fill=\"#b45309\" text-anchor=\"middle\">gate</text><path d=\"M132 322 L132 382\" stroke=\"#0e7490\" stroke-width=\"2.2\"></path><path d=\"M356 358 L392 382\" stroke=\"#78350f\" stroke-width=\"2.6\" stroke-linecap=\"round\"></path><path d=\"M400 382 L436 406\" stroke=\"#78350f\" stroke-width=\"2.6\" stroke-linecap=\"round\"></path><path d=\"M400 382 L364 406\" stroke=\"#78350f\" stroke-width=\"2.6\" stroke-linecap=\"round\"></path><path d=\"M64 382 L64 356\" stroke=\"#0e7490\" stroke-width=\"2.2\"></path><circle cx=\"64\" cy=\"348\" r=\"7\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.2\"></circle><circle cx=\"64\" cy=\"336\" r=\"4\" fill=\"#0e7490\"></circle><text x=\"88\" y=\"352\" font-family=\"monospace\" font-size=\"11\" fill=\"#0e7490\">logic GND</text><text x=\"88\" y=\"368\" font-family=\"monospace\" font-size=\"11\" fill=\"#0e7490\">battery GND</text><text x=\"400\" y=\"426\" font-family=\"monospace\" font-size=\"12\" fill=\"#78350f\" text-anchor=\"middle\">COMMON GROUND (never common VCC)</text></svg>",
+    "points": [
+      { "x": 7.5, "y": 26.4, "label": "The motor's own supply", "detail": "9 V, separate from the logic rail. The deck's rule of thumb: a load that draws real current, switches often, or is inductive gets its own supply, and the microcontroller only controls it." },
+      { "x": 50.0, "y": 34.5, "label": "The motor", "detail": "The load. It requires more current than a microcontroller can provide, and being inductive it also pushes current back when it powers down — the two challenges the deck names." },
+      { "x": 38.0, "y": 67.0, "label": "The NMOS transistor", "detail": "An electronically controlled switch. The gate is like a water tap: apply voltage and the battery's current flows through the motor. NMOS turns on with a positive gate voltage and pulls the output down to ground." },
+      { "x": 81.5, "y": 42.0, "label": "The flyback diode", "detail": "Placed across the motor. When the motor powers down, the collapsing field drives current back; the diode gives it a safe path and dissipates the back electromotive force that would otherwise burn the MOSFET." },
+      { "x": 12.0, "y": 44.0, "label": "The microcontroller", "detail": "Supplies only the gate decision, not the motor current. In the lecture's build-up this is the moment the motor becomes digitally controllable — and the moment the gate voltage stops being the motor's voltage." },
+      { "x": 22.0, "y": 86.8, "label": "The common ground", "detail": "Battery GND and microcontroller GND are tied together so the gate signal has a shared reference. Their VCC rails are never joined — that is the wiring mistake that pushes motor current back through the microcontroller." }
+    ]
+  }
+  </script>
+
+  <div class="algo-block">
+    <h4>The lecture's build-up, in order</h4>
+    <pre class="code-block">// each line is a question the previous circuit could not answer
+1. battery + motor            -> it spins, but nothing controls it
+2. + microcontroller          -> we want to control it ... digitally
+3. + transistor               -> the voltage is too high for the pin
+4. + flyback diode            -> current flows back when we power down;
+                                 it will burn the MOSFET
+5. + common ground            -> GND together, VCC never together</pre>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Powering from the internal supply</h3>
+      <p>Possible only while the motor's current stays within what the board's regulator and the pin can supply. The lecture treats this as the case that <em>does not</em> hold for motors: a vibration motor can easily draw 100&nbsp;mA, which is why the transistor and the external source appear.</p>
+    </div>
+    <div class="col-card">
+      <h3>Powering from an external supply</h3>
+      <p>Connect the GND of the battery and the microcontroller. Do <strong>not</strong> connect their VCC. The control wire still comes from the microcontroller &mdash; for a servo, that is the orange wire while the red wire moves to the external supply.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A servo is stronger than the microcontroller's regulator can supply, but you still want to command its angle from code. What does the lecture say to do?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. You can still control it from the microcontroller, but the red wire must be connected to an external supply — the control wire stays with the logic while the power wire moves." data-bad="">Keep the control wire on the microcontroller and move the red (Vcc) wire to an external supply</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Moving the control wire to the supply removes the thing that makes it controllable. The signal is logic-level; the power is not.">Move the orange control wire to the external supply and keep the red wire on the board</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Adding a diode protects against back-EMF. It does not increase the current the regulator can deliver.">Add a flyback diode and keep both wires where they are</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; sizing a haptic prototype's power budget.</strong> A wearable cues direction with three ERM vibration motors, one per shoulder and one at the sternum.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Write down the load.</strong> The deck's figure: a vibration motor can easily draw 100&nbsp;mA. Three of them, potentially on at once, is a peak of roughly 300&nbsp;mA.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Compare against the pin.</strong> A GPIO pin is rated for tens of milliamps at most. Even one motor already exceeds it, so no motor may come off a pin. The comparison \(I_{\text{motor}} \gg I_{\text{pin}}\) is the whole argument.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Apply the rule of thumb.</strong> The load draws real current, switches on and off frequently, and is inductive. All three conditions point the same way: give the motors their own supply and let the microcontroller control them through transistors.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Protect each switch.</strong> One flyback diode per motor, across the motor terminals, so the inductive kick has a path when that channel switches off. Sharing a single diode between channels does not protect the switch that is actually opening.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Tie the references.</strong> Battery GND and microcontroller GND together, VCC rails apart. Then check the design against the week's perception side as well: three spatially separated motors give you a categorical direction cue, and the ADSR envelope is what keeps each cue perceptible rather than fading under adaptation.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-design">
+  <h2 class="section-title">Haptic design checklist</h2>
+  <p class="section-lead">Most Week 7 exam questions reduce to &ldquo;design (or critique) a haptic feedback for this situation&rdquo;. Run the seven steps in order and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-design-seq"></div>
+  <script type="application/json" id="ix-m-design-seq">
+  {
+    "title": "Order the haptic design checklist",
+    "subtitle": "Rebuild the order in which to interrogate a haptic design before you judge it.",
+    "steps": [
+      "Name the information to be conveyed — urgency, direction, weight, texture, temperature",
+      "Choose the receptor class that carries that information",
+      "Choose the channel and actuator family that addresses that class",
+      "Set the signal parameters: frequency, duration, amplitude, waveform, rhythm, ADSR",
+      "Check the power chain: own supply, transistor, flyback diode, common ground",
+      "Check the body: acuity at the site, threshold, and adaptation over time",
+      "Name the failure mode and say who bears its cost"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Information</td><td>Is it a discrete event, a continuous property, or a spatial cue?</td><td>You describe the hardware before saying what it communicates</td></tr>
+        <tr><td>2. Receptor class</td><td>Thermo-, mechano-, noci- or proprioceptors</td><td>You choose vibration for weight or temperature</td></tr>
+        <tr><td>3. Channel and actuator</td><td>Vibrotactile, thermal, force, passive prop</td><td>You name a device without naming the channel it writes to</td></tr>
+        <tr><td>4. Signal parameters</td><td>The six parameters and the ADSR envelope</td><td>You specify &ldquo;a buzz&rdquo; with no envelope, guaranteeing adaptation</td></tr>
+        <tr><td>5. Power chain</td><td>Own supply, transistor switch, diode, shared ground</td><td>You power a motor from a GPIO pin</td></tr>
+        <tr><td>6. The body</td><td>Acuity at the site, threshold, adaptation</td><td>You design below the detection threshold or above what the site can resolve</td></tr>
+        <tr><td>7. Failure mode</td><td>Missed cue, nuisance buzz, discomfort, lost control</td><td>You claim the design has no trade-offs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: say the answer before you flip",
+    "subtitle": "Definitions, parameters and rules from the Week 7 material.",
+    "cards": [
+      { "front": "Haptic feedback", "back": "Relating to the sense of touch.", "hint": "Definition" },
+      { "front": "Cutaneous vs tactile", "back": "Cutaneous pertains to the skin as a sense organ and includes pressure, temperature and pain; tactile is the cutaneous sense restricted to pressure.", "hint": "Definition" },
+      { "front": "Kinaesthetic", "back": "Relating to the feeling of motion and sensations originating in muscles, tendons and joints.", "hint": "Definition" },
+      { "front": "Proprioceptive", "back": "Relating to sensory information about the state of the body — including cutaneous, kinaesthetic and vestibular sensations.", "hint": "Definition" },
+      { "front": "Acuity", "back": "Spatial resolution — how close two stimuli can be and still be resolved as two.", "hint": "Three properties" },
+      { "front": "Sensitivity", "back": "The detection threshold — how weak a stimulus can be and still be felt.", "hint": "Three properties" },
+      { "front": "Adaptation", "back": "How the response changes over time under a constant stimulus; it is why haptic signals must change to keep being perceived.", "hint": "Three properties" },
+      { "front": "The six vibration parameters", "back": "Frequency, duration, amplitude, waveform, rhythm, and ADSR — attack, decay, sustain, release.", "hint": "Vibrotactile" },
+      { "front": "ERM vs LRA", "back": "ERM: an eccentric rotating mass powered by a DC motor, whose rotation makes it vibrate. LRA: a mass on a spring driven by a coil, moving up and down.", "hint": "Actuators" },
+      { "front": "Stepper resolution", "back": "200 steps per rotation, so 1.8 degrees per step. Open loop, full rotation, controlled by a motor driver — one pulse, one step.", "hint": "Numbers" },
+      { "front": "Rule of thumb for loads", "back": "If a load draws more than a trivial amount of current, switches on and off frequently, or is inductive, give it its own supply and use the microcontroller only to control it via a transistor.", "hint": "Hardware rule" },
+      { "front": "Common ground", "back": "Connect the battery's GND to the microcontroller's GND so the gate signal has a shared reference. Do NOT connect their VCC.", "hint": "Wiring rule" }
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Audit question one</h3>
+      <p>Which receptor class does this design write to, and is that the class that carries the information? If the answer is &ldquo;mechanoreceptors&rdquo; and the information is weight, the design is already wrong.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Audit question two</h3>
+      <p>Does the signal change over time? If the envelope is flat, adaptation will remove it from perception no matter how strong it is.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Audit question three</h3>
+      <p>Where does the current come from? If the answer involves a GPIO pin and a motor in the same sentence, the power chain is not finished.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Audit question four</h3>
+      <p>What does the user lose? Discomfort, missed cues, false urgency and lost control are the costs this week's devices typically impose.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and budgets on this page, the receptor classes and the two design camps on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5047ChapterUI) return;
+    try {
+      window.initCOMP5047ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5047 chapter 7] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

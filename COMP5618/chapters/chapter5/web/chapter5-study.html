@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 5: Web Application Scanners — COMP5618</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter5-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 study guide for COMP5618: how web application scanners crawl, probe, analyse and report, the black/white/grey box taxonomy, fuzzing, authenticated scanning with session cookies, triage of false positives, the vulnerability management lifecycle and defensive mitigations.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 5: Web Application Scanners — COMP5618">
+<meta property="og:description" content="Week 5 study guide for COMP5618: scanner anatomy, testing approaches, fuzzing, authenticated scanning, triage and the vulnerability management lifecycle.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" data-i18n-home style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F50E;</span>
+      <h2>Week 5</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-anatomy" class="nav-link" data-section="anatomy">Scanner Anatomy</a></li>
+    <li><a href="#sec-types" class="nav-link" data-section="types">Black, White &amp; Grey Box</a></li>
+    <li><a href="#sec-fuzzing" class="nav-link" data-section="fuzzing">Fuzzing &amp; Probes</a></li>
+    <li><a href="#sec-tools" class="nav-link" data-section="tools">Tool Landscape</a></li>
+    <li><a href="#sec-discovery" class="nav-link" data-section="discovery">Discovery &amp; Proxies</a></li>
+    <li><a href="#sec-auth" class="nav-link" data-section="auth">Authenticated Scanning</a></li>
+    <li><a href="#sec-triage" class="nav-link" data-section="triage">Triage &amp; Severity</a></li>
+    <li><a href="#sec-lifecycle" class="nav-link" data-section="lifecycle">Vulnerability Lifecycle</a></li>
+    <li><a href="#sec-defend" class="nav-link" data-section="defend">Defending Web Apps</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter5-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter5-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);" data-i18n="link_quiz">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 5 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5618 — Applied Cybersecurity</p>
+    <h1>Week 5: Web Application Scanners</h1>
+    <p class="hero-subtitle">Automated discovery of web flaws: scanner architecture, fuzzing, authenticated scanning, triaging false positives, and turning findings into a risk-based remediation report.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50E;</span>
+        <span>Crawl &rarr; probe &rarr; analyse &rarr; report</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F5C2;</span>
+        <span>Black, white and grey box testing</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F36A;</span>
+        <span>Session cookies for authenticated scans</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2696;</span>
+        <span>Triage before you trust a finding</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter5-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter5-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 5 lecture deck <em>Web Application Scanners</em> and the Week 5 tutorial (Dirb, Burp Suite, OWASP ZAP and sqlmap against DVWA)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-anatomy" class="section" data-track="anatomy">
+  <h2 class="section-title">How a Web Application Scanner Works</h2>
+  <p class="section-lead">The deck opens with the four-stage engine that every scanner shares, and with the caveat that matters most in the exam: automated discovery produces <em>candidates</em>, not confirmed vulnerabilities.</p>
+
+  <div class="concept-box">
+    <p><strong>Lecture framing:</strong> automated scanners help teams discover common web weaknesses early, then turn findings into <strong>risk-based remediation</strong> work. Scanner output still needs validation, ownership and remediation tracking.</p>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-scan-pipeline"></div>
+  <script type="application/json" id="ix-scan-pipeline">
+  {
+    "title": "The four stages of a scan",
+    "subtitle": "The deck's engine: crawl, probe, analyse, report. Press play to step through it.",
+    "nodes": [
+      { "label": "1 Crawl", "note": "Map pages, APIs, forms and links into a site model." },
+      { "label": "2 Probe", "note": "Send safe tests for known weakness patterns, one input slot at a time." },
+      { "label": "3 Analyse", "note": "Match responses against risk indicators and the recorded baseline." },
+      { "label": "4 Report", "note": "Prioritise evidence for remediation, with severity and an owner." }
+    ]
+  }
+  </script>
+
+  <div id="ix-scan-walk"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>What the scanner does (deck)</th><th>Evidence it records</th><th>Where it fails</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Crawl</strong></td><td>Maps pages, APIs, forms and links</td><td>URL inventory, parameter names, form fields, route list</td><td>Misses routes that are only reachable after login, from JavaScript, or from a sitemap that is not linked</td></tr>
+        <tr><td><strong>Probe</strong></td><td>Sends safe tests for known weakness patterns</td><td>The exact request sent, including headers, cookies and body</td><td>A destructive or rate-limited test can change state, lock accounts or corrupt lab data</td></tr>
+        <tr><td><strong>Analyse</strong></td><td>Matches responses to risk indicators</td><td>Baseline and test response: status, length, timing, error text, reflections</td><td>Signature matching cannot reason about business logic, so it produces both false positives and false negatives</td></tr>
+        <tr><td><strong>Report</strong></td><td>Prioritises evidence for remediation</td><td>Finding, severity, affected endpoint, reproduction steps, suggested fix</td><td>A report nobody owns or retests is a document, not a control</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>What scanners help detect</h4>
+      <ul>
+        <li><strong>Security flaws</strong> &mdash; injection, XSS, authentication gaps</li>
+        <li><strong>Misconfigurations</strong> &mdash; headers, TLS, exposed services</li>
+        <li><strong>Weak areas</strong> &mdash; prioritised issues for developer fixes</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>Why teams still run them</h4>
+      <ul>
+        <li>Identify security weaknesses at scale and repeatedly</li>
+        <li>Protect sensitive data and reduce financial loss</li>
+        <li>Meet compliance and regulatory requirements</li>
+        <li>Enhance user trust through evidence of testing</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> automation buys <em>coverage and repetition</em>, not judgement. The deck is explicit that scanners have limitations in deep system inspection, that understanding a vulnerability and crafting a manual exploit remains crucial, and that automated tools should complement manual processes rather than replace them.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A scanner reports &ldquo;possible SQL injection&rdquo; on a search parameter because the response contained a database error string. What is the most accurate description of that output?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A scanner matches patterns; it does not prove exploitability or measure business impact. The finding is a candidate until a human confirms it.">A confirmed vulnerability with a known impact</div>
+      <div class="qc-opt" data-correct="true" data-good="Right. The analyse stage matches responses to risk indicators, so the output is a candidate finding that still needs validation, ownership and remediation tracking." data-bad="">A candidate finding that still needs validation, ownership and remediation tracking</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Misconfiguration checks are one category scanners cover (headers, TLS, exposed services), but an error string from a parameter test is an injection candidate, not a configuration issue.">A misconfiguration of the web server error handler</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; tracing one finding through the four stages.</strong> Scope: your own DVWA virtual machine on the isolated lab network. The scanner is pointed at the lab host, never at a system you do not own.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Crawl.</strong> The crawler starts from the seed URL, follows the menu links, and parses every form it reaches. It records <code>/dvwa/vulnerabilities/sqli/</code> with one GET parameter (<code>id</code>) and one session cookie. Two links it never follows are behind the login form, so the site model is already incomplete.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Probe.</strong> For the <code>id</code> slot the prober first sends the normal value and stores the response as the baseline. It then substitutes one test string at a time &mdash; syntax-breaking characters, boolean-true and boolean-false variants, timing variants &mdash; and never touches more than one slot per request, so the cause of any change stays attributable.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Analyse.</strong> The boolean pair returns the same page with different result rows: a difference the crawler can attribute to the injected condition rather than to page noise. A syntax-breaking string returns a database error signature. Two independent indicators raise confidence; a single odd status code would not.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Report.</strong> The finding leaves with the request/response pair as evidence, the affected endpoint, a severity estimate and a suggested remediation. Because it is an error-based indicator, it may still be a false positive if the application sanitises the value elsewhere &mdash; so the first action on the ticket is manual reproduction, not a patch.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Close the loop.</strong> A human reproduces it, a developer fixes it (parameterised queries), the scanner is re-run to verify, and the ticket records who owns the residual risk if the fix is deferred. Those three words &mdash; validate, own, track &mdash; are the deck's own caveat about scanner output.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-types" class="section" data-track="types">
+  <h2 class="section-title">Black Box, White Box and Grey Box</h2>
+  <p class="section-lead">The deck names three main categories of web application vulnerability scanner. Each follows a different approach, and each brings its own advantages and limitations.</p>
+
+  <div class="def-box">
+    <div class="def-label">White box</div>
+    <p>A scanner that <strong>examines the source code or internal structure</strong> of a web application. It provides a deeper level of analysis by inspecting the application's code, configuration files and internal messages. Key characteristics from the deck: source code analysis, internal message analysis, in-depth coverage, customisation and configuration, and code review with recommendations.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Black box</div>
+    <p>A scanner that <strong>operates from the outside</strong>, without access to the internal structure or source code. It simulates real-world attack scenarios and identifies vulnerabilities by interacting with the application as an external user would. Key characteristics: network scanning, attack payloads, pattern recognition, vulnerability detection and web application crawling.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Grey box</div>
+    <p><strong>Combines elements of white and black box</strong> scanning. Visibility varies with the configuration and capabilities granted to the tool; it mixes code analysis and response analysis, may require source access depending on the level of analysis, and can incorporate an external perspective to some extent.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Dimension</th><th>White box scanners</th><th>Black box scanners</th><th>Grey box scanners</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Approach</strong></td><td>Examines source code and internal structure</td><td>Scans via the network and analyses responses</td><td>Combines elements of white and black box scanners</td></tr>
+        <tr><td><strong>Visibility</strong></td><td>Full visibility into the application's internal workings</td><td>Limited visibility into the internal workings</td><td>Variable visibility depending on configuration and capabilities</td></tr>
+        <tr><td><strong>Vulnerability detection</strong></td><td>Comprehensive analysis of code and configuration</td><td>Identifies vulnerabilities from external observation and response analysis</td><td>Mixes code analysis and response analysis</td></tr>
+        <tr><td><strong>False positives / negatives</strong></td><td>May arise from misinterpretation of code</td><td>May arise from limited visibility and response analysis</td><td>May arise depending on the level of analysis performed</td></tr>
+        <tr><td><strong>Source code access</strong></td><td>Required for in-depth analysis</td><td>Not required &mdash; it focuses on external observation</td><td>May be required depending on the level of analysis</td></tr>
+        <tr><td><strong>External perspective</strong></td><td>Limited: it mainly examines internal structure</td><td>Primary focus: external observation and network scanning</td><td>Can incorporate it to some extent, based on configuration</td></tr>
+        <tr><td><strong>Use cases</strong></td><td>Comprehensive security assessments and secure coding practices</td><td>Quick vulnerability identification and general security assessments</td><td>Flexible, customised scanning that addresses specific concerns</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-black"></div>
+  <script type="application/json" id="ix-race-black">
+  {
+    "title": "Black box scanning — emphasis profile",
+    "subtitle": "Illustrative 0–5 emphasis scores derived from the deck's comparison table. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Visibility into internals", "value": 1, "display": "limited" },
+      { "name": "External perspective", "value": 5, "display": "primary" },
+      { "name": "Real-world attack simulation", "value": 5, "display": "the point" },
+      { "name": "Deployment speed", "value": 5, "display": "no source needed" },
+      { "name": "Risk of response misreading", "value": 4, "display": "high" }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-white"></div>
+  <script type="application/json" id="ix-race-white">
+  {
+    "title": "White box scanning — emphasis profile",
+    "subtitle": "Same five dimensions, same 0–5 scale. The trade is internal depth for external realism.",
+    "max": 5,
+    "rows": [
+      { "name": "Visibility into internals", "value": 5, "display": "full" },
+      { "name": "External perspective", "value": 1, "display": "limited" },
+      { "name": "Real-world attack simulation", "value": 2, "display": "indirect" },
+      { "name": "Deployment speed", "value": 2, "display": "needs source and build" },
+      { "name": "Risk of code misinterpretation", "value": 4, "display": "high" }
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Benefits of white box scanning</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Early detection</strong> &mdash; issues found during development, before deployment</li>
+        <li><strong>Deeper analysis</strong> &mdash; flaws that are hard to detect from outside</li>
+        <li><strong>Compliance and best practice</strong> &mdash; coding standards and industry guidelines</li>
+        <li><strong>Secure coding education</strong> &mdash; insights developers can act on immediately</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Benefits of black box scanning</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Real-world simulation</strong> &mdash; how an external attacker actually sees the app</li>
+        <li><strong>Comprehensive coverage</strong> &mdash; probing many parts and functions</li>
+        <li><strong>Quick deployment</strong> &mdash; no source or internal structure required</li>
+        <li><strong>Third-party perspective</strong> &mdash; flaws that internal developers cannot see</li>
+        <li><strong>Continuous monitoring</strong> &mdash; regular scans that catch emerging threats</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Downsides worth quoting:</strong> black box scanners suffer <em>limited visibility</em>, <em>false positives and false negatives</em>, and <em>dependence on response analysis</em>. White box scanners suffer <em>source code availability</em>, <em>complexity and false positives</em>, and a <em>limited external perspective</em>. Neither list is a reason to skip the other class &mdash; they fail in different directions.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team has the source repository and CI pipeline but no running production instance to scan. Which class of scanner can still be used, and what does it cost them?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. White box scanning needs the code, not a live target, which is why it catches issues in development — at the cost of the external perspective a black box scan provides." data-bad="">White box scanning, at the cost of the external attacker's perspective</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Black box scanning operates by interacting with a running application over the network, so with no instance to scan there is nothing to probe.">Black box scanning, at the cost of source code access</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Grey box scanning mixes both approaches, but it still needs something to analyse — source, a running instance, or both. It is not a substitute for having neither.">Grey box scanning, because it needs neither source nor a running target</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-fuzzing" class="section" data-track="fuzzing">
+  <h2 class="section-title">Fuzzing and Probe Design</h2>
+  <p class="section-lead">Fuzzing is the technique underneath the probe stage. Understanding what it does &mdash; and what it cannot do &mdash; explains both the value and the noise of scanner output.</p>
+
+  <div class="def-box">
+    <div class="def-label">Fuzzing (deck definition)</div>
+    <p>A technique used by some vulnerability scanners to test the robustness and security of a web application. It involves providing the application with various types of <strong>invalid, unexpected or random data</strong> as input in order to identify vulnerabilities.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Input class</th><th>What it stresses</th><th>What the scanner compares</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Invalid</strong></td><td>Parsing, validation and error handling</td><td>Status code changes, stack traces, database error signatures, generic error pages</td></tr>
+        <tr><td><strong>Unexpected</strong></td><td>Type assumptions, boundary conditions, encoding and canonicalisation</td><td>Response length and structure against the baseline, reflected characters, boolean-true vs boolean-false differences</td></tr>
+        <tr><td><strong>Random</strong></td><td>Robustness and crash resistance</td><td>Timing outliers, connection resets, repeated-content fingerprints, rate-limit responses</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Two design decisions make the difference between a useful probe set and a noisy one. The first is <strong>one variable at a time</strong>: change a single parameter or header per request so that any change in the response is attributable. The second is the <strong>baseline</strong>: the same request with a benign value, stored before any test is sent, is the only thing that makes a diff meaningful.</p>
+
+  <pre class="code-block"><code># Conceptual exchange only — sent by a scanner to your own lab VM, never to a third party.
+# 1. Baseline: the benign request, stored for comparison.
+GET /dvwa/vulnerabilities/sqli/?id=1&amp;Submit=Submit HTTP/1.1
+Host: &lt;your-lab-vm&gt;
+Cookie: PHPSESSID=&lt;session-copied-from-your-own-lab-browser&gt;; security=low
+--&gt; 200 OK, 4 812 bytes, one data row, no error text
+
+# 2. Probe: exactly one slot changed. The scanner records the pair, not a verdict.
+GET /dvwa/vulnerabilities/sqli/?id=&lt;single-test-string&gt;&amp;Submit=Submit HTTP/1.1
+Host: &lt;your-lab-vm&gt;
+Cookie: PHPSESSID=&lt;same-session&gt;; security=low
+--&gt; 500 Internal Server Error, 1 290 bytes, database error signature present</code></pre>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why fuzzing finds real flaws</h3>
+      <p>Attackers also send malformed input. A parser that assumes well-formed data fails in ways the developer never tested: unhandled exceptions, verbose errors that leak structure, and code paths that skip validation entirely.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why fuzzing produces noise</h3>
+      <p>A 500 response may be a handled error with no security consequence, and an input echoed into the page may already be encoded. Pattern matching sees the symptom, never the root cause &mdash; which is exactly why the analyse stage needs a human afterwards.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Safe testing in the lab:</strong> the deck specifies <em>safe tests</em> for the probe stage. In the tutorial this means a deliberately vulnerable application (DVWA) running on your own virtual machines, non-destructive checks, and awareness that state-changing requests, account lockouts and rate limits can distort both the target and the result.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A scanner sends one request per parameter and keeps a benign baseline of each. Which property of good probe design does this describe?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Randomising order changes timing, not attribution. The property being described is about isolating the variable that caused a response to change.">Randomising the order of tests to avoid caching effects</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. One variable at a time plus a stored baseline is what makes a response difference attributable to the input the scanner changed." data-bad="">Isolating one variable per request and comparing against a stored baseline</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Maximising requests raises coverage but breaks attribution and can trip rate limits or lock accounts — the opposite of the deck's emphasis on safe tests.">Maximising the number of requests per second to finish the scan faster</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tools" class="section" data-track="tools">
+  <h2 class="section-title">The Tool Landscape</h2>
+  <p class="section-lead">The deck walks through nine named tools. Most are white box (static) analysers; the exam question is almost always <em>which one, why, and what makes it distinctive</em>.</p>
+
+  <div data-ix="timeline" data-ix-src="#ix-tool-timeline"></div>
+  <script type="application/json" id="ix-tool-timeline">
+  {
+    "title": "When the named tools appeared",
+    "subtitle": "Founding dates from the Week 5 deck. The dates cluster in the 2000s, which is when static analysis became a commercial product category.",
+    "events": [
+      { "label": "1996", "title": "AppScan founded", "detail": "Now part of HCL Software. Supports various languages and frameworks; offers static and dynamic analysis with comprehensive reporting and vulnerability management features." },
+      { "label": "2001", "title": "Klocwork", "detail": "Now part of the Perforce Software family. Static code analysis with customisable rule sets; unique feature is continuous analysis and compliance with coding standards and industry regulations." },
+      { "label": "2002", "title": "Coverity and CodeSonar", "detail": "Coverity is known for scalability and fast analysis of large codebases. CodeSonar, founded by GrammaTech, uses sophisticated static analysis for advanced bug finding: critical defects, security vulnerabilities and code quality issues." },
+      { "label": "2003", "title": "Fortify", "detail": "Now part of Micro Focus. A wide range of languages and security testing capabilities; unique feature is integration with popular IDEs so developers get real-time feedback as they write code." },
+      { "label": "2006", "title": "Checkmarx, Veracode and Semmle", "detail": "Checkmarx: deep code analysis for complex flaws such as SQL injection and XSS. Veracode: cloud-based, SAST and DAST plus binary analysis of compiled code. Semmle: CodeQL, a powerful query language for customisable code analysis; acquired by GitHub." },
+      { "label": "2008", "title": "SonarQube", "detail": "Founded in Switzerland, focused on code quality and security. A comprehensive rule set across many languages, with a free open-source community edition and a commercial edition with additional features and support." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Tool</th><th>Origin in the deck</th><th>Class</th><th>Unique feature</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>SonarQube</strong></td><td>Founded 2008, Switzerland; open-source community edition plus commercial editions</td><td>Static analysis / code quality</td><td>Code quality and security rules across a wide range of languages</td></tr>
+        <tr><td><strong>Checkmarx</strong></td><td>Founded 2006, USA; integrates with development environments</td><td>SAST</td><td>Deep code analysis that detects complex flaws such as SQL injection and XSS</td></tr>
+        <tr><td><strong>Veracode</strong></td><td>Founded 2006, USA; cloud-based application security</td><td>SAST + DAST</td><td>Binary analysis: analyses compiled code without source, suiting COTS applications and third-party libraries</td></tr>
+        <tr><td><strong>Fortify</strong></td><td>Since 2003, now part of Micro Focus</td><td>SAST</td><td>Integration with popular IDEs for real-time developer feedback</td></tr>
+        <tr><td><strong>Coverity</strong></td><td>Founded 2002</td><td>Static analysis</td><td>Scalability and fast analysis of large codebases without sacrificing accuracy</td></tr>
+        <tr><td><strong>Klocwork</strong></td><td>Since 2001, part of Perforce Software</td><td>Static code analysis</td><td>Continuous analysis and compliance with coding standards and regulations</td></tr>
+        <tr><td><strong>AppScan</strong></td><td>Founded 1996, now part of HCL Software</td><td>Static + dynamic</td><td>Combined static and dynamic analysis with reporting and vulnerability management</td></tr>
+        <tr><td><strong>Semmle</strong></td><td>Founded 2006, acquired by GitHub</td><td>Query-based code analysis</td><td>CodeQL: a powerful query language for detecting vulnerabilities, with customisable queries</td></tr>
+        <tr><td><strong>CodeSonar</strong></td><td>Founded 2002 by GrammaTech</td><td>Static analysis</td><td>Advanced bug finding: complex defects, security vulnerabilities and code quality issues</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-tool-match"></div>
+  <script type="application/json" id="ix-tool-match">
+  {
+    "title": "Match the tool to its distinguishing feature",
+    "subtitle": "Click a tool on the left, then the feature the deck singles out for it on the right.",
+    "pairs": [
+      ["SonarQube", "Code quality and security rules across many languages; free community edition"],
+      ["Checkmarx", "Deep code analysis that finds complex flaws such as SQL injection and XSS"],
+      ["Veracode", "Binary analysis of compiled code without access to the source"],
+      ["Fortify", "IDE integration giving developers real-time feedback while they write code"],
+      ["Coverity", "Scalability and fast analysis of very large codebases"],
+      ["Klocwork", "Continuous analysis and compliance with coding standards and regulations"],
+      ["AppScan", "Static and dynamic analysis with comprehensive reporting and vulnerability management"],
+      ["Semmle", "CodeQL: a query language for deep, customisable code analysis"],
+      ["CodeSonar", "Sophisticated static analysis for advanced bug finding"]
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Choosing a tool is a scoping decision.</strong> If the team owns the source, white box tooling runs in the pipeline and catches issues before deployment. If the app is bought, hosted by a third party, or already running, black box scanning is the only option &mdash; and Veracode's binary analysis exists precisely because source is often unavailable for commercial off-the-shelf software and third-party libraries.
+  </div>
+</section>
+
+<section id="sec-discovery" class="section" data-track="discovery">
+  <h2 class="section-title">Content Discovery and Intercepting Proxies</h2>
+  <p class="section-lead">The tutorial puts the scanner toolkit into practice against DVWA. Its first lesson is a distinction the exam likes: a content scanner is <em>not</em> a vulnerability scanner, but it finds the entry points a vulnerability scanner needs.</p>
+
+  <div class="def-box">
+    <div class="def-label">Web content scanner (tutorial)</div>
+    <p>Where <code>nmap</code> scans a host for ports, services, versions and operating-system information, a web content scanner looks for <strong>web objects, hidden or otherwise</strong>. It usually works by launching a <strong>dictionary-based attack</strong> against a web server and analysing the response. These tools are not vulnerability scanners, but they can find useful pages that contain possible entry points. Example tools: <code>dirb</code>, <code>dirbuster</code>, <code>gobuster</code>.</p>
+  </div>
+
+  <div id="ix-proxy-walk"></div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-lab-map"></div>
+  <script type="application/json" id="ix-lab-map">
+  {
+    "title": "The lab topology a scanner walks",
+    "subtitle": "Click each marker to see what the scanner sees at that point. Everything here lives on your own isolated lab network.",
+    "svg": "<svg viewBox=\"0 0 800 420\" role=\"img\" aria-label=\"Lab topology diagram: a Kali VM with a scanner, intercepting proxy and wordlists, connected over a lab network to an Ubuntu VM running a web server, the DVWA application, a session store and MySQL\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"arw\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#9ca3af\"></path></marker></defs><rect x=\"0\" y=\"0\" width=\"800\" height=\"420\" fill=\"#fdf7f9\"></rect><text x=\"30\" y=\"34\" font-size=\"12\" fill=\"#be123c\" font-family=\"sans-serif\">Isolated lab network — your own VMs only, no third-party systems</text><rect x=\"30\" y=\"60\" width=\"210\" height=\"310\" rx=\"14\" fill=\"#ffffff\" stroke=\"#be123c\" stroke-width=\"2\"></rect><text x=\"135\" y=\"86\" text-anchor=\"middle\" font-size=\"13\" fill=\"#be123c\" font-family=\"sans-serif\">Kali VM — tester</text><rect x=\"62\" y=\"112\" width=\"146\" height=\"56\" rx=\"8\" fill=\"#fde8ee\" stroke=\"#e11d48\" stroke-width=\"1.6\"></rect><text x=\"135\" y=\"134\" text-anchor=\"middle\" font-size=\"12\" fill=\"#881337\" font-family=\"sans-serif\">scanner</text><text x=\"135\" y=\"152\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">crawl · probe · report</text><rect x=\"62\" y=\"190\" width=\"146\" height=\"56\" rx=\"8\" fill=\"#eef2ff\" stroke=\"#2563eb\" stroke-width=\"1.6\"></rect><text x=\"135\" y=\"212\" text-anchor=\"middle\" font-size=\"12\" fill=\"#1e3a8a\" font-family=\"sans-serif\">intercepting proxy</text><text x=\"135\" y=\"230\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">site map · replay</text><rect x=\"62\" y=\"268\" width=\"146\" height=\"56\" rx=\"8\" fill=\"#f5f3ff\" stroke=\"#7c3aed\" stroke-width=\"1.6\"></rect><text x=\"135\" y=\"290\" text-anchor=\"middle\" font-size=\"12\" fill=\"#5b21b6\" font-family=\"sans-serif\">wordlists</text><text x=\"135\" y=\"308\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">content discovery</text><line x1=\"246\" y1=\"215\" x2=\"304\" y2=\"215\" stroke=\"#9ca3af\" stroke-width=\"2\" stroke-dasharray=\"6 5\"></line><text x=\"275\" y=\"204\" text-anchor=\"middle\" font-size=\"10\" fill=\"#6b7280\" font-family=\"sans-serif\">lab net</text><rect x=\"314\" y=\"60\" width=\"456\" height=\"310\" rx=\"14\" fill=\"#ffffff\" stroke=\"#e11d48\" stroke-width=\"2\" stroke-dasharray=\"8 6\"></rect><text x=\"542\" y=\"86\" text-anchor=\"middle\" font-size=\"13\" fill=\"#be123c\" font-family=\"sans-serif\">Ubuntu VM — target (DVWA)</text><rect x=\"344\" y=\"108\" width=\"176\" height=\"62\" rx=\"8\" fill=\"#eef2ff\" stroke=\"#2563eb\" stroke-width=\"1.6\"></rect><text x=\"432\" y=\"132\" text-anchor=\"middle\" font-size=\"12\" fill=\"#1e3a8a\" font-family=\"sans-serif\">web server :80</text><text x=\"432\" y=\"151\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">public routes</text><rect x=\"344\" y=\"206\" width=\"176\" height=\"76\" rx=\"8\" fill=\"#fde8ee\" stroke=\"#e11d48\" stroke-width=\"1.6\"></rect><text x=\"432\" y=\"230\" text-anchor=\"middle\" font-size=\"12\" fill=\"#881337\" font-family=\"sans-serif\">DVWA application</text><text x=\"432\" y=\"249\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">login · forms · API</text><text x=\"432\" y=\"266\" text-anchor=\"middle\" font-size=\"10\" fill=\"#9ca3af\" font-family=\"sans-serif\">difficulty low (lab only)</text><rect x=\"592\" y=\"108\" width=\"156\" height=\"62\" rx=\"8\" fill=\"#fff7ed\" stroke=\"#f59e0b\" stroke-width=\"1.6\"></rect><text x=\"670\" y=\"132\" text-anchor=\"middle\" font-size=\"12\" fill=\"#92400e\" font-family=\"sans-serif\">session store</text><text x=\"670\" y=\"151\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">PHPSESSID</text><rect x=\"592\" y=\"206\" width=\"156\" height=\"76\" rx=\"8\" fill=\"#ecfdf5\" stroke=\"#059669\" stroke-width=\"1.6\"></rect><text x=\"670\" y=\"230\" text-anchor=\"middle\" font-size=\"12\" fill=\"#065f46\" font-family=\"sans-serif\">MySQL</text><text x=\"670\" y=\"249\" text-anchor=\"middle\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">application data</text><text x=\"670\" y=\"266\" text-anchor=\"middle\" font-size=\"10\" fill=\"#9ca3af\" font-family=\"sans-serif\">lab instance</text><path d=\"M208 140 C 260 120, 300 126, 344 132\" fill=\"none\" stroke=\"#e11d48\" stroke-width=\"1.8\" marker-end=\"url(#arw)\"></path><path d=\"M208 218 C 260 200, 300 170, 344 148\" fill=\"none\" stroke=\"#2563eb\" stroke-width=\"1.6\" stroke-dasharray=\"5 4\" marker-end=\"url(#arw)\"></path><path d=\"M432 170 L432 206\" fill=\"none\" stroke=\"#9ca3af\" stroke-width=\"1.6\" marker-end=\"url(#arw)\"></path><path d=\"M520 232 L592 232\" fill=\"none\" stroke=\"#9ca3af\" stroke-width=\"1.6\" marker-end=\"url(#arw)\"></path><path d=\"M500 214 C 552 190, 566 158, 592 140\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"1.4\" stroke-dasharray=\"4 4\" marker-end=\"url(#arw)\"></path><text x=\"404\" y=\"352\" font-size=\"11\" fill=\"#6b7280\" font-family=\"sans-serif\">Every request in the scan crosses the proxy, so the tester sees and can replay the full exchange.</text></svg>",
+    "points": [
+      { "x": 16.9, "y": 33.3, "label": "Kali VM — scanner", "detail": "The whole scan runs from here: crawler, prober, analyser and reporter. Nothing reaches a system that is not on the isolated lab network." },
+      { "x": 16.9, "y": 51.9, "label": "Intercepting proxy", "detail": "Burp Suite or ZAP sits between the browser and the target, so every request can be read, edited, replayed and stored in a site map." },
+      { "x": 16.9, "y": 70.5, "label": "Wordlists", "detail": "Dictionary-based content discovery drives requests for common paths and file names; the response code and length tell the tester whether anything exists there." },
+      { "x": 54.0, "y": 33.1, "label": "Web server on port 80", "detail": "The only part of the target an unauthenticated scanner can reach. Static resources, redirects and error pages all leak information about the stack." },
+      { "x": 54.0, "y": 58.1, "label": "DVWA application", "detail": "Deliberately vulnerable, with adjustable difficulty. It is the lab's stand-in for a real application and the target for manual confirmation of each scanner finding." },
+      { "x": 83.8, "y": 33.1, "label": "Session store", "detail": "Where the authentication cookie is validated. The scanner has to present the same cookie the browser received, or every protected route bounces it." },
+      { "x": 83.8, "y": 58.1, "label": "MySQL instance", "detail": "The data layer. Injection findings matter most here because this tier holds the data the application exists to protect — and, in the tutorial's later task, the tier that exposes the host." },
+      { "x": 50.5, "y": 83.8, "label": "Verbose responses", "detail": "Error pages and stack traces are the strongest risk indicator a black box scanner has: they are the observable symptom that its malformed input reached something that could not handle it." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Tool (tutorial / deck)</th><th>Class</th><th>What it gives you</th><th>Evidence to capture in the lab</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>dirb</code>, <code>dirbuster</code>, <code>gobuster</code></td><td>Web content scanner</td><td>Hidden and unlinked web objects; possible entry points</td><td>Listed files and folders, and a comparison of the output of two tools</td></tr>
+        <tr><td>Burp Suite</td><td>Intercepting proxy and toolkit</td><td>Proxy, content scanning and crawling, site map, request manipulation, Sequencer for token predictability</td><td>The intercepted request, the edited request, the site map</td></tr>
+        <tr><td>OWASP ZAP</td><td>DAST scanner</td><td>Automated scan of a running application and a generated vulnerability report</td><td>The report, plus one manual confirmation per important finding type</td></tr>
+        <tr><td>sqlmap</td><td>Injection-specific scanner</td><td>Targeted testing of SQL injection across many database types, with verbose logging of its own techniques</td><td>Which injection technique worked, and the evidence from the lab database</td></tr>
+        <tr><td>Hydra</td><td>Credential testing</td><td>Dictionary attack against a lab login, complementing the proxy's view of the request format</td><td>The request shape, the lockout behaviour, and the lab-only scope statement</td></tr>
+        <tr><td><code>nmap</code></td><td>Network scanner</td><td>Ports, services, versions and operating-system information — the layer below the web app</td><td>Open ports and service versions for the lab host</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The tutorial's workflow, in order:</strong> discover content &rarr; map the application through a proxy &rarr; scan it with a DAST tool &rarr; generate a report &rarr; confirm each important finding manually &rarr; demonstrate the confirmed flaws. Automated scanning is the middle of that chain, not the whole of it.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the tutorial insist on manually confirming an important finding from a ZAP report before demonstrating it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The report is not rejected for being automated; it is a prioritisation input. The issue is that a matched pattern is an indicator, not proof of exploitability.">Because automated scanners are not permitted in the unit's labs</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A scanner matches responses to risk indicators; confirming manually establishes that the flaw is real, why it was detected, and what actually caused it." data-bad="">Because a matched risk indicator must be reproduced to show the flaw is real and to identify its cause</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Report format is a presentation issue. Confirmation is about the truth of the finding, not how it is written up.">Because scanner reports do not include enough formatting detail</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-auth" class="section" data-track="auth">
+  <h2 class="section-title">Authenticated Scanning and Session Cookies</h2>
+  <p class="section-lead">Half of a typical application is behind a login form. The deck's answer is the authentication cookie &mdash; and the tutorial's answer is DVWA, which requires a login before a scanner can reach the interesting fields.</p>
+
+  <div class="def-box">
+    <div class="def-label">Authentication and cookies (deck)</div>
+    <p>In web applications, certain fields or functionalities may only be accessible to logged-in users. Users obtain an <strong>authentication cookie</strong> by providing correct login credentials; the cookie is stored in the browser and included in subsequent HTTP requests. The <strong>presence of a valid cookie</strong> is what authenticates the browser.</p>
+  </div>
+
+  <div id="ix-auth-walk"></div>
+
+  <pre class="code-block"><code># Conceptual exchange only, against your own DVWA VM on the lab network.
+# Before: the scanner has no session, so protected routes bounce it.
+GET /dvwa/vulnerabilities/brute/ HTTP/1.1
+Host: &lt;your-lab-vm&gt;
+--&gt; 302 Found, Location: /dvwa/login.php
+    (the body is the login form, so the scanner learns nothing about the protected page)
+
+# After: the tester logs in with the lab credentials and copies the session cookie
+# from their own browser's cookie store into the scanner configuration.
+GET /dvwa/vulnerabilities/brute/ HTTP/1.1
+Host: &lt;your-lab-vm&gt;
+Cookie: PHPSESSID=&lt;value-from-your-own-lab-session&gt;; security=low
+--&gt; 200 OK, the protected form is returned and can now be probed</code></pre>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Without a valid session cookie</th><th>With a valid session cookie</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Protected requests are answered with a redirect to the login page</td><td>Requests are treated as authenticated and reach the requested fields</td></tr>
+        <tr><td>The crawl model contains only public routes and the login form</td><td>The crawl model contains the full authenticated navigation, forms and API routes</td></tr>
+        <tr><td>Findings cluster on pre-authentication surfaces: headers, TLS, error handling, login form</td><td>Findings appear in privileged functionality, including injection, access-control and session flaws</td></tr>
+        <tr><td>False negatives dominate: absence of a finding says nothing about the protected area</td><td>Coverage improves, but cookie expiry, CSRF tokens and lockouts now shape the result</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Operational details that decide whether an authenticated scan works:</strong> retrieve the cookie from your own lab session rather than guessing it; expect it to expire mid-scan, and re-authenticate when the redirect count spikes; check whether the application also requires a per-request anti-CSRF token; avoid brute-force style tests that lock the account you are using; and keep the cookie out of the report, because a session identifier is a credential.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A scanner configured without a session cookie reports almost nothing on an application whose interesting features are all behind a login. What is the correct reading of that report?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Silence from an unauthenticated scan is exactly what a redirect to the login page produces. It is not evidence that the protected area is clean.">The authenticated area of the application is secure</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Without a valid cookie the scanner only ever sees the login page, so the result is dominated by false negatives — the deck's point that scanners must be given a valid authentication cookie to bypass the login process." data-bad="">The scan is dominated by false negatives because the scanner never reached the protected functionality</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A redirect is a normal, well-formed response. Nothing here indicates a transport or configuration fault — the missing ingredient is the session cookie.">The scanner is misconfigured at the network layer and cannot reach the host</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked answer &mdash; planning an authenticated scan of a lab application.</strong> Target: DVWA on your own Ubuntu VM, reached from the Kali VM over the isolated lab network.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Confirm the login contract first.</strong> Log in through the browser with the proxy recording. The exchange shows the method, the parameter names, the credential fields and the <code>Set-Cookie</code> response that issues the session. That one exchange defines everything the scanner needs.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Copy the session cookie, not the password.</strong> The deck's method is to retrieve the authentication cookie from the browser's cookie store and enter it into the scanner. The scanner then sends requests that are treated as authenticated, without storing credentials in a tool configuration.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Prove the cookie works before scanning.</strong> Request one protected page with and without the cookie. A 200 with the cookie and a 302 without it is the evidence that the scan will actually see the protected area &mdash; and it is the baseline for detecting expiry later.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Plan for session lifecycle.</strong> Sessions expire, may be invalidated by concurrent logins, and may be tied to an anti-CSRF token or a security level setting such as DVWA's difficulty. Re-authenticate on redirect spikes and note the session's lifetime as a limitation of the scan.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Scan safely and report honestly.</strong> Exclude destructive or lockout-prone tests, record the cookie in the evidence but redact it from the report, and state plainly which parts of the application the session could and could not reach. A coverage statement is what turns a scan into a defensible assessment.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-triage" class="section" data-track="triage">
+  <h2 class="section-title">Triage: False Positives, False Negatives and Severity</h2>
+  <p class="section-lead">Scanner output is a work queue, not a verdict. Triage is the manual stage that decides which findings are real, how bad they are, and who fixes them.</p>
+
+  <div class="def-box">
+    <div class="def-label">Three terms to keep apart</div>
+    <p><strong>False positive</strong> &mdash; the scanner reports a flaw that is not present or not exploitable. <strong>False negative</strong> &mdash; a real flaw the scan did not report. <strong>Severity</strong> &mdash; how much harm the flaw could cause if it were exploited, which is what prioritisation ranks.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Where false positives come from</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>A pattern matched text that is already encoded or escaped downstream</li>
+        <li>A 500 response from unhandled input that has no security consequence</li>
+        <li>An error string in a page that is never influenced by user input</li>
+        <li>Duplicate reporting of one flaw across many parameters</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Where false negatives come from</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>The crawler never found the route: unlinked pages, multi-step forms, JavaScript-built URLs</li>
+        <li>No session cookie, so protected functionality was never probed</li>
+        <li>The flaw is logic or workflow abuse, with no signature to match</li>
+        <li>Rate limiting, lockouts or WAF responses stopped the probes early</li>
+      </ul>
+    </div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-triage-seq"></div>
+  <script type="application/json" id="ix-triage-seq">
+  {
+    "title": "Order the triage of a single finding",
+    "subtitle": "Click the steps in the order that turns an alert into a defensible decision.",
+    "steps": [
+      "Read the stored request and response pair, not just the finding title",
+      "Reproduce the exact request against the lab target and observe the response",
+      "Decide whether the response is deterministic and attributable to the input",
+      "Identify the root cause and what an attacker would actually control",
+      "Assign severity from impact, then confidence from the evidence",
+      "Record the decision, the evidence and the owner of the remediation"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Signal in the report</th><th>Could be a false positive because&hellip;</th><th>How a human confirms it (lab)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Database error signature in a response</td><td>The message may be static text or a decoy, not caused by the injected value</td><td>Send a benign value, then a syntax-breaking value; confirm the error appears only with the second, and only in that parameter</td></tr>
+        <tr><td>Reflected input in the response body</td><td>The value may be encoded, or reflected in a context where it cannot execute</td><td>Inspect the exact bytes around the reflection and test the encoding in the lab browser</td></tr>
+        <tr><td>Status code changed from 200 to 500</td><td>Any malformed input may produce an unhandled error with no security impact</td><td>Repeat with several malformed values; if all fail identically, the finding is robustness, not injection</td></tr>
+        <tr><td>Response length changed materially</td><td>Dynamic content, timestamps or A/B rendering change length without any injection</td><td>Request the baseline several times to measure normal variation before attributing the change</td></tr>
+        <tr><td>Longer response time on a test request</td><td>Server load, caching or network jitter explain most outliers</td><td>Repeat the timing test and compare against several baseline samples, not one</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-node">Alert</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Evidence</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Reproduce</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Confirm or dismiss</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Score &amp; assign</div>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>What handcrafted exploits still do better</h4>
+      <ul>
+        <li>Exploration of edge cases the payload set does not contain</li>
+        <li>Customisation for the specific system under test</li>
+        <li>Detection of complex vulnerabilities that span several requests</li>
+        <li>Real-world simulation of a motivated attacker</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>What automation does better</h4>
+      <ul>
+        <li>Repetition: the same checks on every build, without boredom</li>
+        <li>Coverage: every discovered parameter, every time</li>
+        <li>Efficiency: repetitive tasks take minutes, not days</li>
+        <li>Baselines: consistent evidence that a regression has appeared</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The deck's position, stated plainly:</strong> scanners are useful but have limitations in deep system inspection; understanding a vulnerability and crafting an exploit manually remains crucial; automation should streamline and expedite existing manual processes. Manual expertise <em>plus</em> automated tools is what produces comprehensive identification.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A report lists the same reflected-input finding against six parameters of one page. The reflection is HTML-encoded in every case. What is the correct triage outcome?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would be over-reporting. Encoding is exactly the mitigation for this class of flaw, and six alerts for one root cause inflate the queue.">Six confirmed vulnerabilities, because the input is reflected each time</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The reflection is encoded, so the alerts are false positives for a script-execution flaw; if anything they are one low-severity observation about output handling, recorded once with the encoding evidence." data-bad="">Dismiss the alerts as false positives, recording the encoding evidence once and noting the duplicate pattern</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Deferring does not resolve it, and the deck's point is that scanner output needs ownership and tracking — a finding that is neither confirmed nor dismissed has neither.">Leave all six open and unresolved until the next scan</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-lifecycle" class="section" data-track="lifecycle">
+  <h2 class="section-title">The Vulnerability Management Lifecycle</h2>
+  <p class="section-lead">A scan is one turn of a continuous cycle. The deck frames this as DevSecOps practice: find, risk-rank, fix, validate and monitor weaknesses across applications and systems.</p>
+
+  <div data-ix="pipeline" data-ix-src="#ix-vuln-lifecycle"></div>
+  <script type="application/json" id="ix-vuln-lifecycle">
+  {
+    "title": "The lifecycle: discover to monitor",
+    "subtitle": "A continuous cycle to find, risk-rank, fix, validate and monitor weaknesses. Press play to step through the stages.",
+    "nodes": [
+      { "label": "Discover", "note": "Map assets and exposure — what exists, what is reachable, what changed since the last pass." },
+      { "label": "Assess", "note": "Score severity and impact; reproduce the finding well enough to judge it." },
+      { "label": "Prioritize", "note": "Rank by risk context: exposure, data sensitivity, exploitability, business weight." },
+      { "label": "Remediate", "note": "Patch, reconfigure or mitigate; record what was changed and by whom." },
+      { "label": "Verify", "note": "Retest and close — including regression testing of the parts that changed." },
+      { "label": "Monitor", "note": "Track SLAs and recurrence so the same class of flaw does not return unnoticed." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>Question it answers</th><th>Artifact that proves it happened</th><th>Ownership</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Discover</strong></td><td>What do we have, and what is exposed?</td><td>Asset and endpoint inventory, scan scope statement</td><td>Security and platform teams</td></tr>
+        <tr><td><strong>Assess</strong></td><td>Is it real, and how bad is it?</td><td>Reproduced evidence pair, severity and confidence</td><td>Security analyst</td></tr>
+        <tr><td><strong>Prioritize</strong></td><td>What gets fixed first?</td><td>Risk-ranked backlog with justification</td><td>Security with product owners</td></tr>
+        <tr><td><strong>Remediate</strong></td><td>What changes, and who changes it?</td><td>Patch or configuration change, linked to the finding</td><td>Engineering team</td></tr>
+        <tr><td><strong>Verify</strong></td><td>Is it actually gone, and did the fix break anything?</td><td>Retest result plus regression test evidence</td><td>Security review</td></tr>
+        <tr><td><strong>Monitor</strong></td><td>Is it coming back, and are we meeting our commitments?</td><td>Trend of recurrence and SLA attainment</td><td>Security leadership</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Where AI fits, according to the deck:</strong> AI can cluster duplicate findings, enrich exploit context and suggest fixes &mdash; it strengthens <em>triage</em>. Accountability stays with engineering teams, security review and measurable SLAs. A model may draft the ticket; it does not own the risk.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Regression testing (deck)</div>
+    <p>Retesting the modified or updated parts of the application to ensure that the changes do not introduce new vulnerabilities or impact existing functionality. After fixing a known vulnerability, regression testing verifies that the fix does not break features or open a new hole.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Mitigation strategies (deck)</div>
+    <p>Measures that reduce the risk or impact of vulnerabilities: applying patches, implementing security controls, or modifying system configurations. Examples: input validation and output encoding to mitigate XSS; secure communication protocols such as HTTPS to protect against data interception and tampering.</p>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Why the cycle, not the scan, is the unit of work</h3>
+      <p>A one-off scan produces a snapshot. The lifecycle produces a trend: recurrence, mean time to remediate, and evidence that verification actually happened.</p>
+    </div>
+    <div class="glance-card">
+      <h3>What makes a report actionable</h3>
+      <p>Affected endpoint, evidence pair, severity with justification, suggested remediation, owner, and a verification step. Without the last two it is documentation rather than a control.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-defend" class="section" data-track="defend">
+  <h2 class="section-title">Defending Web Applications</h2>
+  <p class="section-lead">The deck closes the loop from offence to defence with four defensive practices and a layered architecture in which each layer owns a different control.</p>
+
+  <div class="flow-grid">
+    <div class="flow-node">Presentation layer<br><small>validates user input</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Business logic layer<br><small>enforces access controls</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Data layer<br><small>secure storage and retrieval</small></div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Defensive software architecture</div>
+    <p>Designing and implementing software systems with security in mind: incorporating security controls such as <strong>access controls, input validation, encryption and error handling</strong> at various layers of the application architecture, rather than bolting them onto one layer.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Comprehensive code reviews</h3>
+      <p>Thorough examination of the source code to find vulnerabilities and insecure practice, which also surfaces coding errors and deviations from standards. Manual or automated, experienced developers or security analysts review the codebase line by line, looking for flaws such as SQL injection, XSS and insecure data storage.</p>
+    </div>
+    <div class="col-card">
+      <h3>Vulnerability discovery and analysis</h3>
+      <p><strong>Discovery</strong> is actively searching for weaknesses: manual inspection, automated scanning tools, fuzzing or penetration testing. <strong>Analysis</strong> is evaluating the impact and severity of what was found &mdash; the underlying cause, the attack vectors, and the consequences, such as how much access an injection flaw would grant and what damage it could cause.</p>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-mitigation-match"></div>
+  <script type="application/json" id="ix-mitigation-match">
+  {
+    "title": "Match the weakness to the mitigation",
+    "subtitle": "Click a weakness on the left, then the control that addresses it on the right.",
+    "pairs": [
+      ["Cross-site scripting (XSS)", "Input validation and output encoding"],
+      ["Data interception or tampering in transit", "Secure communication protocols such as HTTPS"],
+      ["Missing or broken authorisation checks", "Access controls enforced in the business logic layer"],
+      ["Unvalidated input reaching the data layer", "Input validation at the presentation layer plus parameterised queries"],
+      ["Sensitive data stored in the clear", "Encryption of data at rest in the data layer"],
+      ["Verbose error messages leaking internals", "Error handling that fails safely and logs server-side"],
+      ["A fixed flaw that may have broken something else", "Regression testing of the modified components"],
+      ["A finding nobody has acted on", "Owner assignment, remediation tracking and verification"]
+    ]
+  }
+  </script>
+
+  <div data-ix="deck" data-ix-src="#ix-defend-deck"></div>
+  <script type="application/json" id="ix-defend-deck">
+  {
+    "title": "Four defensive practices, one line each",
+    "subtitle": "Say what the practice controls before you flip the card.",
+    "cards": [
+      { "front": "Defensive software architecture", "back": "Security controls — access control, input validation, encryption, error handling — designed into every layer, with each layer responsible for its own check.", "hint": "Design" },
+      { "front": "Comprehensive code reviews", "back": "Line-by-line examination of the source for insecure practice, coding errors and standards violations, performed by experienced developers or security analysts.", "hint": "Review" },
+      { "front": "Vulnerability discovery", "back": "Active search for weaknesses by manual inspection, automated scanning, fuzzing or penetration testing.", "hint": "Find" },
+      { "front": "Vulnerability analysis", "back": "Evaluating impact and severity: the underlying cause, the attack vectors and the realistic consequences of exploitation.", "hint": "Judge" },
+      { "front": "Mitigation strategies", "back": "Patching, security controls and configuration changes that reduce risk or impact — for example output encoding for XSS, HTTPS for interception and tampering.", "hint": "Fix" },
+      { "front": "Regression testing", "back": "Retesting modified components to confirm the fix removed the flaw without introducing a new one or breaking existing functionality.", "hint": "Verify" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Tutorial self-assessment &mdash; turning a scan report into a confirmed set of findings.</strong> The tutorial asks you to scan DVWA with OWASP ZAP (or OpenVAS), save the report, and then, for each important finding, confirm it manually, explain why it was detected and what caused it, and repeat for one SQLi, one XSS and one CSRF.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Scope and evidence first.</strong> Confirm that the target is your own DVWA instance on the lab network and that the difficulty is set to low. Record the tool, its version, the start and end time, and the session state &mdash; an unauthenticated scan and an authenticated scan of the same host are different assessments.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Group the report by finding type.</strong> Scanners repeat one root cause across many parameters. Cluster by the mechanism (injection, script execution, request forgery), then pick one representative endpoint per cluster to confirm &mdash; the tutorial's requirement of one SQLi, one XSS and one CSRF is exactly this move.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Confirm each one manually in the lab interface.</strong> Reproduce the flaw through the DVWA pages themselves, with the proxy recording, and capture the request, the response and the visible effect. State in one sentence <em>why</em> the scanner flagged it: which input reached which component and produced which observable difference.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Explain the cause, not the symptom.</strong> For each confirmed flaw, name the missing control: absent parameterisation for the injection, unencoded output for the script execution, a state-changing request with no anti-CSRF token for the forgery. That is what makes the finding remediable, and it is what the deck's vulnerability-analysis step asks for.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Write the remediation and the retest.</strong> For each flaw, give the control that fixes it, then say how you would verify the fix: re-run the scan, re-attempt the manual reproduction, and regression test the pages that changed. A finding without a verification step is not closed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Respect the scope.</strong> Everything above happens against a deliberately vulnerable application on your own virtual machines. The same techniques pointed at a system you do not own are an offence, not an exercise &mdash; which is why the unit treats ethics and authorisation as part of the tooling, not as an afterthought.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team fixes a cross-site scripting flaw by encoding output on the affected page. What does the deck's lifecycle require next?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Closing on the strength of the change alone is how fixes silently regress. The lifecycle's next stage is verification, which includes regression testing of the changed components.">Close the finding, because the control that addresses XSS has been applied</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Output encoding is the right mitigation, and the lifecycle then requires verification — retest the finding and regression test the modified parts to confirm nothing new was introduced." data-bad="">Retest the finding and run regression tests on the modified components before closing it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Re-scanning is part of verification, but a scan alone is not the requirement — the deck pairs retesting and closing with regression testing of what changed.">Re-scan the whole application and ignore the changed pages, since the scanner covers them</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 5 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Four stages, one caveat</h4>
+        <p>Crawl, probe, analyse, report &mdash; and scanner output still needs validation, ownership and remediation tracking.</p>
+        <div class="flip-hint">Architecture</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Three testing approaches</h4>
+        <p>White box reads code and configuration; black box probes from outside; grey box mixes both with visibility that varies by configuration.</p>
+        <div class="flip-hint">Taxonomy</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Fuzzing is a sampling strategy</h4>
+        <p>Invalid, unexpected or random data stresses robustness. One variable per request plus a stored baseline is what makes a response difference mean something.</p>
+        <div class="flip-hint">Probing</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>The cookie is the key to half the app</h4>
+        <p>Without a valid authentication cookie, protected functionality is invisible to the scanner and the report is dominated by false negatives.</p>
+        <div class="flip-hint">Authenticated scanning</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Self-test: say the answer before you flip",
+    "subtitle": "Six prompts that cover the markable content of Week 5.",
+    "cards": [
+      { "front": "Name the four stages of a scan", "back": "Crawl (map pages, APIs, forms and links), probe (safe tests for known weakness patterns), analyse (match responses to risk indicators), report (prioritise evidence for remediation).", "hint": "Architecture" },
+      { "front": "White box vs black box in one line each", "back": "White box examines source code and internal structure for full internal visibility; black box scans from the network and analyses responses, with no source access and a genuine external perspective.", "hint": "Taxonomy" },
+      { "front": "Define fuzzing", "back": "A technique used by some vulnerability scanners that supplies an application with invalid, unexpected or random data as input in order to test its robustness and security.", "hint": "Definition" },
+      { "front": "Why does a scanner need an authentication cookie?", "back": "Fields and functionality may only be accessible to logged-in users. The presence of a valid cookie is what authenticates the browser, so without it protected requests redirect to the login page and the scan never reaches them.", "hint": "Authenticated scanning" },
+      { "front": "Distinguish a false positive from a false negative", "back": "A false positive is a reported flaw that is not real or not exploitable; a false negative is a real flaw the scan failed to report. Triage removes the first; coverage work reduces the second.", "hint": "Triage" },
+      { "front": "Name the six lifecycle stages", "back": "Discover, assess, prioritize, remediate, verify, monitor — a continuous cycle, with ownership and SLAs kept by people rather than by the tooling.", "hint": "Lifecycle" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's vocabulary into definitions, a taxonomy of scanner classes and the arithmetic of detection, precision and risk scoring. Then attempt the Quiz Hub and the Flashcards for Week 5.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you describe one finding from crawl to report, state which scanner class would have found it earlier, and say what would make it a false positive?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Have both VMs on the same isolated network, a wordlist ready for content discovery, the proxy configured in the browser, and a plan for capturing evidence of each confirmed flaw.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

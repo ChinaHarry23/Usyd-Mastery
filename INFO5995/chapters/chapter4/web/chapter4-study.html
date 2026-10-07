@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4: Cryptography Basics Part 1 — INFO5995</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter4-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 study guide for INFO5995: what cryptography guarantees, Kerckhoffs's principle, symmetric encryption, the one-time pad, stream versus block ciphers, AES internals, block cipher modes of operation, key strength and entropy, and cryptographic hash functions.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 4: Cryptography Basics Part 1 — INFO5995">
+<meta property="og:description" content="Week 4 study guide for INFO5995: what cryptography guarantees, Kerckhoffs's principle, symmetric encryption, the one-time pad, stream versus block ciphers, AES internals, block cipher modes of operation, key strength and entropy, and cryptographic hash functions.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F510;</span>
+      <h2>Week 4</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-goals" class="nav-link" data-section="goals">Goals &amp; Guarantees</a></li>
+    <li><a href="#sec-kerckhoffs" class="nav-link" data-section="kerckhoffs">Kerckhoffs's Principle</a></li>
+    <li><a href="#sec-symmetric" class="nav-link" data-section="symmetric">Symmetric Encryption</a></li>
+    <li><a href="#sec-otp" class="nav-link" data-section="otp">One-Time Pad</a></li>
+    <li><a href="#sec-ciphers" class="nav-link" data-section="ciphers">Stream vs Block</a></li>
+    <li><a href="#sec-aes" class="nav-link" data-section="aes">AES Internals</a></li>
+    <li><a href="#sec-modes" class="nav-link" data-section="modes">Modes of Operation</a></li>
+    <li><a href="#sec-construct" class="nav-link" data-section="construct">Choosing a Construction</a></li>
+    <li><a href="#sec-keys" class="nav-link" data-section="keys">Key Strength</a></li>
+    <li><a href="#sec-hash" class="nav-link" data-section="hash">Hash Functions</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter4-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter4-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+    <div class="progress-text">Lecture 4 — Cryptography Basics Part 1</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">INFO5995 — Cybersecurity</p>
+    <h1>Week 4: Cryptography Basics Part 1</h1>
+    <p class="hero-subtitle">Confidentiality from first principles: what a primitive guarantees, why the algorithm is public and the key is secret, how AES works inside, how block cipher modes change what a system reveals, and where hash functions fit.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AF;</span>
+        <span>Match the primitive to the goal</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F511;</span>
+        <span>Public algorithm, secret key</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F510;</span>
+        <span>AES: 128-bit blocks, 10+ rounds</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9EE;</span>
+        <span>Length is not entropy</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter4-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter4-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 4 lecture deck (INFO5995, <em>Crypto Basics</em>) — Confidentiality, AES, key management and hashing</p>
+      <div class="chip-list" style="margin-top:1rem;">
+        <span>What cryptography guarantees</span>
+        <span>Kerckhoffs's principle</span>
+        <span>Symmetric encryption &amp; the one-time pad</span>
+        <span>Stream vs block ciphers, AES internals</span>
+        <span>Modes of operation &amp; AEAD</span>
+        <span>Key strength, entropy &amp; lifecycle</span>
+        <span>Hash functions</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-goals" class="section" data-track="goals">
+  <h2 class="section-title">What Cryptography Actually Guarantees</h2>
+  <p class="section-lead">The deck's opening move is to refuse the word &ldquo;secure&rdquo;. Cryptography is a set of mathematical techniques that protect information and communication even when the network or the system cannot be fully trusted — and each technique delivers one specific guarantee under one defined threat model.</p>
+
+  <div class="concept-box">
+    <p><strong>The chain to memorise:</strong> information &rarr; <em>cryptographic primitive</em> (algorithm + parameters + key, when required) &rarr; <em>security guarantee</em>. A primitive is never &ldquo;strong&rdquo; in the abstract; it is strong <em>for a stated goal against a stated attacker</em>.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Trust the algorithm, not the channel</h3>
+      <p>The first lecture's warning was &ldquo;don't trust anyone&rdquo;. Cryptography is how we build trust out of mathematics instead of out of the network: secure communication and secure computation rest on the properties of an algorithm, not on the honesty of the path between two parties.</p>
+    </div>
+    <div class="col-card">
+      <h3>Crypto is everywhere</h3>
+      <p>Cryptography protects data from being read <em>or changed</em>. Remove it and online banking stops working, card payments stop being safe, passwords become readable by anyone on the network, software updates can be replaced by attackers, and messaging can be intercepted.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Security goal</th><th>Question it answers</th><th>Primary tools in the deck</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Confidentiality</strong></td><td>Can outsiders read the data?</td><td>Encryption &bull; authenticated encryption (AEAD)</td></tr>
+        <tr><td><strong>Integrity</strong></td><td>Has the data been changed?</td><td>Hash* &bull; MAC &bull; AEAD &bull; digital signature</td></tr>
+        <tr><td><strong>Authentication</strong></td><td>Who created or sent it?</td><td>MAC &bull; digital signature &bull; certificate binding</td></tr>
+        <tr><td><strong>Non-repudiation</strong></td><td>Can a signer later deny it?</td><td>Digital signature + identity and audit context</td></tr>
+        <tr><td><strong>Key establishment</strong></td><td>How do peers obtain a shared secret?</td><td>Diffie&ndash;Hellman &bull; key encapsulation mechanism (KEM)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The asterisk is examinable.</strong> A bare hash is only a fingerprint: an attacker who can modify the data can replace the message <em>and</em> its hash. Integrity against an active attacker requires a MAC, a digital signature or an AEAD construction &mdash; not a hash on its own.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-goal-matcher"></div>
+  <script type="application/json" id="ix-goal-matcher">
+  {
+    "title": "Match the goal to the tool",
+    "subtitle": "Click a security goal on the left, then the primitive the deck pairs with it.",
+    "pairs": [
+      ["Confidentiality — can outsiders read the data?", "Encryption, including authenticated encryption (AEAD)"],
+      ["Integrity — has the data been changed?", "MAC, AEAD or digital signature (a bare hash is only a fingerprint)"],
+      ["Authentication — who created or sent it?", "MAC, digital signature or certificate binding"],
+      ["Non-repudiation — can the signer deny it later?", "Digital signature plus identity and audit context"],
+      ["Key establishment — how do peers get a shared secret?", "Diffie–Hellman or a key encapsulation mechanism (KEM)"]
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-guarantee-map"></div>
+  <script type="application/json" id="ix-guarantee-map">
+  {
+    "title": "Which property does each primitive deliver?",
+    "subtitle": "Illustrative 0–3 coverage scores read off the Week 4 goal table. Encryption, MAC and signature differ in what they promise; this is a revision aid, not measured data.",
+    "max": 3,
+    "rows": [
+      { "name": "Symmetric encryption (AES-CBC)", "value": 3, "display": "confidentiality only" },
+      { "name": "AEAD (AES-GCM)", "value": 3, "display": "confidentiality + integrity" },
+      { "name": "MAC (HMAC)", "value": 2, "display": "integrity + origin" },
+      { "name": "Bare hash (SHA-256)", "value": 1, "display": "change detection only" },
+      { "name": "Digital signature", "value": 3, "display": "integrity + origin + non-repudiation" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A team publishes a file together with its SHA-256 hash on the same web server. Which guarantee have they actually delivered?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An attacker who can edit the file on that server can edit the published hash in the same request. Nothing about the hash being long prevents this.">Integrity against an attacker who can modify the server</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A bare hash detects accidental corruption, but an attacker who can modify the data can replace the message and its hash. The deck's rule is that integrity against an active attacker needs a MAC, a signature or an AEAD construction." data-bad="">Detection of accidental corruption only — an active attacker replaces both the file and its hash</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Confidentiality comes from encryption. A hash does not hide anything; it only produces a fixed-length fingerprint.">Confidentiality, because the hash hides the file contents</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-kerckhoffs" class="section" data-track="kerckhoffs">
+  <h2 class="section-title">Kerckhoffs's Principle: Public Algorithm, Secret Key</h2>
+  <p class="section-lead">Week 4 poses the design question directly — <em>is hiding the best way to keep something safe?</em> — and answers it with a nineteenth-century principle that still governs every modern standard.</p>
+
+  <div class="def-box">
+    <div class="def-label">Kerckhoffs's principle</div>
+    <p>The security of a system should depend on its <strong>key</strong>, not on its design remaining obscure. Auguste Kerckhoffs, a Dutch cryptographer writing in the 19th century, framed it as &ldquo;the enemy knows the system&rdquo;.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Security by obscurity</h3>
+      <p>The natural instinct: a good secret is your best defence, so keep the mechanism hidden. The deck's line is that even dogs bury bones &mdash; hiding is the obvious move, and it is the one that fails first, because the mechanism leaks.</p>
+    </div>
+    <div class="col-card">
+      <h3>Security by transparency</h3>
+      <p>True security comes from openness. The algorithm is published, reviewed and attacked by everyone; the only thing protected is the key. This is what modern cryptography does: <em>public algorithm + secret key</em>.</p>
+    </div>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Why openness is stronger</h4>
+      <ul>
+        <li><strong>Public review and trust</strong> &mdash; thousands of cryptanalysts have tested AES; nobody has tested your home-grown scheme.</li>
+        <li><strong>Scalability</strong> &mdash; changing a key is cheap; redesigning an algorithm is not.</li>
+      </ul>
+    </div>
+    <div class="why-card con" style="background:var(--blue-bg); border-color:rgba(37,99,235,0.3);">
+      <h4>What the principle does <em>not</em> say</h4>
+      <ul>
+        <li>It does not say keys may be public. The key is the one secret, and it must stay secret.</li>
+        <li>It does not say implementations may leak. Padding oracles and timing leaks attack the key, not the published design.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="algo-box">
+    <div class="algo-diagram">
+      <div class="algo-card">
+        <strong>AES</strong>
+        <span>public algorithm</span>
+      </div>
+      <div class="algo-arrow">&plus;</div>
+      <div class="algo-card">
+        <strong>key</strong>
+        <span>secret, generated by a CSPRNG</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-card">
+        <strong>ciphertext</strong>
+        <span>safe to publish</span>
+      </div>
+    </div>
+    <div class="arch-caption">AES(key, plaintext) &rarr; ciphertext. Everyone may know that you used AES; nobody may know the key.</div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why this principle makes the rest of the week possible:</strong> because the algorithm is public, we can standardise it (FIPS 197), analyse it in the open, accelerate it in hardware, and reason about security in terms of key length. Everything that follows &mdash; search space, entropy, lifecycle &mdash; is about protecting one short secret instead of one large design.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A vendor argues that its file encryption is safe because the scrambling routine is proprietary and undocumented. What is the correct assessment under Kerckhoffs's principle?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Undocumented is not the same as strong. Secrecy of the design is exactly what Kerckhoffs's principle tells you not to rely on.">It is safe, because an attacker cannot read the algorithm</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Security should depend on the key, not on the design remaining obscure. A proprietary routine has had no public review, and its obscurity disappears the moment the binary is reverse engineered or a former employee talks." data-bad="">Its security rests on obscurity, so it will fail as soon as the design leaks — and public review, which is how AES earned trust, never happened</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is the opposite of the principle. Kerckhoffs's principle is precisely why standard, public algorithms are preferred; a published algorithm plus a secret key is the strong configuration.">Proprietary algorithms are always weaker than published ones, so the only fix is to publish the source code</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-symmetric" class="section" data-track="symmetric">
+  <h2 class="section-title">Symmetric Encryption: One Shared Secret</h2>
+  <p class="section-lead">Encryption changes <em>who can understand</em> the data. The simplest key model is one secret that both sides already hold: Alice and Bob must each possess the same key K.</p>
+
+  <div class="def-box">
+    <div class="def-label">Symmetric encryption</div>
+    <p>A single shared secret key drives both directions: \(C = \mathrm{Enc}(K, M)\) and \(M = \mathrm{Dec}(K, C)\). High throughput, small overhead and suitability for large data come from the fact that the same short key protects an arbitrarily long message.</p>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-sym-pipeline"></div>
+  <script type="application/json" id="ix-sym-pipeline">
+  {
+    "title": "The symmetric encryption path",
+    "subtitle": "Both endpoints already hold K. The network carries only ciphertext.",
+    "nodes": [
+      { "label": "Plaintext M", "note": "The readable message that must not cross the network in the clear." },
+      { "label": "Enc(K, M)", "note": "The public algorithm combines the message with the shared secret key K." },
+      { "label": "Ciphertext C", "note": "What an observer sees. Under a good cipher it reveals nothing about M without K." },
+      { "label": "Dec(K, C)", "note": "The receiver applies the inverse transformation with the same key K." },
+      { "label": "Plaintext M", "note": "Recovered. Held only on the two endpoints, never by the network." }
+    ]
+  }
+  </script>
+
+  <div class="algo-box">
+    <div class="algo-diagram">
+      <div class="algo-card">
+        <strong>HELLO CLASS</strong>
+        <span>plaintext</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-core">
+        <strong>KEY</strong>
+        <span>shared secret K</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-card">
+        <strong>9F A2 71 &hellip;</strong>
+        <span>ciphertext</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-card">
+        <strong>HELLO CLASS</strong>
+        <span>decrypt with the same K</span>
+      </div>
+    </div>
+    <div class="arch-caption">The algorithm may be public. Security depends on controlling the key.</div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why it is useful</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>High throughput</li>
+        <li>Small overhead</li>
+        <li>Ideal for bulk data: files, disks and network traffic</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What can go wrong</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Key leakage</li>
+        <li>Unsafe sharing of the secret</li>
+        <li>Nonce or IV mistakes</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The one sentence to remember:</strong> if K is exposed, anyone holding K can decrypt the data. There is no second factor and no recovery &mdash; which is exactly why the second half of this week is about protecting K, and why Week 5 exists at all.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Symmetric</th><th>Asymmetric</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Keys</strong></td><td>One shared secret key</td><td>A public and a private key</td></tr>
+        <tr><td><strong>Strength</strong></td><td>Fast enough for files, disks and network traffic</td><td>Useful when the parties do not already share a secret</td></tr>
+        <tr><td><strong>Challenge</strong></td><td>How do both sides get the secret?</td><td>Slower and more complex</td></tr>
+        <tr><td><strong>In practice</strong></td><td colspan="2">Most real protocols use both: a short asymmetric setup to establish trust or keys, then a long symmetric session for bulk data.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">WhatsApp's server forwards messages it cannot read. Which statement best describes the key model behind that?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The server is a courier. If it held the key it could read the messages, which is precisely what end-to-end encryption prevents.">The server holds the key and decrypts each message in transit</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The readable message stays on the two phones: key material is created on the devices, a shared secret is derived without sending it like a password, and message keys keep changing so old and future messages are protected differently. The route is visible; the meaning is not." data-bad="">Key material is created on the two phones, a shared secret is derived rather than transmitted, and message keys rotate — the server carries ciphertext it cannot read</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Hiding the route is not the goal and is not what encryption does. Encryption hides the meaning of a message while the network still sees who sent what to whom.">The server hides the route so that nobody can tell who is messaging whom</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-otp" class="section" data-track="otp">
+  <h2 class="section-title">The One-Time Pad: Perfect Secrecy, and Why It Stays in the Textbook</h2>
+  <p class="section-lead">Before practical ciphers, the deck proves what is theoretically possible. A random key exactly as long as the message, XORed into the plaintext, gives a ciphertext that reveals nothing about the message.</p>
+
+  <div class="def-box">
+    <div class="def-label">One-time pad</div>
+    <p>Create a random key the same length as the message. Encrypt by combining each bit of plaintext with each bit of key using XOR, and decrypt by XORing the ciphertext with the same key again: \(C = M \oplus K\) and \(M = C \oplus K\).</p>
+  </div>
+
+  <div class="code-block">
+PLAINTEXT (M)     10110010
+ONE-TIME KEY (K)  01011001
+                 --------  XOR
+CIPHERTEXT (C)    11101011
+
+DECRYPT:  C &oplus; K  =  11101011 &oplus; 01011001  =  10110010  =  M
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Truly random</h3>
+      <p>No predictable pattern. Generated by a cryptographic random-bit generator, not by a human or a formula.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Same length</h3>
+      <p>One key bit for every message bit. A 1 GB message needs a fresh 1 GB key.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Kept secret</h3>
+      <p>Known only to sender and receiver, and shared in advance through a channel nobody else can read.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Never reused</h3>
+      <p>A fresh key for every message. This is the condition that fails first in practice.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>When all four conditions hold, the ciphertext reveals nothing about the plaintext.</strong> Not &ldquo;very little&rdquo; &mdash; nothing. This is the strongest confidentiality statement in the whole week.
+  </div>
+
+  <div id="ix-otp"></div>
+
+  <div class="theorem-box">
+    <h3>The cost, and the reuse failure</h3>
+    <p>The guarantee is exceptional; the key-management cost is the problem. Key length equals message length, the key must be distributed securely in advance, message-sized secret material has to be stored, and the key must be destroyed so it can never be reused.</p>
+    <p style="margin-top:0.6rem;">Reuse the key once and the secrecy collapses. For two messages under the same key:</p>
+    \[ C_1 \oplus C_2 = (M_1 \oplus K) \oplus (M_2 \oplus K) = M_1 \oplus M_2 \]
+    <p style="margin-top:0.6rem;">The key cancels out. The attacker now holds the XOR of two plaintexts, which is enough to recover both with ordinary language statistics. <strong>Key reuse destroys perfect secrecy</strong> — and that limitation is what motivates practical stream and block ciphers.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; from the ideal to the deployable.</strong> The exam question is usually phrased as &ldquo;why is the one-time pad not used in practice?&rdquo;. Answer it by walking the four conditions and then naming what a practical cipher changes.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>State the ideal.</strong> Perfect secrecy: with a truly random key used once, at the same length as the message, \(C = M \oplus K\) leaks nothing about \(M\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Cost it.</strong> Key length equals message length, so protecting a 1 GB file needs a 1 GB key. Every message needs its own key, and every key must be delivered in advance over a channel that is already secure &mdash; the problem you were trying to solve.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Show the reuse failure.</strong> Two ciphertexts under one key XOR to \(M_1 \oplus M_2\). The key disappears from the equation, so the attacker's problem no longer involves the secret at all.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Name the replacement.</strong> Practical systems keep the goal (a short secret protecting a long stream) and change the key model: a stream cipher expands a short key and a unique nonce into a keystream, and a block cipher transforms fixed-size blocks under a mode of operation that keeps repeated encryptions from matching.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Close with the discipline that survives.</strong> The one-time pad's &ldquo;never reuse&rdquo; rule does not go away. It reappears as <em>nonce discipline</em>: a nonce must never repeat under the same AEAD key.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An engineer keeps one long random key file and XORs each outgoing message with the next slice of it, never repeating a slice. What is the status of this design?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. This is a one-time pad keyed by position: if the slices really never repeat, the key really is random, and the slices are kept secret and destroyed, the perfect-secrecy argument still applies. In practice the hard parts are generating enough true randomness and guaranteeing that no slice is ever reused across restarts, backups or retransmissions." data-bad="">It is still a one-time pad — it is secure only as long as no slice is ever reused and the randomness is genuine, which is exactly the condition that is hard to guarantee operationally</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing about modern practice changes the mathematics. A key stream slice used once is a one-time pad; the difficulty is operational, not theoretical.">It is insecure because one-time pads are obsolete</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Shortening the key does not help; it changes the construction into a stream cipher, which needs a proper keystream generator and a unique nonce rather than a truncated key file.">It becomes secure only if the key file is truncated and the same beginning is reused</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-ciphers" class="section" data-track="ciphers">
+  <h2 class="section-title">Stream Ciphers and Block Ciphers</h2>
+  <p class="section-lead">Practical ciphers answer the one-time pad's question &mdash; <em>how can a short key protect a long stream of data?</em> &mdash; in one of two ways. The distinction describes how the cipher handles input, not how strong the algorithm is.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Stream cipher</h3>
+      <p>Protects a flowing sequence. The key and a nonce seed a generator that produces a keystream, and each message bit is XORed with one keystream bit: \(C = M \oplus \mathrm{keystream}\). Natural for continuous data. The deck's modern example is <strong>ChaCha20</strong>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Block cipher</h3>
+      <p>Transforms fixed-size blocks. The message is split into blocks \(M_1, M_2, M_3, M_4\) and the cipher maps each block to a same-size block. <strong>AES uses 128-bit blocks</strong>; a mode of operation safely handles messages longer than one block.</p>
+    </div>
+  </div>
+
+  <div class="algo-box">
+    <div class="algo-diagram">
+      <div class="algo-card">
+        <strong>message blocks</strong>
+        <span>M1 &nbsp; M2 &nbsp; M3 &nbsp; M4</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-core">
+        <strong>block cipher</strong>
+        <span>128-bit block</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-card">
+        <strong>ciphertext blocks</strong>
+        <span>C1 &nbsp; C2 &nbsp; C3 &nbsp; C4</span>
+      </div>
+    </div>
+    <div class="arch-caption">A block cipher alone handles exactly one block. Everything longer is the mode's job.</div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Modern protocols normally use authenticated encryption &mdash; not a raw cipher by itself.</strong> A stream cipher or a block cipher is a component. The deployable unit is a complete construction: cipher + mode + nonce strategy + authentication mechanism.
+  </div>
+
+  <div id="ix-stream-vs-block"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Stream cipher</th><th>Block cipher</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Input model</strong></td><td>A flowing sequence, one unit at a time</td><td>Fixed-size blocks, padded to a multiple of the block size</td></tr>
+        <tr><td><strong>Core operation</strong></td><td>\(C = M \oplus \mathrm{keystream}\)</td><td>A keyed permutation of a 128-bit block</td></tr>
+        <tr><td><strong>Needs a mode?</strong></td><td>No mode, but it does need a unique nonce</td><td>Yes &mdash; the mode defines how blocks are chained or counted</td></tr>
+        <tr><td><strong>Modern example</strong></td><td>ChaCha20</td><td>AES, in GCM or CBC mode</td></tr>
+        <tr><td><strong>Typical failure</strong></td><td>Nonce reuse makes two messages XOR together</td><td>Wrong mode choice: ECB reveals patterns, CBC alone adds no integrity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A developer says &ldquo;I used AES, so the data is safe&rdquo;. What is missing from that statement?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Choosing a good cipher is necessary but not sufficient. The deck's warning is that strong primitives still fail in weak systems.">Nothing — AES is a standard, so naming it is enough</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. AES is a block cipher that handles one 128-bit block. The usable construction also needs a mode of operation, a nonce or IV strategy, and an authentication mechanism — AES-CBC and AES-GCM are very different deployments." data-bad="">The mode of operation, the nonce or IV strategy, and the authentication mechanism — a cipher name alone does not define the construction</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Key length matters, but 128-bit AES is not the problem here. Even AES-256 in ECB mode leaks repeated plaintext patterns.">Only the key length — AES-128 must be upgraded to AES-256</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-aes" class="section" data-track="aes">
+  <h2 class="section-title">Inside AES: A Public, Repeatable Round Function</h2>
+  <p class="section-lead">AES is the week's worked example of Kerckhoffs's principle in hardware: a fully public specification, adopted as FIPS 197, whose entire secrecy lives in the key schedule. Step through its round function byte by byte.</p>
+
+  <div class="def-box">
+    <div class="def-label">AES (Advanced Encryption Standard)</div>
+    <p>A symmetric block cipher with a <strong>128-bit block</strong> and a key of 128, 192 or 256 bits. Its round count grows with the key: <strong>10 rounds</strong> for AES-128, <strong>12</strong> for AES-192 and <strong>14</strong> for AES-256. Widely accelerated in hardware, which is why it is the default in modern protocols.</p>
+  </div>
+
+  <div id="ix-aes-round"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>What it does</th><th>Why the design needs it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>SubBytes</strong></td><td>Each state byte is replaced by its entry in a fixed public 16&times;16 substitution box (S-box)</td><td>Supplies non-linearity. Without it the cipher would be a solvable system of linear equations</td></tr>
+        <tr><td><strong>ShiftRows</strong></td><td>Row <em>r</em> of the 4&times;4 state is rotated left by <em>r</em> bytes</td><td>Spreads bytes across columns so a change in one byte affects several columns</td></tr>
+        <tr><td><strong>MixColumns</strong></td><td>Each column is multiplied by a fixed polynomial over GF(2<sup>8</sup>)</td><td>Diffuses change within a column; combined with ShiftRows it diffuses across the whole state</td></tr>
+        <tr><td><strong>AddRoundKey</strong></td><td>The state is XORed with a round key derived from the key schedule</td><td>The only step that involves the secret. Everything else is public and key-independent</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-facts">
+    <div class="fact-pill">Block size: 128 bits</div>
+    <div class="fact-pill">Key sizes: 128 / 192 / 256 bits</div>
+    <div class="fact-pill">Rounds: 10 / 12 / 14</div>
+    <div class="fact-pill">Public specification: FIPS 197</div>
+    <div class="fact-pill">Hardware accelerated</div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Structure: a substitution&ndash;permutation network</h3>
+      <p>Every round applies the same four steps in the same order, under a different round key. The final round omits MixColumns. Because the structure is public and identical for every user, an attacker knows exactly what the cipher is doing &mdash; and still cannot invert it without the key.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why diffusion is the point</h3>
+      <p>Confusion hides the relationship between key and ciphertext; diffusion spreads one plaintext bit across the whole state. After enough rounds, changing a single plaintext bit changes roughly half of the output bits &mdash; the avalanche property you will measure on the Foundations page.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> never describe AES as &ldquo;a secret algorithm&rdquo;. It is the opposite &mdash; a published standard whose security depends entirely on the key, which is why the rest of this week is about key generation, key length, entropy and lifecycle.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which AES round step is the only one that involves the secret key?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The S-box is a fixed public table in the specification. Anyone can apply it; it contains no secret.">SubBytes, because the S-box is secret</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="ShiftRows is a fixed byte rotation that depends only on the row index. It is pure permutation, identical for every key.">ShiftRows, because the rotation amount depends on the key</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. AddRoundKey XORs the state with round keys derived from the secret key by the key schedule; SubBytes, ShiftRows and MixColumns are all fixed, public, key-independent operations." data-bad="">AddRoundKey, which XORs the round keys produced by the key schedule</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-modes" class="section" data-track="modes">
+  <h2 class="section-title">Modes of Operation: The Same AES Reveals Different Things</h2>
+  <p class="section-lead">The same AES primitive can be used in very different ways. The mode decides what an observer of the ciphertext can learn, and whether tampering can be detected at all.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Mode</th><th>How blocks relate</th><th>Repeated plaintext</th><th>Patterns</th><th>Integrity</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>ECB</strong> &mdash; electronic codebook</td><td>Each block is encrypted independently</td><td>Repeated plaintext &rarr; repeated ciphertext</td><td>Patterns remain visible</td><td>None</td></tr>
+        <tr><td><strong>CBC</strong> &mdash; cipher block chaining</td><td>Each block depends on the previous ciphertext block</td><td>Repeated plaintext gives different ciphertext</td><td>Hides repeated patterns</td><td>Confidentiality only; authentication is separate</td></tr>
+        <tr><td><strong>GCM</strong> &mdash; Galois/counter mode</td><td>Counter-based encryption plus an authentication tag</td><td>Determined by the nonce, never by the plaintext</td><td>Hides content</td><td>Detects tampering</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+WHY ECB FAILS — encrypt two identical blocks under one key
+
+PLAINTEXT   [ ATTACK ][ AT DAWN ][ ATTACK ][ AT DAWN ]
+ECB         [ 4F 1C ][ 9A 03 ][ 4F 1C ][ 9A 03 ]
+                          ^                ^
+              identical plaintext blocks produce identical ciphertext blocks,
+              so the structure of the message is visible without any key.
+  </div>
+
+  <div id="ix-modes"></div>
+
+  <div class="insight-box">
+    <strong>ECB is the classic exam answer for &ldquo;what not to do&rdquo;.</strong> It is not that AES is weak; it is that encrypting each block independently publishes any repetition in the plaintext. CBC fixes the repetition by chaining, but it still provides confidentiality only &mdash; authentication must be designed separately, and doing that wrongly is a well-known source of padding-oracle attacks. GCM does both.
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-modes-deck"></div>
+  <script type="application/json" id="ix-modes-deck">
+  {
+    "title": "Six mode facts worth flipping through",
+    "subtitle": "Say what each one guarantees before you flip the card.",
+    "cards": [
+      { "front": "ECB in one line", "back": "Each block is encrypted independently, so identical plaintext blocks produce identical ciphertext blocks and the pattern of the message survives encryption.", "hint": "Legacy" },
+      { "front": "CBC in one line", "back": "Each ciphertext block is XORed into the next plaintext block before encryption, so identical blocks encrypt differently and repeated patterns are hidden. It provides confidentiality only.", "hint": "Legacy" },
+      { "front": "What CBC still needs", "back": "A separate, correctly designed authentication mechanism. Confidentiality without integrity leaves controlled modification possible.", "hint": "Composition" },
+      { "front": "GCM in one line", "back": "Counter-based encryption plus a keyed authentication tag: one pass produces ciphertext and tag, so the receiver releases plaintext only when the tag verifies.", "hint": "Modern default" },
+      { "front": "AES-GCM inputs", "back": "A key K, a unique nonce N and the plaintext M. It returns the pair (C, T) = Enc(K, N, M): ciphertext plus tag.", "hint": "AEAD" },
+      { "front": "What happens when C or T changes", "back": "Verification fails and the plaintext is rejected. Tampering is detected rather than silently decrypted.", "hint": "AEAD" }
+    ]
+  }
+  </script>
+
+  <div class="algo-box">
+    <div class="algo-diagram">
+      <div class="algo-card">
+        <strong>KEY K</strong>
+        <span>secret</span>
+      </div>
+      <div class="algo-card">
+        <strong>UNIQUE NONCE N</strong>
+        <span>public, never repeated under K</span>
+      </div>
+      <div class="algo-card">
+        <strong>PLAINTEXT M</strong>
+        <span>the bulk data</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-core">
+        <strong>AES-GCM</strong>
+        <span>encrypt + authenticate</span>
+      </div>
+      <div class="algo-arrow">&rarr;</div>
+      <div class="algo-card">
+        <strong>CIPHERTEXT C</strong>
+        <span>plus TAG T</span>
+      </div>
+    </div>
+    <div class="arch-caption">(C, T) = Enc(K, N, M). If C or T changes, verification fails and the plaintext is rejected.</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A 4 MB file is encrypted with AES in ECB mode. The ciphertext visibly contains the same 16-byte pattern at four separate offsets. What has gone wrong?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. ECB encrypts each block independently, so repeated plaintext blocks produce repeated ciphertext blocks and the structure of the file leaks without any key. CBC or, better, an AEAD such as AES-GCM would not show this." data-bad="">The mode, not the cipher: ECB encrypts blocks independently, so identical plaintext blocks become identical ciphertext blocks</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A 128-bit block and a 128-bit key are both standard and are not the cause. The repetition is a property of the mode.">The block size is too small at 128 bits</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The key was clearly not reused across the file — if it had been, ECB would still show the same repetition. The leak is caused by independent per-block encryption.">The same key was reused for each of the four blocks</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-construct" class="section" data-track="construct">
+  <h2 class="section-title">Choose Complete Constructions, Not Algorithm Names</h2>
+  <p class="section-lead">Selection question to ask: <em>what security property does the complete construction guarantee?</em> A cipher, a mode, a nonce strategy and an authentication mechanism together form the usable thing.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Modern defaults</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>AES-GCM</strong> &mdash; AES block cipher plus GCM authenticated mode; widely accelerated in hardware</li>
+        <li><strong>ChaCha20-Poly1305</strong> &mdash; stream cipher plus authenticator; strong software performance</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Legacy &mdash; learn, do not choose</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>AES-CBC</strong> &mdash; can provide confidentiality, but needs a separate secure authentication design</li>
+        <li><strong>DES, 3DES, RC4</strong> &mdash; obsolete or prohibited in modern designs; retained only for history and migration discussions</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Symmetric</th><th>Asymmetric</th><th>Hybrid</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Best for</strong></td><td>Protecting lots of data</td><td>Establishing trust or keys</td><td>Building a complete protocol</td></tr>
+        <tr><td><strong>Key model</strong></td><td>One shared secret</td><td>Public / private pair</td><td>Short asymmetric setup + long symmetric session</td></tr>
+        <tr><td><strong>Examples</strong></td><td>AES-GCM, ChaCha20-Poly1305</td><td>X25519, RSA-OAEP, RSA-PSS, EdDSA</td><td>TLS, envelope encryption</td></tr>
+        <tr><td><strong>What still needs care</strong></td><td>Key sharing + nonce discipline</td><td>Identity binding + private-key custody</td><td>Composition + lifecycle</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Four ways strong primitives still fail in weak systems:</strong></p>
+    <ol style="padding-left:1.3rem; line-height:1.8; margin-top:0.5rem;">
+      <li><strong>Nonce reuse</strong> &mdash; repeating a nonce under one AEAD key can reveal relationships or worse.</li>
+      <li><strong>No authentication</strong> &mdash; encryption without integrity can permit controlled modification.</li>
+      <li><strong>Weak key lifecycle</strong> &mdash; keys leak through logs, backups, memory, access control or poor rotation.</li>
+      <li><strong>Unsafe composition</strong> &mdash; ECB, home-grown protocols and error oracles defeat good primitives.</li>
+    </ol>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-failure-matcher"></div>
+  <script type="application/json" id="ix-failure-matcher">
+  {
+    "title": "Match the failure to the fix",
+    "subtitle": "Each failure on the left is answered by one design change on the right.",
+    "pairs": [
+      ["Nonce reuse under one AEAD key", "Generate a fresh unique nonce per message and enforce it in the API"],
+      ["Encryption without integrity", "Use an AEAD construction, or add a MAC over the ciphertext"],
+      ["Keys leaking through logs and backups", "Keep keys in a keystore or HSM, never log them, and restrict access"],
+      ["Home-grown protocol on top of AES", "Choose a vetted construction such as AES-GCM or ChaCha20-Poly1305"],
+      ["Obsolete cipher kept for compatibility", "Plan a migration to a modern AEAD instead of extending DES, 3DES or RC4"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Takeaway from the deck:</strong> choose a proven AEAD, design the protocol, <em>then</em> engineer the key lifecycle. In that order &mdash; because the choice of primitive determines what the protocol can promise, and the lifecycle determines whether the promise survives contact with operations.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; reviewing a file-encryption design.</strong> A team proposes: &ldquo;AES-128 in ECB mode, the key is stored in the application config file, and we hand the same key to every customer install.&rdquo; Review it.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Mode.</strong> ECB encrypts each 128-bit block independently, so repeated plaintext blocks produce repeated ciphertext blocks. For structured files &mdash; spreadsheets, database pages, images &mdash; the layout of the content remains visible. <em>Replace with</em> AES-GCM (or ChaCha20-Poly1305 where hardware AES is unavailable).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Integrity.</strong> ECB provides none. An attacker who flips a ciphertext bit flips the corresponding plaintext bit with no detection. An AEAD returns a tag, and the receiver rejects the message when the tag does not verify. <em>Replace with</em> an authenticated construction.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Nonce.</strong> GCM requires a unique nonce per encryption under the same key. A file-encryption design must therefore guarantee that the nonce is generated fresh &mdash; not derived from a filename or a counter that restarts. <em>Add</em> a nonce strategy before adopting GCM, not after.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Key custody.</strong> A key in a plain config file is readable by anyone with filesystem access, and it leaks through backups and support bundles. <em>Replace with</em> a keystore or HSM, restricted access, and no logging of key material.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Key per install.</strong> One key shared by every customer means one compromise breaks every customer, and rotation becomes a mass migration. <em>Replace with</em> a per-install data key wrapped by a key-encryption key &mdash; envelope encryption &mdash; so rotation is a re-wrap rather than a re-encrypt of all data.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>The one-sentence verdict.</strong> &ldquo;AES is the right primitive, but the construction is wrong in four independent ways: the mode leaks patterns, there is no integrity, the nonce strategy is undefined, and the key is neither protected nor scoped. Choose AES-GCM, define the nonce, move the key into a keystore, and give each install its own data key.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-keys" class="section" data-track="keys">
+  <h2 class="section-title">What Makes a Key Strong: Length, Entropy, Lifecycle</h2>
+  <p class="section-lead">A key is valuable because it is difficult to predict &mdash; and carefully controlled. Three separate properties are in play, and conflating them is the most common Week 4 mistake.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Key role</th><th>Who may hold it</th><th>What operation it enables</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Symmetric secret</strong></td><td>Shared by the authorised parties</td><td>Encrypt + decrypt bulk data</td></tr>
+        <tr><td><strong>Private key</strong></td><td>Kept by one owner</td><td>Decrypt &bull; sign &bull; derive secrets</td></tr>
+        <tr><td><strong>Public key</strong></td><td>Designed for distribution</td><td>Encrypt &bull; verify &bull; establish keys</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Four slogans worth memorising:</strong> public &ne; unprotected &bull; private &ne; shared &bull; secret &ne; memorable. The role of a key determines who may possess it and what operation it enables &mdash; nothing more and nothing less.
+  </div>
+
+  <div class="theorem-box">
+    <h3>Key length sets the maximum search space</h3>
+    <p>An <em>n</em>-bit key has \(2^n\) possible bit strings &mdash; <em>if every string can really occur</em>.</p>
+    \[ \text{search space} = 2^{n} \qquad 2^{4} = 16 \qquad 2^{128} \approx 3.4 \times 10^{38} \]
+    <p style="margin-top:0.6rem;">Four bits are small enough to enumerate by hand; 128 bits are a vast candidate space. Length helps only when generation and implementation preserve the full search space.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Length is not entropy</h3>
+    <p>Entropy is the attacker's uncertainty <em>before</em> the key is generated &mdash; not the number of characters the key occupies.</p>
+    <div class="code-block" style="margin-top:0.6rem;">
+HUMAN PATTERN                     CSPRNG OUTPUT
+INFO5995-INFO5995!                7f2a19c0b6e3d84a
+                                  915cf207ab469d31
+Long, but built from a            Generated from a cryptographic
+guessable rule                    random-bit generator
+    </div>
+    <p style="margin-top:0.6rem;">If only 16 bits vary, the effective search is at most \(2^{16}\) candidates &mdash; even inside a 128-bit field. <strong>LONG &ne; STRONG.</strong></p>
+  </div>
+
+  <div id="ix-key-space"></div>
+
+  <div class="theorem-box">
+    <h3>A strong key can still fail through poor handling</h3>
+    <p>The five-stage lifecycle the deck lays out. Security must survive every stage, from creation to destruction:</p>
+    <div class="table-responsive" style="margin-top:0.6rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Stage</th><th>What good looks like</th><th>Failure it prevents</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1. Generate</td><td>OS CSPRNG, secure entropy source</td><td>Predictable keys from human patterns or weak seeding</td></tr>
+          <tr><td>2. Store</td><td>Keystore or HSM, restricted access</td><td>Leakage through config files, backups and logs</td></tr>
+          <tr><td>3. Use</td><td>Least exposure, never log the key</td><td>Key material in logs, crash dumps and memory dumps</td></tr>
+          <tr><td>4. Rotate / revoke</td><td>Policy plus a response plan to compromise</td><td>One leaked key staying valid forever</td></tr>
+          <tr><td>5. Destroy</td><td>Remove active and backup copies</td><td>A retired key still decrypting old data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The week's summary formula:</strong> <em>strong cryptography = strong primitive + unpredictable key + disciplined lifecycle</em>. Every one of the four failure modes in the previous section is a failure of the second or third term.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A service derives its AES key with <code>sha256("GoldenRetriever2019")</code>. The key is 256 bits long. How strong is it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This confuses length with entropy. The output field is 256 bits, but the attacker's uncertainty is bounded by the guessing space of the input phrase, which is tiny.">256 bits of security, because SHA-256 outputs 256 bits</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Entropy is the attacker's uncertainty before generation. A memorable phrase with a capital letter and a year has a guessable structure, so the effective search space is far smaller than 2^256 — and the deck's rule is that length helps only when generation preserves the full search space. Use the OS CSPRNG." data-bad="">Far weaker than 256 bits: the effective search space is the guessing space of the phrase, not the output length of the hash</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Hashing is not the problem in itself — a CSPRNG output hashed into 256 bits would be fine. The problem is that the input has almost no entropy.">Secure, provided the hash function is a standard one such as SHA-256</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-hash" class="section" data-track="hash">
+  <h2 class="section-title">Cryptographic Hash Functions: A Fixed-Length Fingerprint</h2>
+  <p class="section-lead">A hash function maps an input of any length to a short fixed-length digest. It is the second primitive family in the week's toolkit, and it is also the one most often misused.</p>
+
+  <div class="def-box">
+    <div class="def-label">Cryptographic hash function</div>
+    <p>A public function \(h = H(m)\) that maps a message of arbitrary length to a fixed-length digest. It is <strong>one-way</strong> (preimage resistant), <strong>collision resistant</strong> and produces a different digest for even a one-bit change in the input (the avalanche effect).</p>
+  </div>
+
+  <div id="ix-hash"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>What it means</th><th>What it is used for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Preimage resistance</strong></td><td>Given a digest, finding any message that produces it costs about \(2^{n}\) work for an <em>n</em>-bit digest</td><td>Integrity by fingerprint; password verification with a salt and a slow KDF</td></tr>
+        <tr><td><strong>Second preimage resistance</strong></td><td>Given a message, finding a different message with the same digest is infeasible</td><td>Detecting substitution as well as corruption</td></tr>
+        <tr><td><strong>Collision resistance</strong></td><td>Finding <em>any</em> two messages with the same digest costs about \(2^{n/2}\) work (the birthday bound)</td><td>Choosing digest length; why MD5 and SHA-1 are deprecated</td></tr>
+        <tr><td><strong>Avalanche</strong></td><td>Changing one input bit changes about half the output bits</td><td>Detecting modification at all, even a single flipped bit</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Algorithm</th><th>Digest</th><th>Status in modern designs</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>MD5</strong></td><td>128 bits</td><td>Broken &mdash; practical collisions; unsuitable for any security purpose</td></tr>
+        <tr><td><strong>SHA-1</strong></td><td>160 bits</td><td>Deprecated &mdash; collisions demonstrated; retained only for legacy data</td></tr>
+        <tr><td><strong>SHA-256</strong></td><td>256 bits</td><td>Standard default digest (SHA-2 family)</td></tr>
+        <tr><td><strong>SHA-512</strong></td><td>512 bits</td><td>Standard, larger margin on the birthday bound</td></tr>
+        <tr><td><strong>SHA-3</strong></td><td>224&ndash;512 bits</td><td>Standard alternative with a different internal design (sponge construction)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>What a hash does not do.</strong> A bare hash is only a fingerprint: an attacker who can modify the data can replace both the message and its hash. It also provides no confidentiality &mdash; the digest is not encryption, and it cannot be reversed to recover the message. For integrity against an active attacker, use a MAC, a signature or an AEAD.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Where hashes earn their place</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Software update manifests and release checksums</li>
+        <li>Content addressing and integrity checks in storage systems</li>
+        <li>Key derivation (HKDF) and password hashing with a salt and a deliberately slow function</li>
+        <li>Building blocks inside MACs, signatures and certificate fingerprints</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Where they are misused</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>As a substitute for a MAC over data an attacker can edit</li>
+        <li>As a way to &ldquo;encrypt&rdquo; data &mdash; hashing is not encryption</li>
+        <li>As a password store without a salt and a slow KDF</li>
+        <li>With a deprecated digest (MD5, SHA-1) in a new design</li>
+      </ul>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; choosing a primitive for three requirements.</strong> A team must (a) protect a 2 GB backup on disk, (b) let users verify that a firmware image has not been altered, and (c) let a customer prove that a signed invoice came from the vendor.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>(a) Bulk backup.</strong> This is confidentiality plus integrity over a lot of data, so the requirement is symmetric and authenticated: AES-GCM or ChaCha20-Poly1305 with a per-backup unique nonce, and a per-install data key wrapped by a key-encryption key. ECB is excluded because it leaks structure; CBC alone is excluded because it supplies no integrity.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>(b) Firmware verification.</strong> The question is &ldquo;has this exact image been altered?&rdquo; against an attacker who can modify the download. A bare SHA-256 published on the same site as the image does not answer it, because the attacker edits both. Use a <em>digital signature</em> over the image from a key the device already trusts, or a MAC when the verifier already shares a secret with the publisher. This is where Week 5's signatures and certificates take over; the important point here is that a hash on its own is not enough.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>(c) Signed invoice.</strong> Non-repudiation is required, and the vendor must not be able to deny authorship. Only a digital signature over a hash of the document, bound to an identity through a certificate, gives that &mdash; a MAC cannot, because both parties hold the same key and either could have produced the tag.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The pattern behind all three answers.</strong> Name the goal first (confidentiality, integrity, non-repudiation), then the attacker's capability, then the primitive, then the key model and lifecycle. Choosing &ldquo;the strongest algorithm&rdquo; before naming the goal is the mistake the deck warns about.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A downloads page publishes an installer and, next to it, <code>SHA-256: 8f14e4&hellip;</code>. What does this actually protect against?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The digest detects corruption in transit — a truncated download, a bad mirror, a flipped bit. It does not defend against an attacker who controls the page, because that attacker can change the installer and the published digest together. A signature from a key the user already trusts is what closes that gap." data-bad="">Accidental corruption and download errors — not an attacker who controls the download page, who can replace both the installer and its published digest</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hash is not encryption and hides nothing. Anyone can compute the digest of a known file and compare.">An attacker learning the contents of the installer, because the hash hides them</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is the misuse the deck warns about. A bare hash is a fingerprint; against an active attacker you need a MAC, a signature or an AEAD.">Any modification by any attacker, because SHA-256 is collision resistant</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 4 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Match the primitive to the goal</h4>
+        <p>Confidentiality, integrity, authentication, non-repudiation, key establishment. Different goals need different tools, and a bare hash is only a fingerprint.</p>
+        <div class="flip-hint">Guarantees</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Public algorithm, secret key</h4>
+        <p>Kerckhoffs's principle: the enemy knows the system. Security must rest on the key, which is why openness, review and standardisation are strengths rather than risks.</p>
+        <div class="flip-hint">Design principle</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Perfect secrecy is not deployable</h4>
+        <p>The one-time pad proves what is possible: a random key as long as the message, used once. Key length equals message length, and reuse collapses the secrecy to M1 &oplus; M2.</p>
+        <div class="flip-hint">Theory</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>AES is a component, not a construction</h4>
+        <p>128-bit blocks, 10/12/14 rounds, public specification. The mode decides what the ciphertext reveals: ECB leaks patterns, CBC hides them but adds no integrity, GCM does both.</p>
+        <div class="flip-hint">Practice</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Length is not entropy</h4>
+        <p>Search space is 2^n only if every bit can vary. A memorable 128-bit-looking passphrase built from a rule has almost no entropy: LONG &ne; STRONG.</p>
+        <div class="flip-hint">Key strength</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Strong crypto = primitive + key + lifecycle</h4>
+        <p>Generate with a CSPRNG, store in a keystore or HSM, use with least exposure, rotate on policy, destroy every copy. Nonce reuse and unsafe composition defeat good primitives.</p>
+        <div class="flip-hint">Takeaway</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-node">Name the goal</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Name the attacker</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Choose the primitive</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Design the key lifecycle</div>
+  </div>
+
+  <div class="callout">
+    <strong>Three ideas to leave with.</strong> (1) <em>Public algorithms, protected secrets</em> &mdash; security should depend on strong keys, not on hiding how the system works. (2) <em>Encryption is only one part</em> &mdash; a secure channel also needs integrity, authentication and safe key establishment. (3) <em>Strong primitives must be composed correctly</em> &mdash; good algorithms still fail through weak protocols, poor randomness or mishandled keys.
+  </div>
+
+  <div class="insight-box">
+    <strong>Where Week 5 picks up.</strong> Symmetric encryption left one difficult question open: Alice and Bob want the speed of symmetric encryption, but how does K reach both sides? Sending K across the network lets an observer copy it. Agreeing on K without sending K is the job of Diffie&ndash;Hellman &mdash; and once agreement exists, authentication is needed to stop a man in the middle from substituting both public values.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you state the five security goals and their tools, explain Kerckhoffs's principle in one sentence, and say why the one-time pad is not deployed?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Then check the key maths</h3>
+      <p>Search space \(2^n\), the reuse identity \(C_1 \oplus C_2 = M_1 \oplus M_2\), AES's block and key sizes, and the birthday bound \(2^{n/2}\) on the Foundations page.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

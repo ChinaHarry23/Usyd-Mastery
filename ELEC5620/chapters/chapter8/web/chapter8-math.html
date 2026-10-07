@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations &mdash; Week 8: Agile Model Practice</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 foundations for ELEC5620: the notation card for UML packages, dependencies, nodes and artifacts, the rules that make a model executable and testable, a consistency model for models, tests and code, and the checklist for deciding whether to keep a model.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations &mdash; Week 8: Agile Model Practice">
+<meta property="og:description" content="Week 8 foundations for ELEC5620: notation for packages and deployment, the rules that make a model executable and testable, a consistency model linking model, tests and code, and the keep-or-drop checklist.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter8-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 8 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-vocab" class="toc-link">Definitions and process terms</a></li>
+    <li><a href="#sec-m-quality" class="toc-link">What makes a model agile</a></li>
+  </ul>
+  <div class="toc-group">Notation</div>
+  <ul>
+    <li><a href="#sec-m-notation" class="toc-link">The notation card</a></li>
+  </ul>
+  <div class="toc-group">Relationships</div>
+  <ul>
+    <li><a href="#sec-m-pipeline" class="toc-link">Model, tests and code</a></li>
+    <li><a href="#sec-m-roundtrip" class="toc-link">The round-trip rules</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checks" class="toc-link">Keep-or-drop and tutorial review</a></li>
+  </ul>
+  <a href="chapter8-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">ELEC5620 &mdash; Week 8 supplement</p>
+  <h1>Foundations: the notation and the rules behind agile model practice</h1>
+  <p class="hero-desc">Week 8 is about process and practice rather than mathematics, so this page does the equivalent job: it fixes the definitions, gives you the notation card for the two diagram types the tutorial puts in front of you, writes the relationships between a model, its tests and its code as compact rules, and ends with the checklist that decides whether a model is kept or dropped.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 8 deck and tutorial</span>
+    <span>Notation card for packages, dependencies, nodes and artifacts</span>
+    <span>Consistency rules for the model&ndash;code round trip</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-vocab">
+  <h2 class="section-title">Definitions and process terms</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Agile development</div>
+    <p>A way of organising product development that is <strong>adaptive</strong> (teams and process stay flexible under rapid-fire change), <strong>iterative and incremental</strong> (working products in stages, a growing set of completed and working software) and <strong>people-oriented</strong> (the team organisation and process support good people, who are the most important ingredient to project success). Its framework asks teams to keep things small, deliver partially-completed software frequently, talk to the customer often, write more code than documentation, and learn together.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Iteration (Sprint)</div>
+    <p>A timeboxed development cycle of <strong>2 to 4 weeks</strong> containing a list of tasks and work product outputs. It opens with iteration planning, contains development work, and closes with an iteration review; the team tracks the iteration with a burndown chart and reflects in a retrospective. Management does not add new work to a running Sprint &mdash; new items go on the Product Backlog.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Backlog, task view and estimate</div>
+    <p>The <strong>Product Backlog</strong> is the set of all features and sub-features known to be needed, in priority order by value to the customer, and items may be added at any time. Within an iteration the team divides its Product Backlog Items into individual <strong>tasks</strong> &mdash; the task view is used only inside the iteration. Every PBI carries an <strong>estimate of effort</strong>, and estimates come from the team, never from managers.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">User story</div>
+    <p>The unit of work in agile: an informal, general explanation of a software feature, simpler than a use case, written from the user's perspective and used to drive collaboration. The template is <em>&ldquo;As a &lt;role&gt;, I want to &lt;goal&gt; so that &lt;benefit&gt;&rdquo;</em>. A <strong>user persona</strong> is a fictional but detailed representation of a typical user; an <strong>epic</strong> and a <strong>theme</strong> name the larger groupings a story belongs to.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Agile</td><td>Adaptive, iterative, people-oriented &mdash; and the values, not just the practices</td><td>&ldquo;Development in iterations&rdquo;, which the deck explicitly says is not enough</td></tr>
+        <tr><td>Scrum</td><td>3 roles, 3 lists, 3 meetings; timeboxed Sprints</td><td>Calling the Scrum Master the team's manager or the person who assigns work</td></tr>
+        <tr><td>Burndown chart</td><td>Estimated effort remaining in the current iteration, tracked daily</td><td>Claiming it must fall monotonically &mdash; it may rise when a task was mis-estimated</td></tr>
+        <tr><td>MoSCoW</td><td>Must-have, should-have, could-have, would-like-to-have</td><td>Treating every &ldquo;would like&rdquo; item as committed Sprint scope</td></tr>
+        <tr><td>Package</td><td>A collection of logically related UML elements; a namespace</td><td>Calling it a folder of files rather than a model namespace</td></tr>
+        <tr><td>Node</td><td>A physical element that exists and runs at runtime</td><td>Confusing a node with the artifact deployed inside it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about estimation matches the Week 8 material?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck is emphatic: should managers do the estimation of Product Backlog Items? No, never.">Managers estimate each backlog item so that the plan is consistent across teams</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Managers and customers set priority with the Product Owner; the team estimates size and effort, and their estimates are not to be changed even if they are unpopular." data-bad="">The team estimates each item, and its estimates are not changed by managers or customers</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Re-estimating in the daily meeting is not the rule. The Daily Scrum is 15 minutes, everyone speaks, and there is no problem solving in the meeting.">Estimates are set at the Daily Scrum and revised every day</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-quality">
+  <h2 class="section-title">What makes a model agile</h2>
+  <p class="section-lead">The lecture's own tests for an agile artefact apply directly to models. These are the three questions to run before you draw anything, plus the two properties that decide whether the result was worth keeping.</p>
+
+  <div class="theorem-box">
+    <h3>1. The keep-or-drop test is a conjunction</h3>
+    <p>Keep a model only when all three hold. With \(P\) for purpose, \(A\) for audience and \(L\) for a maintenance lifetime:</p>
+    \[ \text{keep} \;=\; P \;\wedge\; A \;\wedge\; L \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The conjunction is the point: a complete model with no reader is dropped, and so is a useful model nobody plans to update. This is the modelling reading of the deck's advice that a document nobody reads should be left out &ldquo;because you are Agile&rdquo;.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Value per unit of effort, not completeness</h3>
+    <p>Agile modelling maximises the decisions a model settles per unit of effort spent. If a model of size \(s\) settles \(d\) decisions, and the alternative is to answer \(d\) questions in code at cost \(c\), the model earns its place when:</p>
+    \[ \frac{d}{s} \;>\; \frac{d}{c} \quad\Longleftrightarrow\quad s \;<\; c \]
+    <p style="margin-top:0.6rem;">In words: model the question when the model is cheaper than finding out by building. That is why a two-class slice and a three-state machine are the right size for a Sprint, and a whole-system class diagram is not.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Executable means every transition is total</h3>
+    <p>A state machine is executable when each transition \(t\) specifies all three parts &mdash; trigger, guard and effect &mdash; and the guards are exhaustive enough that the machine always knows what to do:</p>
+    \[ t \;=\; \langle\, \textit{trigger},\; \textit{guard},\; \textit{effect} \,\rangle \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">A transition with a trigger but no guard is a machine that can fire when it should not; a guard with no effect is a machine that fires and leaves no evidence. Both failures are invisible in a diagram and fatal in an executable model.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Testable means the claim can fail</h3>
+    <p>Every constraint the model asserts must map to at least one check that can fail. For a model element \(m\) with claim \(k(m)\), require:</p>
+    \[ \forall\, m \in M:\; k(m) \;\Rightarrow\; \exists\, \tau \in T \text{ such that } \tau \text{ fails when } k(m) \text{ is violated} \]
+    <p style="margin-top:0.6rem;">Multiplicity is the clearest case: a model that says a user has <code>0..*</code> preferences is asserting that a second preference is legal and a missing channel is not. If no test can fail on that, the multiplicity is decoration.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Where the requirement meets the model.</strong> The Week 8 deck advises creating acceptance tests <em>at the same time as</em> you write the key requirements. In this framework that is not a testing preference but a modelling constraint: the test is what makes the model's claims falsifiable, so it is part of the iteration's definition of done rather than a later phase.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team draws a sequence diagram for a flow that has not changed in three Sprints, and no one opens it. Which of the three tests does it fail?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Purpose and audience are exactly what it fails: it settles no open decision in this increment and has no reader.">Only the lifetime test</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. It settles no live decision and has no reader, so two of the three conjuncts fail and the model is dropped — which is the agile reading of &ldquo;a document that nobody reads&rdquo;." data-bad="">Purpose and audience &mdash; no live decision and no reader</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Correctness is not one of the three tests. An accurate model can still be ceremony if nobody needs the answer.">None &mdash; an accurate diagram is always worth keeping</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">The notation card</h2>
+  <p class="section-lead">Everything the Week 8 tutorial expects you to draw, in one grid. In an exam, being able to name and draw the element is usually worth more than a page of prose about it.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning and the constraint it carries</div>
+    <div class="sym-cell">&#128193;</div><div class="sym-cell">package</div><div class="sym-cell">Rectangle with a small tab at the top; name on the tab or inside. A collection of logically related UML elements and a <strong>namespace</strong>.</div>
+    <div class="sym-cell">\(P_1 \to P_2\)</div><div class="sym-cell">dependency</div><div class="sym-cell">Dashed arrow from the dependent package to the one it needs. Rule: if a change in the second could force a change in the first, the first depends on the second.</div>
+    <div class="sym-cell">&#171;import&#187;</div><div class="sym-cell">import stereotype</div><div class="sym-cell">Dependency subtype: the source package imports the functionality of the other package.</div>
+    <div class="sym-cell">&#171;access&#187;</div><div class="sym-cell">access stereotype</div><div class="sym-cell">Dependency subtype: the source package requires help from the functions of the other package. A pair of these in opposite directions is the tutorial's dual dependency.</div>
+    <div class="sym-cell">\(P_1.P_2.C\)</div><div class="sym-cell">fully qualified name</div><div class="sym-cell">The package-qualified name of an element. Package names must be unique in a system; classes inside different packages need not be.</div>
+    <div class="sym-cell">&#9634;&#9634;</div><div class="sym-cell">node</div><div class="sym-cell">A three-dimensional box: a physical element that exists and runs at runtime. An optional icon in the upper right names the node type (PC client, UNIX server, CD-ROM, storage device, security device).</div>
+    <div class="sym-cell">name : type</div><div class="sym-cell">node instance</div><div class="sym-cell">The instance name is underscored and the node type follows a colon, optionally preceded by an example name. Distinguishes a specific machine from a type.</div>
+    <div class="sym-cell">&#171;artifact&#187;</div><div class="sym-cell">artifact</div><div class="sym-cell">A product of the development process &mdash; process models, source code, executables, design documentation, test reports, requirement prototypes, user manuals &mdash; drawn with a documentation (file, not folder) icon.</div>
+    <div class="sym-cell">&#9634;&#8834;&#9634;</div><div class="sym-cell">node as container</div><div class="sym-cell">A node may contain other nodes, components or objects; e.g. a server node containing the artifact deployed on it.</div>
+    <div class="sym-cell">&#8212;&#8212;</div><div class="sym-cell">association</div><div class="sym-cell">A communication path between nodes that interact. The connection has its protocol, which is worth naming on the line.</div>
+    <div class="sym-cell">&#215;|&#8594;</div><div class="sym-cell">multiplicity</div><div class="sym-cell">Cardinality of an association end: <code>1</code>, <code>0..1</code>, <code>1..*</code>, <code>0..*</code>. A constraint, and therefore something a test can check.</div>
+    <div class="sym-cell">&#123; &#125;</div><div class="sym-cell">invariant</div><div class="sym-cell">A constraint that must hold in every valid state of the object, written in OCL or as a note anchored to the element it constrains.</div>
+    <div class="sym-cell">trigger[guard]/effect</div><div class="sym-cell">executable transition</div><div class="sym-cell">The three parts a transition needs before a tool can run it. The guard is the part most often left out of a diagram.</div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Package rules worth writing down</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>A package name must be unique within a system; class names need not be.</li>
+        <li>Packages may contain whole diagrams, the names of components alone, or nothing at all.</li>
+        <li>Nested packages are hierarchical, and their atomic modules are usually class diagrams.</li>
+        <li>A package represents a namespace, so it is also the unit you version and review.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Deployment rules worth writing down</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>A deployment diagram describes the structure of the system at runtime: hardware configuration and how software is deployed into the network.</li>
+        <li>There is only <em>one</em> deployment diagram for a system model.</li>
+        <li>It is the diagram that controls performance, scalability, maintainability and portability.</li>
+        <li>Most UML diagrams deal with logical components; this one focuses on the hardware topology.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-notation-match"></div>
+  <script type="application/json" id="ix-m-notation-match">
+  {
+    "title": "Match the notation to the semantics",
+    "subtitle": "Click a notation on the left, then the meaning it carries on the right. These are the distinctions exam questions turn on.",
+    "pairs": [
+      ["&#171;import&#187; dependency", "The source package imports the functionality of the other package"],
+      ["&#171;access&#187; dependency", "The source package requires help from the functions of the other package"],
+      ["Package", "A collection of logically related UML elements that also acts as a namespace"],
+      ["Node", "A physical element that exists and runs at runtime, hardware or a software system on it"],
+      ["Node instance", "Instance name underscored, node type after a colon"],
+      ["Artifact", "A product of the development process, drawn with a documentation icon"],
+      ["Association between nodes", "A communication path between systems that interact, with its protocol"],
+      ["Node as container", "A node that contains other nodes, components or objects"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">In a deployment diagram you want to show a file deployed on a specific Linux host. Which pair of notations do you need?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A package is a namespace in a package diagram, and it is drawn as a folder rather than a three-dimensional box.">A package and a dependency arrow</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The host is a node (three-dimensional box, optionally typed by an icon); the file is an artifact drawn with a documentation icon and deployed inside the node that contains it." data-bad="">A node and an artifact, with the artifact contained in the node</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An association is the communication path between nodes. It says nothing about what is deployed on which machine.">An association and a multiplicity</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-pipeline">
+  <h2 class="section-title">Model, tests and code as one system</h2>
+  <p class="section-lead">The week's central relationship is between three artefacts that must agree: the model, the tests derived from it, and the code generated from it. Written as a relation, the round trip is a fixed point rather than a one-way street.</p>
+
+  <div class="theorem-box">
+    <h3>The consistency relation</h3>
+    <p>Let \(M\) be the model, \(T\) the test suite and \(C\) the code, and let \(g\) be the generator and \(r\) the reverse step:</p>
+    \[ C \;=\; g(M), \qquad M' \;=\; r(C) \]
+    <p style="margin-top:0.6rem;">The loop is closed when \(M' = M\), that is, when the code contains nothing that the reverse step has not already accounted for. Every difference is either a defect in the code or a discovery that belongs in the model &mdash; there is no third option, and leaving it in the code is what makes the loop a race.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Three conditions for a usable round trip</h3>
+    <p>\[ \text{round trip} \;=\; \textit{deterministic}(g) \;\wedge\; \textit{generated}(C) \subseteq g(M) \;\wedge\; \forall\, e \in \textit{manual}(C):\; e \in \textit{marked}(C) \]</p>
+    <p style="margin-top:0.6rem;">Deterministic transformation (same model, same output); the model is the single source for everything the generator owns; every manual edit is marked and either protected from regeneration or moved back into the model. Drop any one condition and the next regeneration silently loses work.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Traceability as a total function</h3>
+    <p>Each requirement \(q\) should map to at least one model element \(m\) and one test \(\tau\):</p>
+    \[ \forall\, q \in Q:\; \exists\, (m, \tau) \;\text{ with }\; q \rightarrow m \rightarrow \tau \]
+    <p style="margin-top:0.6rem;">This is the modelling reading of the deck's requirements advice: for key requirements, the acceptance test is created at the same time as the requirement. A requirement with no model element is unimplemented; a requirement with no test is unverifiable; a model element with neither is a candidate for the keep-or-drop test above.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-roundtrip-seq"></div>
+  <script type="application/json" id="ix-m-roundtrip-seq">
+  {
+    "title": "Order the round trip inside one iteration",
+    "subtitle": "Rebuild the sequence a model-driven Sprint follows, from the question to the next backlog item.",
+    "steps": [
+      "Name the question this iteration has to settle",
+      "Model the smallest slice that settles it",
+      "Validate the executable parts — guards, invariants, multiplicities",
+      "Generate code from the model",
+      "Run the tests derived from the model and the acceptance criteria",
+      "Fold anything the code discovered back into the model",
+      "Record the next open question as a Product Backlog item"
+    ]
+  }
+  </script>
+
+  <div data-ix="deck" data-ix-src="#ix-m-rules"></div>
+  <script type="application/json" id="ix-m-rules">
+  {
+    "title": "Self-test: state the rule before you flip the card",
+    "subtitle": "Each card is a rule from this page that an exam answer is expected to contain.",
+    "cards": [
+      { "front": "The keep-or-drop test", "back": "Keep a model only when it has a purpose (it settles a live decision), an audience (someone reads it) and a lifetime (someone will update or delete it). All three, or it is ceremony.", "hint": "Purpose × audience × lifetime" },
+      { "front": "Lightweight modelling", "back": "Produce the smallest model that answers the question in front of the team, at the moment it is asked, and expect to change it in the next iteration.", "hint": "Definition" },
+      { "front": "Executable model", "back": "A model precise enough for a tool to run: every transition carries a trigger, a guard and an effect; every operation carries its contract; every class carries its invariants.", "hint": "Definition" },
+      { "front": "Testable model", "back": "A model whose claims are attached to checks that fail when the claim is broken — multiplicities, invariants and acceptance criteria each map to a test.", "hint": "Definition" },
+      { "front": "The round-trip conditions", "back": "Deterministic transformation, the model as the single source for everything generated, and every manual edit either marked as protected or folded back into the model.", "hint": "Consistency" },
+      { "front": "Dependency direction", "back": "If a change in one package could force a change in another, the latter depends on the former. Read the dashed arrow as “changes here can force changes there”.", "hint": "Package rule" },
+      { "front": "Deployment in one sentence", "back": "One diagram per system model showing nodes and the communication paths between them: the runtime configuration of hardware and the software deployed onto it, controlling performance, scalability, maintainability and portability.", "hint": "Notation" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; reading a dependency graph for trouble.</strong> You are handed the Week 8 tutorial's Order Processing subsystem and asked whether the package structure is healthy. Work it through in four moves.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name every package and its namespace.</strong> <code>Track Order</code>, <code>Order Processing</code>, <code>Shipping</code>, plus the external <code>UI Framework</code>. Each is a namespace, so <code>Track Order.Status</code> and <code>Order Processing.Status</code> may coexist while the package names themselves must be unique.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Check each arrow against the rule.</strong> Track Order takes order details from Order Processing, and Order Processing needs the tracking information the customer supplied. Both directions therefore exist, and the tutorial calls the result an <code>&#171;access&#187;</code> dual dependency. Shipping's functionality is imported by Track Order, so that arrow is <code>&#171;import&#187;</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Say what the cycle costs.</strong> A two-way dependency means the two packages cannot be understood, tested or released independently: a change to the tracking display can force a change in order processing and the reverse. It is not automatically wrong &mdash; the tutorial draws it deliberately &mdash; but naming the cost is the markable observation.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Propose the smallest repair, and test it.</strong> Introduce an interface the tracker publishes (<code>TrackingQuery</code>) that Order Processing consumes, so the dependency points one way. Then check the claim: removing the reverse arrow should not break the tracking scenario, and a change to the tracking screen should no longer be able to force a change in order processing.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-roundtrip">
+  <h2 class="section-title">The round-trip rules</h2>
+  <p class="section-lead">The consistency relation above is easy to state and easy to break. These are the four decisions that keep it true under a two-week iteration, in the order you would explain them.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Decision</th><th>Rule</th><th>Symptom when it is broken</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What the generator owns</td><td>Everything the transformation emits is owned by the model; generated regions are never edited by hand</td><td>Regeneration overwrites a fix and the defect returns</td></tr>
+        <tr><td>What is hand-written</td><td>Manual code lives in marked, protected regions or in a separate file the generator does not touch</td><td>The distinction between generated and manual code is lost within two Sprints</td></tr>
+        <tr><td>Where discovery goes</td><td>A finding in the code is folded into the model in the same change</td><td>The model drifts into a historical sketch and reviewers stop trusting it</td></tr>
+        <tr><td>When the loop is checked</td><td>Inside the iteration, by the tests derived from the model and the acceptance criteria</td><td>&ldquo;Done&rdquo; means the demo worked once, and the burndown reflects hope rather than state</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The exam sentence for the round trip:</strong> the model is generated forward into code, the code is read back into the model, and the loop is safe only when the transformation is deterministic, the model owns everything generated, and every manual edit is marked &mdash; which is what lets a model survive rapid-fire change instead of becoming the document the week warns about.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A generator produces a class from a model, a developer adds a validation method directly to that file, and the next generation removes it. Which round-trip condition was violated?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Determinism is working exactly as specified: the same model produced the same output. The hand edit was never part of the model.">Deterministic transformation</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The model must be the single source for everything the generator owns; a manual edit in a generated region has to be moved into the model or placed in a marked, protected region." data-bad="">The model as the single source for what the generator owns</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The tests may also need updating, but the loss happened at the generation boundary, not at the test boundary.">The test suite derived from the model</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checks">
+  <h2 class="section-title">Keep-or-drop and tutorial review</h2>
+  <p class="section-lead">The Week 8 tutorial asks for two diagrams and a Jira board. Use this checklist to audit what you produced before you commit it to the Sprint.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Package diagram audit</h3>
+      <p>One tab per package, unique names, every arrow justified by the change-propagation rule, and each dependency stereotyped as <code>&#171;import&#187;</code> or <code>&#171;access&#187;</code> where the distinction is meaningful.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Deployment diagram audit</h3>
+      <p>Exactly one diagram for the system model; nodes, node instances and artifacts distinguished; every communication path carrying its protocol; the four parameters (performance, scalability, maintainability, portability) answerable from what is drawn.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Backlog audit</h3>
+      <p>Every item ordered by value to the customer, every estimate made by the team, MoSCoW applied so the Sprint holds the must-haves and should-haves, and any new request sitting on the Product Backlog rather than in the running Sprint.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Model audit</h3>
+      <p>Each model names its question, its reader and its update point; each constraint maps to a check that can fail; each transition carries a trigger, a guard and an effect.</p>
+    </div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-keepdrop"></div>
+  <script type="application/json" id="ix-m-keepdrop">
+  {
+    "title": "Order the keep-or-drop checklist",
+    "subtitle": "Rebuild the order in which to interrogate a candidate model before you commit it to the repository.",
+    "steps": [
+      "Name the decision this model changes",
+      "Name the person who will read it",
+      "Name when it will be updated or deleted",
+      "Check that every constraint in it maps to a test that can fail",
+      "Check that every transition has a trigger, a guard and an effect",
+      "Decide whether the model or the code is the cheaper place to answer the question",
+      "Keep it, or drop it and answer the question in code"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Candidate model</th><th>Verdict</th><th>Reason</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Two-class slice for the preference story</td><td>Keep</td><td>Settles the ownership decision, has a reader in the team, updated with the code</td></tr>
+        <tr><td>Three-state preference lifecycle</td><td>Keep</td><td>The guard on the return transition is a decision the story does not make on its own</td></tr>
+        <tr><td>Package diagram of the whole product</td><td>Trim</td><td>Only the packages the increment touches change a decision this Sprint</td></tr>
+        <tr><td>Deployment diagram of an environment nobody will provision</td><td>Drop</td><td>Fails purpose and lifetime; the tutorial's own example is a clustered environment that is actually assumed</td></tr>
+        <tr><td>Sequence diagram of the unchanged login flow</td><td>Drop</td><td>Fails purpose and audience; the code is the clearer source of truth</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; auditing a Sprint's models in five questions.</strong> Sprint goal: <em>&ldquo;A customer can track an order from the store's order-processing screen.&rdquo;</em> The team has produced a package diagram, a deployment sketch and a preference state machine it never used.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Purpose.</strong> The package diagram settles where tracking logic lives and whether the two-way dependency is acceptable; the deployment sketch settles whether the cluster can serve the lookup. The preference state machine settles nothing in this Sprint. Verdict on the third: drop it, and note in the retrospective that it was written before the story was understood.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Audience.</strong> Both kept diagrams are read by the whole team during the Sprint, and the deployment sketch is read again at the review when performance is discussed. Name a reader for each or the artefact goes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Lifetime.</strong> Both are updated in the same change as the code and both are re-examined at the review. Without that commitment they become the stale artefacts the week warns about, and the correct decision is to delete them rather than keep them &ldquo;just in case&rdquo;.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Falsifiability.</strong> Every constraint gets a check: the dual <code>&#171;access&#187;</code> dependency is reviewed against the rule that a change in one package can force a change in the other; the tracking state machine's guard &ldquo;serial number is well formed&rdquo; is tested with a malformed serial that must never leave the submitted state; the lookup timeout has a test that fails when the status never resolves.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Cheaper place to answer.</strong> The unknown-serial message was modelled, then dropped: one line of code answers it faster than a diagram. That is the trade the week is asking you to make deliberately, not a failure of rigour.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and notation here, the steppers and the package and deployment hotspots on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initELEC5620ChapterUI) return;
+    try {
+      window.initELEC5620ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[ELEC5620 chapter 8] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

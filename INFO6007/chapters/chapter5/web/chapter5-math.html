@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 5: Quality Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 foundations for INFO6007: the exact definitions behind project quality management, the cost-of-quality arithmetic, acceptance criteria and quality metrics expressed as testable thresholds, and a worked earned-value check on a quality problem.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 5: Quality Management">
+<meta property="og:description" content="Week 5 foundations for INFO6007: quality definitions, cost-of-quality arithmetic, quality metrics as testable thresholds, and the earned-value arithmetic the quality metrics feed.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter5-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 5 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-symbols" class="toc-link">Notation for quality</a></li>
+  </ul>
+  <div class="toc-group">Arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-coq" class="toc-link">Cost of quality</a></li>
+    <li><a href="#sec-m-metrics" class="toc-link">Metrics &amp; acceptance criteria</a></li>
+    <li><a href="#sec-m-schedule" class="toc-link">Quality work on the critical path</a></li>
+    <li><a href="#sec-m-evm" class="toc-link">EVM check on a quality problem</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial work, self-marked</a></li>
+  </ul>
+  <a href="chapter5-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO6007 &mdash; Week 5 supplement</p>
+  <h1>Foundations: the definitions and the arithmetic behind quality</h1>
+  <p class="hero-desc">Week 5 is mostly conceptual, but three parts of it are quantitative and are where marks are usually lost: the cost of quality, the translation of a quality requirement into a measurable acceptance criterion, and the earned-value arithmetic that shows what a defect is doing to the project. This page pins the definitions down exactly, then works the numbers.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 5 deck</span>
+    <span>EVM arithmetic follows the Week 5 tutorial answers</span>
+    <span>Critical-path arithmetic links back to Week 3</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">The Week 5 deck opens by quoting PMBOK. Learn the quoted form, then the deck's own gloss, then the consequence &mdash; that is the shape of a full-mark answer.</p>
+
+  <div class="def-box">
+    <div class="def-label">Quality (PMBOK, as quoted in the deck)</div>
+    <p>&ldquo;The degree to which a set of inherent characteristics fulfill requirements.&rdquo; The deck's plain-language version: <em>quality is the degree to which a product or service meets requirements, expectations, and is fit for its intended purpose.</em></p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Project Quality Management</div>
+    <p>The set of processes that ensure a project's <strong>deliverables</strong> meet stakeholder expectations, requirements and agreed standards, <em>while also</em> ensuring the project's <strong>processes</strong> are efficient and effective. Both halves are examinable: product quality and process quality.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The three processes</div>
+    <p><strong>Planning quality management</strong> &mdash; identify the quality requirements and standards, and how compliance will be demonstrated and measured. <strong>Managing quality</strong> (quality assurance) &mdash; translate the plan into executable assurance activity; process-focused and preventive. <strong>Controlling quality</strong> (quality control) &mdash; monitor and verify that deliverables meet the defined standards; output-focused and reactive.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Verification vs validation</div>
+    <p><strong>Verification</strong> asks &ldquo;did we build it right?&rdquo; &mdash; the deliverable meets its specification. <strong>Validation</strong> asks &ldquo;did we build the right thing?&rdquo; &mdash; the deliverable meets the user's need. The deck's NSW driver licence example states both explicitly: verification checks technical specifications, validation confirms the licence works for drivers, police and service staff.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Cost of quality</div>
+    <p>The total cost incurred to ensure a product or service meets quality requirements &mdash; in the deck's words, &ldquo;the cost of preventing, detecting, and correcting defects&rdquo;. It splits into <strong>cost of conformance</strong> (prevention + appraisal) and <strong>cost of non-conformance</strong> (internal + external failure).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Quality</td><td>Degree to which inherent characteristics fulfil requirements</td><td>&ldquo;High quality means expensive / premium&rdquo; &mdash; quality is conformance to requirements, not luxury</td></tr>
+        <tr><td>Quality assurance</td><td>Process-focused, preventive, audits and reviews</td><td>Describing testing. Testing is control, not assurance</td></tr>
+        <tr><td>Quality control</td><td>Product-focused, detective, acceptance decisions on deliverables</td><td>Calling a retrospective &ldquo;QC&rdquo; because it happened after delivery</td></tr>
+        <tr><td>Verification</td><td>Meets the specification (&ldquo;built it right&rdquo;)</td><td>Swapping verification and validation</td></tr>
+        <tr><td>Cost of conformance</td><td>Prevention + appraisal</td><td>Listing bug fixes as conformance because &ldquo;we paid for them&rdquo;</td></tr>
+        <tr><td>Cost of non-conformance</td><td>Internal + external failure</td><td>Forgetting the external half: complaints, lost trust, rework at the client</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team runs a sprint retrospective that changes how user stories are written, so that fewer ambiguous requirements reach development. Which process is this?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Quality control works on deliverables — testing, inspection, acceptance. Here nothing is being tested; a process is being changed.">Controlling quality, because the retrospective happened after the sprint</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Improving the process that produces the deliverable, before defects are created, is quality assurance — the deck lists retrospectives under assurance reviews." data-bad="">Managing quality (assurance), because a process is being improved to prevent defects</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Planning produces the Quality Management Plan up front. This is a mid-project change to how the plan is executed, which the deck calls continuous process improvement under assurance.">Planning quality management, because the story template is part of the plan</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-symbols">
+  <h2 class="section-title">Notation for quality</h2>
+  <p class="section-lead">The deck is written in prose. The symbols below are a revision aid introduced here so that the week's relationships can be written compactly; they are not lecture notation and should not be quoted as such.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(R\)</div><div class="sym-cell">requirements</div><div class="sym-cell">The documented requirements the deliverable must satisfy (scope plus specifications)</div>
+    <div class="sym-cell">\(Q\)</div><div class="sym-cell">quality</div><div class="sym-cell">The degree to which the deliverable's inherent characteristics fulfil \(R\)</div>
+    <div class="sym-cell">\(m_i\)</div><div class="sym-cell">metric \(i\)</div><div class="sym-cell">A measurable property of the deliverable or process, e.g. defect density, response time</div>
+    <div class="sym-cell">\(T_i\)</div><div class="sym-cell">threshold</div><div class="sym-cell">The target or limit for metric \(i\): the acceptance criterion made numeric</div>
+    <div class="sym-cell">\(\mathrm{CoC}\)</div><div class="sym-cell">cost of conformance</div><div class="sym-cell">Prevention cost \(C_p\) plus appraisal cost \(C_a\)</div>
+    <div class="sym-cell">\(\mathrm{CoNC}\)</div><div class="sym-cell">cost of non-conformance</div><div class="sym-cell">Internal failure \(C_{if}\) plus external failure \(C_{ef}\)</div>
+    <div class="sym-cell">\(\mathrm{CoQ}\)</div><div class="sym-cell">cost of quality</div><div class="sym-cell">\(\mathrm{CoC} + \mathrm{CoNC}\), the total spend on preventing, detecting and correcting defects</div>
+    <div class="sym-cell">\(\lambda\)</div><div class="sym-cell">defect escape rate</div><div class="sym-cell">Defects found after release divided by total defects found; the share QC failed to catch</div>
+    <div class="sym-cell">\(D\)</div><div class="sym-cell">defect count</div><div class="sym-cell">Defects logged against a deliverable; the input to a Pareto or control chart</div>
+    <div class="sym-cell">\(F\)</div><div class="sym-cell">float</div><div class="sym-cell">Spare schedule time on a task; \(F = 0\) marks the critical path (Week 3)</div>
+    <div class="sym-cell">\(\mathrm{PV},\mathrm{EV},\mathrm{AC}\)</div><div class="sym-cell">earned value trio</div><div class="sym-cell">Planned value, earned value and actual cost; the Week 4 vocabulary that quality work consumes</div>
+    <div class="sym-cell">\(\mathrm{CPI},\mathrm{SPI}\)</div><div class="sym-cell">performance indices</div><div class="sym-cell">\(\mathrm{EV}/\mathrm{AC}\) and \(\mathrm{EV}/\mathrm{PV}\); below 1 means over budget or behind schedule</div>
+  </div>
+
+  <div class="insight-box">
+    <strong>One tolerance to carry through the whole page.</strong> A quality metric with no threshold is not a metric, it is a wish. Every number below is expressed as \(m_i \le T_i\) or \(m_i \ge T_i\), because that is the only form a release gate can evaluate.
+  </div>
+</section>
+
+<section class="section" id="sec-m-coq">
+  <h2 class="section-title">Cost of quality: the arithmetic</h2>
+  <p class="section-lead">The deck asserts that prevention is cheaper than correction. The cost-of-quality breakdown is how you make that assertion quantitative in an exam answer.</p>
+
+  <div class="theorem-box">
+    <h3>The decomposition</h3>
+    <p>Total cost of quality is the sum of four categories, grouped into two halves:</p>
+    \[ \mathrm{CoQ} \;=\; \underbrace{(C_p + C_a)}_{\text{cost of conformance}} \;+\; \underbrace{(C_{if} + C_{ef})}_{\text{cost of non-conformance}} \]
+    <p style="margin-top:0.6rem;">
+      \(C_p\) <strong>prevention</strong> &mdash; training, standards, code review, threat modelling, test automation.<br>
+      \(C_a\) <strong>appraisal</strong> &mdash; testing, inspection, audits, quality-control tooling.<br>
+      \(C_{if}\) <strong>internal failure</strong> &mdash; rework, retesting and defect triage found <em>before</em> release.<br>
+      \(C_{ef}\) <strong>external failure</strong> &mdash; incidents, hotfixes, downtime, complaints, compensation found <em>after</em> release.
+    </p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Why the failure terms dominate</h3>
+    <p>Let a defect fixed during prevention cost \(1\) unit, during appraisal cost \(k_a\), during internal failure \(k_{if}\) and after release \(k_{ef}\). The standard escalation is:</p>
+    \[ 1 \;<\; k_a \;\ll\; k_{if} \;\ll\; k_{ef} \]
+    <p style="margin-top:0.6rem;">The deck's version of this is the principle <em>prevention over inspection</em>: &ldquo;it's cheaper to prevent defects than fix them later&rdquo;. Deming's third point makes the same claim in management language &mdash; cease dependence on inspection to achieve quality, and build quality into the process instead.</p>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-coq-timeline"></div>
+  <script type="application/json" id="ix-coq-timeline">
+  {
+    "title": "Where the quality money goes as a project runs",
+    "subtitle": "The same four cost-of-quality categories, seen at the point in the lifecycle where each one is normally incurred.",
+    "events": [
+      { "label": "Plan", "title": "Prevention C\u209a", "detail": "Standards, code review, training, test automation and threat modelling are funded before any defect exists. This is the cheapest place in the whole lifecycle to deal with a defect, and the deck's 'prevention over inspection' principle in practice." },
+      { "label": "Build", "title": "Appraisal C\u2090", "detail": "Unit, integration and system testing, inspections and process audits. Appraisal does not remove defects — it finds them, which is why the deck classifies it as conformance spending rather than as a cure." },
+      { "label": "Release gate", "title": "Internal failure C\u1d62\u1da0", "detail": "Defects caught before release become rework, retest cycles and triage. Costlier than appraisal, because the work is repeated rather than merely checked." },
+      { "label": "After release", "title": "External failure C\u2091\u1da0", "detail": "Incidents, hotfixes, downtime and complaints. The client now finds the defects, so the cost is paid twice: once to fix, once in trust. This is the category that a release gate exists to keep empty." },
+      { "label": "Review", "title": "Re-balance for the next cycle", "detail": "Total cost of quality is not the objective — the mix is. Moving money left, from failure into prevention, lowers the total and lowers the risk at the same time." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Category</th><th>Half</th><th>IT examples from the deck</th><th>Behaviour over the project</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Prevention</strong> \(C_p\)</td><td>Conformance</td><td>Automated tests, code reviews, training, standards</td><td>Spent early, on purpose, before defects exist</td></tr>
+        <tr><td><strong>Appraisal</strong> \(C_a\)</td><td>Conformance</td><td>Unit, integration, system, UAT, performance testing</td><td>Spent throughout; proportional to what you test</td></tr>
+        <tr><td><strong>Internal failure</strong> \(C_{if}\)</td><td>Non-conformance</td><td>Bug fixes found in test, retest cycles, defect triage</td><td>Rises when appraisal is under-resourced</td></tr>
+        <tr><td><strong>External failure</strong> \(C_{ef}\)</td><td>Non-conformance</td><td>Downtime, customer complaints, emergency releases</td><td>Rises when defects escape the release gate</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The trap in the definition.</strong> CoQ is <em>not</em> &ldquo;the cost of the QA team&rdquo;. It is the total of all four categories, and the interesting management question is the <em>mix</em>: a project can spend the same total on quality and still fail because \(C_{ef}\) is doing the work that \(C_p\) should have done.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A release ships with a defect that miscalculates overtime pay. Payroll staff work a weekend to correct 1,200 payslips manually, and the client raises a formal complaint. How are these costs classified?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Appraisal is testing and inspection done on purpose, before release. Nothing here was planned inspection work.">Appraisal cost, because the payslips had to be checked</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Internal failure is failure found before release. These costs landed on the client after go-live, which is the external category.">Internal failure cost, because the defect was eventually fixed in-house</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The defect escaped the release gate, so the weekend rework and the complaint are cost of non-conformance of the external-failure kind — the most expensive category, and the one prevention exists to eliminate." data-bad="">External failure cost — part of the cost of non-conformance</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m-coq">Show solution</button>
+  <div class="solution-content" id="sol-m-coq">
+    <p><strong>Worked arithmetic &mdash; rebalancing the quality spend.</strong> A 6-month IT project budgets its quality activities as \(C_p = \$30{,}000\), \(C_a = \$50{,}000\), \(C_{if} = \$70{,}000\), \(C_{ef} = \$50{,}000\).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p><strong>Total and split.</strong></p>
+          \[ \mathrm{CoC} = 30{,}000 + 50{,}000 = \$80{,}000 \]
+          \[ \mathrm{CoNC} = 70{,}000 + 50{,}000 = \$120{,}000 \]
+          \[ \mathrm{CoQ} = 80{,}000 + 120{,}000 = \$200{,}000 \]
+          <p>So 40% of all quality spend is conformance and 60% is failure &mdash; a project paying for defects rather than for prevention.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p><strong>Propose a shift, not a cut.</strong> Move \(\$20{,}000\) from reactive work into prevention: more review, more automated regression, earlier defect detection. Assume a conservative conversion factor of \(1.75\) &mdash; every dollar spent preventing defects removes \(\$1.75\) of failure cost, because failure work is dearer than prevention work.</p>
+          \[ C_p' = 30{,}000 + 20{,}000 = \$50{,}000 \]
+          \[ \mathrm{CoNC}' = 120{,}000 - (20{,}000 \times 1.75) = 120{,}000 - 35{,}000 = \$85{,}000 \]
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p><strong>New total.</strong> Appraisal is unchanged at \(\$50{,}000\):</p>
+          \[ \mathrm{CoQ}' = (50{,}000 + 50{,}000) + 85{,}000 = \$185{,}000 \]
+          <p>A \(\$15{,}000\) reduction in total cost of quality, achieved by spending <em>more</em> on prevention. This is the deck's prevention-over-inspection principle expressed as arithmetic.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <p><strong>State the assumption.</strong> The result depends entirely on the conversion factor. If prevention only removes \(\$0.80\) of failure cost per dollar spent, \(\mathrm{CoQ}' = 100{,}000 + 104{,}000 = \$204{,}000\) and the shift destroys value. The honest exam answer names the assumption and the break-even point: here, prevention must remove more than \(\$1.00\) of failure cost per dollar to be worth doing on cost grounds alone &mdash; and less than that on risk grounds, because external failures also cost reputation and client trust.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-metrics">
+  <h2 class="section-title">Metrics and acceptance criteria</h2>
+  <p class="section-lead">The deck's planning step says to define quality metrics; its control step says to measure against thresholds. Between them sits the step students skip: turning a requirement into something a test can pass or fail.</p>
+
+  <div class="theorem-box">
+    <h3>From requirement to acceptance criterion</h3>
+    <p>A requirement becomes usable for quality control only when it is expressed as a measurable assertion over a stated condition:</p>
+    \[ \text{criterion}_i \;=\; \bigl(\, m_i \;\bowtie\; T_i \;\mid\; \text{load } L,\ \text{data set } S \,\bigr), \qquad \bowtie \;\in\; \{\le, \ge, =\} \]
+    <p style="margin-top:0.6rem;">The condition clause is the part that carries the marks. &ldquo;Response time \(\le 2\)&nbsp;s&rdquo; is not testable; &ldquo;response time \(\le 2\)&nbsp;s for the 95th percentile at 5,000 concurrent users on the production-sized enrolment data set&rdquo; is.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Quality dimension (from the deck)</th><th>Question it answers</th><th>Metric \(m_i\)</th><th>Acceptance criterion</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Functionality</strong></td><td>Does it do what it is supposed to?</td><td>Functional test pass rate; defects per module</td><td>100% of critical test cases pass; 0 open critical defects</td></tr>
+        <tr><td><strong>Reliability</strong></td><td>Does it work consistently without failure?</td><td>Crash rate; mean time between failures</td><td>Crash rate &lt; 0.1% of sessions over a 14-day soak</td></tr>
+        <tr><td><strong>Performance</strong></td><td>Is it fast and efficient?</td><td>95th-percentile response time; throughput</td><td>p95 response &le; 2&nbsp;s at 5,000 concurrent users</td></tr>
+        <tr><td><strong>Usability</strong></td><td>Is it intuitive for end users?</td><td>Task completion rate; time on task</td><td>&ge; 90% of first-time users complete enrolment unaided</td></tr>
+        <tr><td><strong>Maintainability</strong></td><td>Can it be updated and improved easily?</td><td>Static-analysis findings; test coverage</td><td>0 blocker findings; &ge; 70% line coverage on changed code</td></tr>
+        <tr><td><strong>Security</strong></td><td>Are data and systems protected?</td><td>Open vulnerabilities by severity</td><td>0 open high or critical findings at release</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Definition of done, written properly</h3>
+      <p>A release gate is a conjunction of criteria, not a feeling. In the notation above, release requires \(\bigwedge_i (m_i \bowtie T_i)\) &mdash; every criterion satisfied at once, under the stated conditions. That conjunction is what the deck's driver licence example means by &ldquo;statewide release proceeds only when agreed criteria are met and critical defects are closed&rdquo;.</p>
+    </div>
+    <div class="col-card">
+      <h3>The metric that was missing</h3>
+      <p>The workshop scenario on the study page failed with a full green test report because the load and concurrency clause \(L\) was never written into any criterion. Nothing was tested wrongly; something testable was never defined. That is a planning defect, and it is why the failure surfaced as an external one.</p>
+    </div>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-evm-race"></div>
+  <script type="application/json" id="ix-evm-race">
+  {
+    "title": "Tutorial Part A in one picture (thousands of dollars)",
+    "subtitle": "PV 100, EV 80 and AC 110 at the end of month 4 on a $200k budget. Earned value sits below both plan and spend: the gap to PV is schedule slippage, the gap to AC is overspend, and the last bar is where the current CPI is heading.",
+    "max": 275,
+    "rows": [
+      { "name": "PV — planned value", "value": 100, "display": "$100k planned" },
+      { "name": "EV — earned value", "value": 80, "display": "$80k earned" },
+      { "name": "AC — actual cost", "value": 110, "display": "$110k spent" },
+      { "name": "BAC — total budget", "value": 200, "display": "$200k baseline" },
+      { "name": "EAC — forecast at completion", "value": 275, "display": "≈$275k forecast" },
+      { "name": "VAC — variance at completion", "value": 75, "display": "−$75k overrun" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which of these is a usable acceptance criterion for quality control?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="There is no threshold and no condition, so this can never fail a test — which means it can never gate a release either.">The system should be responsive and easy to use</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: a metric, a threshold and the conditions under which it is measured. Any tester can decide pass or fail without asking the author what they meant." data-bad="">95th-percentile response time &le; 2 s at 5,000 concurrent users on the production data set</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is a plan for an activity, not a criterion on a deliverable. It says what the team will do, not what the product must achieve.">Performance testing will be carried out before release</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-schedule">
+  <h2 class="section-title">Quality work on the critical path</h2>
+  <p class="section-lead">Week 3's arithmetic is what stops quality from being the thing that gets cut when the schedule slips. This is a small schedule for a quality-critical release, in the WBS-and-critical-path style of Week 3.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>ID</th><th>Activity</th><th>Duration (days)</th><th>Predecessors</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td>Kick-off and requirements baseline</td><td>2</td><td>&mdash;</td></tr>
+        <tr><td>B</td><td>Backend API build</td><td>6</td><td>A</td></tr>
+        <tr><td>C</td><td>Frontend build</td><td>5</td><td>A</td></tr>
+        <tr><td>D</td><td>Security review and remediation</td><td>4</td><td>B, C</td></tr>
+        <tr><td>E</td><td>System and integration testing</td><td>4</td><td>D</td></tr>
+        <tr><td>F</td><td>UAT on a sample of 500 users</td><td>3</td><td>E</td></tr>
+        <tr><td>G</td><td>Rollout and support shadowing</td><td>2</td><td>F</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-cpm"></div>
+
+  <div class="theorem-box">
+    <h3>Forward pass, backward pass, float</h3>
+    <p>With early start \(ES\), early finish \(EF\), late start \(LS\), late finish \(LF\) and duration \(d\):</p>
+    \[ ES_j = \max_{i \in P(j)} EF_i, \qquad EF_j = ES_j + d_j \]
+    \[ LF_i = \min_{j \in S(i)} LS_j, \qquad LS_i = LF_i - d_i, \qquad F_i = LS_i - ES_i \]
+    <p style="margin-top:0.6rem;">Tasks with \(F = 0\) form the critical path. Here that path is A&nbsp;&rarr;&nbsp;B&nbsp;&rarr;&nbsp;D&nbsp;&rarr;&nbsp;E&nbsp;&rarr;&nbsp;F&nbsp;&rarr;&nbsp;G, giving a project duration of \(2+6+4+4+3+2 = 21\) days. Task C has \(F = 1\) day.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Why this matters for quality.</strong> Only task C carries float. If the security review (D) runs late or the UAT sample finds defects, there is no spare time anywhere on the path to absorb it &mdash; the only levers left are scope and quality. That is the schedule-level version of the trade-off the deck describes between time and quality: &ldquo;tight schedules may force reduced testing or shortcuts, risking quality&rdquo;.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">The security review (D) is expected to take 4 days but takes 6. The project still has a fixed go-live date. What does the critical-path arithmetic tell the project manager?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="C has only one day of float and D is on the critical path, so the slip consumes it immediately. Front-end work is the one task that cannot rescue the date.">Task C's float absorbs the slip, so the go-live date is safe</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Every task after D on the path shifts by two days, and the only float in the network (one day, on C) is already used up. Absorbing the slip means compressing E, F or G — and compressing testing is exactly the shortcut that turns an internal failure into an external one." data-bad="">Two days are added to the project end date unless testing or UAT is compressed, and compressing them is a quality decision</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Adding testers helps, but the path is serial: E starts only when D finishes, so extra people do not shorten it. This is the classic resource-versus-duration confusion.">Adding testers to task E restores the original date without any trade-off</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-evm">
+  <h2 class="section-title">An earned-value check on a quality problem</h2>
+  <p class="section-lead">Week 4's EVM arithmetic answers &ldquo;how are we doing?&rdquo; in money and time. Run it on a project whose problem is quality, and the numbers tell you which of the two it actually is. This is the Week 5 tutorial's Part A, worked in full.</p>
+
+  <div class="info-card">
+    <p><strong>Scenario (Week 5 tutorial, Part A).</strong> \(\mathrm{BAC} = \$200{,}000\), project duration 8 months. At the end of month 4: planned completion 50%, so \(\mathrm{PV} = \$100{,}000\); actual completion 40%, so \(\mathrm{EV} = \$80{,}000\); and \(\mathrm{AC} = \$110{,}000\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The formulas, all five</h3>
+    \[ \mathrm{CV} = \mathrm{EV} - \mathrm{AC}, \qquad \mathrm{SV} = \mathrm{EV} - \mathrm{PV} \]
+    \[ \mathrm{CPI} = \frac{\mathrm{EV}}{\mathrm{AC}}, \qquad \mathrm{SPI} = \frac{\mathrm{EV}}{\mathrm{PV}} \]
+    \[ \mathrm{EAC} = \frac{\mathrm{BAC}}{\mathrm{CPI}}, \qquad \mathrm{VAC} = \mathrm{BAC} - \mathrm{EAC} \]
+    <p style="margin-top:0.6rem;">\(\mathrm{EAC} = \mathrm{BAC}/\mathrm{CPI}\) is the &ldquo;current CPI persists&rdquo; forecast the tutorial asks for. It is the right forecast when the cause of the variance is systemic &mdash; which, in a quality problem, it usually is.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m-evm">Show solution</button>
+  <div class="solution-content" id="sol-m-evm">
+    <p><strong>Worked answer &mdash; tutorial Part A.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p><strong>Cost and schedule variance.</strong></p>
+          \[ \mathrm{CV} = 80{,}000 - 110{,}000 = -\$30{,}000 \quad(\text{over budget}) \]
+          \[ \mathrm{SV} = 80{,}000 - 100{,}000 = -\$20{,}000 \quad(\text{behind schedule}) \]
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p><strong>Performance indices.</strong></p>
+          \[ \mathrm{CPI} = \frac{80{,}000}{110{,}000} = 0.727\ldots \approx 0.73 \quad(\text{cost-inefficient}) \]
+          \[ \mathrm{SPI} = \frac{80{,}000}{100{,}000} = 0.80 \quad(\text{progress slower than plan}) \]
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p><strong>Forecast.</strong> With the current CPI persisting:</p>
+          \[ \mathrm{EAC} = \frac{200{,}000}{0.727\ldots} \approx \$275{,}000 \]
+          \[ \mathrm{VAC} = 200{,}000 - 275{,}000 = -\$75{,}000 \]
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <p><strong>Interpretation, as the tutorial answers it.</strong> Behind schedule and over budget; if the trend continues, expect an overrun of about \(\$75\)k. The quality reading of the same numbers: \(\mathrm{SPI} = 0.80\) means testing and review are being squeezed to hold the date, and \(\mathrm{CPI} = 0.73\) means the money is going into rework rather than into planned work. In cost-of-quality language, \(C_{if}\) is inflating, and the risk is that it converts into \(C_{ef}\) after release.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <p><strong>The Part B variant, for comparison.</strong> With \(\mathrm{BAC} = \$500{,}000\) and a 10% contingency reserve (\(\$50{,}000\)), at month 6 of 12: \(\mathrm{PV} = \$250{,}000\), \(\mathrm{EV} = \$220{,}000\), \(\mathrm{AC} = \$270{,}000\).</p>
+          \[ \mathrm{CPI} = \frac{220{,}000}{270{,}000} \approx 0.815, \qquad \mathrm{SPI} = \frac{220{,}000}{250{,}000} = 0.88 \]
+          <p>Over budget and behind schedule again, but the overrun so far is \(\mathrm{CV} = -\$50{,}000\) &mdash; the entire contingency reserve. The tutorial's suggested root causes are the quality-relevant ones: underestimated integration and testing, change requests, resource churn, vendor delays. Its corrective actions are equally quality-relevant: scope triage, senior staff onto the critical path, enforced change control.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Read \(\mathrm{SPI}\) first</h3>
+      <p>Behind schedule is the leading indicator of a quality problem, because the first thing a compressed schedule loses is review and test time. Behind schedule <em>and</em> over budget together is the signature of rework.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Then ask what the money bought</h3>
+      <p>The same \(\mathrm{CPI}\) can mean two different things: more effort than planned for the same scope, or the same effort spent twice. The defect log and the cost-of-quality mix distinguish them.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Then compare with the reserve</h3>
+      <p>An overrun inside the contingency reserve is a managed risk being consumed. An overrun past it is a baseline change, and a quality failure that reaches the client is what makes the reserve insufficient.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A project reports \(\mathrm{CPI} = 0.95\) and \(\mathrm{SPI} = 0.72\). Which reading is most defensible?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Money is nearly on plan; it is time that has gone. Reading this as a cost problem points the corrective action at the wrong place.">The project is in serious financial trouble</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Cost is broadly on plan while schedule has slipped badly, so value is being delivered late rather than expensively — and the standard response of compressing test and review time is exactly what turns a late project into a low-quality one." data-bad="">Cost is roughly on plan but the schedule has slipped, so the live risk is that quality is cut to recover time</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Both indices below 1 mean the project is not ahead on either dimension. Neither index can exceed 1 here.">The project is ahead of schedule and under budget</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">The original budget is \(\mathrm{BAC} = \$120{,}000\). At the half-way point \(\mathrm{EV} = \$50{,}000\) and \(\mathrm{AC} = \$62{,}000\). What does the remaining work now have to achieve?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="0.81 is the CPI so far (50,000 / 62,000) — the performance already achieved. The question asks what the remaining work must achieve to finish inside the original budget.">A CPI of about 0.81 for the rest of the project</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. TCPI = (BAC − EV) / (BAC − AC) = 70,000 / 58,000 ≈ 1.21. The remaining work must be delivered 21% more efficiently than the plan assumed, which is the arithmetic version of ‘the contingency is gone’." data-bad="">A CPI of about 1.21 for the rest of the project</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="1.00 would mean the remaining work just has to go to plan. That is only true while CPI equals 1; here the money already spent above plan has to be recovered.">A CPI of 1.00, because the remaining work is unchanged</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial work, self-marked</h2>
+  <p class="section-lead">Two tasks from the Week 5 tutorial and workshop, answered to the standard the marking rubric implies: name the mechanism, name the evidence, name the trade-off.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-recovery"></div>
+  <script type="application/json" id="ix-m-recovery">
+  {
+    "title": "Order the recovery sequence for a slipping, over-budget project",
+    "subtitle": "The order the tutorial's corrective actions imply once quality is treated as the constraint.",
+    "steps": [
+      "Establish the true position: re-baseline progress, defects and cost of quality",
+      "Separate the systemic cause from the local one (rework vs estimate error)",
+      "Triage scope and defer the lowest-value features explicitly",
+      "Reinforce prevention on the modules that generated the defects",
+      "Re-plan the critical path with named owners and dates",
+      "Re-forecast EAC with the corrected CPI and publish the new baseline"
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m-case">Show solution</button>
+  <div class="solution-content" id="sol-m-case">
+    <p><strong>Worked answer &mdash; the TechSolutions HRM case, classified.</strong> Full context is on the study page; this is the arithmetic and classification the case asks for.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p><strong>Classify each reported defect.</strong> The overtime miscalculation, the biometric sync failure and the 500-employee report crash were all found by the <em>client</em> after the Month 4 release. Every one of them is therefore <strong>external failure</strong> \(C_{ef}\): the dearest category. The unit and integration testing that did run is <strong>appraisal</strong> \(C_a\) and stays conformance spending regardless of how many defects it missed.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p><strong>Name the missing tests and what each would have caught.</strong> <em>System testing</em> &mdash; the whole integrated HRM against requirements &mdash; would have caught the report crash, because the crash appears only with the full data set. <em>User acceptance testing</em> &mdash; real users on real data &mdash; would have caught the overtime rule, because the rule is a business rule that only payroll staff can confirm. <em>Performance/load testing</em> would have caught the biometric sync failure under concurrent device traffic. The deck's list &mdash; unit, integration, system, UAT, &ldquo;and many more&rdquo; &mdash; is exactly the taxonomy to reason with here.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p><strong>Cause-and-effect (Ishikawa) for the payroll defect.</strong> Four branches, each with a plausible cause from the case. <em>People</em>: no payroll domain expert on the review panel. <em>Method</em>: overtime rules documented nowhere, so the developer inferred them. <em>Machine</em>: no automated regression suite over payroll calculations. <em>Measurement</em>: no acceptance criteria for overtime, so nothing could fail. The last branch is the root cause, and it is a planning failure, not a coding one.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <p><strong>Prevention for the next release, in Juran's ten steps.</strong> Build awareness (the defect cost is now visible and quantified), set goals (zero critical defects at release, defined exit criteria), organise (a named quality owner per module), provide resources (an automated payroll regression suite), train (payroll rules for the team), take action (rule documentation and approval), report progress (defect trend on a dashboard), recognise, communicate results, and maintain momentum by folding the new regression suite into the standard pipeline. Steps 1&ndash;5 address this project; steps 6&ndash;10 make the change survive it.</p>
+        </div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <p><strong>The one-sentence answer.</strong> The project did not fail at testing; it failed at planning, because no measurable acceptance criterion existed for overtime calculation or for concurrency, and quality control can only detect what a criterion defines.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-terms"></div>
+  <script type="application/json" id="ix-m-terms">
+  {
+    "title": "Self-test: say the definition before you flip",
+    "subtitle": "Every card is a phrase the Week 5 deck uses and an exam answer is expected to use precisely.",
+    "cards": [
+      { "front": "Quality (PMBOK)", "back": "The degree to which a set of inherent characteristics fulfill requirements.", "hint": "Quoted definition" },
+      { "front": "Cost of conformance", "back": "Prevention plus appraisal: the money spent to keep defects out of the product in the first place.", "hint": "Cost of quality" },
+      { "front": "Cost of non-conformance", "back": "Internal plus external failure: rework found in test, and failures found by the client after release.", "hint": "Cost of quality" },
+      { "front": "Process audit", "back": "A systematic review checking whether teams are following the defined standards, policies and procedures — the deck's example is auditing whether secure coding practices are used.", "hint": "Assurance activity" },
+      { "front": "Pareto chart / 80-20 rule", "back": "A bar chart with a cumulative line showing that roughly 80% of problems come from 20% of causes, so improvement effort should be aimed at the vital few.", "hint": "Quality tool" },
+      { "front": "Control chart", "back": "Process performance plotted over time against upper and lower control limits, to detect variation or trends outside acceptable thresholds.", "hint": "Quality tool" },
+      { "front": "Verification", "back": "Did we build it right? The deliverable conforms to its specification.", "hint": "Control decision" },
+      { "front": "Validation", "back": "Did we build the right thing? The deliverable meets the real user need.", "hint": "Control decision" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the three processes, the tools, the standards and the workshop case; this page carries the definitions and the arithmetic. Then attempt the Quiz Hub and Flashcards for Week 5.
+  </div>
+</section>
+
+</div>
+
+<script>
+/* Foundations page chrome. Declarative widgets (timeline, race, sequence, deck)
+ * are mounted by shared/interactive.js from the JSON blocks on this page; the
+ * canvas animators for the week live on the study guide. */
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.initINFO6007ChapterUI) window.initINFO6007ChapterUI();
+  if (window.renderKatex) window.renderKatex();
+});
+window.addEventListener("langchange", function () {
+  if (window.Interactive && window.Interactive.mount) {
+    window.Interactive.mount(document);
+  }
+  if (window.initINFO6007ChapterUI) window.initINFO6007ChapterUI();
+  if (window.renderKatex) window.renderKatex();
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

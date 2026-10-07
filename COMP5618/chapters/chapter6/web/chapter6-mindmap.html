@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind map — Week 6: Linux OS Introduction</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind map — Week 6 — Hierarchical mind map of the Linux security model: permissions, service accounts, setuid, sudoers, cron, detection and hardening.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind map — Week 6: Linux OS Introduction">
+<meta property="og:description" content="Mind map — Week 6 — Hierarchical mind map of the Linux security model: permissions, service accounts, setuid, sudoers, cron, detection and hardening.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter6-study.html">&larr; Study guide</a>
+  <a href="chapter6-math.html">Foundations</a>
+  <a href="../../../index.html">&#127968; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Week 6 mind map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand all</button>
+    <button id="btnCollapseAll">Collapse all</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--blue)"></span> Linux foundations &amp; the filesystem</span>
+  <span><span class="dot" style="background:var(--green)"></span> Identity, delegation &amp; automation</span>
+  <span><span class="dot" style="background:var(--purple)"></span> Escalation paths</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Detection &amp; hardening</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Week 6: Linux OS Introduction",
+  label_zh: "第 6 周：Linux 操作系统入门",
+  children: [
+    {
+      label: "What Linux is",
+      label_zh: "Linux 是什么",
+      color: "blue",
+      href: "chapter6-study.html#sec-linux",
+      children: [
+        { label: "Open source, based on UNIX", label_zh: "开源，源自 UNIX", href: "chapter6-study.html#sec-linux" },
+        { label: "Kernel by Linus Torvalds, 1991", label_zh: "内核由 Linus Torvalds 于 1991 年发布", href: "chapter6-study.html#sec-linux" },
+        { label: "UNIX-like design principles", label_zh: "类 UNIX 的设计原则", href: "chapter6-study.html#sec-linux" },
+        { label: "Hierarchical filesystem, multiuser, shell", label_zh: "层次化文件系统、多用户、命令行界面", href: "chapter6-study.html#sec-linux" },
+        { label: "A distribution is kernel + userland", label_zh: "发行版 = 内核 + 用户态软件", href: "chapter6-study.html#sec-linux" }
+      ]
+    },
+    {
+      label: "Filesystem and permission bits",
+      label_zh: "文件系统与权限位",
+      color: "blue",
+      href: "chapter6-study.html#sec-filesystem",
+      children: [
+        { label: "One tree, rooted at /", label_zh: "以 / 为根的一棵树", href: "chapter6-study.html#sec-filesystem" },
+        { label: "Ten characters: type + three triads", label_zh: "十个字符：类型 + 三个三元组", href: "chapter6-study.html#sec-filesystem" },
+        { label: "s replaces x — SUID and SGID", label_zh: "s 取代 x —— SUID 与 SGID", href: "chapter6-study.html#sec-filesystem" },
+        { label: "Enumerate with find -perm", label_zh: "用 find -perm 枚举", href: "chapter6-study.html#sec-filesystem" },
+        { label: "Mode arithmetic and the setuid equation", label_zh: "权限数值运算与 setuid 等式", href: "chapter6-math.html#sec-m-perms" }
+      ]
+    },
+    {
+      label: "Users, groups and service accounts",
+      label_zh: "用户、组与服务账户",
+      color: "green",
+      href: "chapter6-study.html#sec-users",
+      children: [
+        { label: "Multiuser by design; every process has an identity", label_zh: "多用户设计；每个进程都有身份", href: "chapter6-study.html#sec-users" },
+        { label: "www-data, mysql, nobody", label_zh: "www-data、mysql、nobody", href: "chapter6-study.html#sec-users" },
+        { label: "Program-specific users contain a compromise", label_zh: "专用账户把入侵限制在局部", href: "chapter6-study.html#sec-users" },
+        { label: "Principle of least privilege", label_zh: "最小权限原则", href: "chapter6-study.html#sec-users" },
+        { label: "Windows runs programs as the invoking user", label_zh: "Windows 以调用程序的用户身份运行", href: "chapter6-study.html#sec-users" }
+      ]
+    },
+    {
+      label: "Setuid escalation",
+      label_zh: "Setuid 提权",
+      color: "purple",
+      href: "chapter6-study.html#sec-setuid",
+      children: [
+        { label: "Runs with the privileges of the file owner", label_zh: "以文件属主的权限运行", href: "chapter6-study.html#sec-setuid" },
+        { label: "The ping example: -rwsr-xr-x", label_zh: "ping 示例：-rwsr-xr-x", href: "chapter6-study.html#sec-setuid" },
+        { label: "Command execution, memory flaws, writable scripts", label_zh: "命令执行、内存漏洞、可写脚本", href: "chapter6-study.html#sec-setuid" },
+        { label: "Seven best practices", label_zh: "七项最佳实践", href: "chapter6-study.html#sec-setuid" },
+        { label: "The lab chain: www-data to root", label_zh: "实验链路：从 www-data 到 root", href: "chapter6-math.html#sec-m-tutorial" }
+      ]
+    },
+    {
+      label: "Kernel vulnerabilities",
+      label_zh: "内核漏洞",
+      color: "purple",
+      href: "chapter6-study.html#sec-kernel",
+      children: [
+        { label: "The kernel enforces privilege, so bugs in it grant privilege", label_zh: "内核负责权限判定，其漏洞即权限漏洞", href: "chapter6-study.html#sec-kernel" },
+        { label: "CVE Details as the historical record", label_zh: "用 CVE Details 查阅历史记录", href: "chapter6-study.html#sec-kernel" },
+        { label: "CVE-2016-0728: keyring flaw, local user to root", label_zh: "CVE-2016-0728：keyring 缺陷，本地用户提升为 root", href: "chapter6-study.html#sec-kernel" },
+        { label: "Mitigation is the patched kernel", label_zh: "缓解方式是打上补丁的内核", href: "chapter6-study.html#sec-kernel" },
+        { label: "Patch window W = t1 − t0", label_zh: "补丁窗口 W = t1 − t0", href: "chapter6-math.html#sec-m-harden" }
+      ]
+    },
+    {
+      label: "Delegation: sudoers",
+      label_zh: "权限委托：sudoers",
+      color: "green",
+      href: "chapter6-study.html#sec-sudoers",
+      children: [
+        { label: "/etc/sudoers defines who may run sudo, and what", label_zh: "/etc/sudoers 规定谁能以 sudo 运行什么", href: "chapter6-study.html#sec-sudoers" },
+        { label: "User1 ALL=(ALL) /usr/bin/reboot", label_zh: "User1 ALL=(ALL) /usr/bin/reboot", href: "chapter6-study.html#sec-sudoers" },
+        { label: "Edit with visudo — it syntax-checks first", label_zh: "用 visudo 编辑——它会先做语法检查", href: "chapter6-study.html#sec-sudoers" },
+        { label: "Five best practices for least privilege", label_zh: "最小权限的五项最佳实践", href: "chapter6-study.html#sec-sudoers" },
+        { label: "Directive grammar: who, where, as whom, command", label_zh: "指令语法：谁、在哪、以谁的身份、哪条命令", href: "chapter6-math.html#sec-m-cron" }
+      ]
+    },
+    {
+      label: "Automation: cron jobs",
+      label_zh: "自动化：cron 计划任务",
+      color: "green",
+      href: "chapter6-study.html#sec-cron",
+      children: [
+        { label: "Scheduled tasks run without supervision", label_zh: "计划任务无人值守地运行", href: "chapter6-study.html#sec-cron" },
+        { label: "Often scheduled under root's crontab", label_zh: "常被安排在 root 的 crontab 中", href: "chapter6-study.html#sec-cron" },
+        { label: "sudo crontab -e edits the root schedule", label_zh: "sudo crontab -e 编辑 root 的计划", href: "chapter6-study.html#sec-cron" },
+        { label: "A writable script means root runs your commands", label_zh: "脚本可写，即 root 运行你的命令", href: "chapter6-study.html#sec-cron" },
+        { label: "Five-field crontab notation", label_zh: "五字段 crontab 记法", href: "chapter6-math.html#sec-m-cron" }
+      ]
+    },
+    {
+      label: "Detection and rootkits",
+      label_zh: "检测与 rootkit",
+      color: "yellow",
+      href: "chapter6-study.html#sec-detection",
+      children: [
+        { label: "unix-privesc-check detailed | less", label_zh: "unix-privesc-check detailed | less", href: "chapter6-study.html#sec-detection" },
+        { label: "g0tmi1k's privilege escalation cheat sheet", label_zh: "g0tmi1k 提权速查表", href: "chapter6-study.html#sec-detection" },
+        { label: "SUID, writable directories, world-writable files", label_zh: "SUID、可写目录、全局可写文件", href: "chapter6-study.html#sec-detection" },
+        { label: "Rootkits: kernel hooks, modified binaries, stealth", label_zh: "rootkit：内核钩子、篡改二进制、隐蔽性", href: "chapter6-study.html#sec-detection" },
+        { label: "Signature, behavioural, memory, network, hypervisor", label_zh: "特征、行为、内存、网络、虚拟化层", href: "chapter6-study.html#sec-detection" }
+      ]
+    },
+    {
+      label: "Hardening and SSH",
+      label_zh: "安全加固与 SSH",
+      color: "yellow",
+      href: "chapter6-study.html#sec-hardening",
+      children: [
+        { label: "Patch, authenticate, firewall, limit privileges", label_zh: "打补丁、强认证、配防火墙、限制权限", href: "chapter6-study.html#sec-hardening" },
+        { label: "IDS/IPS and full disk encryption", label_zh: "IDS/IPS 与全盘加密", href: "chapter6-study.html#sec-hardening" },
+        { label: "sshd_config: no root login, no empty passwords", label_zh: "sshd_config：禁止 root 登录、禁止空密码", href: "chapter6-study.html#sec-hardening" },
+        { label: "Key-based auth, strong ciphers, idle timeouts", label_zh: "密钥认证、强加密套件、空闲超时", href: "chapter6-study.html#sec-hardening" },
+        { label: "Hardening is subtractive: shrink the surface", label_zh: "加固是做减法：缩小攻击面", href: "chapter6-math.html#sec-m-harden" }
+      ]
+    }
+  ]
+};
+renderMindmap('mindmapCanvas', data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

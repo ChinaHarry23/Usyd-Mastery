@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 8: Intelligent Interactive Systems</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 foundations for COMP5047: exact definitions of AI, autonomy and augmentation, working notation for inference and confidence, the levels of automation as a scale, the latency budget for voice, the Gricean maxims as a failure taxonomy, and a self-check deck.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 8: Intelligent Interactive Systems">
+<meta property="og:description" content="Week 8 foundations for COMP5047: exact definitions of AI, autonomy and augmentation, working notation for inference and confidence, the levels of automation as a scale, the latency budget for voice, the Gricean maxims as a failure taxonomy, and a self-check deck.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter8-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#129504;</span>
+    <h2>Week 8 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-notation" class="toc-link">Working notation</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-model" class="toc-link">Seven relationships worth writing from memory</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomies and checklists</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-selftest" class="toc-link">Self-check and worked answers</a></li>
+  </ul>
+  <a href="chapter8-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5047 &mdash; Week 8 supplement</p>
+  <h1>Foundations: the vocabulary and the dials behind intelligent interfaces</h1>
+  <p class="hero-desc">Week 8 is a design week rather than a mathematical one, so this page does the equivalent job: it pins down the definitions the lecture relies on, gives you a compact notation for inference, confidence and autonomy, turns the levels of automation and the latency budget into relations you can write down, reduces Grice's maxims to a failure taxonomy, and ends with the checklist that turns &ldquo;the AI was wrong&rdquo; into a markable answer.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 8 deck</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Worked latency budget and automation placement</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence for interaction included.</p>
+
+  <div class="def-box">
+    <div class="def-label">AI system &mdash; EU AI regulation, current wording</div>
+    <p>A <strong>machine-based system</strong> designed to operate with <strong>varying levels of autonomy</strong>, which may exhibit <strong>adaptiveness after deployment</strong>, and which, for explicit or implicit objectives, <strong>infers</strong>, from the input it receives, how to generate outputs such as predictions, content, recommendations or decisions that can influence physical or virtual environments.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">AI system &mdash; EU AI regulation proposal (the earlier, technique-based wording)</div>
+    <p>Software developed with one or more of the techniques and approaches listed in Annex I that can, for a given set of human-defined objectives, generate outputs such as content, predictions, recommendations or decisions influencing the environments they interact with. Annex I covers machine-learning approaches (supervised, unsupervised, reinforcement, including deep learning); logic- and knowledge-based approaches (knowledge representation, inductive logic programming, knowledge bases, inference and deductive engines, symbolic reasoning, expert systems); statistical approaches and Bayesian estimation; and search and optimisation methods.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Narrow and general AI</div>
+    <p><strong>Narrow AI</strong> performs one or a few tasks really well and exists today. <strong>General AI</strong> would perform any kind of task extremely well and is not yet realised. Everything discussed in this unit is narrow, however capable it appears.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Automation versus augmentation</div>
+    <p><strong>Automation</strong> moves a decision from the person to the system. <strong>Augmentation</strong> keeps the person as the decision-maker and uses the system to extend what they can do. The deck's claim is that the potential of AI lies not in automation but in augmentation.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Over-trust and automation bias</div>
+    <p><strong>Over-trust</strong> is accepting a system's output as correct without checking it. <strong>Automation bias</strong> is the specific failure of favouring an automated suggestion over other information &mdash; including the user's own judgement. Both are made worse by confident-sounding output from an uncertain model.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>AI system</td><td>Infers from input; autonomy varies; may adapt after deployment; outputs can influence environments</td><td>&ldquo;A program that learns&rdquo; &mdash; learning is one technique, not the definition</td></tr>
+        <tr><td>Autonomy</td><td>How far the system acts before a human decides or approves</td><td>Confusing autonomy with accuracy: a very accurate model can still sit at level 2</td></tr>
+        <tr><td>Augmentation</td><td>The person still decides</td><td>Calling any AI feature &ldquo;augmentation&rdquo; when the system actually decides</td></tr>
+        <tr><td>Over-trust</td><td>The user stops verifying</td><td>Treating it as a personality trait rather than a property of the interface</td></tr>
+        <tr><td>Automation bias</td><td>The automated suggestion outweighs better evidence</td><td>Using it interchangeably with &ldquo;the model is biased&rdquo;, which is a different claim</td></tr>
+        <tr><td>Proactivity</td><td>The system acts or speaks without being asked</td><td>Assuming proactive is always better; proactivity without context is an interruption</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement would earn the mark for &ldquo;what is an AI system?&rdquo; using the current EU wording?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a technique-based answer taken from the earlier proposal. The current wording deliberately avoids naming techniques, so it covers systems that do not learn at all.">Software that uses machine learning or deep learning to produce outputs</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: a machine-based system operating with varying levels of autonomy that may adapt after deployment and that infers, from its input, how to generate outputs such as predictions, recommendations or decisions." data-bad="">A machine-based system with varying autonomy that may adapt after deployment and infers outputs from its input</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Replaceability is not part of the definition. A system that is hard to replace is still an AI system, and plenty of replaceable systems are not.">Any system that can be replaced by a human doing the same task</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">Working notation</h2>
+  <p class="section-lead">The lecture is written in prose. The symbols below are introduced here so that you can write about the week's relationships compactly; they are a revision aid, not lecture notation, and should not be quoted as such.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(x\)</div><div class="sym-cell">input</div><div class="sym-cell">What the system receives: sensor readings, text, audio, a transcript, a user profile</div>
+    <div class="sym-cell">\(y\)</div><div class="sym-cell">output</div><div class="sym-cell">The prediction, content, recommendation or decision the system generates</div>
+    <div class="sym-cell">\(f\)</div><div class="sym-cell">inference</div><div class="sym-cell">The mapping \(y = f(x)\); always probabilistic, never a guarantee</div>
+    <div class="sym-cell">\(\hat{y}\)</div><div class="sym-cell">the system's answer</div><div class="sym-cell">The estimate actually produced, to be distinguished from the correct answer \(y^{*}\)</div>
+    <div class="sym-cell">\(c\)</div><div class="sym-cell">confidence</div><div class="sym-cell">The system's own estimate of how likely \(\hat{y}\) is correct; \(c \in [0,1]\)</div>
+    <div class="sym-cell">\(\tau_c, \tau_a\)</div><div class="sym-cell">confirmation and action thresholds</div><div class="sym-cell">Below \(\tau_c\) the system asks; above \(\tau_a\) it acts silently; between them it confirms</div>
+    <div class="sym-cell">\(\ell\)</div><div class="sym-cell">level of automation</div><div class="sym-cell">Sheridan and Verplank's scale, \(\ell \in \{1,\dots,10\}\)</div>
+    <div class="sym-cell">\(u\)</div><div class="sym-cell">urgency</div><div class="sym-cell">How much time is available before the decision must be made; high \(u\) pushes \(\ell\) up</div>
+    <div class="sym-cell">\(r\)</div><div class="sym-cell">reversibility</div><div class="sym-cell">How cheaply an action can be undone; high \(r\) permits a higher \(\ell\)</div>
+    <div class="sym-cell">\(E_a\)</div><div class="sym-cell">attention demanded</div><div class="sym-cell">The attentional and interaction cost the system imposes; confirmations add to it</div>
+    <div class="sym-cell">\(L\)</div><div class="sym-cell">latency</div><div class="sym-cell">The time between the end of the user's turn and the start of the system's response</div>
+    <div class="sym-cell">\(\mathrm{FA}, \mathrm{FR}\)</div><div class="sym-cell">false accept, false reject</div><div class="sym-cell">The two error directions of a detector such as a wake word</div>
+    <div class="sym-cell">\(K\)</div><div class="sym-cell">augmentation</div><div class="sym-cell">Human capability multiplied by system capability, keeping the human as the decider</div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-model">
+  <h2 class="section-title">Seven relationships worth writing from memory</h2>
+  <p class="section-lead">Each of these turns a design instinct into something you can state, and therefore something an examiner can mark.</p>
+
+  <div class="theorem-box">
+    <h3>1. An AI system is an inference, not a specification</h3>
+    <p>The system does not execute a rule you wrote; it estimates an output from an input:</p>
+    \[ \hat{y} \;=\; f(x), \qquad \hat{y} \;\approx\; y^{*} \text{ only in expectation} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Consequence for interaction: because \(f\) is probabilistic, the interface must communicate capability and error rate <em>before</em> the output is trusted. The first two human-AI guidelines are exactly this consequence.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Confidence decides the response tier</h3>
+    <p>With \(c\) the system's confidence in its own interpretation, and two thresholds \(\tau_c &lt; \tau_a\):</p>
+    \[ \text{response}(c) \;=\; \begin{cases} \text{ask again}, &amp; c &lt; \tau_c \\[2pt] \text{confirm, then act}, &amp; \tau_c \le c &lt; \tau_a \\[2pt] \text{act silently}, &amp; c \ge \tau_a \end{cases} \]
+    <p style="margin-top:0.6rem;">This is the deck's three-tiered confidence, written as a policy. The engineering problem is estimating \(c\) honestly; the design problem is setting the thresholds per action rather than globally, because the cost of a wrong irreversible action is not the same as the cost of a wrong song choice.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The level of automation is a function of error cost, not of model quality</h3>
+    <p>Let \(\ell \in \{1,\dots,10\}\) be the Sheridan and Verplank level, \(u\) the urgency of the decision, \(r\) its reversibility, \(E_a\) the attention the user can spare, and \(P(\text{err})\) the probability the inference is wrong:</p>
+    \[ \ell^{*} \;=\; g\bigl(u,\; r,\; E_a,\; P(\text{err})\bigr) \]
+    <p style="margin-top:0.6rem;">Read the signs: higher urgency and lower attention budget push \(\ell\) <em>up</em>; lower reversibility and higher error probability push \(\ell\) <em>down</em>. Note what is absent &mdash; the model's benchmark score. A better model does not by itself justify more autonomy; it only shifts \(P(\text{err})\), which is one input among four.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Augmentation rather than automation</h3>
+    <p>Let \(H\) be what the human can achieve alone and \(S\) what the system can achieve alone. Automation replaces \(H\) with \(S\); augmentation is bounded by the human:</p>
+    \[ K \;=\; H \cdot (1 + S) \qquad\text{(augmentation)} \qquad\text{versus}\qquad K' \;=\; S \qquad\text{(automation)} \]
+    <p style="margin-top:0.6rem;">The product form carries the argument: if the human's contribution goes to zero, augmentation collapses to \(S\) and you have built automation with extra steps. This is why the deck's claim is a design stance rather than a slogan &mdash; it only pays off where \(H\) is genuinely non-zero.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. The voice latency budget is a sum, and the sum is the experience</h3>
+    <p>A voice interaction is a chain of stages, so the delays add rather than hide:</p>
+    \[ L \;=\; L_{\text{wake}} + L_{\text{asr}} + L_{\text{nlu}} + L_{\text{dialogue}} + L_{\text{skill}} + L_{\text{tts}} \]
+    <p style="margin-top:0.6rem;">The practical reading: you cannot buy back a slow stage by making another one faster than zero. Turning a 1&nbsp;200&nbsp;ms round trip into a 1&nbsp;500&nbsp;ms one is the difference between a conversation and a transaction, and no amount of model accuracy repairs the feel of it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>6. Language has four levels, and each level has its own error rate</h3>
+    <p>The deck's progression &mdash; words, syntax, semantics, pragmatics &mdash; composes into a success probability:</p>
+    \[ P(\text{understood}) \;=\; P(\text{words}) \cdot P(\text{syntax} \mid \text{words}) \cdot P(\text{semantics} \mid \text{syntax}) \cdot P(\text{pragmatics} \mid \text{semantics}) \]
+    <p style="margin-top:0.6rem;">Because the terms multiply, a stage at 0.9 caps the whole chain: four stages at 0.9 give 0.66. This is the formal reason the deck's repair strategies exist, and the reason a correct transcript is not the same as a correct understanding.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>7. A detector has two error directions, and the threshold trades one for the other</h3>
+    <p>For a wake word or any other detector, let \(\mathrm{FA}\) be a false accept (it reacts when nobody spoke to it) and \(\mathrm{FR}\) a false reject (it ignores a real request):</p>
+    \[ \text{raise the threshold} \;\Longrightarrow\; \mathrm{FA} \downarrow,\; \mathrm{FR} \uparrow \]
+    <p style="margin-top:0.6rem;">Both directions have a cost and they are not symmetric. A false accept is a privacy event; a false reject is a repetition, and after two or three of them the user stops talking to the device. Choose the threshold by naming which cost you would rather pay.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>The sentence that connects the whole page.</strong> An intelligent interface makes the design problem harder rather than easier: behaviour that used to be specified is now inferred, so the designer's job becomes choosing \(\ell\), setting \(\tau_c\) and \(\tau_a\), budgeting \(L\), and designing the repair path for the case where \(f(x)\) is wrong &mdash; knowing all the while that the user will trust \(\hat{y}\) more than the evidence warrants.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A model's accuracy improves from 90&nbsp;% to 99&nbsp;%. What follows, on the scale of automation, from the relationship \(\ell^{*} = g(u, r, E_a, P(\text{err}))\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the tempting answer, and it is exactly what the relationship rules out: a higher level is a separate decision about urgency, reversibility and attention, not an automatic consequence of accuracy.">A higher level of automation is now justified because the error probability fell</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Only one of the four inputs changed, so the justified level moves only if that change is large enough to matter given the reversibility and the attention budget. Accuracy is an input, not the verdict." data-bad="">The justified level may rise, but only if that change outweighs the reversibility and attention constraints</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing in the relationship makes accuracy irrelevant — it is one of the four arguments. It is the claim that accuracy alone decides the level that is wrong.">Nothing changes, because level of automation is unrelated to error probability</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomies and checklists</h2>
+  <p class="section-lead">Three tables do most of the work in a Week 8 exam answer: which kind of task the system is doing, which conversational rule it broke, and which of the human-AI guidelines it violated.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Taxonomy 1 &mdash; what kind of task is being automated?</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Category</th><th>Deck's verdict</th><th>Examples</th><th>Where the ethical pressure comes from</th><th>Defensible design move</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Automating perception</strong></td><td>Genuine and rapid progress</td><td>Content identification, face recognition and analysis, medical diagnoses from scans, speech-to-text, deepfakes</td><td>High accuracy, deployed at scale</td><td>Consent, scope limits, and making synthetic media detectable</td></tr>
+        <tr><td><strong>Automating judgement</strong></td><td>Far from perfect, but improving</td><td>Spam detection, plagiarism detection, essay grading, hate speech detection, content recommendation</td><td>Some error is inevitable, and the error lands on people</td><td>Appeal paths, visible uncertainty, and human review of the consequential cases</td></tr>
+        <tr><td><strong>Predicting social outcomes</strong></td><td>Fundamentally dubious</td><td>Recidivism, job performance, predictive policing, terrorist risk, at-risk kids</td><td>Low accuracy presented as measurement</td><td>Do not deploy; if forced, keep a human decision-maker and publish the error rates</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Taxonomy 2 &mdash; which maxim did the assistant break?</h3>
+  <div data-ix="matcher" data-ix-src="#ix-m-grice"></div>
+  <script type="application/json" id="ix-m-grice">
+  {
+    "title": "Match the maxim to the discipline it demands",
+    "subtitle": "Click a maxim of Grice's cooperative principle, then the design commitment it implies for a voice interface.",
+    "pairs": [
+      ["Quality", "Every claim the system makes must be true — including claims about its own capability, so state the limit instead of answering a different question"],
+      ["Quantity", "Give as much as the request needs and no more: answer the question asked rather than reading out every option the API returned"],
+      ["Relation", "Be relevant to what the user actually meant: resolve the referent before answering the words"],
+      ["Manner", "Avoid obscurity and ambiguity, be brief and orderly — including about formats the system itself requires"]
+    ]
+  }
+  </script>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Taxonomy 3 &mdash; the human-AI interaction guidelines by phase</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Phase</th><th>Guidelines (as the deck states them)</th><th>The failure each one prevents</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Initially</strong></td><td>Make clear what the system can do; make clear how well the system can do what it can do; time services based on context; show contextually relevant information; match relevant social norms; mitigate social biases</td><td>The user cannot form an accurate mental model, so every confident output is treated as certain and every interruption arrives at the wrong moment</td></tr>
+        <tr><td><strong>During interaction</strong></td><td>Efficient invocation, dismissal and correction; scope services when in doubt; make clear why the system did what it did; remember recent interactions</td><td>Uncorrectable errors accumulate: the user cannot get out of the state, cannot tell why they are in it, and has to repeat context every turn</td></tr>
+        <tr><td><strong>Over time</strong></td><td>Learn from user behaviour; encourage granular feedback; convey the consequences of user actions; provide global controls</td><td>Adaptation becomes invisible and uncontrollable: the system changes around the user with no way to see or steer it</td></tr>
+        <tr><td><strong>When wrong</strong></td><td>Even assuming perfect AI performance, many interaction design challenges remain</td><td>Designing only for the happy path, which is where the trust that was built gets spent</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Ten-second version for the exam:</strong> name the category (perception, judgement or social prediction), name the level of automation, name the maxim or guideline that was broken, then name who bears the cost of the error. Four moves, and the answer is markable.
+  </div>
+</section>
+
+<section class="section" id="sec-m-selftest">
+  <h2 class="section-title">Self-check and worked answers</h2>
+  <p class="section-lead">Three interactive checks and three worked answers. Answer out loud before you flip, and write the worked answers out in full at least once.</p>
+
+  <div id="ix-m-budget"></div>
+
+  <div id="ix-m-levels"></div>
+
+  <div id="ix-m-detect"></div>
+
+  <div class="quick-check">
+    <div class="qc-question">A wake word detector is tuned so that it almost never reacts to speech that was not addressed to it. What have you paid for that?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Privacy events are false accepts, and you have just reduced those. The cost of a conservative threshold is on the other side of the trade.">More privacy events, because the device wakes up more often</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A high threshold lowers false accepts but raises false rejects, so genuine requests are ignored and the user has to repeat themselves — and after a few repetitions they stop using voice for that task." data-bad="">More false rejects: genuine requests are ignored, so the user repeats themselves and eventually stops trying</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The threshold does not change the model's accuracy on the utterances it does process. It changes which utterances get processed at all.">Nothing: false accepts and false rejects are independent of the threshold</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; a latency budget.</strong> A voice assistant has a round-trip budget of 1&nbsp;000&nbsp;ms. The current pipeline measures: wake word 250&nbsp;ms, speech recognition 320&nbsp;ms, natural-language understanding 180&nbsp;ms, dialogue management 90&nbsp;ms, skill or API call 400&nbsp;ms, text-to-speech 160&nbsp;ms.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Sum the stages.</strong> \(L = 250 + 320 + 180 + 90 + 400 + 160 = 1\,400\)&nbsp;ms &mdash; 400&nbsp;ms over budget.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Note that the sum, not the worst stage, is the experience.</strong> Five stages at 180&nbsp;ms plus one at 500&nbsp;ms is still 1&nbsp;400&nbsp;ms. Shaving a fast stage buys almost nothing; the budget is decided by the sum.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Find the stage that can be overlapped or removed.</strong> The skill call at 400&nbsp;ms is the only stage that leaves the device, and it is also the only one that can start speculatively: issue the call from the partial transcript, and cancel it if the final transcript disagrees. That removes most of the 400&nbsp;ms without touching the model.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Fix the remainder at the interface.</strong> If the budget still cannot be met, acknowledge immediately &mdash; a short filler &mdash; so that perceived latency stops tracking measured latency. This is a design intervention in a latency problem, which is the point: \(L\) is a property of the interaction, not only of the stack.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the caveat.</strong> The numbers here are illustrative; the method is the markable part. Sum the chain, find the removable or overlappable stage, and say what the user perceives while you wait.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An essay-grading model reports that it agrees with human markers 85&nbsp;% of the time. Which conclusion is best supported?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Grading is judgement in the deck's taxonomy, where some error is inevitable and the error lands on a person. An 85 % agreement rate quantifies the error but does not remove it, so the design question is what happens to the 15 % — appeal path, human review, visible uncertainty." data-bad="">It is an automating-judgement task: some error is inevitable, so the design must handle the 15&nbsp;% of cases where the grade is wrong</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Agreement is not accuracy. Where the model and the human disagree, you do not yet know which one is right, so 85 % agreement is not 85 % correctness.">The model is 85&nbsp;% accurate, so it can be deployed with confidence</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck places essay grading under automating judgement, not predicting social outcomes. The distinction matters because the remedies differ: judgement needs appeals and review, social prediction needs non-deployment.">It is a social-outcome prediction, so it is fundamentally dubious and must not be deployed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-selftest-deck"></div>
+  <script type="application/json" id="ix-m-selftest-deck">
+  {
+    "title": "Self-test: say the definition before you flip",
+    "subtitle": "Twelve cards covering the week's vocabulary and the relationships behind it.",
+    "cards": [
+      { "front": "AI system (current EU wording)", "back": "A machine-based system designed to operate with varying levels of autonomy that may exhibit adaptiveness after deployment and that, for explicit or implicit objectives, infers from its input how to generate outputs such as predictions, content, recommendations or decisions that can influence physical or virtual environments.", "hint": "Definition" },
+      { "front": "Narrow versus general AI", "back": "Narrow performs one or a few tasks really well and exists today; general would perform any kind of task extremely well and is not yet realised.", "hint": "Taxonomy" },
+      { "front": "Moravec's paradox", "back": "Adult-level performance on intelligence tests is comparatively easy to produce; the perception and mobility skills of a one-year-old are difficult or impossible.", "hint": "Quote" },
+      { "front": "Sheridan and Verplank's scale", "back": "Ten levels from 1 (AI offers no assistance; the human decides and acts) to 10 (AI decides everything, acts autonomously, ignoring the human). Levels 4–6 retain a human veto; levels 7–10 act first and inform afterwards, if at all.", "hint": "Instrument" },
+      { "front": "Automation versus augmentation", "back": "Automation moves the decision to the system. Augmentation keeps the person as the decider and extends what they can do — the deck's claim is that the potential of AI lies in augmentation.", "hint": "Design stance" },
+      { "front": "Three-tiered confidence", "back": "Act when confident (“OK, ordering more dog food”); confirm when uncertain (“I understand you'd like to order more dog food. Is that correct?”); ask again when lost (“I'm sorry, I didn't get that. What would you like to buy?”).", "hint": "Policy" },
+      { "front": "Grice's cooperative principle", "back": "Participants expect that each will make a conversational contribution such as is required, at the stage at which it occurs, by the accepted purpose or direction of the talk exchange.", "hint": "Definition" },
+      { "front": "The four maxims", "back": "Quality — make a contribution that is true. Quantity — as informative as required. Relation — be relevant. Manner — avoid obscurity and ambiguity, be brief and orderly.", "hint": "List" },
+      { "front": "Four repair strategies", "back": "Hyperarticulation (louder, slower), simplification (keywords only), new utterance (reformulated to the same goal), and giving more information (adding detail to disambiguate).", "hint": "Failure analysis" },
+      { "front": "Over-trust versus automation bias", "back": "Over-trust is accepting an output without checking it. Automation bias is favouring an automated suggestion over other information, including your own judgement. The interface creates both.", "hint": "Risk" },
+      { "front": "Three categories of AI capability", "back": "Automating perception (genuine and rapid progress, concern is scale), automating judgement (far from perfect but improving, concern is inevitable error), predicting social outcomes (fundamentally dubious, concern is low accuracy).", "hint": "Taxonomy" },
+      { "front": "The four phases of the human-AI guidelines", "back": "Initially (capability, accuracy, timing, relevance, social norms, bias), during interaction (invocation and correction, scoping when in doubt, explanation, recent memory), over time (learning, granular feedback, consequences, global controls), and when wrong.", "hint": "Practice" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; placing a proactive feature on the ladder.</strong> Feature: a calendar assistant that notices a double booking, proposes a fix, and &mdash; if you do not respond in ten minutes &mdash; moves the less important meeting and tells you afterwards.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Separate the two decisions.</strong> Detecting the clash and proposing a fix is one behaviour; executing the fix is another. A single feature can sit at two levels at once, and saying so is worth marks.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Place the proposal.</strong> Offering one suggested alternative is level 4. If it offers several options it is level 2 or 3; if it offers one and waits for approval before acting, the pair is best described as level 4 followed by level 5.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Place the execution.</strong> Acting after a timeout without a response is level 6: the human had a period in which to veto, and the system proceeded automatically when the period expired. It is not level 7, because you are informed before the fact by the ten-minute window; it would become a notification-only design, level 7, if it moved the meeting immediately and told you afterwards.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Justify with the four inputs.</strong> Reversibility \(r\) is high for a meeting that can be moved back, urgency \(u\) is moderate, the attention budget \(E_a\) is the whole reason for the timeout, and \(P(\text{err})\) is the risk that the model misjudges which meeting matters more. High \(r\) supports the automatic execution; the error probability is what makes the notification and the undo action mandatory rather than optional.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Name the guideline obligations.</strong> Make clear what the system can do and how often it is wrong (initially); make correction efficient and explain the action (during interaction); convey the consequences of your non-response and provide a global control over what it may move (over time). A proactive feature that skips these is a level-6 system without the level-6 safeguards.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; diagnosing a miscommunication with the maxims and the language levels.</strong> Transcript: <em>&ldquo;Ok, Google, what was the last song?&rdquo;</em> answered with a plot summary of the 2010 film <em>The Last Song</em>.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Locate the level that failed.</strong> The words were recognised and the syntax parsed, so the failure is at semantics: &ldquo;the last song&rdquo; was resolved as a title rather than as a reference to recent history.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Name the maxim.</strong> Relation. The answer is true and well-formed but not relevant to what the speaker meant &mdash; the classic failure of answering the words rather than the intent.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Name the guideline that would have prevented it.</strong> Remember recent interactions: with short-term memory of what was played, &ldquo;the last song&rdquo; is resolvable without any improvement to the language model.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Check the confidence policy.</strong> Two parses existed, so \(c\) should have been below \(\tau_a\). The correct response was the middle tier: confirm which one was meant, rather than acting on the more literal interpretation.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Predict the user's repair.</strong> Faced with a film summary, the user will reformulate: &ldquo;what was the last song I played&rdquo; or &ldquo;what was playing before this&rdquo;. That is the third repair pattern &mdash; a new utterance &mdash; and it is a semantic repair, which is exactly where the defect is.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and notation here, the ten levels and the voice pipeline on the study guide &mdash; then the Quiz Hub and the Week 8 flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5047ChapterUI) return;
+    try {
+      window.initCOMP5047ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5047 chapter 8] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    initSteppers();
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+
+  function currentLang() {
+    return typeof window.getLang === "function" ? window.getLang() : "en";
+  }
+
+  function initSteppers() {
+    buildBudgetStepper();
+    buildLevelStepper();
+    buildDetectStepper();
+  }
+
+  function withFont(ctx, opts, fn) {
+    ctx.save();
+    ctx.font = (opts.weight || "600") + " " + (opts.size || 13) + "px " + (opts.family || "system-ui, sans-serif");
+    ctx.fillStyle = opts.color || "#565d75";
+    ctx.textAlign = opts.align || "left";
+    ctx.textBaseline = "middle";
+    fn();
+    ctx.restore();
+  }
+
+  function paragraph(ctx, x, y, text, opts) {
+    opts = opts || {};
+    var size = opts.size || 12.5;
+    var lh = opts.lh || 18;
+    withFont(ctx, { size: size, color: opts.color || "#565d75", weight: opts.weight || "500" }, function () {
+      var words = String(text).split(/\s+/);
+      var lines = [];
+      var line = "";
+      for (var i = 0; i < words.length; i++) {
+        var attempt = line ? line + " " + words[i] : words[i];
+        if (ctx.measureText(attempt).width > (opts.maxWidth || 400) && line) {
+          lines.push(line);
+          line = words[i];
+        } else {
+          line = attempt;
+        }
+      }
+      if (line) lines.push(line);
+      if (opts.maxLines && lines.length > opts.maxLines) {
+        lines = lines.slice(0, opts.maxLines);
+        lines[opts.maxLines - 1] = lines[opts.maxLines - 1].replace(/\s+\S*$/, "") + "…";
+      }
+      lines.forEach(function (ln, idx) {
+        ctx.fillText(ln, x, y + idx * lh);
+      });
+    });
+  }
+
+  /* ── Latency budget: the sum, with a 1000 ms budget line ───── */
+
+  function buildBudgetStepper() {
+    var host = document.getElementById("ix-m-budget");
+    if (!host || !window.Interactive) return;
+
+    var stages = [
+      {
+        name: "Wake word",
+        ms: 250,
+        note: "Always-on detection. Cheap per frame, but it runs continuously, so its cost is paid in power and in privacy rather than in latency alone."
+      },
+      {
+        name: "Speech recognition",
+        ms: 320,
+        note: "The acoustic model turns audio into a transcript. Everything downstream sees this text and nothing else, so an error here is unrecoverable later."
+      },
+      {
+        name: "Language understanding",
+        ms: 180,
+        note: "Words, syntax, semantics, pragmatics. The stage that decides whether “the last song” means a title or a memory."
+      },
+      {
+        name: "Dialogue management",
+        ms: 90,
+        note: "Cheap, and the stage that sets the response tier. This is where confidence thresholds are applied, so it is the cheapest place to buy correctness."
+      },
+      {
+        name: "Skill or API",
+        ms: 400,
+        note: "The only stage that leaves the device, and therefore the only one that can be started speculatively from a partial transcript and cancelled if the final transcript disagrees."
+      },
+      {
+        name: "Text to speech",
+        ms: 160,
+        note: "Synthesis at the end. Note that prosody is generated here, which means the empathy advantage of voice is a property of this last stage."
+      }
+    ];
+
+    var frames = stages.map(function (stage, idx) {
+      return {
+        title: (idx + 1) + ". " + stage.name + " — " + stage.ms + " ms",
+        caption: stage.note,
+        draw: function (ctx, w, h, k) {
+          k.clear();
+          var pad = 18;
+          var budget = 1000;
+          var total = stages.reduce(function (acc, s, i) {
+            return acc + (i <= idx ? s.ms : 0);
+          }, 0);
+
+          k.label(pad, 24, "CUMULATIVE ROUND TRIP", { size: 10.5, mono: true, color: "#7b829a" });
+          k.label(w - pad, 24, total + " ms of " + budget + " ms", {
+            align: "right",
+            size: 12,
+            mono: true,
+            color: total <= budget ? "#059669" : total <= budget * 1.2 ? "#f59e0b" : "#dc2626"
+          });
+
+          var bx = pad;
+          var by = 40;
+          var bw = w - pad * 2;
+          k.box(bx, by, bw, 22, { fill: "#eef2f7", stroke: "#cbd5e1", lw: 1.2, r: 11 });
+          var cursor = bx;
+          var scale = bw / (budget * 1.45);
+          var palette = ["#0891b2", "#0e7490", "#2563eb", "#7c3aed", "#f59e0b", "#059669"];
+          stages.forEach(function (s, i) {
+            var segW = s.ms * scale;
+            if (i <= idx) {
+              k.box(cursor, by, Math.max(segW, 2), 22, {
+                fill: i === idx ? "#0e7490" : palette[i % palette.length],
+                stroke: "rgba(255,255,255,0.7)",
+                lw: 1,
+                r: 0
+              });
+            }
+            cursor += segW;
+          });
+          var budgetX = bx + budget * scale;
+          k.arrow(budgetX, by - 10, budgetX, by + 34, { color: "#dc2626", lw: 1.6, head: 6 });
+          k.label(budgetX, by + 46, "budget 1000 ms", { align: "center", size: 10.5, mono: true, color: "#dc2626" });
+
+          var ly = 96;
+          stages.forEach(function (s, i) {
+            var x = pad + i * ((w - pad * 2) / stages.length);
+            var live = i <= idx;
+            k.dot(x + 6, ly, 5, { fill: live ? "#0891b2" : "#cbd5e1", stroke: live ? "#0e7490" : "#cbd5e1", lw: 1.2 });
+            k.label(x + 16, ly, s.ms + " ms", {
+              size: 11,
+              mono: true,
+              color: live ? "#141826" : "#94a3b8"
+            });
+            paragraph(ctx, x, ly + 18, s.name, {
+              size: 10.5,
+              lh: 13,
+              maxWidth: (w - pad * 2) / stages.length - 10,
+              maxLines: 2,
+              color: live ? "#565d75" : "#94a3b8"
+            });
+            if (i < stages.length - 1) {
+              k.arrow(x + (w - pad * 2) / stages.length - 10, ly, x + (w - pad * 2) / stages.length - 2, ly, {
+                color: "#cbd5e1",
+                lw: 1.2
+              });
+            }
+          });
+
+          paragraph(ctx, pad, 150, stage.note, {
+            size: 12.5,
+            lh: 18,
+            maxWidth: w - pad * 2,
+            maxLines: 4,
+            color: "#141826"
+          });
+
+          k.box(pad, h - 46, w - pad * 2, 34, { fill: "#f8fcfd", stroke: "#e2e8f0", lw: 1.2, r: 8 });
+          paragraph(ctx, pad + 12, h - 29, "L = L_wake + L_asr + L_nlu + L_dialogue + L_skill + L_tts = " + total + " ms", {
+            size: 12,
+            lh: 16,
+            maxWidth: w - pad * 2 - 24,
+            maxLines: 1,
+            mono: true,
+            color: total <= budget ? "#059669" : "#dc2626"
+          });
+        }
+      };
+    });
+
+    window.Interactive.stepper("ix-m-budget", {
+      title: currentLang() === "zh" ? "语音时延预算：六段之和" : "The voice latency budget: six stages, one sum",
+      subtitle:
+        currentLang() === "zh"
+          ? "延迟是相加的。示例数值为示意性数字，方法才是重点：求和、找出可重叠或可删除的那一段，并说明用户在等待时感受到什么。"
+          : "Latency adds up. The numbers are illustrative and the method is the markable part: sum the chain, find the stage that can be overlapped or removed, and say what the user perceives while they wait.",
+      height: 320,
+      frames: frames
+    });
+  }
+
+  /* ── Levels of automation: three representative rungs ──────── */
+
+  function buildLevelStepper() {
+    var host = document.getElementById("ix-m-levels");
+    if (!host || !window.Interactive) return;
+
+    var items = [
+      {
+        n: 1,
+        name: "AI offers no assistance: human must take all decisions and actions",
+        role: "The system is a tool. It may measure and display, but every decision and every action is the person's.",
+        why: "Justified when the human holds information the system cannot observe, when the action is hard to undo, or when there is no time pressure at all.",
+        tag: "no autonomy"
+      },
+      {
+        n: 5,
+        name: "AI executes a suggestion if the human approves",
+        role: "The classic mixed-initiative handshake: the system proposes, the person accepts, and only then does anything happen.",
+        why: "Justified when the model is useful but error probability is non-trivial and the action matters. The cost is one confirmation per action — and confirmation fatigue, which turns the veto into a reflex.",
+        tag: "human veto"
+      },
+      {
+        n: 10,
+        name: "AI decides everything, acts autonomously, ignoring the human",
+        role: "No human in the loop. The person may not even be informed, and cannot intervene in time even if they were.",
+        why: "Justified only when the objective is unambiguous, the cost of an error is low or fully recoverable, the human could not act in time anyway, and the error rate is known and published.",
+        tag: "no oversight"
+      }
+    ];
+
+    var frames = items.map(function (item, idx) {
+      return {
+        title: "Level " + item.n + " of 10 — " + item.tag,
+        caption: item.why,
+        draw: function (ctx, w, h, k) {
+          k.clear();
+          var pad = 20;
+          var innerW = w - pad * 2;
+
+          k.label(pad, 22, item.name, { size: 13.5, weight: "700", color: "#141826" });
+          k.label(pad, 44, "the rung in the deck's wording", { size: 10.5, mono: true, color: "#7b829a" });
+
+          k.bar(pad, 60, innerW, 12, item.n, { max: 10, fill: idx === 0 ? "#059669" : idx === 1 ? "#0891b2" : "#dc2626", track: "#e2e8f0" });
+          for (var i = 1; i <= 10; i++) {
+            var x = pad + (innerW * (i - 1)) / 9;
+            k.label(x, 86, String(i), {
+              align: "center",
+              size: 9.5,
+              mono: true,
+              color: i === item.n ? "#141826" : "#94a3b8"
+            });
+          }
+          k.dot(pad + (innerW * (item.n - 1)) / 9, 66, 7, { fill: "#ffffff", stroke: idx === 0 ? "#059669" : idx === 1 ? "#0891b2" : "#dc2626", lw: 2.2 });
+
+          k.label(pad, 118, "WHAT THE SYSTEM IS ALLOWED TO DO", { size: 10.5, mono: true, color: "#7b829a" });
+          paragraph(ctx, pad, 140, item.role, { size: 13, lh: 19, maxWidth: innerW, maxLines: 3, color: "#141826" });
+
+          var boxY = 196;
+          k.box(pad, boxY, innerW, 62, { fill: "#f8fcfd", stroke: "#e2e8f0", lw: 1.2, r: 8 });
+          k.label(pad + 12, boxY + 18, "when this rung is defensible", { size: 10.5, mono: true, color: "#0891b2" });
+          paragraph(ctx, pad + 12, boxY + 40, item.why, { size: 11.5, lh: 16, maxWidth: innerW - 24, maxLines: 2, color: "#565d75" });
+
+          k.label(pad, h - 26, "l* = g(urgency, reversibility, attention budget, P(err))", {
+            size: 11.5,
+            mono: true,
+            color: "#7c3aed"
+          });
+        }
+      };
+    });
+
+    window.Interactive.stepper("ix-m-levels", {
+      title: currentLang() === "zh" ? "自动化层级：三个有代表性的刻度" : "Levels of automation: three rungs that matter",
+      subtitle:
+        currentLang() === "zh"
+          ? "层级 1、5、10 分别代表无自主性、人类否决权与无监督。每一帧都说明该刻度在什么条件下才站得住脚。"
+          : "Levels 1, 5 and 10 stand for no autonomy, a human veto, and no oversight. Each frame states the conditions under which that rung is defensible.",
+      height: 300,
+      frames: frames
+    });
+  }
+
+  /* ── Detector thresholds: the two error directions ─────────── */
+
+  function buildDetectStepper() {
+    var host = document.getElementById("ix-m-detect");
+    if (!host || !window.Interactive) return;
+
+    var cases = [
+      {
+        title: "Conservative threshold — few false accepts, many false rejects",
+        caption:
+          "The device almost never reacts to speech that was not addressed to it, so privacy events are rare. The cost is on the other side: genuine requests are ignored, the user repeats themselves, and after two or three repetitions they stop using voice for that task.",
+        fa: "low",
+        fr: "high",
+        faFill: 0.1,
+        frFill: 0.85,
+        verdict: "chosen when a false accept is the expensive error"
+      },
+      {
+        title: "Aggressive threshold — many false accepts, few false rejects",
+        caption:
+          "Requests are picked up reliably and the interaction feels responsive. The device also wakes up during conversations it was not part of, which turns an accuracy setting into a privacy and social-norm problem.",
+        fa: "high",
+        fr: "low",
+        faFill: 0.82,
+        frFill: 0.12,
+        verdict: "chosen when a false reject is the expensive error"
+      },
+      {
+        title: "The design answer is not a better threshold",
+        caption:
+          "Two other moves change the trade rather than sliding along it: indicate clearly when the device is listening, so a false accept is visible and correctable, and make the second failure different from the first, so a false reject does not become three identical attempts.",
+        fa: "visible",
+        fr: "recoverable",
+        faFill: 0.4,
+        frFill: 0.4,
+        verdict: "change the consequences, not only the rate"
+      }
+    ];
+
+    function gauge(ctx, k, x, y, w, label, level, fill, color) {
+      k.box(x, y, w, 74, { fill: "#ffffff", stroke: "#e2e8f0", lw: 1.4, r: 10 });
+      k.label(x + 14, y + 20, label, { size: 11, mono: true, color: "#7b829a" });
+      k.bar(x + 14, y + 34, w - 28, 12, fill, { max: 1, fill: color, track: "#eef2f7" });
+      k.label(x + 14, y + 60, level, { size: 12, weight: "700", color: color });
+    }
+
+    var frames = cases.map(function (c) {
+      return {
+        title: c.title,
+        caption: c.caption,
+        draw: function (ctx, w, h, k) {
+          k.clear();
+          var pad = 20;
+          var gap = 16;
+          var cw = (w - pad * 2 - gap) / 2;
+
+          gauge(ctx, k, pad, 22, cw, "FALSE ACCEPT  (privacy event)", c.fa, c.faFill, "#dc2626");
+          gauge(ctx, k, pad + cw + gap, 22, cw, "FALSE REJECT  (repetition)", c.fr, c.frFill, "#f59e0b");
+
+          k.arrow(pad + cw / 2, 106, pad + cw / 2, 122, { color: "#cbd5e1", lw: 1.4 });
+          k.arrow(pad + cw + gap + cw / 2, 122, pad + cw + gap + cw / 2, 106, { color: "#cbd5e1", lw: 1.4 });
+          k.label(w / 2, 114, "the threshold trades one for the other", { align: "center", size: 11.5, mono: true, color: "#7c3aed" });
+
+          k.box(pad, 136, w - pad * 2, 44, { fill: "#f8fcfd", stroke: "#e2e8f0", lw: 1.2, r: 8 });
+          k.label(pad + 12, 152, "design position", { size: 10.5, mono: true, color: "#0891b2" });
+          k.label(pad + 12, 168, c.verdict, { size: 12, weight: "600", color: "#141826" });
+
+          paragraph(ctx, pad, 202, c.caption, {
+            size: 12.5,
+            lh: 18,
+            maxWidth: w - pad * 2,
+            maxLines: 4,
+            color: "#565d75"
+          });
+
+          k.label(pad, h - 22, "raise the threshold  ⟹  FA ↓ , FR ↑", { size: 12, mono: true, color: "#141826" });
+        }
+      };
+    });
+
+    window.Interactive.stepper("ix-m-detect", {
+      title: currentLang() === "zh" ? "检测器的两个错误方向" : "A detector has two error directions",
+      subtitle:
+        currentLang() === "zh"
+          ? "以唤醒词为例：提高阈值会降低误接受，同时提高误拒绝。两者代价并不对称，因此必须说明你更愿意承担哪一个。"
+          : "Using a wake word as the example: raising the threshold lowers false accepts and raises false rejects. The two costs are not symmetric, so name which one you would rather pay.",
+      height: 300,
+      frames: frames
+    });
+  }
+
+  initSteppers();
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind map — Week 3: Networking Traversal</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind map — Week 3 — Hierarchical mind map of networking traversal: ACL direction, TCP and UDP behaviour, port scanning, NAT and VPN tunnels, proxies and SSH pivoting, secure design and the penetration-testing process.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind map — Week 3: Networking Traversal">
+<meta property="og:description" content="Mind map — Week 3 — Hierarchical mind map of networking traversal: ACL direction, TCP and UDP behaviour, port scanning, NAT and VPN tunnels, proxies and SSH pivoting, secure design and the penetration-testing process.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter3-study.html">&larr; Study guide</a>
+  <a href="chapter3-math.html">Foundations</a>
+  <a href="../../../index.html">&#127968; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Week 3 mind map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand all</button>
+    <button id="btnCollapseAll">Collapse all</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:#60a5fa"></span> Reachability &amp; scanning</span>
+  <span><span class="dot" style="background:#34d399"></span> Tunnels &amp; secure design</span>
+  <span><span class="dot" style="background:#a78bfa"></span> Transport &amp; pivoting</span>
+  <span><span class="dot" style="background:#fbbf24"></span> Engagement process</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Week 3: Networking Traversal",
+  label_zh: "第 3 周：网络穿越",
+  children: [
+    {
+      label: "Networks are not flat",
+      label_zh: "网络并非扁平",
+      color: "blue",
+      href: "chapter3-study.html#sec-traversal",
+      children: [
+        { label: "A router's rules decide who talks to whom, and in which direction", label_zh: "路由器的规则决定谁能与谁通信、朝哪个方向", href: "chapter3-study.html#sec-traversal" },
+        { label: "Admin may initiate everywhere — replies are a separate rule", label_zh: "管理网可向任意处发起——回应是另一条规则", href: "chapter3-study.html#sec-traversal" },
+        { label: "Finance → printer permitted; printer replies only", label_zh: "财务 → 打印机被允许；打印机仅能回应", href: "chapter3-study.html#sec-traversal" },
+        { label: "Printer cannot originate, so a rogue printer cannot scan", label_zh: "打印机无法发起连接，因此被控打印机无法扫描", href: "chapter3-study.html#sec-traversal" },
+        { label: "Firewalking discovers the routes and ACLs", label_zh: "Firewalking 用于探测路由与 ACL 配置", href: "chapter3-study.html#sec-traversal" }
+      ]
+    },
+    {
+      label: "TCP, UDP and IP addressing",
+      label_zh: "TCP、UDP 与 IP 寻址",
+      color: "purple",
+      href: "chapter3-study.html#sec-transport",
+      children: [
+        { label: "The prefix splits network part from host part", label_zh: "前缀把网络部分与主机部分分开", href: "chapter3-math.html#sec-m-address" },
+        { label: "SYN → SYN, ACK → ACK establishes the connection", label_zh: "SYN → SYN, ACK → ACK 建立连接", href: "chapter3-study.html#sec-transport" },
+        { label: "RST means closed but alive; silence means filtered", label_zh: "RST 表示端口关闭但主机在线；静默表示被过滤", href: "chapter3-study.html#sec-transport" },
+        { label: "UDP has no handshake, so no reply proves nothing", label_zh: "UDP 没有握手，因此没有回应什么也证明不了", href: "chapter3-math.html#sec-m-transport" },
+        { label: "SYN and FIN each consume one sequence number", label_zh: "SYN 与 FIN 各消耗一个序列号", href: "chapter3-math.html#sec-m-transport" }
+      ]
+    },
+    {
+      label: "Port scanning and firewalls",
+      label_zh: "端口扫描与防火墙",
+      color: "blue",
+      href: "chapter3-study.html#sec-scanning",
+      children: [
+        { label: "nmap -p1-65535 is the deck's example of active gathering", label_zh: "nmap -p1-65535 是讲义中主动信息收集的例子", href: "chapter3-study.html#sec-scanning" },
+        { label: "Connect scan completes the handshake; SYN scan does not", label_zh: "connect 扫描完成握手；SYN 扫描不完成", href: "chapter3-study.html#sec-scanning" },
+        { label: "open, closed, filtered, unfiltered, open|filtered", label_zh: "open、closed、filtered、unfiltered、open|filtered", href: "chapter3-study.html#sec-scanning" },
+        { label: "Filtered ports map policy, not services", label_zh: "被过滤的端口反映的是策略而非服务", href: "chapter3-study.html#sec-scanning" },
+        { label: "Snort alerts and tcpdump show the same packets", label_zh: "Snort 告警与 tcpdump 抓到的正是同一批数据包", href: "chapter3-study.html#sec-scanning" }
+      ]
+    },
+    {
+      label: "NAT, VPN and tunnel interfaces",
+      label_zh: "NAT、VPN 与隧道接口",
+      color: "green",
+      href: "chapter3-study.html#sec-nat",
+      children: [
+        { label: "NAT maps (private IP, port) to (public IP, port)", label_zh: "NAT 把（私有 IP, 端口）映射为（公有 IP, 端口）", href: "chapter3-math.html#sec-m-acl" },
+        { label: "Inbound traffic has no entry to match, so it fails", label_zh: "入站流量没有可匹配的表项，因此失败", href: "chapter3-study.html#sec-nat" },
+        { label: "VPN plugs you into a remote network as if physically there", label_zh: "VPN 让你如同物理接入般进入远程网络", href: "chapter3-study.html#sec-nat" },
+        { label: "TUN = layer 3 packets, the usual choice", label_zh: "TUN = 三层数据包，通常的选择", href: "chapter3-study.html#sec-nat" },
+        { label: "TAP = layer 2 frames, ARP noise and wasted bandwidth", label_zh: "TAP = 二层帧，带来 ARP 噪声与带宽浪费", href: "chapter3-study.html#sec-nat" }
+      ]
+    },
+    {
+      label: "Proxies and SSH pivoting",
+      label_zh: "代理与 SSH 跳板",
+      color: "purple",
+      href: "chapter3-study.html#sec-tunnels",
+      children: [
+        { label: "The first host compromised is usually a workstation", label_zh: "最先被攻陷的通常是工作站", href: "chapter3-study.html#sec-tunnels" },
+        { label: "Web proxy at the session layer — Squid, auth and caching", label_zh: "会话层的 Web 代理——Squid，支持认证与缓存", href: "chapter3-study.html#sec-tunnels" },
+        { label: "SOCKS intermediates any TCP; SOCKS5 adds UDP and auth", label_zh: "SOCKS 中转任意 TCP；SOCKS5 增加 UDP 与认证", href: "chapter3-study.html#sec-tunnels" },
+        { label: "Local forward -L: bring a remote service to me", label_zh: "本地转发 -L：把远程服务带到我这里", href: "chapter3-study.html#sec-tunnels" },
+        { label: "Reverse forward -R: send the remote server to my service", label_zh: "反向转发 -R：把远程服务器送到我的服务", href: "chapter3-study.html#sec-tunnels" }
+      ]
+    },
+    {
+      label: "Secure network design",
+      label_zh: "安全的网络设计",
+      color: "green",
+      href: "chapter3-study.html#sec-design",
+      children: [
+        { label: "Defense in depth — the castle approach, independent layers", label_zh: "纵深防御——城堡式思路，各层相互独立", href: "chapter3-study.html#sec-design" },
+        { label: "Segmentation by security need: firewalls, VLANs, SDN", label_zh: "按安全需求分段：防火墙、VLAN、SDN", href: "chapter3-study.html#sec-design" },
+        { label: "Least privilege: a web server must not run as root", label_zh: "最小权限：Web 服务器不得以 root 运行", href: "chapter3-math.html#sec-m-design" },
+        { label: "Zero trust: verify every identity, everywhere", label_zh: "零信任：对每个身份、在任何位置都做校验", href: "chapter3-study.html#sec-design" },
+        { label: "Monitor choke points and single points of failure", label_zh: "监控咽喉点与单点故障", href: "chapter3-study.html#sec-design" }
+      ]
+    },
+    {
+      label: "Penetration testing process",
+      label_zh: "渗透测试流程",
+      color: "yellow",
+      href: "chapter3-study.html#sec-pentest",
+      children: [
+        { label: "A pentest also exploits; an assessment only discovers", label_zh: "渗透测试还会利用漏洞；评估只做发现", href: "chapter3-study.html#sec-pentest" },
+        { label: "Scope: external, internal, social engineering, wireless/physical", label_zh: "范围：外部、内部、社会工程、无线/物理", href: "chapter3-study.html#sec-pentest" },
+        { label: "Seven stages from pre-engagement to reporting", label_zh: "从前期约定到报告的七个阶段", href: "chapter3-study.html#sec-pentest" },
+        { label: "Pre-engagement: scope, contract, NDA before anything runs", label_zh: "前期约定：先签范围、合同与 NDA，再开始一切", href: "chapter3-study.html#sec-pentest" },
+        { label: "Report: summary, methodology, findings, recommendation, conclusion", label_zh: "报告：摘要、方法、发现、建议、结论", href: "chapter3-study.html#sec-exploit" }
+      ]
+    },
+    {
+      label: "Information gathering",
+      label_zh: "信息收集",
+      color: "yellow",
+      href: "chapter3-study.html#sec-recon",
+      children: [
+        { label: "Three levels: automated, plus analysis, plus relationships", label_zh: "三个层级：自动化，加人工分析，加关系经营", href: "chapter3-study.html#sec-recon" },
+        { label: "Passive: archived data only, never detected", label_zh: "被动：只用存档信息，永不被发现", href: "chapter3-study.html#sec-recon" },
+        { label: "Semi-passive: published name servers only", label_zh: "半被动：只查询已公开的域名服务器", href: "chapter3-study.html#sec-recon" },
+        { label: "Active: full port scans, should be detected", label_zh: "主动：全端口扫描，应当被检测到", href: "chapter3-study.html#sec-recon" },
+        { label: "Threat modelling turns the map into a plan", label_zh: "威胁建模把信息地图变成攻击计划", href: "chapter3-study.html#sec-recon" }
+      ]
+    },
+    {
+      label: "Foundations bridge",
+      label_zh: "基础知识衔接",
+      color: "blue",
+      href: "chapter3-math.html#sec-m-address",
+      children: [
+        { label: "Subnet arithmetic: 2^(32−p) − 2 usable hosts", label_zh: "子网算术：可用主机数为 2^(32−p) − 2", href: "chapter3-math.html#sec-m-address" },
+        { label: "Handshake numbers and the cost of a scan", label_zh: "握手序列号与扫描的时间成本", href: "chapter3-math.html#sec-m-transport" },
+        { label: "ACL first-match semantics and NAT mapping notation", label_zh: "ACL 首次匹配语义与 NAT 映射记号", href: "chapter3-math.html#sec-m-acl" },
+        { label: "Depth multiplies only while the layers stay independent", label_zh: "只有各层保持独立，纵深防御才会相乘", href: "chapter3-math.html#sec-m-design" },
+        { label: "Lab and engagement checklist", label_zh: "实验与项目检查清单", href: "chapter3-math.html#sec-m-checklist" }
+      ]
+    }
+  ]
+};
+renderMindmap('mindmapCanvas', data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind map — Week 8: Android Overview and Security Model</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind map — Week 8 — Hierarchical mind map of the Android platform, sandbox, permission model, APK internals, IPC and mobile attack surface with expand/collapse navigation.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind map — Week 8: Android Overview and Security Model">
+<meta property="og:description" content="Mind map — Week 8 — Hierarchical mind map of the Android platform, sandbox, permission model, APK internals, IPC and mobile attack surface with expand/collapse navigation.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter7-study.html">&larr; Study guide</a>
+  <a href="chapter7-math.html">Foundations</a>
+  <a href="../../../index.html">&#127968; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Week 8 mind map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand all</button>
+    <button id="btnCollapseAll">Collapse all</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Platform &amp; architecture</span>
+  <span><span class="dot" style="background:var(--green)"></span> Sandbox, permissions &amp; IPC</span>
+  <span><span class="dot" style="background:var(--purple)"></span> APK, tooling &amp; analysis</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Attacks, escalation &amp; defences</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Week 8: Android Overview and Security Model",
+  label_zh: "第 8 周：Android 概览与安全模型",
+  children: [
+    {
+      label: "The mobile platform landscape",
+      label_zh: "移动平台格局",
+      color: "blue",
+      href: "chapter7-study.html#sec-landscape",
+      children: [
+        { label: "Android and iOS dominate; others never reached scale", label_zh: "Android 与 iOS 主导；其余平台未能形成规模", href: "chapter7-study.html#sec-landscape" },
+        { label: "iOS: closed source, Darwin kernel, Swift", label_zh: "iOS：闭源、Darwin 内核、Swift", href: "chapter7-study.html#sec-landscape" },
+        { label: "Android: open source, Linux-based, Java apps", label_zh: "Android：开源、基于 Linux、Java 开发", href: "chapter7-study.html#sec-landscape" },
+        { label: "Why the unit studies Android: open, inspectable, available", label_zh: "为何研究 Android：开放、可检视、易获得", href: "chapter7-study.html#sec-landscape" }
+      ]
+    },
+    {
+      label: "Android architecture as trust boundaries",
+      label_zh: "作为信任边界的 Android 架构",
+      color: "blue",
+      href: "chapter7-study.html#sec-architecture",
+      children: [
+        { label: "System apps and the Java API framework", label_zh: "系统应用与 Java API 框架", href: "chapter7-study.html#sec-architecture" },
+        { label: "Native libraries and the ART runtime", label_zh: "原生库与 ART 运行时", href: "chapter7-study.html#sec-architecture" },
+        { label: "HAL and the Linux kernel below it", label_zh: "HAL 及其下方的 Linux 内核", href: "chapter7-study.html#sec-architecture" },
+        { label: "Kernel is enforcement; everything above is policy", label_zh: "内核负责强制，其上皆为策略", href: "chapter7-math.html#sec-m-boundaries" }
+      ]
+    },
+    {
+      label: "The application sandbox",
+      label_zh: "应用沙箱",
+      color: "green",
+      href: "chapter7-study.html#sec-sandbox",
+      children: [
+        { label: "User-based protection model in Linux", label_zh: "Linux 中基于用户的保护模型", href: "chapter7-study.html#sec-sandbox" },
+        { label: "One app, one UID, one private data directory", label_zh: "一个应用、一个 UID、一个私有数据目录", href: "chapter7-study.html#sec-sandbox" },
+        { label: "Apps cannot talk to each other by default", label_zh: "默认情况下应用之间无法通信", href: "chapter7-study.html#sec-sandbox" },
+        { label: "Sandboxing bounds reach, not behaviour", label_zh: "沙箱限制的是可达范围，而非行为", href: "chapter7-math.html#sec-m-model" }
+      ]
+    },
+    {
+      label: "Permissions: the declared exceptions",
+      label_zh: "权限：被声明的例外",
+      color: "green",
+      href: "chapter7-study.html#sec-permissions",
+      children: [
+        { label: "Declared in the manifest, granted at install or runtime", label_zh: "在清单中声明，安装时或运行时授予", href: "chapter7-study.html#sec-permissions" },
+        { label: "Kernel-level versus application-level permissions", label_zh: "内核级权限与应用级权限", href: "chapter7-study.html#sec-permissions" },
+        { label: "Capability is declaration ∩ grant", label_zh: "能力 = 声明 ∩ 授予", href: "chapter7-math.html#sec-m-model" },
+        { label: "Audit permissions against the app's stated purpose", label_zh: "对照应用声称的用途审计权限", href: "chapter7-math.html#sec-m-checklist" }
+      ]
+    },
+    {
+      label: "Intents and IPC: the controlled hole",
+      label_zh: "Intent 与 IPC：受控的出口",
+      color: "green",
+      href: "chapter7-study.html#sec-ipc",
+      children: [
+        { label: "Explicit versus implicit intents; intent filters", label_zh: "显式与隐式 Intent；Intent 过滤器", href: "chapter7-study.html#sec-ipc" },
+        { label: "Activities, services, receivers, content providers", label_zh: "Activity、Service、Receiver、Content Provider", href: "chapter7-study.html#sec-ipc" },
+        { label: "Exported component without a guard is a public API", label_zh: "未加保护的导出组件就是公开 API", href: "chapter7-math.html#sec-m-model" },
+        { label: "Sandboxed components still share data through exports", label_zh: "沙箱化组件仍通过导出接口共享数据", href: "chapter7-study.html#sec-ipc" }
+      ]
+    },
+    {
+      label: "APK internals and signing",
+      label_zh: "APK 内部结构与签名",
+      color: "purple",
+      href: "chapter7-study.html#sec-apk",
+      children: [
+        { label: "An APK is a ZIP: manifest, DEX, resources, signature block", label_zh: "APK 是 ZIP：清单、DEX、资源、签名块", href: "chapter7-study.html#sec-apk" },
+        { label: "Unzip gives binaries; apktool gives readable smali", label_zh: "解压得到二进制；apktool 得到可读 smali", href: "chapter7-study.html#sec-apk" },
+        { label: "Keytool and jarsigner create and apply a new key", label_zh: "keytool 与 jarsigner 生成并应用新密钥", href: "chapter7-study.html#sec-static" },
+        { label: "Signature verifies the packager, not the behaviour", label_zh: "签名验证打包者，而非行为", href: "chapter7-math.html#sec-m-integrity" }
+      ]
+    },
+    {
+      label: "Static analysis and the APK toolchain",
+      label_zh: "静态分析与 APK 工具链",
+      color: "purple",
+      href: "chapter7-study.html#sec-static",
+      children: [
+        { label: "Understand the program without executing it", label_zh: "在不执行程序的前提下理解它", href: "chapter7-study.html#sec-static" },
+        { label: "Compare certificates to attribute apps to a developer", label_zh: "比对证书以归属应用开发者", href: "chapter7-study.html#sec-static" },
+        { label: "Rebuild with apktool b, then re-sign and install", label_zh: "用 apktool b 重打包，再签名并安装", href: "chapter7-study.html#sec-apk" },
+        { label: "Acquisition route decides what you are trusting", label_zh: "获取渠道决定你所信任的对象", href: "chapter7-study.html#sec-distribution" }
+      ]
+    },
+    {
+      label: "Landmark vulnerabilities and the attack pattern",
+      label_zh: "标志性漏洞与攻击模式",
+      color: "yellow",
+      href: "chapter7-study.html#sec-vulns",
+      children: [
+        { label: "Certifi-Gate 2015: remote support tool, OEM apps", label_zh: "Certifi-Gate 2015：远程支持工具与 OEM 预装应用", href: "chapter7-study.html#sec-vulns" },
+        { label: "Stagefright 2015: crafted MMS, media parsing", label_zh: "Stagefright 2015：构造的 MMS 与媒体解析", href: "chapter7-study.html#sec-vulns" },
+        { label: "Janus 2017: bytes added without changing the signature", label_zh: "Janus 2017：不改变签名即可追加字节", href: "chapter7-study.html#sec-vulns" },
+        { label: "Pattern: bug exposed → exploit path → risk → patch", label_zh: "模式：暴露缺陷 → 利用路径 → 风险 → 修补", href: "chapter7-study.html#sec-vulns" },
+        { label: "Repackaging for ad hijacking, malware, credential theft", label_zh: "重打包用于广告劫持、恶意代码与凭据窃取", href: "chapter7-study.html#sec-static" }
+      ]
+    },
+    {
+      label: "Rooting, escalation and defences",
+      label_zh: "Root、提权与防御",
+      color: "yellow",
+      href: "chapter7-study.html#sec-rooting",
+      children: [
+        { label: "Jailbreaking iOS removes the code-signing check", label_zh: "iOS 越狱移除代码签名检查", href: "chapter7-study.html#sec-rooting" },
+        { label: "Rooting Android obtains superuser access", label_zh: "Android Root 获取超级用户权限", href: "chapter7-study.html#sec-rooting" },
+        { label: "Escalation = reachable ∧ privileged ∧ acts on input", label_zh: "提权 = 可达 ∧ 高权限 ∧ 依据输入行动", href: "chapter7-math.html#sec-m-escalation" },
+        { label: "ProGuard, DexGuard and DashO raise the cost", label_zh: "ProGuard、DexGuard 与 DashO 提高成本", href: "chapter7-study.html#sec-defences" },
+        { label: "Trusted sources, permissions, patching, MDM and VPN", label_zh: "可信来源、权限、及时更新、MDM 与 VPN", href: "chapter7-study.html#sec-defences" }
+      ]
+    }
+  ]
+};
+renderMindmap('mindmapCanvas', data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

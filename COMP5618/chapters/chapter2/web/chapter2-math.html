@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 2: Networking Layers 1 and 2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 foundations for COMP5618: frame-size and overhead arithmetic, Layer 1 capacity and delay formulas, MAC and IP address arithmetic, a symbol glossary, and a step-by-step checklist for reading a packet capture.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 2: Networking Layers 1 and 2">
+<meta property="og:description" content="Week 2 foundations for COMP5618: frame-size and overhead arithmetic, Layer 1 capacity and delay formulas, MAC and IP address arithmetic, a symbol glossary, and a step-by-step checklist for reading a packet capture.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 2 Foundations</h2>
+  </div>
+  <div class="toc-group">Sizes and signals</div>
+  <ul>
+    <li><a href="#sec-m-units" class="toc-link">Frame arithmetic</a></li>
+    <li><a href="#sec-m-physical" class="toc-link">Capacity and delay</a></li>
+  </ul>
+  <div class="toc-group">Addresses</div>
+  <ul>
+    <li><a href="#sec-m-addressing" class="toc-link">Address arithmetic</a></li>
+    <li><a href="#sec-m-symbols" class="toc-link">Symbol glossary</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Reading a capture</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial arithmetic</a></li>
+  </ul>
+  <a href="chapter2-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5618 &mdash; Week 2 supplement</p>
+  <h1>Foundations: the arithmetic behind Layers 1 and 2</h1>
+  <p class="hero-desc">Week 2 is mostly vocabulary and structure, and the numbers that go with it are small &mdash; which is exactly why they are worth being exact about. This page collects the frame-size rules, the Layer 1 capacity and delay formulas, the address arithmetic, and the checklist for reading a capture without guessing.</p>
+  <div class="chip-list">
+    <span>Frame sizes verified against the Ethernet standard</span>
+    <span>Capacity formulas are standard results, not lecture notation</span>
+    <span>Every worked answer shows the units</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-units">
+  <h2 class="section-title">Frame arithmetic: sizes, padding and overhead</h2>
+  <p class="section-lead">One frame, three constants and one rule. Get these right and every capture question becomes arithmetic.</p>
+
+  <div class="def-box">
+    <div class="def-label">Units used on this page</div>
+    <p>A <strong>bit</strong> is the Layer 1 unit and a <strong>byte</strong> is eight of them. Layer 2 moves <strong>frames</strong>, Layer 3 moves <strong>packets</strong>, Layer 4 moves <strong>segments</strong> (TCP) or <strong>datagrams</strong> (UDP), and everything above is simply <strong>data</strong>. The deck's own split is: Layer 1 deals with bits, Layer 2 with frames, Layer 3 with packets, Layer 4 with how packets are sent between endpoints.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. Frame size is a sum</h3>
+    <p>With \(H = 14\) bytes of Ethernet header (6 + 6 + 2), \(P\) bytes of payload and \(T = 4\) bytes of frame check sequence:</p>
+    \[ F \;=\; H + P + T \;=\; 18 + P \ \text{bytes} \]
+    <p style="margin-top:0.6rem;">The payload is bounded on both sides:</p>
+    \[ 46 \;\le\; P \;\le\; 1500 \qquad\Longrightarrow\qquad 64 \;\le\; F \;\le\; 1518 \ \text{bytes} \]
+    <p style="margin-top:0.6rem;">An 802.1Q tag inserts a further 4 bytes, so a tagged frame is \(F' = 22 + P\) and reaches 1522 bytes at the maximum payload.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Padding is the floor, not an error</h3>
+    <p>If the payload is shorter than the minimum, it is padded with zeros:</p>
+    \[ P_{\text{on wire}} \;=\; \max(P,\ 46) \]
+    <p style="margin-top:0.6rem;">The rule exists because collision detection needs the frame to still be transmitting while the signal reaches the far end of the segment and returns. A frame that ended too early could not be distinguished from a collision.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Efficiency is payload over frame</h3>
+    <p>Payload efficiency, and the goodput that follows from it at line rate \(R\):</p>
+    \[ \eta \;=\; \frac{P}{F} \qquad\qquad G \;=\; \eta \cdot R \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">A full 1500-byte payload gives \(\eta = 1500/1518 \approx 98.8\%\). A 28-byte ARP message in a padded 64-byte frame gives \(\eta = 28/64 \approx 43.8\%\). On the wire you must add the 8-byte preamble and the 12-byte inter-frame gap, so the ARP frame really occupies 84 byte-times and \(\eta_{\text{wire}} \approx 33\%\).</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A frame carries a 1200-byte payload. What is its total size on the wire, excluding the preamble?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="14 + 1200 + 4 = 1218. The 18 bytes of header and trailer are always there; they are not optional.">1200 bytes, because the payload is below the MTU</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: F = 18 + P = 18 + 1200 = 1218 bytes. It is comfortably inside the 64–1518-byte window, so no padding and no fragmentation apply." data-bad="">1218 bytes</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Padding only applies below a 46-byte payload. 1200 bytes is far above the floor.">1246 bytes, because the frame is padded to a 46-byte multiple</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-physical">
+  <h2 class="section-title">Layer 1: capacity, delay and the limits of a medium</h2>
+  <p class="section-lead">Layer 1 encodes and modulates bits onto a medium. How many bits per second fit, and how long they take to arrive, are the two questions worth being able to answer numerically.</p>
+
+  <div class="theorem-box">
+    <h3>1. Nyquist &mdash; the limit with no noise</h3>
+    <p>For a channel of bandwidth \(B\) hertz using \(M\) distinguishable signal levels per symbol:</p>
+    \[ C \;=\; 2B \log_2 M \ \text{bits per second} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The \(2B\) is the sampling bound: a signal band-limited to \(B\) can be reconstructed from \(2B\) samples per second. Each symbol then carries \(\log_2 M\) bits.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Shannon &mdash; the limit with noise</h3>
+    <p>Real media have noise, so the achievable rate is capped by the signal-to-noise ratio \(S/N\):</p>
+    \[ C \;=\; B \log_2\!\left(1 + \frac{S}{N}\right) \qquad\text{and}\qquad \mathrm{SNR_{dB}} \;=\; 10 \log_{10}\!\left(\frac{S}{N}\right) \]
+    <p style="margin-top:0.6rem;">No modulation scheme escapes Shannon: past this rate, error-free delivery is impossible regardless of how clever the encoding is. It is the reason more bandwidth and better SNR, not more levels, are what raise a wireless link's ceiling.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Delay is distance over speed</h3>
+    <p>A signal travels at a fraction of the speed of light in vacuum, \(c \approx 3 \times 10^{8}\ \mathrm{m/s}\):</p>
+    \[ t_p \;=\; \frac{d}{v} \;=\; \frac{d}{\kappa\,c} \qquad (0.6 \lesssim \kappa \lesssim 0.8 \ \text{for copper and fibre}) \]
+    <p style="margin-top:0.6rem;">Two consequences worth carrying into the exam: latency on a long link is dominated by distance and is not fixed by buying a faster interface, and bandwidth is a rate while latency is a time &mdash; they are not the same resource.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Units and typical values</div>
+    <div class="sym-cell">\(B\)</div><div class="sym-cell">bandwidth</div><div class="sym-cell">Hertz &mdash; the range of frequencies the medium can carry (20 MHz per 802.11 channel)</div>
+    <div class="sym-cell">\(M\)</div><div class="sym-cell">signal levels</div><div class="sym-cell">Distinct symbols per signalling interval &mdash; 2 (1 bit), 4 (2 bits), 16 (4 bits)</div>
+    <div class="sym-cell">\(C\)</div><div class="sym-cell">channel capacity</div><div class="sym-cell">Bits per second &mdash; an upper bound on error-free throughput</div>
+    <div class="sym-cell">\(S/N\)</div><div class="sym-cell">signal-to-noise ratio</div><div class="sym-cell">A ratio, dimensionless; \(30\ \mathrm{dB} = 1000\)</div>
+    <div class="sym-cell">\(t_p\)</div><div class="sym-cell">propagation delay</div><div class="sym-cell">Seconds &mdash; \(100\ \mathrm{m}\) of Cat6 at \(\kappa = 0.7\) is about \(476\ \mathrm{ns}\)</div>
+    <div class="sym-cell">\(\kappa\)</div><div class="sym-cell">velocity factor</div><div class="sym-cell">Fraction of \(c\); roughly 0.7 in twisted pair, 0.68 in fibre</div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; the ceiling on a wireless link.</strong> A 20 MHz Wi-Fi channel is measured at an SNR of 30 dB. What is the Shannon limit, and how does it compare with a copper link?</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Convert the ratio.</strong> \(\mathrm{SNR_{dB}} = 30\) means \(10\log_{10}(S/N) = 30\), so \(S/N = 10^{3} = 1000\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Apply Shannon.</strong> \(C = 20\times10^{6} \times \log_2(1 + 1000) = 20\times10^{6} \times 9.97 \approx 1.99\times10^{8}\ \mathrm{bit/s}\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>State the answer with units.</strong> Roughly <strong>199 Mbit/s</strong> &mdash; the best any modulation scheme could achieve on that channel at that SNR, before protocol overhead.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Compare with a clean cable.</strong> On Cat6 the SNR is thousands rather than a thousand, and interference is far lower, which is why \(\log_2(1 + S/N)\) is not the binding constraint indoors. Distance and the 100 m channel limit are.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Sanity-check against Nyquist.</strong> If the same 20 MHz were noiseless with 16-level symbols: \(C = 2 \times 20\times10^{6} \times \log_2 16 = 160\ \mathrm{Mbit/s}\). Shannon's noisy bound is the realistic one; Nyquist's is the idealised floor case, not a target.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A link's SNR falls from 30 dB to 20 dB. What happens to the Shannon capacity, all else equal?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. 30 dB is S/N = 1000 and 20 dB is S/N = 100, so log2(1 + S/N) falls from about 9.97 to about 6.66 — roughly a third less capacity, not a fixed subtraction." data-bad="">It falls, because log2(1 + S/N) shrinks as the ratio drops — from about 9.97 to about 6.66 bits per symbol</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Decibels are logarithmic. Losing 10 dB is a factor-of-ten change in the power ratio, not a fixed drop in capacity.">It falls by exactly 10 Mbit/s, because 10 dB of SNR is lost</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Capacity depends on bandwidth and SNR, not on how fast the interfaces are clocked. A faster interface does not create signal.">It is unchanged, because the interface still negotiates the same link speed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-addressing">
+  <h2 class="section-title">Address arithmetic</h2>
+  <p class="section-lead">Two addresses matter this week: the 48-bit hardware address a switch uses inside the LAN, and the 32-bit address ARP is asked to resolve into it.</p>
+
+  <div class="theorem-box">
+    <h3>1. A MAC address is two halves of 24 bits</h3>
+    <p>\[ \underbrace{b_{47}\ldots b_{24}}_{\text{OUI: 24 bits, the vendor}}\;\underbrace{b_{23}\ldots b_{0}}_{\text{NIC-specific: 24 bits}} \]</p>
+    <p style="margin-top:0.6rem;">The space is \(2^{48} \approx 2.81\times10^{14}\) addresses, and the vendor space is \(2^{24} = 16{,}777{,}216\) blocks. Two bits of the first octet carry meaning rather than identity: the I/G bit (0 unicast, 1 multicast or broadcast) and the U/L bit (0 factory, 1 locally administered). That second bit is what makes a randomised or spoofed address syntactically valid.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Layer 2 has no hierarchy, so it has no route</h3>
+    <p>A MAC address encodes no network, which is why it can only be used inside one broadcast domain. The broadcast domain is the unit that matters for scaling and for exposure:</p>
+    \[ \#\text{stations reachable by one broadcast frame} \;=\; \#\text{ports in the same VLAN} \]
+    <p style="margin-top:0.6rem;">Splitting a domain costs a Layer 3 hop; the return is a smaller blast radius. That trade is the whole argument for VLANs and subnets.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The addresses above, for context</h3>
+    <p>IPv4 is a 32-bit address and IPv6 is 128 bits &mdash; the deck's two types. For an IPv4 subnet with prefix length \(p\), the usable host addresses are:</p>
+    \[ N_{\text{hosts}} \;=\; 2^{\,32-p} - 2 \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The subtraction removes the network address (the first address, which names the subnet) and the broadcast address (the last, which means every host on it). A /24 therefore holds 256 addresses and 254 usable hosts. Ports are 16 bits: values 1&ndash;65535, with the destination port normally a low well-known number and the source port a high ephemeral one.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Address space</th><th>Bits</th><th>Size</th><th>What it is used for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>MAC address</td><td>48</td><td>\(2^{48} \approx 2.81\times10^{14}\)</td><td>Interfaces on one Layer 2 segment</td></tr>
+        <tr><td>MAC OUI block</td><td>24</td><td>\(2^{24} = 16{,}777{,}216\)</td><td>Vendor allocations &mdash; remote hardware identification</td></tr>
+        <tr><td>IPv4 address</td><td>32</td><td>\(2^{32} \approx 4.29\times10^{9}\)</td><td>Hosts on routed networks</td></tr>
+        <tr><td>IPv6 address</td><td>128</td><td>\(2^{128} \approx 3.4\times10^{38}\)</td><td>The successor space, sized for Internet growth</td></tr>
+        <tr><td>TCP/UDP port</td><td>16</td><td>\(2^{16} = 65{,}536\) values</td><td>1&ndash;65535 usable; identifies the application</td></tr>
+        <tr><td>802.1Q VLAN ID</td><td>12</td><td>\(2^{12} = 4096\) values</td><td>4094 usable; 0 and 4095 are reserved</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Private range (RFC 1918)</th><th>CIDR block and mask</th><th>Number of addresses</th><th>IP range</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Class A private</td><td>10.0.0.0/8 &nbsp;(255.0.0.0)</td><td>16,777,216 &nbsp;(\(2^{24}\))</td><td>10.0.0.0 &ndash; 10.255.255.255</td></tr>
+        <tr><td>Class B private</td><td>172.16.0.0/12 &nbsp;(255.240.0.0)</td><td>1,048,576 &nbsp;(\(2^{20}\))</td><td>172.16.0.0 &ndash; 172.31.255.255</td></tr>
+        <tr><td>Class C private</td><td>192.168.0.0/16 &nbsp;(255.255.0.0)</td><td>65,536 &nbsp;(\(2^{16}\))</td><td>192.168.0.0 &ndash; 192.168.255.255</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; reading addresses out of a capture.</strong> A frame shows source MAC <code>00:1A:2B:3C:4D:5E</code> and, inside it, an IPv4 packet from <code>192.168.10.105</code> to <code>8.8.8.8</code>. What can and cannot be concluded?</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Split the MAC.</strong> <code>00:1A:2B</code> is the OUI &mdash; a vendor block. <code>3C:4D:5E</code> is the interface's own serial within that block. First octet <code>0x00</code> = binary <code>00000000</code>, so both the I/G bit and the U/L bit are 0: a unicast, factory-assigned address.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Locate the source.</strong> <code>192.168.10.105</code> falls inside 192.168.0.0/16, a private range, so it is not routable on the public Internet. The host is behind a translating device.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Recognise the destination.</strong> <code>8.8.8.8</code> is public. Inside the LAN the frame's destination MAC will be the <em>gateway's</em>, not the server's: a host sends off-net traffic to its router at Layer 2 and lets Layer 3 carry it the rest of the way.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Say what is not proven.</strong> Nothing in the frame authenticates the source MAC, and nothing proves the IP address belongs to that interface. Both are claims; only a control such as port security or 802.1X gives them any weight.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the exam sentence.</strong> &ldquo;The OUI identifies a vendor block, so the hardware class can be guessed; the private source address shows the host is behind NAT; and the frame's Layer 2 destination is the default gateway because the Layer 3 destination is off-subnet.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does <code>192.168.1.150/24</code> give 254 usable host addresses rather than 256?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The /24 prefix leaves the last octet free, so there are 256 addresses in the range. Two of them are simply unavailable as hosts.">Because the subnet mask itself consumes two addresses</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The first address names the subnet (192.168.1.0) and the last is the broadcast address (192.168.1.255), so 2^8 − 2 = 254 addresses can be assigned to hosts." data-bad="">The network address and the broadcast address are both reserved, leaving 2^8 − 2 = 254</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A router does not reserve an address inside every subnet; it simply holds one of the usable addresses as the gateway.">Because one address is always reserved for the router's gateway interface</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-symbols">
+  <h2 class="section-title">Symbol glossary</h2>
+  <p class="section-lead">Everything this page uses, in one place. The first block is standard networking notation; the second is the naming used in the worked answers above.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(F\)</div><div class="sym-cell">frame size</div><div class="sym-cell">Total bytes on the wire, excluding preamble and inter-frame gap</div>
+    <div class="sym-cell">\(H\)</div><div class="sym-cell">header</div><div class="sym-cell">14 bytes for Ethernet II: 6 destination MAC + 6 source MAC + 2 EtherType</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">trailer</div><div class="sym-cell">4 bytes of frame check sequence, a CRC-32</div>
+    <div class="sym-cell">\(P\)</div><div class="sym-cell">payload</div><div class="sym-cell">46&ndash;1500 bytes; shorter values are padded, longer ones are the payload's problem</div>
+    <div class="sym-cell">\(\eta\)</div><div class="sym-cell">efficiency</div><div class="sym-cell">Payload as a fraction of the frame, \(P/F\)</div>
+    <div class="sym-cell">\(G\)</div><div class="sym-cell">goodput</div><div class="sym-cell">Useful payload bits per second &mdash; \(\eta R\), always below the line rate</div>
+    <div class="sym-cell">MTU</div><div class="sym-cell">maximum transmission unit</div><div class="sym-cell">1500 bytes for standard Ethernet; the largest payload a frame may carry</div>
+    <div class="sym-cell">OUI</div><div class="sym-cell">organisationally unique identifier</div><div class="sym-cell">The first 24 bits of a MAC address &mdash; the vendor block</div>
+    <div class="sym-cell">\(h\)</div><div class="sym-cell">host bits</div><div class="sym-cell">\(32 - p\) for IPv4; \(2^{h} - 2\) usable addresses after network and broadcast</div>
+    <div class="sym-cell">\(p\)</div><div class="sym-cell">prefix length</div><div class="sym-cell">The /24 in 192.168.1.150/24 &mdash; how many leading bits name the network</div>
+    <div class="sym-cell">PDU</div><div class="sym-cell">protocol data unit</div><div class="sym-cell">The name of the unit at a given layer: bit, frame, packet, segment, data</div>
+    <div class="sym-cell">BPF</div><div class="sym-cell">Berkeley packet filter</div><div class="sym-cell">The capture-filter syntax: traffic is dropped at capture time, not hidden later</div>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-race"></div>
+  <script type="application/json" id="ix-m-race">
+  {
+    "title": "Where the bytes of a small frame go",
+    "subtitle": "Illustrative byte counts for a padded ARP frame, used to show why small frames are inefficient.",
+    "max": 84,
+    "rows": [
+      { "name": "ARP message (the useful payload)", "value": 28, "display": "28 B" },
+      { "name": "Ethernet header", "value": 14, "display": "14 B" },
+      { "name": "Padding to the 46-byte floor", "value": 18, "display": "18 B" },
+      { "name": "Frame check sequence", "value": 4, "display": "4 B" },
+      { "name": "Preamble and inter-frame gap", "value": 20, "display": "20 B" }
+    ]
+  }
+  </script>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: quantities and their bounds",
+    "subtitle": "Say the number and the unit before you flip the card.",
+    "cards": [
+      { "front": "Smallest legal Ethernet frame", "back": "64 bytes — 14 header + 46 payload minimum + 4 FCS. Anything shorter is a runt and is discarded.", "hint": "Frame sizes" },
+      { "front": "Largest untagged Ethernet frame", "back": "1518 bytes — 1500 bytes of payload (the MTU) plus 18 bytes of header and FCS. An 802.1Q tag raises it to 1522.", "hint": "Frame sizes" },
+      { "front": "How long is a MAC address, and how is it split?", "back": "48 bits: 24 bits of OUI identifying the vendor, 24 bits assigned by that vendor. The I/G and U/L bits live in the first octet.", "hint": "Addressing" },
+      { "front": "Usable hosts in a /24", "back": "254 — 2^8 = 256 addresses minus the network address and the broadcast address.", "hint": "Subnetting" },
+      { "front": "Useful values in a 16-bit port field", "back": "65,536 values, with 1–65535 usable. Destination ports are conventionally low; source ports are ephemeral and high.", "hint": "Ports" },
+      { "front": "How many VLAN IDs fit in an 802.1Q tag?", "back": "12 bits = 4096 values, of which 4094 are usable; 0 and 4095 are reserved.", "hint": "VLANs" }
+    ]
+  }
+  </script>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Checklist: reading a capture without guessing</h2>
+  <p class="section-lead">A capture answers Layer 2 questions in a fixed order. Work down the stack and the diagnosis writes itself &mdash; bottom-up is faster than scrolling for keywords.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the capture-reading checklist",
+    "subtitle": "Rebuild the order in which to interrogate a capture before you form a hypothesis.",
+    "steps": [
+      "Fix the vantage point: which port, VLAN or SPAN session produced this capture?",
+      "Filter to the protocol in question, then read the source and destination MAC addresses",
+      "Check whether the destination is unicast, multicast or broadcast",
+      "Check the EtherType against what the payload actually dissects as",
+      "Look for repetition: one source claiming many addresses, or one address on many ports",
+      "Only then move up: read the IP addresses, then the ports, then the payload"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Question</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Vantage point</td><td>Was this captured on a mirror port, a TAP, or the host itself?</td><td>You claim to see the whole network from a single host's interface</td></tr>
+        <tr><td>2. Filters</td><td>Capture filter or display filter &mdash; and is anything missing as a result?</td><td>You treat a filtered capture as a complete record</td></tr>
+        <tr><td>3. Layer 2 addresses</td><td>Who sent it, who is it for, is either value surprising?</td><td>You assume the source MAC is authentic</td></tr>
+        <tr><td>4. Broadcast or unicast</td><td>Should this frame have reached everyone in the VLAN?</td><td>You call normal ARP flooding an anomaly</td></tr>
+        <tr><td>5. EtherType</td><td>Does the declared type match the dissected contents?</td><td>You skip the field that selects the dissector</td></tr>
+        <tr><td>6. Higher layers</td><td>What do the IP addresses and ports add?</td><td>You jump to payload before establishing who is talking</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked example &mdash; a capture that looks wrong.</strong> In a 60-second capture on a SPAN port you see 4,812 ARP frames. The gateway address <code>10.0.0.1</code> appears in 3,206 of them, sourced from three different MAC addresses. Walk the checklist.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Vantage point.</strong> A SPAN port on the VLAN's switch sees every flooded frame, which is exactly why ARP volume here is expected rather than suspicious. Establish the denominator before calling anything anomalous.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Filter and count.</strong> Split the 4,812 frames by <code>arp.opcode</code>. Requests are broadcasts that every station sees; replies are unicast and should be roughly one per request. A flood of <em>replies</em> nobody asked for is the signal, not the volume of requests.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Layer 2 addresses.</strong> Three MAC addresses claiming <code>10.0.0.1</code> cannot all be the gateway. Check whether one of them also appears as the source of normal traffic &mdash; an attacker relaying traffic usually keeps the legitimate gateway's address while adding its own.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Timing against the switch.</strong> Correlate the first spoofed reply with the switch's MAC table. If one port suddenly sources an address it never sourced before, the port is the location and the timing is the evidence.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the finding in one sentence.</strong> &ldquo;Between 10:02:14 and 10:02:41 the gateway IP 10.0.0.1 was announced by three MAC addresses, none of which is the gateway's own, in a pattern of unsolicited replies consistent with ARP cache poisoning on VLAN 10. Impact: on-path visibility and modification for every host that accepted the mapping. Control: dynamic ARP inspection with DHCP snooping, and port security limiting learned addresses.&rdquo;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Check the arithmetic before you publish.</strong> 3,206 frames in 27 seconds is about 119 per second &mdash; far above a normal re-ARP rate, which is what makes repetition the strongest single indicator in the whole capture.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A capture contains ARP requests but no replies at all. Which conclusion is best supported?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="ARP is unauthenticated, so nobody is obliged to answer; silence is normal behaviour, not evidence of a control.">ARP replies must be blocked by dynamic ARP inspection</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Replies are unicast to the requester, so a capture taken anywhere other than the requester's own segment will typically see the broadcast requests and none of the unicast replies. The vantage point explains the asymmetry before any attack does." data-bad="">The capture point sees broadcasts but not the unicast replies, so the replies were probably never in view</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The ARP cache expiring would produce more requests, not fewer replies. It does not explain missing unicast traffic at a vantage point that cannot see it.">The targets' ARP caches had expired, so they never replied</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial arithmetic: what a tunnel can carry</h2>
+  <p class="section-lead">Tutorial 2 turns the layer model into a decision. Before you configure anything, ask which layer the traffic you need actually lives at.</p>
+
+  <div class="theorem-box">
+    <h3>The rule behind the tutorial's warning</h3>
+    <p>A forward or a proxy carries a <em>transport</em> conversation. An SSH local forward carries TCP, because SSH opens a TCP connection on the far side; nothing carries ICMP, because ICMP is neither TCP nor UDP and has no port to forward. A VPN instead puts the client into the remote network at Layer 3:</p>
+    \[ \text{SSH } -L \;:\; \{\text{TCP}\} \qquad\qquad \text{VPN} \;:\; \{\text{IP}\} \supset \{\text{TCP, UDP, ICMP, }\ldots\} \]
+    <p style="margin-top:0.6rem;">Choose the narrow tool when you know the port (a single web service), and the broad one when you need the whole network &mdash; several ports, several hosts, or protocols that are not TCP at all, which is exactly why the tutorial moves from <code>ssh -L</code> to OpenVPN before running <code>nmap</code>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Traffic you need</th><th>Layer</th><th>SSH local forward</th><th>VPN tunnel</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>HTTP to one host and port</td><td>Application over TCP</td><td>Yes &mdash; <code>-L 8888:&lt;target&gt;:80</code></td><td>Yes, but more configuration than needed</td></tr>
+        <tr><td>SSH to a second internal host</td><td>Application over TCP</td><td>Yes &mdash; another <code>-L</code>, or <code>-J</code> for the jump itself</td><td>Yes</td></tr>
+        <tr><td>TCP port sweep of a whole subnet</td><td>Transport</td><td>One port per forward; not practical</td><td>Yes &mdash; the client is on the network</td></tr>
+        <tr><td>UDP services (DNS, SNMP)</td><td>Transport</td><td>No</td><td>Yes</td></tr>
+        <tr><td><code>nmap</code> host discovery with ICMP</td><td>Network</td><td>No &mdash; ICMP is neither TCP nor UDP</td><td>Yes</td></tr>
+        <tr><td>Broadcast or ARP on the private LAN</td><td>Data link</td><td>No &mdash; the tunnel ends at the jump host</td><td>Only if the tunnel bridges rather than routes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You need <code>nmap</code> to discover live hosts across the private network using ICMP. Which tool does the layer argument require?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An SSH forward moves a TCP byte stream between two ports. ICMP has no port and is not TCP, so there is nothing to forward.">An SSH local forward on the ICMP port</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. ICMP sits at Layer 3 and is carried by neither TCP nor UDP, so only a tunnel that places the client inside the network — the tutorial's OpenVPN setup — can carry it." data-bad="">The VPN, because it carries IP rather than one TCP stream</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A proxy is an application-layer relay; it has the same limitation as the SSH forward and cannot carry ICMP either.">An HTTP proxy configured on the jump host</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and frame anatomy on the study guide, the three steppers for encapsulation, the Ethernet frame and the ARP exchange, then the Quiz Hub and Flashcards for retrieval practice. Week 3 continues up the stack with IP addressing, routing, the TCP handshake, NAT, port scanning and firewalls.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5618ChapterUI) return;
+    try {
+      window.initCOMP5618ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5618 chapter 2] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

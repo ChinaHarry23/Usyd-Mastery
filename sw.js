@@ -1,28 +1,31 @@
 // Bump the version whenever canonical shared assets change — activate() will
 // purge old named caches.
-var CACHE_NAME = "usyd-mastery-v5";
+var CACHE_NAME = "usyd-mastery-v7";
 var PRECACHE_URLS = [
-  "/",
-  "/index.html",
-  "/manifest.webmanifest",
-  "/brand/usyd-mastery-mark-on-dark.svg",
-  "/shared/root-portal.css",
-  "/shared/root-portal.js",
-  "/shared/home.css",
-  "/shared/study-base.css",
-  "/shared/mission-control.js",
-  "/shared/chat-panel.js",
-  "/shared/chat-markdown.js",
-  "/shared/chat-panel.css",
-  "/shared/mindmap.js",
-  "/shared/mindmap.css",
-  "/shared/flashcard-srs.js",
-  "/shared/lang-toggle.js",
-  "/shared/progress-tracker.js",
-  "/shared/katex-loader.js",
-  "/shared/chapter-common.js",
-  "/shared/scroll-anim.js",
-  "/shared/storage.js"
+  "",
+  "index.html",
+  "manifest.webmanifest",
+  "brand/usyd-mastery-mark-on-dark.svg",
+  "shared/root-portal.css",
+  "shared/root-portal.js",
+  "shared/home.css",
+  "shared/study-base.css",
+  "shared/interactive.css",
+  "shared/interactive.js",
+  "shared/mission-control.js",
+  "shared/chat-panel.js",
+  "shared/chat-markdown.js",
+  "shared/chat-panel.css",
+  "shared/mindmap.js",
+  "shared/mindmap.css",
+  "shared/flashcard-srs.js",
+  "shared/lang-toggle.js",
+  "shared/progress-tracker.js",
+  "shared/katex-loader.js",
+  "shared/chapter-common.js",
+  "shared/scroll-anim.js",
+  "shared/storage.js",
+  "shared/site-reset.js"
 ];
 
 self.addEventListener("install", function(event) {
@@ -36,15 +39,21 @@ self.addEventListener("install", function(event) {
 });
 
 self.addEventListener("activate", function(event) {
+  // Drop every cache, not just the ones with an older name. A version bump
+  // usually means the markup or data changed shape, and a half-stale cache is
+  // worse than an empty one: precache will refill this cache immediately, and
+  // the runtime handlers refill the rest on demand.
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
-        cacheNames.filter(function(name) {
-          return name !== CACHE_NAME;
-        }).map(function(name) {
+        cacheNames.map(function(name) {
           return caches.delete(name);
         })
       );
+    }).then(function() {
+      return caches.open(CACHE_NAME);
+    }).then(function(cache) {
+      return cache.addAll(PRECACHE_URLS);
     }).then(function() {
       return self.clients.claim();
     })

@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 6: Resource Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 foundations for INFO6007: resource management definitions and units, the resource-load and utilisation formulae, a full WBS and critical-path calculation, resource-levelling arithmetic and the earned-value arithmetic behind resource cost control.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 6: Resource Management">
+<meta property="og:description" content="Week 6 foundations for INFO6007: resource management definitions and units, the resource-load and utilisation formulae, a full WBS and critical-path calculation, resource-levelling arithmetic and the earned-value arithmetic behind resource cost control.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter6-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 6 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions and units</a></li>
+    <li><a href="#sec-m-notation" class="toc-link">Notation and formula sheet</a></li>
+  </ul>
+  <div class="toc-group">Arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-cpm" class="toc-link">WBS, network and critical path</a></li>
+    <li><a href="#sec-m-level" class="toc-link">Resource levelling arithmetic</a></li>
+    <li><a href="#sec-m-evm" class="toc-link">Resource cost performance</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-select" class="toc-link">Choosing the right technique</a></li>
+    <li><a href="#sec-m-recall" class="toc-link">Recall and exam templates</a></li>
+  </ul>
+  <a href="chapter6-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO6007 &mdash; Week 6 supplement</p>
+  <h1>Foundations: the numbers behind resource management</h1>
+  <p class="hero-desc">Week 6 is mostly behavioural, but four pieces of it are arithmetic: the resource load formula, the critical path and float that decide what levelling is allowed to move, the utilisation numbers a histogram shows, and the earned-value indices that turn resource usage into a cost forecast. This page works all four with real numbers.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 6 deck</span>
+    <span>Worked examples use one running project</span>
+    <span>Formula sheet for the exam</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions and units that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Project resource management</div>
+    <p>The process of identifying, acquiring and managing the resources &mdash; <strong>both human and physical</strong> &mdash; required for the successful delivery of a project. The six processes are planning, estimating activity resources, acquiring, developing the team, managing the team and controlling resources.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Resource breakdown structure (RBS)</div>
+    <p>A hierarchical decomposition of project resources by <strong>category and type</strong>: level 1 broad categories (human, equipment, software, materials), level 2 subcategories (roles for people, platforms for software), level 3 the specific named resource (a person, a tool version, a server, a licence). It complements the WBS, which decomposes tasks instead of resources.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Resource loading</div>
+    <p>Assigning specific resources to project activities over time and measuring their workload, expressed as hours, days or <strong>FTE (full-time equivalent)</strong> per period. Its purpose is to find over-allocated and underutilised resources before the schedule is committed.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Resource histogram</div>
+    <p>A bar chart of how much of each resource is allocated over time: X-axis time periods, Y-axis resource usage, bars the allocation in each period. It visualises workload distribution and makes potential over-allocation visible.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Resource levelling</div>
+    <p>Resolving resource over-allocation by adjusting the schedule or redistributing resources, with the goal that no resource is overburdened while the project timeline is maintained as far as possible. The four techniques are <strong>delay, split, reassign and adjust work hours</strong>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Productivity</td><td>How efficiently resources are used to achieve objectives; output per unit of effort</td><td>Confusing productivity with utilisation &mdash; a person can be 100% utilised on the wrong work</td></tr>
+        <tr><td>Availability</td><td>The extent to which resources are accessible and ready when needed</td><td>Treating a named resource as available for the whole project; leave and shared commitments are part of availability</td></tr>
+        <tr><td>Cost (of a resource)</td><td>The expenditure to acquire, use and maintain it</td><td>Counting only the purchase price and ignoring running, licence and opportunity cost</td></tr>
+        <tr><td>Resource calendar</td><td>When each resource is actually available, including leave and part-time patterns</td><td>Assuming the calendar is the same thing as the project schedule</td></tr>
+        <tr><td>Over-allocation</td><td>Demand for a resource exceeds its capacity in a period</td><td>Saying the project is over budget &mdash; over-allocation is a capacity statement, not a cost one</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about resource levelling would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is resource loading: measuring workload over time. Levelling is the response to what loading reveals.">Assigning resources to activities and measuring their workload over time</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: levelling resolves over-allocation by adjusting the schedule or redistributing resources, while protecting the project timeline as far as the float allows." data-bad="">Resolving over-allocation by adjusting the schedule or redistributing resources, keeping the timeline as far as possible</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Adding people enlarges capacity, which is one possible response, but it is not the definition and it often makes the peak worse through onboarding load.">Recruiting additional people whenever a histogram shows a peak</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">Notation and formula sheet</h2>
+  <p class="section-lead">The lecture is written in prose. The symbols below are introduced here so that the week's relationships can be written compactly; the earned-value symbols are the standard ones from Week 4 and are reused because resource performance is reported through them.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(r_a\)</div><div class="sym-cell">resource demand</div><div class="sym-cell">The FTE (or hours) activity \(a\) consumes in each period it runs</div>
+    <div class="sym-cell">\(d_a\)</div><div class="sym-cell">duration</div><div class="sym-cell">Length of activity \(a\) in periods</div>
+    <div class="sym-cell">\(W_a\)</div><div class="sym-cell">window</div><div class="sym-cell">The set of periods activity \(a\) occupies on the calendar</div>
+    <div class="sym-cell">\(C\)</div><div class="sym-cell">capacity</div><div class="sym-cell">The FTE the resource pool can supply in one period</div>
+    <div class="sym-cell">\(L\)</div><div class="sym-cell">resource load</div><div class="sym-cell">Allocated hours divided by available hours, per resource per period</div>
+    <div class="sym-cell">\(U_t\)</div><div class="sym-cell">utilisation</div><div class="sym-cell">Demand in period \(t\) divided by capacity in period \(t\)</div>
+    <div class="sym-cell">\(ES_a,\ EF_a\)</div><div class="sym-cell">earliest start / finish</div><div class="sym-cell">From the forward pass through the network</div>
+    <div class="sym-cell">\(LS_a,\ LF_a\)</div><div class="sym-cell">latest start / finish</div><div class="sym-cell">From the backward pass; the last dates that protect the end date</div>
+    <div class="sym-cell">\(F_a\)</div><div class="sym-cell">total float</div><div class="sym-cell">\(LS_a - ES_a = LF_a - EF_a\); the delay a task can absorb</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">project duration</div><div class="sym-cell">\(\max_a EF_a\), equal to the \(LF\) of the final activity</div>
+    <div class="sym-cell">\(O, M, P\)</div><div class="sym-cell">three-point estimate</div><div class="sym-cell">Optimistic, most likely and pessimistic values for one estimate</div>
+    <div class="sym-cell">\(PV,\ EV,\ AC\)</div><div class="sym-cell">planned, earned, actual</div><div class="sym-cell">Budgeted cost of work scheduled, of work performed, and the actual cost of that work</div>
+    <div class="sym-cell">\(CPI,\ SPI\)</div><div class="sym-cell">performance indices</div><div class="sym-cell">\(EV/AC\) and \(EV/PV\); below 1 means worse than planned</div>
+    <div class="sym-cell">\(BAC\)</div><div class="sym-cell">budget at completion</div><div class="sym-cell">The total approved budget for the whole project</div>
+    <div class="sym-cell">\(EAC,\ ETC\)</div><div class="sym-cell">estimate at / to completion</div><div class="sym-cell">Forecast total cost, and the money still required</div>
+    <div class="sym-cell">\(TCPI\)</div><div class="sym-cell">to-complete index</div><div class="sym-cell">The cost efficiency the remaining work must achieve</div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. Resource load is a ratio, so name both halves</h3>
+    <p>The deck's formula compares what a resource is given with what it has:</p>
+    \[ L = \frac{\sum h_{\text{allocated}}}{h_{\text{available}}} \]
+    <p style="margin-top:0.6rem;">Expressed in people rather than hours, the same ratio is the full-time equivalent:</p>
+    \[ \text{FTE} = \frac{\text{hours the person works in the period}}{\text{hours in a full-time period}} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Consequence: "120% allocated" means the numerator exceeds the denominator. It is a statement about capacity, and no amount of budget fixes it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Over-allocation is a property of a period, not of a project</h3>
+    <p>With \(r_a\) as the demand of activity \(a\) and \(W_a\) its window, demand in period \(t\) and utilisation are:</p>
+    \[ D_t = \sum_{a\,:\,t \in W_a} r_a, \qquad U_t = \frac{D_t}{C}, \qquad U_{\max} = \max_t U_t \]
+    <p style="margin-top:0.6rem;">The resource is over-allocated exactly when \(U_t \gt 1\) for some \(t\). This is why an average utilisation below 100% proves nothing: the peak is what breaks the plan.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Levelling may only delay what has float</h3>
+    <p>Delaying activity \(a\) by \(\delta\) periods shifts its window \(W_a \to W_a + \delta\) and consumes \(\delta\) of its float. The end date is protected if and only if</p>
+    \[ \delta \le F_a = LS_a - ES_a \]
+    <p style="margin-top:0.6rem;">For an activity on the critical path \(F_a = 0\), so the only remaining techniques are splitting, reassigning or adjusting hours &mdash; or accepting a later end date.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. The critical path is two passes and a subtraction</h3>
+    <p>Forward pass, then backward pass, then float:</p>
+    \[ ES_a = \max_{p \in \text{pred}(a)} EF_p, \qquad EF_a = ES_a + d_a \]
+    \[ LF_a = \min_{s \in \text{succ}(a)} LS_s, \qquad LS_a = LF_a - d_a \]
+    \[ F_a = LS_a - ES_a, \qquad T = \max_a EF_a \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Critical activities have \(F_a = 0\). The critical path is the chain of them from start to finish, and it is the chain that resource levelling is not allowed to break.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Three-point estimating expresses resource uncertainty</h3>
+    <p>With optimistic \(O\), most likely \(M\) and pessimistic \(P\) values for the same resource estimate:</p>
+    \[ E = \frac{O + 4M + P}{6}, \qquad \sigma = \frac{P - O}{6} \]
+    <p style="margin-top:0.6rem;">The expected value \(E\) goes into the estimate; \(\sigma\) is what the contingency reserve and the risk register are sized against.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>6. Resource cost is reported through earned value</h3>
+    <p>Variances, indices and the forecast:</p>
+    \[ CV = EV - AC, \qquad SV = EV - PV \]
+    \[ CPI = \frac{EV}{AC}, \qquad SPI = \frac{EV}{PV} \]
+    \[ EAC = \frac{BAC}{CPI}, \qquad ETC = EAC - AC, \qquad VAC = BAC - EAC \]
+    \[ TCPI = \frac{BAC - EV}{BAC - AC} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Reading rule: \(CPI \lt 1\) means the resources are costing more than the value they have produced; \(SPI \lt 1\) means less work has been earned than planned. When \(CPI \lt SPI\), the problem is resource cost rather than resource throughput.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A specialist team has 4 engineers. Activity X needs 3 engineers for weeks 3&ndash;5, activity Y needs 2 engineers for weeks 4&ndash;6, and both are already committed. What is \(U_{\max}\), and what does it mean?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the average across the window. Utilisation is computed per period, and the peak is the number that breaks the schedule.">\(U_{\max} = 0.83\), which is acceptable because capacity is never exceeded on average</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. In week 4 and week 5 the demand is 3 + 2 = 5 engineers against a capacity of 4, so \(U = 5/4 = 1.25\): the pool is over-allocated in those periods, and the plan is infeasible regardless of the average." data-bad="">\(U_{\max} = 1.25\) in the overlap weeks &mdash; demand exceeds capacity, so the plan is infeasible as written</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="\(U_{\max}\) is a ratio against capacity, so it cannot exceed 4 here; 5 is the demand in engineers, not the utilisation.">\(U_{\max} = 5\), meaning five engineers must be hired</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-cpm">
+  <h2 class="section-title">Worked example 1: from WBS to critical path</h2>
+  <p class="section-lead">Everything in this section runs on one project, reused in the levelling and cost sections. It is a small mobile release, and the numbers are chosen so the arithmetic is checkable by hand.</p>
+
+  <div class="def-box">
+    <div class="def-label">Step 1 &mdash; decompose the work (WBS)</div>
+    <p>The work breakdown structure decomposes deliverables, not resources. Only the leaves are work packages that can be estimated and assigned.</p>
+  </div>
+
+  <div class="diagram-flow">
+    <div class="node-box">
+      <div class="node-label">1.0 Mobile release</div>
+      <div style="margin-top:0.6rem; font-size:0.85rem; line-height:1.7;">
+        1.1 Discovery &rarr; <strong>A</strong> Requirements &amp; UX<br>
+        1.2 Build &rarr; <strong>B</strong> API design, <strong>C</strong> UI build, <strong>D</strong> Backend build<br>
+        1.3 Test &rarr; <strong>T1</strong> Module testing, <strong>T2</strong> Regression suite, <strong>E</strong> Integration &amp; test<br>
+        1.4 Release &rarr; <strong>F</strong> Release &amp; rollout
+      </div>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Step 2 &mdash; sequence it and estimate duration and demand</div>
+    <p>The RBS sits beside this table: it names <em>who and what</em> each work package consumes, while the WBS names the work itself.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>ID</th><th>Activity</th><th>Predecessors</th><th>Duration \(d\)</th><th>Resource demand \(r\)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td>Requirements &amp; UX</td><td>&mdash;</td><td>2 weeks</td><td>1 business analyst</td></tr>
+        <tr><td>B</td><td>API design</td><td>A</td><td>3 weeks</td><td>1 backend engineer</td></tr>
+        <tr><td>C</td><td>UI build</td><td>A</td><td>4 weeks</td><td>2 frontend engineers</td></tr>
+        <tr><td>D</td><td>Backend build</td><td>B</td><td>5 weeks</td><td>2 backend engineers</td></tr>
+        <tr><td>T1</td><td>Module testing</td><td>B</td><td>2 weeks</td><td>2 QA testers</td></tr>
+        <tr><td>T2</td><td>Regression suite</td><td>C</td><td>2 weeks</td><td>2 QA testers</td></tr>
+        <tr><td>T3</td><td>UAT support</td><td>T1</td><td>1 week</td><td>1 QA tester</td></tr>
+        <tr><td>E</td><td>Integration &amp; test</td><td>C, D, T1, T2, T3</td><td>3 weeks</td><td>2 QA testers</td></tr>
+        <tr><td>F</td><td>Release &amp; rollout</td><td>E</td><td>1 week</td><td>1 DevOps engineer</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Step 3 &mdash; forward pass (earliest dates)</div>
+    <p>\(ES_a = \max EF\) of predecessors, \(EF_a = ES_a + d_a\). Work in weeks elapsed, so the project starts at week 0.</p>
+    <p style="margin-top:0.6rem; font-family:var(--font-mono); font-size:0.86rem; line-height:1.9;">
+      \(ES_A = 0 \Rightarrow EF_A = 0 + 2 = 2\)<br>
+      \(ES_B = EF_A = 2 \Rightarrow EF_B = 2 + 3 = 5\)<br>
+      \(ES_C = EF_A = 2 \Rightarrow EF_C = 2 + 4 = 6\)<br>
+      \(ES_D = EF_B = 5 \Rightarrow EF_D = 5 + 5 = 10\)<br>
+      \(ES_{T1} = EF_B = 5 \Rightarrow EF_{T1} = 5 + 2 = 7\)<br>
+      \(ES_{T2} = EF_C = 6 \Rightarrow EF_{T2} = 6 + 2 = 8\)<br>
+      \(ES_{T3} = EF_{T1} = 7 \Rightarrow EF_{T3} = 7 + 1 = 8\)<br>
+      \(ES_E = \max(EF_C, EF_D, EF_{T1}, EF_{T2}, EF_{T3}) = \max(6, 10, 7, 8, 8) = 10 \Rightarrow EF_E = 13\)<br>
+      \(ES_F = EF_E = 13 \Rightarrow EF_F = 13 + 1 = 14\)
+    </p>
+    <p style="margin-top:0.6rem;">The forward pass gives the project duration \(T = \max_a EF_a = 14\) weeks.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Step 4 &mdash; backward pass (latest dates) and float</div>
+    <p>Start from \(LF_F = 14\) and work backwards: \(LF_a = \min LS\) of successors, \(LS_a = LF_a - d_a\), then \(F_a = LS_a - ES_a\).</p>
+    <p style="margin-top:0.6rem; font-family:var(--font-mono); font-size:0.86rem; line-height:1.9;">
+      \(LF_F = 14 \Rightarrow LS_F = 13 \quad F_F = 0\)<br>
+      \(LF_E = LS_F = 13 \Rightarrow LS_E = 10 \quad F_E = 0\)<br>
+      \(LF_D = LS_E = 10 \Rightarrow LS_D = 5 \quad F_D = 0\)<br>
+      \(LF_C = LS_E = 10 \Rightarrow LS_C = 6 \quad F_C = 10 - 6 = 4\)<br>
+      \(LF_B = \min(LS_D, LS_{T1}) = \min(5, 8) = 5 \Rightarrow LS_B = 2 \quad F_B = 0\)<br>
+      \(LF_A = \min(LS_B, LS_C) = \min(2, 6) = 2 \Rightarrow LS_A = 0 \quad F_A = 0\)<br>
+      \(LF_{T1} = \min(LS_E, LS_{T3}) = \min(10, 9) = 9 \Rightarrow LS_{T1} = 7 \quad F_{T1} = 2\)
+    </p>
+    <p style="margin-top:0.6rem;">Careful: \(T1\) also feeds \(T3\), and \(T3\) has \(LS = 9\), so \(LF_{T1} = \min(10, 9) = 9\) and \(F_{T1} = 7 - 5 = 2\). Continuing, \(LF_{T2} = LS_E = 10 \Rightarrow LS_{T2} = 8\) and \(F_{T2} = 8 - 6 = 2\); and \(LF_{T3} = LS_E = 10 \Rightarrow LS_{T3} = 9\) with \(F_{T3} = 9 - 7 = 2\).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>ID</th><th>\(d\)</th><th>\(ES\)</th><th>\(EF\)</th><th>\(LS\)</th><th>\(LF\)</th><th>Float \(F\)</th><th>Critical?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td>2</td><td>0</td><td>2</td><td>0</td><td>2</td><td>0</td><td>Yes</td></tr>
+        <tr><td>B</td><td>3</td><td>2</td><td>5</td><td>2</td><td>5</td><td>0</td><td>Yes</td></tr>
+        <tr><td>C</td><td>4</td><td>2</td><td>6</td><td>6</td><td>10</td><td>4</td><td>No</td></tr>
+        <tr><td>D</td><td>5</td><td>5</td><td>10</td><td>5</td><td>10</td><td>0</td><td>Yes</td></tr>
+        <tr><td>T1</td><td>2</td><td>5</td><td>7</td><td>7</td><td>9</td><td>2</td><td>No</td></tr>
+        <tr><td>T2</td><td>2</td><td>6</td><td>8</td><td>8</td><td>10</td><td>2</td><td>No</td></tr>
+        <tr><td>T3</td><td>1</td><td>7</td><td>8</td><td>9</td><td>10</td><td>2</td><td>No</td></tr>
+        <tr><td>E</td><td>3</td><td>10</td><td>13</td><td>10</td><td>13</td><td>0</td><td>Yes</td></tr>
+        <tr><td>F</td><td>1</td><td>13</td><td>14</td><td>13</td><td>14</td><td>0</td><td>Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Result.</strong> The critical path is <strong>A &rarr; B &rarr; D &rarr; E &rarr; F</strong> with a duration of <strong>14 weeks</strong>. Every test activity carries two weeks of float, and UI build carries four. Those float values are the only currency resource levelling can spend &mdash; the next section spends them.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked solution &mdash; checking the two passes by hand.</strong> A common exam question is a network with only some cells filled in. Work it in this order.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Forward pass, in topological order.</strong> Take the largest \(EF\) among predecessors. D ends at week 10 and C ends at week 6, so E cannot start before week 10 even though C finished four weeks early &mdash; E needs <em>both</em>. That single \(\max\) is what creates C's float.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Duration.</strong> \(T = \max EF = 14\). If a question gives a required end date shorter than \(T\), the honest answer is that the schedule is infeasible and the options are scope, resources or the date &mdash; not a smaller float.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Backward pass, in reverse topological order.</strong> Take the smallest \(LS\) among successors. T1's successors are E (LS 10) and T3 (LS 9), so \(LF_{T1} = 9\), not 10. Missing a successor is the most common arithmetic error in this question.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Float and critical path.</strong> \(F = LS - ES\). A, B, D, E and F all have \(F = 0\), so they form the critical path; C, T1, T2 and T3 have \(F = 4, 2, 2, 2\). Sanity check: every path from start to finish must have at least one zero-float activity, and the sum of float along any path equals the total.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Translate into resource language.</strong> T2 can start anywhere between weeks 7 and 9 without moving the release date; C can start anywhere between weeks 3 and 7. A specialist shortage in those windows is therefore a levelling problem, not a schedule problem &mdash; and a shortage in B or D is a project problem.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A project's network has a total duration of 14 weeks. A task with \(ES = 6\), \(d = 2\) and all of its successors starting at week 10 is delayed by 3 weeks. What happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The task has \(LF = 10\), so \(LS = 8\) and \(F = 8 - 6 = 2\). Three weeks exceeds that float.">Nothing: the project still finishes in week 14 because float absorbs it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. \(F = LS - ES = 8 - 6 = 2\), so a 3-week delay consumes the float and pushes the successor — and therefore the end date — one week later." data-bad="">The two weeks of float are used up and the finish date slips by one week</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The task itself has float, so it is not on the critical path; the critical path simply changes to include it once the float is gone and the delay propagates.">The task becomes critical and the project slips by three weeks</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-level">
+  <h2 class="section-title">Worked example 2: resource levelling arithmetic</h2>
+  <p class="section-lead">Now put the QA testers from the network onto a calendar. The team has <strong>two testers</strong>, so \(C = 2\). A week is the period, and an activity with \(ES = s\) and duration \(d\) occupies weeks \(s+1\) through \(s+d\).</p>
+
+  <div class="def-box">
+    <div class="def-label">Step 1 &mdash; the unlevelled plan (all activities at earliest start)</div>
+    <div class="table-responsive" style="margin-top:0.9rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Week</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>T1 Module testing (2 testers)</td><td>2</td><td>2</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>4 tester-weeks</td></tr>
+          <tr><td>T2 Regression suite (2 testers)</td><td>&mdash;</td><td>2</td><td>2</td><td>&mdash;</td><td>&mdash;</td><td>4 tester-weeks</td></tr>
+          <tr><td>T3 UAT support (1 tester)</td><td>&mdash;</td><td>&mdash;</td><td>1</td><td>&mdash;</td><td>&mdash;</td><td>1 tester-week</td></tr>
+          <tr><td><strong>Demand \(D_t\)</strong></td><td><strong>2</strong></td><td><strong>4</strong></td><td><strong>3</strong></td><td><strong>0</strong></td><td><strong>0</strong></td><td><strong>9 tester-weeks</strong></td></tr>
+          <tr><td>Capacity \(C\)</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>10 tester-weeks</td></tr>
+          <tr><td><strong>Utilisation \(U_t = D_t / C\)</strong></td><td>1.00</td><td><strong>2.00</strong></td><td><strong>1.50</strong></td><td>0.00</td><td>0.00</td><td>0.90 average</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 2 &mdash; read the two numbers that matter</h3>
+    <p>Average utilisation and peak utilisation answer different questions:</p>
+    \[ U_{\text{avg}} = \frac{\sum_t D_t}{5 \cdot C} = \frac{9}{10} = 0.90, \qquad U_{\max} = \max_t U_t = \frac{4}{2} = 2.00 \]
+    <p style="margin-top:0.6rem;">The pool looks 90% loaded and is in fact impossible: in week 7 the plan demands four testers from a team of two. This is the single most examinable idea on the page &mdash; <strong>average utilisation never proves feasibility</strong>.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Step 3 &mdash; choose the movable activity</div>
+    <p>The over-allocated weeks must lose work. Which activity moves is decided by float, not by preference:</p>
+    <p style="margin-top:0.6rem; font-family:var(--font-mono); font-size:0.86rem; line-height:1.9;">
+      T1: \(F = 2\), and it is the predecessor of T3 &mdash; moving it moves T3<br>
+      T2: \(F = 2\), and its only successor is E &mdash; therefore movable by up to 2 weeks<br>
+      T3: \(F = 2\), but dropping it into an overloaded week makes the peak worse
+    </p>
+    <p style="margin-top:0.6rem;">Delay T2 by \(\delta = 2\) weeks, the largest \(\delta\) permitted by \(\delta \le F_{T2} = 2\).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Step 4 &mdash; the levelled plan</div>
+    <p>T2 now occupies weeks 9&ndash;10 instead of 7&ndash;8. Nothing else moves.</p>
+    <div class="table-responsive" style="margin-top:0.9rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Week</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>Peak</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Demand \(D_t\)</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>&mdash;</td></tr>
+          <tr><td>Utilisation \(U_t\)</td><td>1.00</td><td>1.00</td><td>0.50</td><td>1.00</td><td>1.00</td><td><strong>1.00</strong></td></tr>
+          <tr><td>T2 remaining float</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td colspan="2">\(2 - 2 = 0\) weeks</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.7rem;">\(U_{\max}\) falls from 2.00 to 1.00, the same 9 tester-weeks are delivered, and the finish date is unchanged at week 14 because T2 now starts exactly at its late start \(LS = 8\). The price is that T2 has no float left: any further slip on it moves E and therefore the release.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 5 &mdash; price the alternative: overtime instead of levelling</h3>
+    <p>Suppose the team refuses to move T2 and the peak week is covered with overtime. With an illustrative loaded rate of \(\$80\) per hour and a 38-hour week, one tester-week costs \(38 \times 80 = \$3{,}040\), and the over-allocation in week 7 is 2 testers:</p>
+    \[ \text{extra cost} = 2 \times 3{,}040 \times 0.5 = \$3{,}040 \]
+    <p style="margin-top:0.6rem;">The 0.5 is the overtime premium: the two tester-weeks are paid anyway, and the half-load premium is what levelling avoids. Add the burnout risk the deck warns about, and delaying a floating activity is cheaper than paying the peak &mdash; which is exactly why levelling looks for float first.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked solution &mdash; levelling by splitting instead of delaying.</strong> The same plan, but the regression suite T2 is split into two one-week halves of two testers each.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Place the halves where the pool is empty.</strong> T1 fills weeks 6&ndash;7 at 2 testers and T3 sits in week 8 at 1 tester. The only weeks with free capacity are 8 (one tester free) and 9&ndash;10 (two free). Put one half in week 9 and the other in week 10.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>New demand vector.</strong> \(D = (2, 2, 1, 2, 2)\), so \(U_{\max} = 1.00\) &mdash; the same peak as the delayed plan, reached by a different route.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Check the constraint.</strong> T2's second half finishes in week 10, which equals \(LF_{T2} = 10\), so E still starts in week 11 and the 14-week duration holds. Split float = 2 weeks, exactly as before.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Compare the costs.</strong> Splitting preserves the option to start T2 earlier if capacity appears, and it keeps testers on one activity at a time &mdash; but it pays for two test-environment set-ups and risks an inconsistent regression baseline if code changes between the halves. Delaying is simpler; splitting is better when the second half genuinely can wait.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the rule.</strong> Every levelling technique costs something. Choose the one whose cost falls on the activity with the most float, and re-check \(U_{\max}\) afterwards &mdash; levelling a peak into a different peak is a common and expensive mistake.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">After levelling, \(U_{\max} = 1.00\) and the finish date is unchanged. What has the project given up?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Float is the buffer that absorbs future slippage. Spending both weeks of T2's float to remove the peak is a real trade: the plan is now feasible but has no protection left on that path." data-bad="">Two weeks of float on the delayed activity, which is the buffer that would have absorbed a future slip</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Levelling moves work within the existing resource pool; it does not add people, so no additional capacity was created.">Nothing: levelling adds capacity at no cost by definition</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The finish date is explicitly unchanged, so the project is not longer. What changed is the buffer inside it.">The project duration: it now finishes later, which is why the peak fell</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-evm">
+  <h2 class="section-title">Worked example 3: resource cost performance</h2>
+  <p class="section-lead">The deck's closing case study is a 12-week Cloud Banking Application with a budget of $100,000 and resources in trouble by week 6. Resource usage is only visible as money once it is compared with earned value.</p>
+
+  <div class="def-box">
+    <div class="def-label">The data at the end of week 6 (illustrative figures consistent with the case)</div>
+    <p>Budget at completion \(BAC = \$100{,}000\). Planned value \(PV = \$52{,}000\). Earned value \(EV = \$44{,}000\). Actual cost \(AC = \$58{,}000\). Everything below is arithmetic on those four numbers.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 1 &mdash; variances: how far off, in dollars</h3>
+    \[ CV = EV - AC = 44{,}000 - 58{,}000 = -\$14{,}000 \]
+    \[ SV = EV - PV = 44{,}000 - 52{,}000 = -\$8{,}000 \]
+    <p style="margin-top:0.6rem;">Both variances are negative, so the project is over budget <em>and</em> behind schedule. Note the asymmetry that matters for resource management: the cost variance is nearly twice the schedule variance.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 2 &mdash; indices: how far off, as a rate</h3>
+    \[ CPI = \frac{EV}{AC} = \frac{44{,}000}{58{,}000} = \frac{22}{29} = 0.759 \]
+    \[ SPI = \frac{EV}{PV} = \frac{44{,}000}{52{,}000} = \frac{11}{13} = 0.846 \]
+    <p style="margin-top:0.6rem;">Interpretation: every dollar spent has bought 76 cents of earned value, and 85% of the planned work has been earned. \(CPI \lt SPI\) says the binding constraint is the cost of resources, not the throughput of the team.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 3 &mdash; forecast: what the finish now costs</h3>
+    \[ EAC = \frac{BAC}{CPI} = \frac{100{,}000}{0.759} = \$131{,}818 \]
+    \[ ETC = EAC - AC = 131{,}818 - 58{,}000 = \$73{,}818 \]
+    \[ VAC = BAC - EAC = 100{,}000 - 131{,}818 = -\$31{,}818 \]
+    <p style="margin-top:0.6rem;">If the current cost efficiency persists, the project finishes about 32% over budget: \(\frac{31{,}818}{100{,}000} = 0.318\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 4 &mdash; recovery: the efficiency the remaining work must reach</h3>
+    \[ TCPI = \frac{BAC - EV}{BAC - AC} = \frac{100{,}000 - 44{,}000}{100{,}000 - 58{,}000} = \frac{56{,}000}{42{,}000} = 1.33 \]
+    <p style="margin-top:0.6rem;">Every remaining dollar must now deliver \(\$1.33\) of value &mdash; against a historic rate of 0.76. A TCPI far above 1 is the quantitative form of the deck's instruction to correct and reallocate resources early rather than at the end.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Resource line</th><th>Planned to week 6</th><th>Actual to week 6</th><th>Variance</th><th>Resource reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Labour (5.0 FTE &times; 6 weeks)</td><td>$36,000</td><td>$34,000</td><td>&minus;$2,000</td><td>Under-spent because a developer is on leave &mdash; availability fell, so cost fell too</td></tr>
+        <tr><td>Cloud capacity</td><td>$10,000</td><td>$18,000</td><td>+$8,000</td><td>The physical resource is consuming more than plan; this is the over-allocation the histogram would show in money</td></tr>
+        <tr><td>Licences and tools</td><td>$6,000</td><td>$6,000</td><td>$0</td><td>Fixed cost behaving as planned</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>$52,000</strong> = \(PV\)</td><td><strong>$58,000</strong> = \(AC\)</td><td><strong>+$6,000</strong></td><td>A cheap labour variance is hiding an expensive cloud variance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The lesson the table teaches.</strong> A total variance of +$6,000 looks survivable; the composition does not. The saving came from a resource that stopped being available (which also cost earned value), while the overrun came from a resource that is still being consumed above plan and will keep overrunning. When you report resource cost, decompose it by resource line &mdash; a single net figure hides both the cause and the trend.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked solution &mdash; deciding what to fix first.</strong> Given \(CPI = 0.76\), \(SPI = 0.85\) and \(TCPI = 1.33\), what should the project manager actually do?</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Separate the two problems.</strong> The schedule index is the milder one. Since \(CPI \lt SPI\), the cost per unit of progress is the worse number, so an across-the-board push for speed would spend money the project does not have.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Attack the resource line with the largest variance.</strong> Cloud capacity is +$8,000 against plan. The control-resources cycle &mdash; record, compare, analyse, correct, update &mdash; ends in one of four decisions: keep, reallocate, replace or release. Right-sizing and releasing idle capacity is the only lever here that changes both the trend and the forecast.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Do not bank the labour saving.</strong> The &minus;$2,000 is the shadow of an availability loss, and it is why \(EV\) is $8,000 below \(PV\). Treating it as a saving would repeat the mistake the case study describes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Check the recovery index against reality.</strong> \(TCPI = 1.33\) means the remaining work must be a third more cost-efficient than the plan assumed. That is achievable only by changing how the work is resourced &mdash; automating the deployments the DevOps engineer is struggling with, levelling the testers' multitasking, and re-planning the cloud footprint &mdash; not by asking people to work harder.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Report it as a range.</strong> \(EAC\) computed from \(CPI\) assumes the current efficiency persists. Present \(EAC = \$131{,}818\) as the "no change" forecast and state what the forecast becomes if the cloud action lands &mdash; that is what turns a variance report into a decision.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">At week 6 of a $100,000 project, \(EV = \$44{,}000\), \(AC = \$58{,}000\) and \(PV = \$52{,}000\). Which single statement is true?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="\(CPI = 44/58 = 0.76\), not 1.32. Dividing \(AC\) by \(EV\) inverts the index — the convention is value earned per dollar spent.">\(CPI = 1.32\), so the project is under budget</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. \(CPI = 0.76\) and \(SPI = 0.85\): both below 1, so the project is over budget and behind schedule, and the cost problem is the larger of the two." data-bad="">Both indices are below 1, so the project is over budget and behind schedule</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="\(SV = EV - PV = -\$8{,}000\), which is negative. A $14,000 figure is the cost variance \(CV = EV - AC\), and it is also negative.">\(SV = +\$14{,}000\), so the project is ahead of schedule</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-select">
+  <h2 class="section-title">Choosing the right technique</h2>
+  <p class="section-lead">Week 6 exam questions are usually &ldquo;which technique, and why?&rdquo;. Run the situation through this order and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-select"></div>
+  <script type="application/json" id="ix-m-select">
+  {
+    "title": "Order the levelling decision",
+    "subtitle": "Rebuild the order in which to respond to an over-allocated resource.",
+    "steps": [
+      "Confirm the over-allocation: compute demand per period against capacity and find the peak",
+      "Identify which of the competing activities has float, and how much",
+      "Delay the activity with float, up to the limit of that float",
+      "If float runs out, split the task across two windows instead",
+      "If the work cannot be split, reassign it to a resource with spare capacity",
+      "Only then adjust working hours, and record the cost and burnout risk",
+      "Re-check the peak: levelling one period must not create a worse one"
+    ]
+  }
+  </script>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-match"></div>
+  <script type="application/json" id="ix-m-match">
+  {
+    "title": "Match the situation to the technique",
+    "subtitle": "Each pair is one sentence you could write in an exam answer.",
+    "pairs": [
+      ["Two activities overlap on a scarce specialist, and one has three weeks of float", "Levelling by delaying the floating activity within its float"],
+      ["A tester must cover two modules in the same week and neither has float", "Levelling by splitting the testing into two windows, or reassigning one module"],
+      ["An activity on the critical path is over-allocated and the end date is fixed", "Reassign, split or adjust hours — delaying is not available"],
+      ["A one-off peak that will not recur, with budget available", "Overtime or part-time hours, accepting the premium cost"],
+      ["A resource estimate must be produced quickly for a business case", "Analogous estimating from a similar delivered project"],
+      ["The estimate must be defensible line by line for a fixed-price contract", "Bottom-up estimating from the resource breakdown structure"]
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Situation</th><th>First move</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Peak demand exceeds capacity in one period</td><td>Find the float among the overlapping activities</td><td>You propose hiring before checking whether the peak is movable</td></tr>
+        <tr><td>Over-allocation on the critical path</td><td>Reassign, split or adjust hours; or re-baseline the date</td><td>You delay a zero-float activity and claim the end date is unchanged</td></tr>
+        <tr><td>Demand below capacity for a whole role</td><td>Release or reallocate the resource and update the plan</td><td>You treat underutilisation as harmless; idle specialist capacity is a cost</td></tr>
+        <tr><td>Cost variance worse than schedule variance</td><td>Decompose actual cost by resource line</td><td>You report a single net variance with no resource attribution</td></tr>
+        <tr><td>A named specialist is shared across projects</td><td>Negotiate and record the commitment in the resource calendar</td><td>You assume availability equals headcount</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The sentence that earns the mark:</strong> &ldquo;The resource is over-allocated in week 7 because demand of four testers exceeds capacity of two; the regression suite has two weeks of float while module testing has none, so levelling delays the regression suite by two weeks, which brings the peak to 100% without moving the 14-week end date.&rdquo; Definition, evidence, technique, consequence.
+  </div>
+</section>
+
+<section class="section" id="sec-m-recall">
+  <h2 class="section-title">Recall and exam templates</h2>
+  <p class="section-lead">Cover the answers and work down the deck. If you can state each one from memory and write the formula, the arithmetic questions in this unit hold no surprises.</p>
+
+  <div data-ix="deck" data-ix-src="#ix-m-recall"></div>
+  <script type="application/json" id="ix-m-recall">
+  {
+    "title": "Self-test: the formulae and what each one commits you to",
+    "subtitle": "Say the formula out loud before you flip the card.",
+    "cards": [
+      { "front": "Resource load", "back": "L = Σ allocated hours ÷ available hours. It is a per-resource, per-period ratio, so always name the period.", "hint": "Loading" },
+      { "front": "Full-time equivalent", "back": "FTE = hours worked in the period ÷ hours in a full-time period. One person at 50% for two weeks equals one person at 100% for one week.", "hint": "Units" },
+      { "front": "Utilisation and over-allocation", "back": "U_t = D_t ÷ C, and the resource is over-allocated exactly when U_t > 1 for some period t. The peak, not the average, decides feasibility.", "hint": "Histogram" },
+      { "front": "Total float", "back": "F = LS − ES = LF − EF. Levelling may delay an activity only by δ ≤ F if the end date is to be protected.", "hint": "Levelling limit" },
+      { "front": "Forward and backward pass", "back": "ES = max EF of predecessors; EF = ES + d. LF = min LS of successors; LS = LF − d. Duration T = max EF.", "hint": "Critical path" },
+      { "front": "Three-point (PERT) estimate", "back": "E = (O + 4M + P) ÷ 6 and σ = (P − O) ÷ 6. E goes into the estimate; σ sizes the contingency.", "hint": "Estimating" },
+      { "front": "Cost and schedule variance", "back": "CV = EV − AC and SV = EV − PV. Negative means over budget and behind schedule respectively.", "hint": "Earned value" },
+      { "front": "CPI and SPI", "back": "CPI = EV ÷ AC and SPI = EV ÷ PV. Below 1 is worse than planned; CPI < SPI means resource cost is the binding problem.", "hint": "Indices" },
+      { "front": "EAC, ETC and VAC", "back": "EAC = BAC ÷ CPI; ETC = EAC − AC; VAC = BAC − EAC. This is the 'no change' forecast.", "hint": "Forecast" },
+      { "front": "TCPI", "back": "TCPI = (BAC − EV) ÷ (BAC − AC) — the cost efficiency the remaining work must achieve. Far above 1 means the plan has to change, not just the effort.", "hint": "Recovery" }
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Template: &ldquo;describe the process&rdquo;</h3>
+      <p>Name the process, state its input, state its output, then give one IT example. <em>&ldquo;Acquiring resources obtains the people and environments the plan requires; its outputs are the project team assignments, physical resource assignments and resource calendars.&rdquo;</em></p>
+    </div>
+    <div class="glance-card">
+      <h3>Template: &ldquo;which technique and why&rdquo;</h3>
+      <p>Give the evidence (demand against capacity, or float), name the technique, then state the consequence and its cost. Never name a technique without saying what it consumes.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Template: a numbers question</h3>
+      <p>Write the formula, substitute, state the unit, then interpret in one sentence. &ldquo;\(CPI = 0.76\), so the project earns 76 cents of value per dollar spent&rdquo; earns the interpretation mark that a bare number does not.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Template: a case question</h3>
+      <p>Classify each symptom as availability, productivity, over-allocation or cost, then match each to a control-resources action: keep, reallocate, replace or release.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the six processes, RACI, Tuckman, motivation, conflict and the agile material. Then attempt the Quiz Hub and the Flashcards for Week 6.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO6007ChapterUI) return;
+    try {
+      window.initINFO6007ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO6007 chapter 6] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    if (typeof window.renderKatex === "function") window.renderKatex();
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

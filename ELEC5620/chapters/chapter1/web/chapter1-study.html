@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 1: Introduction to Model-Based Software Engineering — ELEC5620</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter1-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 1 study guide for ELEC5620: why software engineering needs models, what a model buys you, the IEEE 42010 definition of architecture, essential versus accidental complexity, MBSE versus code-first development, the UML landscape, and the One-Person AI Company project.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 1: Introduction to Model-Based Software Engineering — ELEC5620">
+<meta property="og:description" content="Week 1 study guide for ELEC5620: why software engineering needs models, what a model buys you, the IEEE 42010 definition of architecture, essential versus accidental complexity, MBSE versus code-first development, the UML landscape, and the One-Person AI Company project.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F3D7;</span>
+      <h2>Week 1</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-models" class="nav-link" data-section="models">Why Models</a></li>
+    <li><a href="#sec-architecture" class="nav-link" data-section="architecture">What Architecture Is</a></li>
+    <li><a href="#sec-complexity" class="nav-link" data-section="complexity">Complexity &amp; Decay</a></li>
+    <li><a href="#sec-mbse" class="nav-link" data-section="mbse">MBSE vs Code-First</a></li>
+    <li><a href="#sec-uml" class="nav-link" data-section="uml">The UML Landscape</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="tutorial">Tutorial 1</a></li>
+    <li><a href="#sec-project" class="nav-link" data-section="project">The Project</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter1-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter1-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 1 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">ELEC5620 — Model-Based Software Engineering</p>
+    <h1>Week 1: Introduction to Model-Based Software Engineering</h1>
+    <p class="hero-subtitle">Why software engineering needs models, what a model actually buys you, how model-based development differs from code-first development, and the shape of the One-Person AI Company project you will model all semester.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3D7;</span>
+        <span>Architecture is design, not code</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9E9;</span>
+        <span>Abstraction drops irrelevant detail</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F5FA;</span>
+        <span>UML is the language of communication</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F916;</span>
+        <span>One-Person AI Company project</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter1-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter1-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 1 lecture deck (<em>Week 1: Introduction</em>), Tutorial 1 and Lab Note 1</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-models" class="section" data-track="models">
+  <h2 class="section-title">Why Software Engineering Needs Models</h2>
+  <p class="section-lead">The unit opens with a claim that carries the whole semester: software design is too complex, too time consuming and too risky to do entirely in code, so you <strong>use a model to simplify the problem</strong>.</p>
+
+  <div class="def-box">
+    <div class="def-label">Where architecture sits</div>
+    <p>Software architecture is <em>a kind of software design</em> in the software engineering domain, and architecture details are a <em>subset</em> of software design. The lecture draws it as three nested boxes: <strong>Software Engineering</strong> &supe; <strong>Software Design</strong> &supe; <strong>Software Architecture</strong>. Everything in this unit is therefore design work at the coarsest level of detail &mdash; the level at which you decide what the parts are and how they talk to each other.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Software</h3>
+      <p>A collection of instructions, often in the form of code, which tell the computer how to act.</p>
+    </div>
+    <div class="col-card">
+      <h3>Hardware</h3>
+      <p>The platform, often in the form of a machine, which actually completes the work.</p>
+    </div>
+  </div>
+
+  <p>Software is anything that tells hardware what to do and how to do it. Software projects can be <strong>massive and large-scale</strong>, and they can be <strong>very diverse</strong>. Those two facts are the reason an engineering discipline exists around them: software engineering focuses on the development and use of <em>rigorous methods</em> for designing and constructing software artefacts that will <em>reliably</em> perform specified tasks. It is explicitly more than an IT skill set &mdash; it draws on engineering mathematics, professional engagement and other engineering domain knowledge.</p>
+
+  <div class="insight-box">
+    <strong>The economic argument for modelling.</strong> The lecture's picture of architectural exploration is a set of four curves against time: problem understanding and confidence rises, the cost of design change rises, and design risk falls. Repeating the evaluation of architectural models early &mdash; by simulation and by formal and informal analysis &mdash; reaches the <em>critical understanding threshold</em> through <strong>model evaluation at time T2</strong> instead of through <strong>implementation evaluation at time T1</strong>. Flaws found at T2 are far cheaper to fix than the same flaws found after the code exists.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Model</div>
+    <p>A <strong>model</strong> is a deliberately incomplete representation of a system, built to answer one class of question about it. It is not a worse copy of the code: the omission is the feature. A model of a system that kept every detail would be as hard to reason about as the system itself.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Abstraction</div>
+    <p><strong>Abstraction</strong> is the act of dropping detail that is irrelevant to the question at hand while preserving what is relevant. The lecture makes it the first of the architect's qualifications: the <em>capacity for abstract thinking &mdash; seeing beyond the technology and the code</em>. &ldquo;Fundamental&rdquo; in the IEEE definition of architecture means exactly this: irrelevant details are omitted.</p>
+  </div>
+
+  <p>Different models answer different questions about the same system. That is why a project produces several diagrams rather than one, and why &ldquo;draw me the model&rdquo; is never a well-formed request.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Model</th><th>Question it answers</th><th>Detail it deliberately omits</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Context / use case</td><td>Who uses the system, and for what outcome?</td><td>Internal structure, ordering of steps</td></tr>
+        <tr><td>Component</td><td>What are the parts, and what do they expose?</td><td>Class-level detail inside each part</td></tr>
+        <tr><td>Class</td><td>What concepts exist, and how are they related?</td><td>Objects, threads, timing</td></tr>
+        <tr><td>Sequence</td><td>In what order do messages flow for one scenario?</td><td>Alternative scenarios, internal state</td></tr>
+        <tr><td>State machine</td><td>What states can one object be in, and what moves it?</td><td>Who else is involved, how long it takes</td></tr>
+        <tr><td>Deployment</td><td>Where does each part actually run?</td><td>Source layout, algorithms</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> never answer &ldquo;a model is a simplified version of the system&rdquo; and stop. The markable version names the purpose: a model is built <em>to reason about</em> a specific aspect, so its value depends on whether the details it dropped were the right ones for that question.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the lecture begin the unit with architecture rather than with code?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Software design is too complex, time consuming and risky to do entirely at code level, so a model is used to simplify the problem before expensive decisions are committed." data-bad="">Because software design is too complex, time consuming and risky to do without first simplifying the problem with a model</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The lecture says the opposite: UML is not helpful to coding in many cases, for example in Agile work. Its value is as a language for communication.">Because architecture diagrams remove the need to write code at all</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a project-management benefit, and a real one, but it is not the reason the lecture gives for starting from architecture.">Because it is the fastest way to allocate work across a group of five</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-architecture" class="section" data-track="architecture">
+  <h2 class="section-title">What Software Architecture Is</h2>
+  <p class="section-lead">Two definitions from the deck do the heavy lifting. Learn both, because exam questions quote them and then ask you to unpack one word.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; Clements, Bass, Kazman (2012)</div>
+    <p>&ldquo;The software architecture of a system is <strong>the set of structures needed to reason about the system</strong>, which comprise <strong>software elements</strong>, <strong>relations among them</strong>, and <strong>properties of both</strong>.&rdquo;</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; ISO/IEC/IEEE 42010</div>
+    <p>&ldquo;<strong>Architecture</strong>: the fundamental organization of a system embodied in its components, their relationships to each other and to the environment, and the principles guiding its design and evolution.&rdquo; A <strong>system</strong> is a collection of components organized to accomplish a specific function or set of functions.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">What IEEE 42010 is for</div>
+    <p>The standard is the <em>IEEE Recommended Practice for Architectural Description of Software-Intensive Systems</em>. Its goals are to facilitate the <strong>expression and communication</strong> of architectures (specification and design, and documentation), to <strong>define key terms, principles and guidelines</strong>, and to <strong>provide a framework</strong> for other related IEEE standards.</p>
+  </div>
+
+  <p>The lecture unpacks the IEEE sentence word by word, and each gloss is worth marks on its own.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Word in the definition</th><th>What it commits you to</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>fundamental</strong></td><td>Irrelevant details are omitted &rArr; <em>abstraction</em>. Architecture is what is left after you remove everything you could reasonably change without changing the system's character.</td></tr>
+        <tr><td><strong>organization</strong></td><td>Both <em>structural</em> and <em>behavioural</em>. The lecture is explicit that the unit covers both aspects of software architecture.</td></tr>
+        <tr><td><strong>components</strong></td><td>Architecture involves <em>decomposition</em>. If you cannot name the parts, you have not described an architecture.</td></tr>
+        <tr><td><strong>relationships</strong></td><td>The manner in which the parts are assembled is <em>fundamental</em> to an architecture. The same components wired differently are different architectures.</td></tr>
+        <tr><td><strong>guiding principles</strong></td><td>Like the basic tenets of a constitution: the rules that constrain later design and evolution decisions.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-card">
+    <p><strong>The lecture's worked example.</strong> A simple architecture model is drawn with three things on it at once: a <em>layering structure</em> (an application layer above a services layer), a <em>horizontal structure</em> (a set of peer components &mdash; the deck names them Boobler, Fuber, Gruber and Dabbler), and <em>end-to-end behaviours</em> traced across them (A &rarr; B &rarr; C). Beside it sits the <em>design principle</em> that motivates the whole shape: <em>&ldquo;To support high availability, the system must not have a single point of failure.&rdquo;</em> One picture, three kinds of architectural statement.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-arch-seq"></div>
+  <script type="application/json" id="ix-arch-seq">
+  {
+    "title": "Order the architectural design process",
+    "subtitle": "The lecture describes architectural specification as an iterative process rather than a phase. Rebuild the order.",
+    "steps": [
+      "Identify the stakeholders and their concerns",
+      "Record the driving quality attributes and constraints",
+      "Propose a candidate architecture: components and their relationships",
+      "Validate the candidate against the requirements by evaluating the model",
+      "Refine the design and repeat until it satisfies all the requirements",
+      "Record the design principles and decisions that the final structure embodies"
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Architectural specification is iterative.</strong> The lecture places the same picture of stakeholders and their concerns next to a diagram of components being refined: <em>&ldquo;refining the design over time until it satisfies all the requirements&rdquo;</em>. There is no single pass in which you get the architecture right, which is precisely why a cheap, revisable model beats committing to code.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team documents &ldquo;the order service calls the payment service, and no service may call the order service back.&rdquo; Which part of the IEEE 42010 definition is doing the work?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="&ldquo;Fundamental&rdquo; is about abstraction — dropping irrelevant detail. The rule you were given is a constraint on how parts may be assembled.">fundamental &mdash; irrelevant details are omitted</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Components would be the services themselves. The sentence you were given is about how they may relate, not about what they are.">components &mdash; architecture involves decomposition</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The statement is about the manner in which parts are assembled — the relationships — and the no-callback rule is exactly a guiding principle that constrains later design and evolution." data-bad="">relationships and guiding principles &mdash; how the parts may be assembled</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-arch-map"></div>
+  <script type="application/json" id="ix-arch-map">
+  {
+    "title": "One architecture, four kinds of statement",
+    "subtitle": "A layered component view of the project system in the style of the lecture's example. Click each marker to see which architectural claim it carries.",
+    "svg": "<svg viewBox=\"0 0 800 460\" role=\"img\" aria-label=\"Layered component diagram with a design principle panel and an end-to-end behaviour trace\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"800\" height=\"460\" fill=\"#fbfbfe\"></rect><rect x=\"26\" y=\"18\" width=\"470\" height=\"424\" rx=\"10\" fill=\"#ffffff\" stroke=\"#c7c9e0\" stroke-width=\"1.6\"></rect><text x=\"42\" y=\"40\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#6366f1\">layering structure</text><rect x=\"48\" y=\"56\" width=\"426\" height=\"74\" rx=\"8\" fill=\"#eef0fe\" stroke=\"#818cf8\" stroke-width=\"1.6\"></rect><text x=\"60\" y=\"76\" font-family=\"ui-monospace, monospace\" font-size=\"11.5\" fill=\"#4f46e5\">application layer</text><rect x=\"64\" y=\"86\" width=\"118\" height=\"34\" rx=\"6\" fill=\"#ffffff\" stroke=\"#818cf8\" stroke-width=\"1.4\"></rect><text x=\"123\" y=\"107\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#3f3d63\">Chat UI</text><rect x=\"196\" y=\"86\" width=\"118\" height=\"34\" rx=\"6\" fill=\"#ffffff\" stroke=\"#818cf8\" stroke-width=\"1.4\"></rect><text x=\"255\" y=\"107\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#3f3d63\">Results panel</text><rect x=\"328\" y=\"86\" width=\"130\" height=\"34\" rx=\"6\" fill=\"#ffffff\" stroke=\"#818cf8\" stroke-width=\"1.4\"></rect><text x=\"393\" y=\"107\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#3f3d63\">Founder console</text><rect x=\"48\" y=\"146\" width=\"426\" height=\"104\" rx=\"8\" fill=\"#eaf7f2\" stroke=\"#34d399\" stroke-width=\"1.6\"></rect><text x=\"60\" y=\"166\" font-family=\"ui-monospace, monospace\" font-size=\"11.5\" fill=\"#047857\">services layer — agent components</text><rect x=\"64\" y=\"176\" width=\"88\" height=\"58\" rx=\"6\" fill=\"#ffffff\" stroke=\"#34d399\" stroke-width=\"1.4\"></rect><text x=\"108\" y=\"200\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Fit</text><text x=\"108\" y=\"216\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Analysis</text><rect x=\"162\" y=\"176\" width=\"88\" height=\"58\" rx=\"6\" fill=\"#ffffff\" stroke=\"#34d399\" stroke-width=\"1.4\"></rect><text x=\"206\" y=\"200\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Product</text><text x=\"206\" y=\"216\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Research</text><rect x=\"260\" y=\"176\" width=\"88\" height=\"58\" rx=\"6\" fill=\"#ffffff\" stroke=\"#34d399\" stroke-width=\"1.4\"></rect><text x=\"304\" y=\"200\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Inventory</text><text x=\"304\" y=\"216\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Check</text><rect x=\"358\" y=\"176\" width=\"100\" height=\"58\" rx=\"6\" fill=\"#ffffff\" stroke=\"#34d399\" stroke-width=\"1.4\"></rect><text x=\"408\" y=\"200\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Customer</text><text x=\"408\" y=\"216\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Support</text><rect x=\"48\" y=\"266\" width=\"426\" height=\"80\" rx=\"8\" fill=\"#fdf3e7\" stroke=\"#f59e0b\" stroke-width=\"1.6\"></rect><text x=\"60\" y=\"286\" font-family=\"ui-monospace, monospace\" font-size=\"11.5\" fill=\"#b45309\">integration layer</text><rect x=\"64\" y=\"296\" width=\"126\" height=\"34\" rx=\"6\" fill=\"#ffffff\" stroke=\"#f59e0b\" stroke-width=\"1.4\"></rect><text x=\"127\" y=\"317\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">LLM gateway</text><rect x=\"204\" y=\"296\" width=\"126\" height=\"34\" rx=\"6\" fill=\"#ffffff\" stroke=\"#f59e0b\" stroke-width=\"1.4\"></rect><text x=\"267\" y=\"317\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Inventory API</text><rect x=\"344\" y=\"296\" width=\"114\" height=\"34\" rx=\"6\" fill=\"#ffffff\" stroke=\"#f59e0b\" stroke-width=\"1.4\"></rect><text x=\"401\" y=\"317\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Fitting CRM</text><rect x=\"48\" y=\"362\" width=\"426\" height=\"62\" rx=\"8\" fill=\"#f4f1fd\" stroke=\"#a855f7\" stroke-width=\"1.6\"></rect><text x=\"60\" y=\"382\" font-family=\"ui-monospace, monospace\" font-size=\"11.5\" fill=\"#7e22ce\">data layer</text><rect x=\"64\" y=\"392\" width=\"150\" height=\"24\" rx=\"6\" fill=\"#ffffff\" stroke=\"#a855f7\" stroke-width=\"1.4\"></rect><text x=\"139\" y=\"408\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Customer profiles</text><rect x=\"228\" y=\"392\" width=\"150\" height=\"24\" rx=\"6\" fill=\"#ffffff\" stroke=\"#a855f7\" stroke-width=\"1.4\"></rect><text x=\"303\" y=\"408\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">Confidence policy</text><path d=\"M540 44 h234\" stroke=\"#c7c9e0\" stroke-width=\"1.4\" stroke-dasharray=\"5 5\"></path><text x=\"540\" y=\"34\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#6366f1\">design principles</text><rect x=\"540\" y=\"56\" width=\"234\" height=\"386\" rx=\"10\" fill=\"#ffffff\" stroke=\"#c7c9e0\" stroke-width=\"1.6\"></rect><text x=\"558\" y=\"84\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#3f3d63\">P1 no single point of failure</text><text x=\"558\" y=\"110\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#3f3d63\">P2 agents never hold health data</text><text x=\"558\" y=\"136\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#3f3d63\">P3 every action is logged</text><text x=\"558\" y=\"162\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#3f3d63\">P4 low confidence escalates</text><text x=\"558\" y=\"206\" font-family=\"ui-monospace, monospace\" font-size=\"11.5\" fill=\"#4f46e5\">end-to-end behaviour</text><text x=\"558\" y=\"232\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">scan -> fit analysis -> search</text><text x=\"558\" y=\"252\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">-> rank -> founder approval</text><text x=\"558\" y=\"272\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">-> reserve -> log feedback</text><path d=\"M558 300 h40\" stroke=\"#6366f1\" stroke-width=\"2\"></path><path d=\"M598 300 l-8 -5 v10 z\" fill=\"#6366f1\"></path><text x=\"608\" y=\"304\" font-family=\"ui-monospace, monospace\" font-size=\"10.5\" fill=\"#3f3d63\">spans all layers</text></svg>",
+    "points": [
+      { "x": 15.5, "y": 23.0, "label": "Application layer", "detail": "Structure: the parts a person actually touches. Answering 'what are the components?' is decomposition — one of the five words in the IEEE definition." },
+      { "x": 25.5, "y": 44.5, "label": "Services layer", "detail": "The agent components sit as peers on one horizontal level. Same components, different wiring, would be a different architecture, because the manner of assembly is fundamental." },
+      { "x": 33.5, "y": 66.5, "label": "Integration layer", "detail": "Everything the system does not own: the LLM gateway, the inventory API, the fitting CRM. These are the relationships to the environment that ISO/IEC/IEEE 42010 names explicitly." },
+      { "x": 17.0, "y": 85.5, "label": "Data layer", "detail": "Where state lives. The confidence policy is a data-level encoding of a design principle, which is why principles belong in the architecture description and not only in a wiki." },
+      { "x": 82.0, "y": 25.0, "label": "Design principles panel", "detail": "The 'guiding principles' clause: the basic tenets of a constitution. P1 to P4 constrain decisions that have not been made yet." },
+      { "x": 82.0, "y": 67.5, "label": "End-to-end behaviour", "detail": "A behaviour traced across several components. The lecture's example does the same with A → B → C, and notes that the unit covers structural and behavioural aspects together." }
+    ]
+  }
+  </script>
+</section>
+
+<section id="sec-complexity" class="section" data-track="complexity">
+  <h2 class="section-title">Complexity, Decay and Why Architecture Matters</h2>
+  <p class="section-lead">Architecture is not valuable in the abstract. It is valuable at three specific moments in a system's life, and it decays when nobody defends it.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">When architecture matters</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Phase</th><th>What the architecture does for you</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>During inception and design</strong></td>
+          <td>Facilitates system consistency and simplifies design; helps predict key system qualities; and <em>helps identify requirements</em> &mdash; modelling is not only downstream of the requirements, it is a way of finding them.</td>
+        </tr>
+        <tr>
+          <td><strong>During implementation</strong></td>
+          <td>Helps identification and allocation of development work, and guides finer-grained design decisions.</td>
+        </tr>
+        <tr>
+          <td><strong>During maintenance and evolution</strong></td>
+          <td>Reduces the likelihood of architectural decay during fine-grained maintenance, and identifies the feasibility and potential cost of evolution alternatives.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-why-timeline"></div>
+  <script type="application/json" id="ix-why-timeline">
+  {
+    "title": "Why architecture is important — the lecture's seven claims",
+    "subtitle": "Each claim is a different kind of return on the same investment. Step through them and notice that only the first is about code.",
+    "events": [
+      { "label": "Claim 1", "title": "A carrier of the earliest design decisions", "detail": "The architecture records choices made when the least was known and the most was still changeable — which is exactly why they are the expensive ones to reverse." },
+      { "label": "Claim 2", "title": "It inhibits the driving quality attributes", "detail": "The architecture constrains what quality attributes are achievable at all, and it is what allows those attributes to be predicted early rather than measured late." },
+      { "label": "Claim 3", "title": "It provides reasoning about managing changes", "detail": "With a model you can argue about the cost of a change before making it; without one you can only discover the cost by making it." },
+      { "label": "Claim 4", "title": "It improves cost and schedule estimates", "detail": "Estimates built on named components and known relationships are defensible in a way that estimates built on a feature list are not." },
+      { "label": "Claim 5", "title": "Architecture-based development focuses on assembly", "detail": "The unit of work becomes the assembly of components rather than the construction of everything from scratch." },
+      { "label": "Claim 6", "title": "A documented architecture enhances communication", "detail": "This is the claim that justifies UML as a shared notation: a diagram is the artefact that lets a stakeholder, a developer and a marker talk about the same system." },
+      { "label": "Claim 7", "title": "An architecture is transferable and reusable", "detail": "The knowledge captured in the model outlives the project. It is the only one of the seven claims that pays out on the next system as well as this one." }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Architectural decay</div>
+    <p>The <strong>gradual corruption of architectural design decisions through seemingly minor fixes and modifications</strong>. It has two principal causes, and both are about the difficulty of seeing the whole:</p>
+    <ul style="padding-left:1.15rem; line-height:1.75; margin-top:0.5rem;">
+      <li>the difficulty of <strong>comprehending</strong> an architecture by observing details;</li>
+      <li>the difficulty of <strong>enforcing</strong> architectural design decisions in the process of implementation.</li>
+    </ul>
+  </div>
+
+  <p>Note what decay is <em>not</em>. It is not a single bad decision; it is the accumulation of individually reasonable ones. That is why the counter-measures are a documented architecture (so the whole can be comprehended) and a modelled, traceable design (so the decisions can be enforced) &mdash; not simply &ldquo;better programmers&rdquo;.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Two kinds of complexity</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Essential complexity</h3>
+      <p>Complexity that belongs to the problem: the domain really is intricate, the rules really do interact, the human situation really is ambiguous. <strong>Modelling cannot remove it</strong> &mdash; the only honest responses are to understand it better and to represent it explicitly.</p>
+    </div>
+    <div class="col-card">
+      <h3>Accidental complexity</h3>
+      <p>Complexity introduced by the way we chose to build the solution: the framework, the data model we picked, the premature optimisation, the tangled dependencies. <strong>This is the part modelling and architecture actually attack.</strong></p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why the distinction earns marks.</strong> A tempting but wrong answer to &ldquo;how does modelling reduce complexity?&rdquo; is &ldquo;it makes the problem simpler&rdquo;. A model does not simplify the problem; it simplifies <em>your access</em> to it by separating the two kinds of complexity and letting you attack the accidental one deliberately. Applied to the project: recommending a running shoe that fits <em>is</em> genuinely hard (essential); discovering that the inventory adapter has leaked into the ranking logic is not (accidental).
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team ships a working system. Over two years, each release adds a small shortcut until the ordering, pricing and notification logic are entangled across four services. What has happened?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Essential complexity is complexity in the problem itself. Here the domain did not change — the design decisions did, one small fix at a time.">Essential complexity increased because the business domain became harder</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. This is architectural decay: the gradual corruption of architectural design decisions through seemingly minor fixes, caused by the difficulty of comprehending the architecture from details and of enforcing its decisions during implementation." data-bad="">Architectural decay: architectural decisions were corrupted by minor fixes and modifications</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Decay is not caused by staff turnover in the lecture's account. It is caused by the difficulty of comprehending the whole from the details and of enforcing decisions during implementation.">Nothing architectural &mdash; the code simply reflects normal staff turnover</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A developer spends three days writing an adapter because the inventory vendor's API returns availability as a nested array, then has to change it again when the vendor updates the schema. Which kind of complexity is that?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Recommendation quality is the genuinely hard part of this problem — it would still be hard if the vendor's API were perfect. The adapter is difficulty we introduced by our choice of integration.">Essential &mdash; deciding which shoe to recommend is inherently difficult</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Accidental complexity is introduced by the way we chose to build the solution. A vendor's response shape is not part of the problem; it becomes part of our design only because the integration was allowed to leak inward." data-bad="">Accidental &mdash; the vendor's response shape is a property of our chosen solution, not of the problem</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Neither category is about effort. Complexity is classified by where the difficulty comes from — the problem itself, or our chosen solution — not by how long it took.">Neither &mdash; three days of work is simply normal development cost</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; classifying complexity in a real system.</strong> Scenario: the One-Person AI Company recommends a running shoe, checks stock, and reserves a pair.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>List the difficulties, not the features.</strong> Deciding what &ldquo;fits&rdquo; means from a foot scan; ranking shoes when fit, comfort, price and availability disagree; knowing when a recommendation is uncertain enough to escalate.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Mark the essential ones.</strong> Fit, ranking trade-offs and the escalation threshold are essential. No amount of refactoring makes them go away &mdash; a human founder still has to own the judgement.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Mark the accidental ones.</strong> The inventory vendor's REST shape leaking into the ranking rules; the recommendation logic being reachable only through the chat handler; three copies of the confidence threshold. These are self-inflicted.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Decide which one the model attacks.</strong> The architecture model puts an integration layer between inventory and ranking, and names the confidence policy once. That is accidental complexity removed by a structural decision &mdash; and it is why the decision is worth recording before the code is written.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the risk.</strong> If the model had tried to remove the <em>essential</em> complexity &mdash; for example by pretending a single numeric score can rank fit, comfort and price without a stated trade-off &mdash; the design would have become simpler to draw and wrong in use. Modelling removes the accidental and <em>exposes</em> the essential.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-mbse" class="section" data-track="mbse">
+  <h2 class="section-title">MBSE: The Model as the Primary Artefact</h2>
+  <p class="section-lead">Model-based software engineering is not &ldquo;drawing some diagrams before coding&rdquo;. It is a change in which artefact carries the design.</p>
+
+  <div class="def-box">
+    <div class="def-label">Model-Based Software Engineering</div>
+    <p><strong>MBSE</strong> is the practice of expressing a system's requirements, architecture, structure and behaviour as <em>models</em> that are precise enough to be analysed, checked and transformed, and of treating those models as the primary engineering artefact rather than as an illustration of code that has already been written. <strong>Model-driven engineering (MDE)</strong> is the stronger form of the same idea, in which the model is the source from which other artefacts &mdash; documentation, interfaces, and in part the implementation &mdash; are generated.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-mbse-race"></div>
+  <script type="application/json" id="ix-mbse-race">
+  {
+    "title": "Where the effort goes: code-first versus model-based",
+    "subtitle": "Illustrative 0–5 emphasis scores built from the lecture's account of design risk and architectural decay. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Design decisions recorded in a notation others can read", "value": 5, "display": "model is the record" },
+      { "name": "Effort spent before the first line of code", "value": 5, "display": "front-loaded" },
+      { "name": "Early detection of design flaws", "value": 5, "display": "by model evaluation" },
+      { "name": "Traceability from requirement to design element", "value": 5, "display": "maintained" },
+      { "name": "Reliance on an individual's memory of the design", "value": 1, "display": "low" },
+      { "name": "Cost of discovering a structural mistake", "value": 2, "display": "contained early" }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-codefirst-race"></div>
+  <script type="application/json" id="ix-codefirst-race">
+  {
+    "title": "Same six dimensions, code-first",
+    "subtitle": "Code-first is not stupidity: it is the right call for small, well-understood, short-lived systems. The scores invert as the system grows and outlives its authors.",
+    "max": 5,
+    "rows": [
+      { "name": "Design decisions recorded in a notation others can read", "value": 1, "display": "implicit in code" },
+      { "name": "Effort spent before the first line of code", "value": 1, "display": "minimal" },
+      { "name": "Early detection of design flaws", "value": 1, "display": "at run time" },
+      { "name": "Traceability from requirement to design element", "value": 1, "display": "narrative only" },
+      { "name": "Reliance on an individual's memory of the design", "value": 5, "display": "high" },
+      { "name": "Cost of discovering a structural mistake", "value": 5, "display": "paid in rework" }
+    ]
+  }
+  </script>
+
+  <div data-ix="pipeline" data-ix-src="#ix-md-pipeline"></div>
+  <script type="application/json" id="ix-md-pipeline">
+  {
+    "title": "The model-driven toolchain",
+    "subtitle": "Each stage consumes the previous artefact and produces the next. The model is not a by-product of this pipeline — it is the input.",
+    "nodes": [
+      { "label": "Metamodel", "note": "The rules of the language itself: what a Class is, what an Association may connect, what a Stereotype may extend. UML's metamodel is what makes a diagram checkable rather than merely drawn." },
+      { "label": "Model", "note": "An instance of the metamodel describing your system: classes, components, states and their relationships. This is the artefact you version, review and maintain." },
+      { "label": "Analysis & validation", "note": "The model is queried for consistency: unresolved references, contradictory multiplicities, requirements with no design element, design elements with no requirement." },
+      { "label": "Transformation", "note": "Rules map model elements onto other model elements or onto text — interfaces, schemas, skeletons, configuration, documentation." },
+      { "label": "Generated artefacts", "note": "Code, schemas, API stubs and reports derived from the model rather than hand-maintained alongside it." },
+      { "label": "Implementation & evidence", "note": "The parts a generator cannot produce are written by hand and traced back to the model element that justified them." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question</th><th>Code-first</th><th>Model-based</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What is the primary artefact?</td><td>The source code</td><td>The model; code is one derived artefact</td></tr>
+        <tr><td>Where do design decisions live?</td><td>Implicitly, in the structure of the code</td><td>Explicitly, in a notation with defined semantics</td></tr>
+        <tr><td>How is a design flaw found?</td><td>By running it, or by reading all of it</td><td>By evaluating the model before implementation</td></tr>
+        <tr><td>How is the design communicated?</td><td>By walking someone through the code</td><td>By a diagram a stakeholder can read</td></tr>
+        <tr><td>What happens as the system ages?</td><td>Architectural decay, discovered late</td><td>Decay is detectable against the recorded design</td></tr>
+        <tr><td>When is it the wrong choice?</td><td>Rarely, for genuinely small systems</td><td>When the ceremony costs more than the system is worth</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>The prerequisite warning from the deck, in its own terms.</strong> &ldquo;UML is not helpful to coding in many cases (e.g., Agile). But it is a good language for communication.&rdquo; Read that as a claim about <em>which job</em> the model is doing. A model is not a compiler input in this unit; it is how a design becomes discussable, reviewable, traceable and markable.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-mbse-match"></div>
+  <script type="application/json" id="ix-mbse-match">
+  {
+    "title": "Match the term to what it commits you to",
+    "subtitle": "Click a term on the left, then its consequence on the right.",
+    "pairs": [
+      ["Model", "An incomplete representation built to answer one class of question about a system"],
+      ["Abstraction", "Dropping detail that is irrelevant to the question while preserving what is relevant"],
+      ["Essential complexity", "Difficulty that belongs to the problem and cannot be designed away"],
+      ["Accidental complexity", "Difficulty introduced by our chosen solution and removable by redesign"],
+      ["Architectural decay", "The gradual corruption of design decisions through seemingly minor fixes"],
+      ["Architecture (IEEE 42010)", "The fundamental organization of a system in its components, their relationships and the principles guiding design and evolution"],
+      ["Metamodel", "The definition of the modelling language itself, which makes a model checkable"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement best distinguishes model-driven engineering from producing a few diagrams at the end of a project?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Tool choice is a symptom, not the definition. A model-driven process can be run with a whiteboard; a code-first process can be run with an expensive UML tool.">Model-driven engineering means using a UML tool rather than a whiteboard</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. In MDE the model is the source artefact: it is analysed and transformed so that other artefacts are generated from it, rather than illustrated by it after the fact." data-bad="">The model is the source artefact that is analysed and transformed, so other artefacts derive from it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes documentation, which is one output of a toolchain. It misses the point that the model is what is maintained and reasoned about.">Model-driven engineering means producing more documentation than code</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-uml" class="section" data-track="uml">
+  <h2 class="section-title">The UML Landscape</h2>
+  <p class="section-lead">UML is the notation the whole unit is written in. Week 1 assumes familiarity and warns that the unit will do a deep dive into its semantics &mdash; so it is worth knowing exactly which diagram does which job before Week 5 and Week 6 arrive.</p>
+
+  <div class="def-box">
+    <div class="def-label">Unified Modeling Language</div>
+    <p><strong>UML</strong> is a standardised graphical language for specifying, visualising, constructing and documenting the artefacts of a software-intensive system. It is a <em>language</em>, so it has a metamodel that fixes what each element means; it is <em>unified</em>, so the same notation serves requirements, architecture, structure and behaviour; and it is a <em>modelling</em> language, so it describes designs rather than implementations.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Structure diagrams &mdash; what the system is</h3>
+      <ul style="padding-left:1.15rem; line-height:1.75;">
+        <li><strong>Class</strong> &mdash; concepts, attributes, operations and their relationships</li>
+        <li><strong>Component</strong> &mdash; replaceable parts and the interfaces they expose</li>
+        <li><strong>Package</strong> &mdash; grouping and namespaces</li>
+        <li><strong>Deployment</strong> &mdash; which part runs on which node</li>
+        <li><strong>Object</strong> &mdash; a snapshot of instances at one moment</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Behaviour diagrams &mdash; what the system does</h3>
+      <ul style="padding-left:1.15rem; line-height:1.75;">
+        <li><strong>Use case</strong> &mdash; actors and the outcomes they want</li>
+        <li><strong>Activity</strong> &mdash; the flow of work, with decisions and concurrency</li>
+        <li><strong>State machine</strong> &mdash; the states of one object and what moves it</li>
+        <li><strong>Sequence</strong> &mdash; messages between lifelines in time order</li>
+        <li><strong>Communication</strong> &mdash; the same interactions, organised around the links instead of the clock</li>
+      </ul>
+    </div>
+  </div>
+
+  <p>Two of those pairs are easy to confuse under exam pressure, and both confusions are about <em>what the diagram puts first</em>.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Pair</th><th>First diagram</th><th>Second diagram</th><th>How to choose</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sequence vs communication</td>
+          <td><strong>Sequence</strong> organises interactions by <em>time</em>: lifelines down the page, messages in order.</td>
+          <td><strong>Communication</strong> organises the same interactions by <em>structure</em>: objects and links, with numbered messages.</td>
+          <td>Use sequence when the ordering is the point; use communication when the wiring is the point.</td>
+        </tr>
+        <tr>
+          <td>Activity vs state machine</td>
+          <td><strong>Activity</strong> models work that flows between activities and can fork or join.</td>
+          <td><strong>State machine</strong> models one object's state, with transitions triggered by events and guarded by conditions.</td>
+          <td>Ask how many objects are in the picture. Many, flowing: activity. One, changing: state machine.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Building a class diagram, one decision at a time</h3>
+  <p>The fastest way to internalise UML is to watch a diagram acquire meaning. The animation below starts from a single empty class and adds exactly one modelling decision per step &mdash; attributes and operations, then an association with multiplicity, then aggregation, then composition, then generalisation, and finally the stereotype that binds the model to the project's agent architecture.</p>
+
+  <div id="ix-uml-build"></div>
+
+  <div class="callout">
+    <strong>The rule that matters most:</strong> every element you add is a <em>claim</em>. An association with multiplicity <code>1..*</code> says the domain can never contain a shoe with no model; a filled diamond says the part cannot outlive the whole. If you cannot defend the claim, use a plain association &mdash; an unadorned relationship is honest, a wrong adornment is a defect.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You need to show that a <code>ShoeModel</code> cannot exist without the <code>Manufacturer</code> that produces it, and that deleting the manufacturer deletes the model. Which notation is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A plain association asserts only that the two are related. Stronger claims about lifetime need an adornment, and UML has one for exactly this.">A plain association with multiplicity <code>1</code> at the manufacturer end</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hollow diamond is aggregation: the part can be shared and can outlive the whole. That is weaker than the lifetime dependency you were asked to express.">Aggregation &mdash; a hollow diamond at the manufacturer end</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Composition is the filled diamond: the part is owned by the whole and shares its lifetime, which is exactly the constraint stated." data-bad="">Composition &mdash; a filled diamond at the manufacturer end</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Tutorial 1: From Problem to Model</h2>
+  <p class="section-lead">Tutorial 1 is the run-through of the lecture plus a workshop. Its goal is stated on the slide: leave with <em>one real problem worth investigating</em> &mdash; and a disciplined way to model it as a One-Person AI Company.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-tut-seq"></div>
+  <script type="application/json" id="ix-tut-seq">
+  {
+    "title": "Order the Tutorial 1 session",
+    "subtitle": "Five segments, in the order the tutorial runs them.",
+    "steps": [
+      "Welcome and course review",
+      "Architecture: review of the lecture",
+      "AI and learning: the case discussion",
+      "Customer and business thinking",
+      "Company workshop: draft your own one-sentence brief"
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What the tutorial promises to cover</h3>
+      <ul style="padding-left:1.15rem; line-height:1.75;">
+        <li>Review key concepts and answer questions</li>
+        <li>Learn about UML and its standards</li>
+        <li>Supplementary knowledge for the assignment: Jira, Git, Visual Studio Code, LangChain</li>
+        <li>Case studies</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>How to get value from it</h3>
+      <ul style="padding-left:1.15rem; line-height:1.75;">
+        <li>Email your tutor the questions <strong>24 hours before</strong> the tutorial</li>
+        <li>Bring a draft brief, not a topic area</li>
+        <li>Bring the models you have started and the assumptions behind them</li>
+        <li>Share progress and problems with tutors every week during the lab</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">The one-sentence company brief</h3>
+  <p>The tutorial's central exercise is a template, and its shape is a modelling decision in disguise: it forces you to name the actor, the situation, the cause, the agent roles and the human decision that stays human.</p>
+
+  <div class="concept-box">
+    <p><em>For <strong>[target user]</strong> in <strong>[situation]</strong>, <strong>[problem]</strong> occurs because <strong>[cause]</strong>. Our one-person AI company coordinates <strong>[agent roles]</strong> to <strong>[outcome]</strong>, while the human founder approves <strong>[high-impact decision]</strong>.</em></p>
+  </div>
+
+  <div class="chip-list">
+    <span>Specific user</span>
+    <span>Real evidence</span>
+    <span>Measurable value</span>
+    <span>Multi-agent roles</span>
+    <span>Human accountability</span>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; StrideWise AI, the tutorial's own case, decomposed.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Separate the surface request from the underlying need.</strong> The customer says &ldquo;I want to buy a pair of running shoes.&rdquo; What is actually unresolved is financial confidence (is this good value?), fit accuracy (will it hurt?) and trust (there are too many options to evaluate).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>State the business goal separately.</strong> Higher conversion, lower product return rates and increased customer trust. Note that the first two are measurable and the third is not &mdash; the model has to carry both without pretending they are the same kind of thing.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Write the brief in one sentence.</strong> For runners who struggle to choose suitable shoes, the wrong shoe is bought because fit, style and budget cannot be compared in the shop. StrideWise AI coordinates fit-analysis, product-research, inventory and customer-support agents to recommend available shoes matching the customer's feet, running style and budget, while the human founder approves health-related advice and uncertain recommendations.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Read the brief back as a design.</strong> &ldquo;Coordinates four agents&rdquo; is a component diagram. &ldquo;Approves health-related advice&rdquo; is a state machine with an escalation transition. &ldquo;Recommends available shoes&rdquo; is a sequence diagram with an inventory call. &ldquo;Uncertain recommendations&rdquo; is a guard condition. The sentence already contains the models.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Apply the design test from the lecture.</strong> <em>Can the company deliver value repeatedly without the founder touching every step?</em> If not, simplify the promise or redesign the workflow. Note that the test is not &ldquo;can the AI do everything&rdquo; &mdash; it is &ldquo;is the human attention allocated to the right steps&rdquo;.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">From agent elements to engineering requirements</h3>
+  <p>Tutorial 1's closing table is the most directly examinable artefact in the week: it converts each element of an agent architecture into the requirement it imposes on the design. This is the bridge from Week 1 concepts to Week 3 and Week 4 models.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Agent element</th><th>StrideWise AI example</th><th>Engineering requirement it creates</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Environment</strong></td><td>Customer, foot, product and inventory data</td><td>Secure data model and API integration</td></tr>
+        <tr><td><strong>Perception</strong></td><td>Capture preferences and analyse foot scans</td><td>Multimodal processing and preference extraction</td></tr>
+        <tr><td><strong>Decision-making</strong></td><td>Rank shoes by fit, comfort, price and availability</td><td>Recommendation logic and constraint checking</td></tr>
+        <tr><td><strong>Action &amp; tools</strong></td><td>Explain recommendations and reserve shoes</td><td>Inventory API, confirmation and response generation</td></tr>
+        <tr><td><strong>Feedback</strong></td><td>Record fittings, satisfaction, returns and rejections</td><td>Traceable feedback and model refinement</td></tr>
+        <tr><td><strong>Human oversight</strong></td><td>Review health concerns and uncertain cases</td><td>Confidence thresholds, escalation and approval rules</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An LLM writes fluent product recommendations. Which property makes it an <em>agent</em> in this unit's sense?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Generating and transforming language is exactly what the lecture says an LLM does on its own — and it may not know whether its answer changed the world.">It generates and transforms language fluently</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. An agent pursues a goal across multiple steps: it perceives its environment, makes decisions, takes actions, uses tools and observes results, all inside a goal-directed loop." data-bad="">It pursues a goal across multiple steps, using tools and observing the results</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An agent usually consists of perception, decision-making and action modules, so having those concerns somewhere is expected — but the defining property is the goal-directed loop, not the source layout.">Its code is organised into perception, decision and action modules</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-project" class="section" data-track="project">
+  <h2 class="section-title">The Project: A One-Person AI Company</h2>
+  <p class="section-lead">The project theme is not a generic software exercise. It is a specific organisational idea, and the models you build have to describe that organisation.</p>
+
+  <div class="def-box">
+    <div class="def-label">The one-person AI company</div>
+    <p>A company <strong>owned and directed by one founder</strong>, in which AI agents, software and specialist contractors perform the repeatable work under the founder's control. It can research markets, create content, sell, support customers, analyse data and run back-office workflows, while the founder owns <strong>judgement, relationships and accountability</strong>.</p>
+  </div>
+
+  <div class="info-card">
+    <p><strong>The design principle stated in the deck.</strong> Design from customer value backward, not from available tools &mdash; in four moves: <strong>narrow the promise</strong> (one customer, one painful job, one measurable outcome), <strong>map the work</strong> (separate judgement, repeatable tasks and risky exceptions), <strong>build guardrails</strong> (data access, quality checks, approvals, fallbacks) and <strong>create memory</strong> (store decisions, examples, metrics and lessons in one system). The design test is a single question: <em>can the company deliver value repeatedly without the founder touching every step?</em> If not, simplify the promise or redesign the workflow.</p>
+  </div>
+
+  <p>The worked example in both the lecture and the tutorial is a hypothetical patient-navigation agency: the founder partners with clinics and employers to help patients understand referrals, prepare for appointments and complete non-clinical follow-up, while <em>licensed clinicians retain every diagnosis and treatment decision</em>. Notice how precisely the boundary is drawn &mdash; the agents handle coordination, the humans keep the clinical judgement. That boundary is an architectural decision, and it is the kind of decision the marker is looking for.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Assessment and milestones</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Component</th><th>Weight</th><th>Timing</th><th>What is submitted</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Project Stage 1</strong> &mdash; architecture design and modelling</td><td>30%</td><td>Checkpoint in week 5; due week 8 (tentative)</td><td>Report submission, plus presentation and in-class interview</td></tr>
+        <tr><td><strong>Project Stage 2</strong> &mdash; implementation</td><td>20%</td><td>Due week 13</td><td>Code submission and in-class demonstration</td></tr>
+        <tr><td><strong>Mid-semester exam</strong></td><td>10%</td><td>Online quiz, week 9 (tentative)</td><td>&mdash;</td></tr>
+        <tr><td><strong>Final exam</strong></td><td>40%</td><td>Examination period</td><td>Closed book</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Group and tools.</strong> Form groups of <strong>3&ndash;5</strong> in the same lab session and register on Canvas with a name in the format <code>lab time + group number</code> (for example &ldquo;Mon 10-12 Group 1&rdquo;). The lab toolchain named in the deck spans <strong>StarUML</strong>, <strong>draw.io</strong>, <strong>Jira</strong>, <strong>Jupyter Notebook</strong>, <strong>VS Code</strong>, <strong>Amazon Web Services</strong>, <strong>LangChain</strong>, other agentic coding tools, and <strong>Papyrus UML</strong> among the IDEs.
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-project-timeline"></div>
+  <script type="application/json" id="ix-project-timeline">
+  {
+    "title": "The semester as a modelling pipeline",
+    "subtitle": "Read this as the order in which the artefacts are produced, not as a list of deadlines. Every later artefact is a model of something an earlier one established.",
+    "events": [
+      { "label": "Week 1", "title": "Problem and company brief", "detail": "Choose a topic and write one sentence that names the user, the situation, the cause, the agent roles and the human decision that stays human. One or two candidate topics is the recommendation, not one." },
+      { "label": "Week 1 lab", "title": "Group and project documentation", "detail": "Scenario, key functionalities, intended users or beneficiaries, each member's role and responsibilities, collaboration and conflict-resolution guidelines, and an overview of objectives, scope and significance with emphasis on agentic AI." },
+      { "label": "Weeks 2–3", "title": "Requirements models", "detail": "Classification into agreement, core and optional features, expressed as use cases with actors, include and extend, and non-functional requirements." },
+      { "label": "Weeks 4–6", "title": "Architecture, structure and behaviour", "detail": "Component and deployment views, class models with associations and multiplicities, and the behavioural models that show the system working: activity, sequence and state machines." },
+      { "label": "Week 5", "title": "Stage 1 checkpoint", "detail": "An early look at the design before the report is finalised — the cheapest possible moment to discover that the architecture does not carry the requirements." },
+      { "label": "Week 8", "title": "Stage 1 submission — 30%", "detail": "Requirements document, architecture design and system modelling in UML with the assumptions made during design, and a video presentation covering requirements and classifications, the proposed design including discarded choices, an overview of all models, change assessment and acceptance determination." },
+      { "label": "Week 13", "title": "Stage 2 submission — 20%", "detail": "The prototype: core features mandatory, with both number and quality of features considered; evidence of how LLMs are used in agents; an agile development process evidenced by a Jira timeline and supporting documentation; and advanced technologies used and well developed." }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; turning a topic into a modelled scope.</strong> A group proposes a &ldquo;smart campus study assistant&rdquo;. Here is the Week 1 work that has to happen before any diagram is worth drawing.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Narrow the promise.</strong> Not &ldquo;helps students study&rdquo; but &ldquo;for a first-year student the night before a lab, the wrong prerequisite is revised because the unit outline and their own notes cannot be compared in one place&rdquo;. One user, one painful job, one measurable outcome.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Map the work.</strong> Repeatable: retrieving the outline, extracting deadlines, checking coverage. Judgement: deciding what the student should revise. Risky exceptions: the student is behind on a prerequisite, or the outline changed mid-semester.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Build guardrails.</strong> Which data the agents may read, what quality check a generated study plan must pass, which changes require approval, and what happens when a source is unavailable. Each of these becomes a constraint later, so name them now.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Create memory.</strong> Store the decisions, the examples and the metrics in one system, so that the model of the system and the record of what was learned do not drift apart.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Run the design test.</strong> Can this deliver value repeatedly without the founder touching every step? If the honest answer is no because the plan always needs a human rewrite, narrow the promise to &ldquo;assembles the evidence a student needs for a revision decision&rdquo; and let the human make the decision. You have just made your first architectural decision, and it is defensible in one sentence.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Stage 1 asks for &ldquo;assumptions made during the design&rdquo; as a deliverable in its own right. Why does that belong in a modelling submission?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Assumptions are not there for completeness. They are the conditions under which the model's claims are true — an unstated assumption is a claim you cannot audit.">Because a report is expected to be complete and self-contained</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A model is an incomplete representation built on choices. Recording the assumptions makes those choices auditable and tells a reader when the model would stop being valid — which is also what lets change assessment and acceptance determination be argued rather than asserted." data-bad="">Because a model is built on deliberate omissions, and an unrecorded assumption is a claim nobody can audit</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Assumptions are design content, not meeting minutes. They belong in the model's documentation because they bound what the model claims.">Because the tutor needs to know how the group divided the work</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 1 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>A model is a deliberate omission</h4>
+        <p>An incomplete representation built to answer one class of question. Architecture is the model at the coarsest level: software engineering &supe; software design &supe; software architecture.</p>
+        <div class="flip-hint">Core definition</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>IEEE 42010 in five words</h4>
+        <p>Fundamental (abstraction) &middot; organization (structure and behaviour) &middot; components (decomposition) &middot; relationships (assembly) &middot; guiding principles (the constitution).</p>
+        <div class="flip-hint">Definition to reproduce</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Decay is accumulation, not one mistake</h4>
+        <p>Architectural decay is the gradual corruption of design decisions by minor fixes. Its causes are the difficulty of comprehending the whole from the details, and of enforcing the decisions during implementation.</p>
+        <div class="flip-hint">Failure mode</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>MBSE moves the artefact</h4>
+        <p>The model becomes the primary engineering artefact: analysed, validated and transformed, with requirements traceable to design elements &mdash; instead of an illustration of code already written.</p>
+        <div class="flip-hint">Method</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Week 1 self-test",
+    "subtitle": "Answer out loud before you flip the card. If you cannot, the section named in the hint is where to go back to.",
+    "cards": [
+      { "front": "Why does software design need models at all?", "back": "Because software design is too complex, time consuming and risky to be done entirely in code: a model simplifies the problem so that design flaws are found by evaluating the model rather than by evaluating an implementation.", "hint": "§ Why Models" },
+      { "front": "Name the three nested boxes.", "back": "Software Engineering ⊃ Software Design ⊃ Software Architecture. Architecture is a kind of software design, and architecture details are a subset of software design.", "hint": "§ Why Models" },
+      { "front": "Give the IEEE 42010 definition of architecture.", "back": "The fundamental organization of a system embodied in its components, their relationships to each other and to the environment, and the principles guiding its design and evolution.", "hint": "§ What Architecture Is" },
+      { "front": "What are the two causes of architectural decay?", "back": "The difficulty of comprehending an architecture by observing details, and the difficulty of enforcing architectural design decisions in the process of implementation.", "hint": "§ Complexity & Decay" },
+      { "front": "Essential versus accidental complexity?", "back": "Essential complexity belongs to the problem and cannot be designed away. Accidental complexity comes from our chosen solution and is what modelling and architecture actually remove.", "hint": "§ Complexity & Decay" },
+      { "front": "What does the model-driven toolchain start from?", "back": "The metamodel that defines the language, then the model as an instance of it. The model is analysed, validated and transformed, and other artefacts are generated from it.", "hint": "§ MBSE" },
+      { "front": "Sequence or communication diagram?", "back": "Sequence orders interactions by time along lifelines; communication organises the same interactions around the links between objects. Choose by whether ordering or wiring is the point.", "hint": "§ The UML Landscape" },
+      { "front": "State the project's design test.", "back": "Can the company deliver value repeatedly without the founder touching every step? If not, simplify the promise or redesign the workflow.", "hint": "§ The Project" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's vocabulary into exact definitions, a UML notation reference card, the metamodel hierarchy and an MBSE checklist. Then attempt the Quiz Hub and the Flashcards for Week 1, and bring a one-sentence company brief to your lab.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you define model, abstraction and architecture in one sentence each, name the two causes of decay, and say what makes an LLM into an agent?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the lab</h3>
+      <p>Bring one or two candidate topics, a draft one-sentence brief, and a first list of agent roles with the human decision each one escalates to.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

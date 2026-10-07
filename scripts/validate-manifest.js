@@ -2,13 +2,20 @@
 "use strict";
 
 /**
- * Validates chapter-manifest.js against actual HTML content.
+ * Structural validation for chapter-manifest.js.
  *
  * Checks:
  *   1. Manifest file exists and is syntactically valid
- *   2. manifest.sections[ch] matches the number of .section[data-track] elements
- *      in chapterN-study.html (for chapters that have study pages)
+ *   2. Every declared chapter has a manifest entry
  *   3. No chapter has all-zero manifest values
+ *
+ * NOTE: exact denominator values are NOT checked here. The authoritative
+ * source is scripts/audit-denominators.js, which boots each chapter page with
+ * the real shared/progress-tracker.js and drives every trackable interaction.
+ * That accounts for section ids reused between a chapter's study and
+ * foundations pages, which a plain selector count cannot.
+ *
+ * Regenerate the manifests with: node scripts/audit-denominators.js --fix
  *
  * Exit codes:
  *   0  — all checks pass
@@ -25,9 +32,14 @@ var errors = [];
 var hubs = [
   { dir: "5270RandomAlgo", chapters: 12 },
   { dir: "5318ML",         chapters: 6  },
-  { dir: "5046NLP",        chapters: 6 },
-  { dir: "9001Py",         chapters: 5 },
-  { dir: "9123DataStructureAlgo", chapters: 10 }
+  { dir: "5046NLP",        chapters: 6  },
+  { dir: "9001Py",         chapters: 5  },
+  { dir: "9123DataStructureAlgo", chapters: 10 },
+  { dir: "COMP5047",       chapters: 8  },
+  { dir: "COMP5618",       chapters: 7  },
+  { dir: "ELEC5620",       chapters: 8  },
+  { dir: "INFO5995",       chapters: 8  },
+  { dir: "INFO6007",       chapters: 8  }
 ];
 
 function loadManifest(hubDir) {
@@ -47,14 +59,7 @@ function loadManifest(hubDir) {
   return sandbox.window.CHAPTER_MANIFEST;
 }
 
-function countSectionsInHTML(filePath) {
-  if (!fs.existsSync(filePath)) return -1;
-  var content = fs.readFileSync(filePath, "utf8");
-  var matches = content.match(/data-track/g);
-  return matches ? matches.length : 0;
-}
-
-console.log("Validating chapter manifests against HTML...\n");
+console.log("Validating chapter manifest structure...\n");
 
 hubs.forEach(function(hub) {
   var manifest = loadManifest(hub.dir);
@@ -62,27 +67,17 @@ hubs.forEach(function(hub) {
   console.log("[" + hub.dir + "]");
 
   for (var ch = 1; ch <= hub.chapters; ch++) {
-    var studyFile = path.join(root, hub.dir, "chapters", "chapter" + ch, "web", "chapter" + ch + "-study.html");
-
     var mSec = manifest.sections  ? (manifest.sections[ch]  || 0) : 0;
     var mChk = manifest.checks    ? (manifest.checks[ch]    || 0) : 0;
     var mTut = manifest.tutorials ? (manifest.tutorials[ch] || 0) : 0;
+    var empty = mSec === 0 && mChk === 0 && mTut === 0;
 
-    var htmlSections = countSectionsInHTML(studyFile);
-    var hasHTML = htmlSections >= 0;
-    var sectionMatch = !hasHTML || htmlSections === 0 || htmlSections === mSec;
+    var studyFile = path.join(
+      root, hub.dir, "chapters", "chapter" + ch, "web", "chapter" + ch + "-study.html"
+    );
+    var hasPage = fs.existsSync(studyFile);
 
-    if (hasHTML && htmlSections > 0 && htmlSections !== mSec) {
-      errors.push({
-        hub: hub.dir,
-        ch: ch,
-        msg: "sections mismatch: manifest=" + mSec + " HTML=" + htmlSections,
-        file: studyFile,
-        fatal: true
-      });
-    }
-
-    if (mSec === 0 && mChk === 0 && mTut === 0) {
+    if (empty) {
       errors.push({
         hub: hub.dir,
         ch: ch,
@@ -91,23 +86,23 @@ hubs.forEach(function(hub) {
       });
     }
 
-    var status = sectionMatch ? "✓" : "✗";
-    var detail = hasHTML && htmlSections > 0
-      ? " (HTML=" + htmlSections + ")"
-      : htmlSections === 0 ? " (empty study HTML)" : " (no study HTML)";
-    console.log("  " + status + " Ch" + ch + ": sections=" + mSec + " checks=" + mChk + " tutorials=" + mTut + detail);
+    console.log(
+      "  " + (empty ? "\u2717" : "\u2713") + " Ch" + ch + ": sections=" + mSec +
+      " checks=" + mChk + " tutorials=" + mTut + (hasPage ? "" : " (no study HTML yet)")
+    );
   }
 
   console.log("");
 });
 
 if (errors.length === 0) {
-  console.log("All manifest validations passed! ✓");
+  console.log("All manifest structures valid! \u2713");
+  console.log("Run `node scripts/audit-denominators.js` for exact denominators.\n");
   process.exit(0);
 } else {
   console.log(errors.length + " error(s) found:");
   errors.forEach(function(e) {
-    var prefix = e.fatal ? "✗" : "⚠";
+    var prefix = e.fatal ? "\u2717" : "\u26a0";
     var loc = e.hub + (e.ch ? " ch" + e.ch : "");
     console.error("  " + prefix + " " + loc + ": " + e.msg);
   });

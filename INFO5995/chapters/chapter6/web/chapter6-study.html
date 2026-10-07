@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6: Applied Cryptography and Secure Communications — INFO5995</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter6-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 study guide for INFO5995: the Harbour University breach, system-level authentication and MFA, passkeys, authorization with RBAC and least privilege, data security across its lifecycle, availability, the TLS 1.3 handshake, and cloud security.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 6: Applied Cryptography and Secure Communications — INFO5995">
+<meta property="og:description" content="Week 6 study guide for INFO5995: the Harbour University breach, system-level authentication and MFA, passkeys, authorization with RBAC and least privilege, data security across its lifecycle, availability, the TLS 1.3 handshake, and cloud security.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F510;</span>
+      <h2>Week 6</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-incident" class="nav-link" data-section="incident">The Incident</a></li>
+    <li><a href="#sec-system-auth" class="nav-link" data-section="system-auth">System Authentication</a></li>
+    <li><a href="#sec-methods" class="nav-link" data-section="methods">Auth Methods</a></li>
+    <li><a href="#sec-authz" class="nav-link" data-section="authz">Authorisation</a></li>
+    <li><a href="#sec-data" class="nav-link" data-section="data">Data Security</a></li>
+    <li><a href="#sec-channel" class="nav-link" data-section="channel">Secure Channel</a></li>
+    <li><a href="#sec-availability" class="nav-link" data-section="availability">Availability</a></li>
+    <li><a href="#sec-cloud" class="nav-link" data-section="cloud">Cloud Security</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter6-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter6-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Week 6 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">INFO5995 — Cybersecurity</p>
+    <h1>Week 6: Applied Cryptography and Secure Communications</h1>
+    <p class="hero-subtitle">Putting primitives to work: the TLS handshake, digital identity and authentication, NIST digital identity guidance, and cloud key management &mdash; read through the Harbour University case study.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F510;</span>
+        <span>Who is actually logging in?</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6AA;</span>
+        <span>Authenticate &rarr; authorise &rarr; audit</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F512;</span>
+        <span>Encrypt data in transit, at rest, in use</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2601;</span>
+        <span>Identity is the cloud control plane</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter6-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter6-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 6 lecture deck (<em>Applied Cryptography and Secure Communications</em>) and its Harbour University running case study</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-incident" class="section" data-track="incident">
+  <h2 class="section-title">If No Encryption Was Broken, Where Did the Attack Happen?</h2>
+  <p class="section-lead">Week 6 opens with a running case study. Harbour University runs one connected system &mdash; a web portal, single sign-on, a marks database and a cloud platform &mdash; serving roughly 50,000 students and staff. The week's incident is the question the rest of the deck answers.</p>
+
+  <div class="concept-box">
+    <p><strong>The timeline in the deck.</strong> At 8:03&nbsp;a.m. a staff login succeeds with a valid password. By 8:17&nbsp;a.m. 8,000 student records &mdash; names, marks, student IDs and contact details &mdash; have been accessed. The deck's own verdict: <em>the data was encrypted, but the attacker logged in as an authorised user.</em></p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What did not fail</h3>
+      <p>Encryption in transit (HTTPS) and encryption at rest both worked as designed. No cipher was broken and no key was cracked. Every control the deck drew on the diagram &mdash; TLS, SSO, the encrypted database &mdash; was operating.</p>
+    </div>
+    <div class="col-card">
+      <h3>What did fail</h3>
+      <p>The system could not tell <em>which human</em> was holding a valid credential. Once the attacker held a working password, the session was legitimate from the application's point of view, and the application served plaintext because that is what applications must do.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The pivot of the whole week.</strong> Weeks 4&ndash;5 taught you to authenticate a <em>message</em> or a <em>peer</em>: MAC/HMAC, digital signatures, certificates and TLS. Week 6 moves up a layer and asks the same question about a <em>user and a session</em> &mdash; password risk, MFA and passkeys, recovery and monitoring. The key sentence from the deck: <em>encryption can protect the channel; it cannot prove the right human is using the account.</em>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Layer</th><th>What it authenticates</th><th>Week 4&ndash;5 tooling</th><th>Week 6 question</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Message</td><td>That content was not altered</td><td>Hash, MAC / HMAC</td><td>Did the right <em>account</em> send it?</td></tr>
+        <tr><td>Peer</td><td>That the endpoint is who it claims</td><td>Digital signature, certificate</td><td>Who is the person behind that endpoint?</td></tr>
+        <tr><td>Channel</td><td>Confidentiality and integrity in transit</td><td>TLS / HTTPS</td><td>What happens after the channel ends?</td></tr>
+        <tr><td>User and session</td><td>That the legitimate owner is present</td><td>&mdash;</td><td>The whole of Week 6</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> the deck's four pause-and-think questions are the skeleton of a good answer. <em>Identity</em> &mdash; who logged in? <em>Access</em> &mdash; what could they reach? <em>Data</em> &mdash; where did it travel? <em>Cloud</em> &mdash; who owned each control? Answer an incident question with those four, in that order.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Harbour University's database was encrypted and TLS was in use, yet 8,000 records were exposed. Which statement best explains the failure?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck states explicitly that no encryption was broken. Looking for a cryptographic failure here sends you down the wrong path.">The encryption keys were too short, so the database ciphertext could be decrypted offline</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Encryption protects data states and channels; it does not establish that the human holding the credential is the legitimate owner. The application served plaintext to a session that was valid by every technical measure." data-bad="">The attacker held a valid credential, so the session was authorised and the application returned readable records</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="TLS was working. Its job ends at the server; it never claimed to know which human was typing.">TLS terminated at the load balancer, so the last hop to the database was in plaintext</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-system-auth" class="section" data-track="system-auth">
+  <h2 class="section-title">System-Level Authentication</h2>
+  <p class="section-lead">A password demonstrates knowledge of a secret. It does not prove the legitimate owner is present &mdash; and that gap is where the Harbour University incident lives.</p>
+
+  <div class="def-box">
+    <div class="def-label">Three questions, three decisions</div>
+    <p><strong>Identification</strong> &mdash; who do you claim to be? Alice enters <code>alice@harbour.edu.au</code>; the portal now knows which account is being claimed. <strong>Authentication</strong> &mdash; can you prove the claim? Alice's passkey response is verified. <strong>Authorisation</strong> &mdash; what are you permitted to do? Policy allows Alice to view <code>/marks/1042</code> and not <code>/marks/1043</code>. The order is always <em>claim identity &rarr; verify evidence &rarr; evaluate permission</em>.</p>
+  </div>
+
+  <p>Passwords are reusable, shareable and phishable. The deck's framing is therefore not &ldquo;passwords are bad&rdquo; but &ldquo;one kind of evidence is a single point of failure&rdquo;. Alice must supply different kinds of evidence, and those kinds are the classic factor categories.</p>
+
+  <div id="ix-auth-journey"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Factor</th><th>Evidence</th><th>Deck example</th><th>Characteristic weakness</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Something she knows</strong></td><td>A secret held in memory</td><td>Password</td><td>Reusable, shareable, phishable</td></tr>
+        <tr><td><strong>Something she has</strong></td><td>A device or key she controls</td><td>Registered phone</td><td>Can be lost, stolen or exhausted by push fatigue</td></tr>
+        <tr><td><strong>Something she is</strong></td><td>A biometric trait</td><td>Fingerprint</td><td>Probabilistic match; hard to replace after compromise</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The counting rule the deck stresses:</strong> factors count separately <em>only when each is independently verified</em>. Password + PIN is two steps but one factor category. Two passwords, two TOTP apps on the same phone, or a password plus a push to the same device are all one category wearing two hats.
+  </div>
+
+  <div class="insight-box">
+    <strong>The five principles of strong authentication</strong> &mdash; (1) identity is never absolute, systems build confidence from evidence not certainty; (2) passwords alone are not enough; (3) independent factors are stronger; (4) authentication is continuous, because device, location and behaviour change risk after login; (5) recovery must be secure, because a weak fallback bypasses the strongest primary method. Authentication is about building confidence that the right person is accessing the right system at the right time.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A portal requires a password followed by a PIN that the user also memorised. How should this be described?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Step count is not factor count. Both secrets come from the same category — knowledge — so a single successful phishing or observation attack can compromise both.">Two-factor authentication, because two separate secrets are required</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Factors are counted by category, and each category must be independently verified. Password + PIN is two steps within one factor category, so it raises effort but not the number of independent failure modes." data-bad="">Two authentication steps in one factor category, so the independent-evidence property is not met</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Adding a second secret of the same kind does add friction for an attacker, but it does not create independence — compromise of one channel tends to compromise both.">Three-factor authentication, because the PIN is verified by a different server component</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; explaining the breach to the Harbour University council.</strong> The council asks: &ldquo;we encrypted everything, so how did this happen?&rdquo; Build the answer in four moves.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Separate the layers.</strong> Name what each control does. TLS protects data <em>in transit</em> between student device and portal. Database encryption protects data <em>at rest</em>. Neither control is asked to answer &ldquo;is this the legitimate Alice?&rdquo;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Name the failed decision.</strong> Authentication is the decision that failed. The credential was genuine, so the authentication step <em>succeeded</em> at the only question it was asked: is this a valid secret for this account? The right person was never established.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Explain why the data was readable.</strong> A valid session receives plaintext because the application has to use the data. Encryption at rest is unwrapped by the application before it builds the response page. That is not a bug; it is how the stack works.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Locate the real control gap.</strong> Either authorisation was too broad (the session could reach 8,000 records it did not need) or detection was too slow (fourteen minutes of bulk access with no alert). Both are Week 6 answers; neither is a cryptography answer.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-methods" class="section" data-track="methods">
+  <h2 class="section-title">Choosing Authentication Methods by Threat</h2>
+  <p class="section-lead">The deck's rule is to choose by threat, not fashion. Each method proves something different and fails in a different way.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Method</th><th>What it proves</th><th>Main limitation</th><th>Best use</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Password</strong></td><td>Something you know</td><td>Can be stolen, reused or phished</td><td>General compatibility; baseline authentication</td></tr>
+        <tr><td><strong>Authenticator app (TOTP)</strong></td><td>Something you have</td><td>Codes can still be phished in real time</td><td>Stronger than passwords; widely supported</td></tr>
+        <tr><td><strong>Push approval</strong></td><td>Something you have</td><td>Vulnerable to push fatigue if users approve unexpected requests</td><td>Good usability; enable number matching where available</td></tr>
+        <tr><td><strong>Security key / passkey</strong></td><td>Public-key credential stored on the user's device</td><td>Requires compatible devices and services</td><td>Preferred for phishing-resistant and high-risk authentication</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Push fatigue</h3>
+      <p>Repeated prompts pressure a user into approving an attacker's session. The attack does not defeat MFA; it recruits the user. Countermeasures: number matching, rate limits on prompts, and treating an unexpected prompt as a reportable event.</p>
+    </div>
+    <div class="col-card">
+      <h3>Biometrics are identifiers, not secrets</h3>
+      <p>A sensor captures a sample and compares it against a protected template, so the result is probabilistic rather than an exact string comparison. You cannot reissue a fingerprint. Design consequences: liveness checks, secure hardware, retry limits, and a carefully protected fallback.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Passkeys change what the server stores</div>
+    <p>The device creates and protects a private key; the portal stores only the matching <em>public</em> key &mdash; never a reusable password. The private key is not sent to the university. The result is origin-bound authentication that resists credential stuffing and many phishing attacks, because the signature is bound to the site's origin and cannot be replayed to a look-alike domain.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Adaptive authentication:</strong> the same login carries different risk. 9:00&nbsp;a.m. on a known laptop on the Sydney campus is lower risk; 3:14&nbsp;a.m. from a new browser in an unusual country is higher risk. Adaptive authentication can require stronger evidence or restrict sensitive actions when the context changes &mdash; and it needs monitoring to know that the context changed.
+  </div>
+
+  <div class="callout">
+    <strong>Recovery is an authentication path.</strong> The deck's 2:13&nbsp;a.m. scenario, and the help-desk path behind it: &ldquo;I lost my phone&rdquo; &rarr; weak identity check (name plus date of birth) &rarr; account reset &rarr; attacker takes control. Recovery is often the weakest authentication path in the system, which is exactly why principle 5 exists.
+  </div>
+
+  <div id="ix-verifier"></div>
+
+  <div data-ix="matcher" data-ix-src="#ix-attacks"></div>
+  <script type="application/json" id="ix-attacks">
+  {
+    "title": "Match the password attack to its countermeasure",
+    "subtitle": "Every attack below arrives through a different door, so no single control closes all four.",
+    "pairs": [
+      ["Stolen verifiers — offline guessing against a leaked hash database", "A slow, memory-hard password hashing function with per-account salts"],
+      ["Credential stuffing — reused username/password pairs tried on university accounts", "Unique passwords plus a password manager, and MFA or passkeys that reuse cannot satisfy"],
+      ["Password spraying — a few likely passwords tried across many accounts to avoid lockout", "Rate limiting, anomaly detection and monitoring rather than per-account lockout alone"],
+      ["Phishing — a fake login page or a fraudulent approval prompt", "Origin-bound passkeys and user training that treats unexpected prompts as incidents"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the lecture insist that a password should be <em>hashed</em> rather than <em>encrypted</em> before storage?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Hashing is generally faster than a memory-hard KDF, but speed is the opposite of what a password store wants — a slow function is the point.">Hashing is faster, so login stays responsive under load</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Encryption is reversible, so a stolen key exposes every stored password at once. Hashing is one-way verification: the server derives a candidate verifier and compares, and never needs to recover the original password. Hashing does not make weak passwords strong — it raises the cost of guessing them." data-bad="">Because encryption is reversible, so the decryption key becomes a single point of failure for every stored password</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hash does not make a weak password strong, and the deck says so explicitly. It only raises the cost of each guess.">Because a hash makes even a weak password computationally impossible to guess</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-authz" class="section" data-track="authz">
+  <h2 class="section-title">Authorisation: What May You Do?</h2>
+  <p class="section-lead">Everyone logged in successfully. Now the second question: should a tutor access marks for students outside their classes? Should every administrator be able to view student grades?</p>
+
+  <div class="concept-box">
+    <p><strong>Authentication answered &ldquo;who are you?&rdquo;. Authorisation asks &ldquo;what may you do?&rdquo;</strong> The deck's five-role ladder for one system &mdash; student, tutor, lecturer, unit coordinator, administrator &mdash; is a ladder of <em>scope</em>, not of status. The rule attached to it: scope should match responsibility, not status, and higher roles do not automatically inherit permission to read every record.</p>
+  </div>
+
+  <div id="ix-rbac-scope"></div>
+
+  <div data-ix="matcher" data-ix-src="#ix-rbac"></div>
+  <script type="application/json" id="ix-rbac">
+  {
+    "title": "RBAC: match the role to the permission it carries",
+    "subtitle": "RBAC assigns permissions to roles; users inherit them through role membership.",
+    "pairs": [
+      ["Student", "View own result"],
+      ["Tutor", "Enter marks for assigned tutorial"],
+      ["Lecturer", "Manage assigned unit"],
+      ["Coordinator", "Approve final marks"],
+      ["Administrator", "Maintain service"]
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Least privilege limits the blast radius</div>
+    <p>Compare a tutor role that can <em>view all students, export all marks, change enrolments and manage users</em> with one that can only <em>view the assigned class and enter assigned marks, with no bulk export</em>. Grant the minimum scope, actions and duration required for the task. The reason is stated in the deck: if the tutor account is compromised, the attacker reaches fewer records and fewer actions.</p>
+  </div>
+
+  <div class="three-col" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin:1.5rem 0;">
+    <div class="info-card">
+      <h4>Separation of duties</h4>
+      <p>No single person should control the entire process. The lecturer proposes marks, the coordinator reviews and approves, the system publishes results. Separating critical actions reduces the risk of fraud, mistakes and unilateral misuse.</p>
+    </div>
+    <div class="info-card">
+      <h4>Broken object-level authorisation</h4>
+      <p>A logged-in student with ID 1042 requests <code>GET /marks/1043</code>. The server asks whether student 1042 may view record 1043 and denies. Changing an ID in a URL is a broken <em>authorisation</em> control, not a failed authentication.</p>
+    </div>
+    <div class="info-card">
+      <h4>Access follows the person</h4>
+      <p>Join: assign the role and minimum permissions. Move: remove old permissions, grant only the new role's access. Review: verify current permissions are still required. Leave: disable the account, revoke sessions, remove access.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Say the right layer out loud.</strong> In incident reports and exams alike, &ldquo;the IDOR let them read another student's marks&rdquo; is an authorisation finding. &ldquo;They logged in with a stolen password&rdquo; is an authentication finding. Scoring the wrong layer loses the marks even when the observation is correct.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An attacker authenticates with a valid staff credential, then requests other students' mark records by editing the record ID in the URL. What has failed?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Authentication succeeded — that is precisely why the case is interesting. The credential was genuine, so the failure is downstream of login.">Authentication, because the attacker should not have been able to log in at all</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck names this pattern exactly: changing an ID in a URL is broken object-level authorisation. The server failed to check whether this subject may act on that object." data-bad="">Authorisation, specifically object-level authorisation — the server never checked whether this subject may access that object</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="No cipher was broken and no key was attacked. Encryption protects the channel and the stored data, not who may read a particular row.">Encryption, because record IDs should have been encrypted in the URLs</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-data" class="section" data-track="data">
+  <h2 class="section-title">Data Security Through the Lifecycle</h2>
+  <p class="section-lead">Harbour University holds marks, student IDs, addresses, medical adjustments, research data, payroll and financial records. Not all of it has the same value, sensitivity or impact if compromised.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Classification</th><th>Deck example</th><th>Who may access it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Public</strong></td><td>Course handbook</td><td>Approved for anyone</td></tr>
+        <tr><td><strong>Internal</strong></td><td>Staff meeting notes</td><td>University workforce</td></tr>
+        <tr><td><strong>Confidential</strong></td><td>Student marks</td><td>Authorised academic roles</td></tr>
+        <tr><td><strong>Restricted</strong></td><td>Payroll &bull; medical records</td><td>Tightly limited, high-impact access</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Classify data <em>before</em> deciding who may access it, how it is protected and how long it is retained. The three states then follow from the classification, and each state has its own controls.</p>
+
+  <div class="flow-grid">
+    <div class="flow-step"><span class="flow-step-num">1</span><h4>In transit</h4><p>TLS, authenticated channels, VPN where appropriate &mdash; student device to cloud portal over HTTPS.</p></div>
+    <div class="flow-step"><span class="flow-step-num">2</span><h4>At rest</h4><p>Database, disk and object-storage encryption &mdash; the encrypted database behind the portal.</p></div>
+    <div class="flow-step"><span class="flow-step-num">3</span><h4>In use</h4><p>Application permissions, isolation, minimisation and monitoring &mdash; the state where the data is plaintext.</p></div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The sentence the case study is built to teach:</strong> the database was encrypted, the records were still exposed. Protection at rest worked; the failure was a valid login plus wrong permissions, and the application returned readable records. <em>Encryption protects particular data states. It does not override application authorisation.</em>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Minimisation</h3>
+      <p>The deck's admission form: name, student ID and email are required; passport copy, driver licence and extra personal details are questioned. Ask before collecting &mdash; is it required for the stated purpose, is there a less sensitive alternative, how long must it be retained, and who will be able to access it? Less stored data means less data to expose, misuse, retain and delete.</p>
+    </div>
+    <div class="col-card">
+      <h3>Accountability</h3>
+      <p>Every important action should leave evidence in five parts: time (09:02:14), actor (Alice, 1042), action (viewed marks), resource (student 1042) and context (Sydney, 203.x.x.x). Logs create accountability only when they are protected, monitored and reviewed &mdash; an unread log is a cost, not a control.</p>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-integrity"></div>
+  <script type="application/json" id="ix-integrity">
+  {
+    "title": "Integrity controls: what each one can and cannot tell you",
+    "subtitle": "Can someone change 78 to 98, alter a salary, or modify research results after collection? Flip a card to see which control answers which question.",
+    "cards": [
+      { "front": "Hash / checksum", "back": "Detects change when compared with a trusted reference. A hash alone does not say who changed the value, and it is only as trustworthy as the reference you compare against.", "hint": "Detects change" },
+      { "front": "Digital signature / MAC", "back": "Provides authenticated integrity: not just that the value changed, but who produced or approved it. This is the property a bare checksum cannot give you.", "hint": "Attributes change" },
+      { "front": "Protected audit log", "back": "Records who changed what, when and from where. It is the control that answers the deck's question: if someone changes a mark, how would we know?", "hint": "Creates accountability" },
+      { "front": "Confidentiality — who can see it?", "back": "Access control plus encryption in the appropriate data state. It says nothing about whether the value you are reading is the value that was written.", "hint": "CIA: C" },
+      { "front": "Integrity — can we trust it?", "back": "Hashes, signatures and protected logs together. A tutor's mark entry that is signed and logged is defensible; one that is merely stored is not.", "hint": "CIA: I" },
+      { "front": "Availability — can we access and recover it?", "back": "Backups, versioning, offline or immutable copies and recovery testing. Note the deck's warning: backups support availability and recovery — they do not automatically provide confidentiality.", "hint": "CIA: A" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">An encrypted database is breached and records are read through a valid application session. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Encryption at rest did its job — the stored data was not readable without the application. The failure was that a valid session had more reach than the task required.">Encryption at rest failed, because a well-configured store would never return plaintext</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A valid session receives plaintext because the application must use the data. Encryption protects particular data states; it does not override application authorisation, and it cannot shrink the permissions attached to a session." data-bad="">Protection at rest worked as designed; the exposure came from the permissions attached to a legitimate session</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Minimisation reduces how much damage any single exposure can do, but it is a separate control. It is not the mechanism that returned these particular records.">Minimisation failed, because the records should never have been stored in the first place</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-channel" class="section" data-track="channel">
+  <h2 class="section-title">The Secure Channel: TLS, Certificates and Message Authentication</h2>
+  <p class="section-lead">Everything the case study describes travels over HTTPS. TLS is the applied end of Weeks 4&ndash;5: it takes key exchange, certificates, AEAD and message authentication and makes them work on every page load. This section is the bridge from the deck's diagram to the protocol behind it.</p>
+
+  <div id="ix-hmac"></div>
+
+  <div id="ix-tls"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>TLS 1.3 message</th><th>Carried in clear or encrypted?</th><th>What it establishes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ClientHello (+ key_share, ALPN, SNI)</td><td>Clear</td><td>Client random, supported versions, cipher suites, a guessed key share, the server name</td></tr>
+        <tr><td>ServerHello (+ key_share)</td><td>Clear</td><td>Chosen version and cipher suite, the server's key share &mdash; both sides can now derive handshake keys</td></tr>
+        <tr><td>EncryptedExtensions, Certificate, CertificateVerify, Finished</td><td>Encrypted</td><td>Server parameters, the certificate chain, a signature over the transcript proving private-key possession</td></tr>
+        <tr><td>Client Finished</td><td>Encrypted</td><td>Client's transcript check; handshake keys are then discarded</td></tr>
+        <tr><td>Application data</td><td>Encrypted</td><td>Payload under AEAD with per-record nonces and sequence numbers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What the certificate chain proves</h3>
+      <p>A leaf certificate binds a public key to a name. It is valid only if an intermediate CA signed it and a root CA that the client already trusts signed the intermediate. Verification checks the signature chain, the validity window, the name, and revocation status. Remove any link and the chain proves nothing.</p>
+    </div>
+    <div class="col-card">
+      <h3>What the handshake deliberately hides</h3>
+      <p>Because almost everything after ServerHello is encrypted, a network observer learns the server name (SNI) and the packet sizes and timings, and little else. That is a feature: the certificate, the negotiated extensions and the application traffic are all inside the encrypted envelope.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where this fits Week 6:</strong> the handshake authenticates the <em>server</em> to the client, and optionally the client to the server by certificate. It does not authenticate Alice the human. A stolen password travels happily inside a perfectly valid TLS 1.3 tunnel &mdash; which is exactly why the case study's incident cannot be fixed with more encryption.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In a TLS 1.3 handshake, an observer on the network can read which of the following directly from the wire?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The certificate now travels encrypted, inside the handshake, after ServerHello. An observer sees its size and timing, not its contents.">The server's certificate and public key, because certificates must be publicly verifiable</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. ClientHello is sent in the clear, so the server name (SNI), the offered cipher suites and the client key share are visible. Everything after ServerHello is encrypted, including the certificate." data-bad="">The server name in the ClientHello and the cipher suites the client offers</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Application data in TLS 1.3 is protected by AEAD under keys derived from the handshake. An observer sees record lengths and timing, not plaintext.">The plaintext of the first HTTP request, because application keys are derived later</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-availability" class="section" data-track="availability">
+  <h2 class="section-title">Availability: An Attacked Pillar</h2>
+  <p class="section-lead">Strong encryption and correct permissions still fail if students and staff cannot reach the service. Availability is the pillar that can be attacked without anyone reading or changing a single record.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>What breaks availability</th><th>Mechanism</th><th>Primary control</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>DoS / DDoS</td><td>One source, or many distributed devices, overwhelm the service together</td><td>Rate limiting, scrubbing and elastic capacity</td></tr>
+        <tr><td>Ransomware</td><td>Production files are encrypted or systems disrupted</td><td>Isolated, immutable backups and tested restores</td></tr>
+        <tr><td>Resource exhaustion</td><td>CPU, memory, APIs or storage consumed</td><td>Quotas, autoscaling and load balancing</td></tr>
+        <tr><td>Failure</td><td>Hardware or software stops working</td><td>Redundancy; no single point of failure</td></tr>
+        <tr><td>Human error</td><td>Accidental deletion or a bad change</td><td>Change control, versioning, protected copies</td></tr>
+        <tr><td>Dependency outage</td><td>A cloud or third-party service fails</td><td>Dependency mapping and graceful degradation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>The distinction the deck draws:</strong> DoS and DDoS have the same goal &mdash; make the service unavailable &mdash; and differ only in scale. Did the attacker need to read or change data? No. Availability alone can be attacked, and availability failures are not always data breaches &mdash; but they are still security failures.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-ransomware"></div>
+  <script type="application/json" id="ix-ransomware">
+  {
+    "title": "Order the ransomware recovery chain",
+    "subtitle": "Backups support availability and recovery. Rebuild the sequence that gets the service back safely.",
+    "steps": [
+      "Production files are encrypted by ransomware",
+      "An isolated, versioned, immutable backup copy remains available",
+      "Restore the data to a safe environment and verify its integrity",
+      "Check dependencies and confirm the restored state is consistent",
+      "Resume operations and monitor for a second attempt"
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Availability = prevent disruption + recover quickly.</strong> Four resilience controls (redundancy, load balancing, rate limiting, monitoring) sit in front of the four recovery steps (ransomware, isolated backup, restore and verify, continue operations). Preparation is for hardware failure, ransomware, human error, and regional or provider outage &mdash; and backups are useful only when restores are tested and recovery objectives are understood.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A university takes nightly backups to the same cloud account that hosts production, and has never test-restored them. What is the most accurate assessment?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nightly copies exist, but they are neither isolated nor verified. An attacker who reaches the production account can typically reach the same account's backups.">Availability is covered, because backups exist and run on a schedule</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Isolation and tested restores are the two properties that make a backup a recovery control. Backups in the same account share the blast radius, and an untested restore is a hope rather than a control — and note that backups support availability, not confidentiality." data-bad="">The backup is not yet a recovery control: it is not isolated from the production account and its restore path has never been verified</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Backups do not provide confidentiality. The deck says so explicitly, and encrypted backups are still a copy that can be stolen.">Confidentiality is covered, because the backup copy is encrypted</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-cloud" class="section" data-track="cloud">
+  <h2 class="section-title">Cloud Security and Key Management</h2>
+  <p class="section-lead">Harbour University runs its portal, records, payroll and research services in the cloud. That changes both the opportunities and the risks, and it moves identity to the centre of the control plane.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Opportunities</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Remote access from anywhere</li>
+        <li>Elastic resources instead of fixed capacity</li>
+        <li>Resilient architectures across zones</li>
+        <li>Faster deployment, shorter procurement</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>New risks</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Internet exposure of services that were internal</li>
+        <li>Shared responsibility across a moving boundary</li>
+        <li>Configuration mistakes with enormous blast radius</li>
+        <li>Identity attacks replacing network-perimeter attacks</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="ix-cloud"></div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-cloud-map"></div>
+  <script type="application/json" id="ix-cloud-map">
+  {
+    "title": "Where the decisions live in the Harbour University cloud",
+    "subtitle": "Click each marker to see the control that belongs there and the failure the case study is warning about.",
+    "svg": "<svg viewBox=\"0 0 800 420\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Layered diagram of the Harbour University cloud: users, internet boundary, cloud identity, applications, storage and backups\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"420\" fill=\"#f6fbf9\"></rect><rect x=\"26\" y=\"26\" width=\"748\" height=\"52\" rx=\"10\" fill=\"#e6f5f0\" stroke=\"#059669\" stroke-width=\"1.6\"></rect><text x=\"44\" y=\"57\" font-family=\"system-ui, sans-serif\" font-size=\"14\" font-weight=\"700\" fill=\"#047857\">STUDENTS &#183; STAFF &#183; RESEARCHERS</text><rect x=\"26\" y=\"98\" width=\"748\" height=\"46\" rx=\"10\" fill=\"#eef2ff\" stroke=\"#2563eb\" stroke-width=\"1.6\" stroke-dasharray=\"6 5\"></rect><text x=\"44\" y=\"126\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"700\" fill=\"#1d4ed8\">INTERNET BOUNDARY &#8212; HTTPS / TLS</text><rect x=\"26\" y=\"164\" width=\"748\" height=\"54\" rx=\"10\" fill=\"#f0fdf4\" stroke=\"#10b981\" stroke-width=\"1.6\"></rect><text x=\"44\" y=\"196\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"700\" fill=\"#047857\">CLOUD IDENTITY &#8212; SSO &#183; MFA &#183; POLICIES</text><rect x=\"26\" y=\"238\" width=\"748\" height=\"62\" rx=\"10\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.6\"></rect><text x=\"44\" y=\"264\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"700\" fill=\"#047857\">APPLICATIONS</text><text x=\"44\" y=\"286\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#565d75\">learning portal &#183; student records &#183; payroll &#183; research</text><rect x=\"26\" y=\"320\" width=\"748\" height=\"72\" rx=\"10\" fill=\"#fffbeb\" stroke=\"#f59e0b\" stroke-width=\"1.6\"></rect><text x=\"44\" y=\"348\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"700\" fill=\"#b45309\">STORAGE &#183; DATABASE &#183; LOGS &#183; BACKUPS</text><text x=\"44\" y=\"370\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#565d75\">encrypted at rest &#183; versioned &#183; isolated copies &#183; retention rules</text><path d=\"M400 78 L400 96\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path><path d=\"M400 144 L400 162\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path><path d=\"M400 218 L400 236\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path><path d=\"M400 300 L400 318\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path></svg>",
+    "points": [
+      { "x": 12, "y": 13, "label": "Users — the identities the cloud must recognise", "detail": "Students, staff and researchers reach the same services from campus, home and overseas. Every one of them is an identity the platform must authenticate; there is no trusted network location left to fall back on." },
+      { "x": 50, "y": 29, "label": "Internet boundary — TLS on every path", "detail": "The service is internet-facing, so HTTPS/TLS is the minimum for data in transit. The boundary also means attacks arrive as ordinary requests, which is why authentication rather than network position carries the trust." },
+      { "x": 50, "y": 45, "label": "Cloud identity — SSO, MFA and policy", "detail": "In the cloud, identity becomes a primary control plane. A request is evaluated by authentication, then authorisation plus context, then the application action. Identity does not replace network security, but location alone is no longer sufficient trust." },
+      { "x": 50, "y": 62, "label": "Applications — least privilege at cloud scale", "detail": "A compromised privileged account can alter infrastructure and affect thousands of users, so use scoped roles, temporary elevation and strong controls for privileged access. Scope should match responsibility, not status." },
+      { "x": 30, "y": 84, "label": "Storage, database, logs and backups", "detail": "Encrypt every copy — transit, at rest and the recovery copy — and manage the keys, the access policy and the restore procedure. One changed storage setting can expose an entire dataset to anyone on the internet." },
+      { "x": 90, "y": 84, "label": "Monitoring turns logs into detection", "detail": "Login from Australia at 09:12, login from Germany at 09:14, 40,000 records downloaded at 09:15 is impossible travel plus bulk export. Look for impossible travel, large downloads, repeated failures and privilege changes. Collection creates evidence; monitoring creates detection." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Responsibility</th><th>Cloud provider &mdash; security <em>of</em> the cloud</th><th>Harbour University &mdash; security <em>in</em> the cloud</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Physical and platform</td><td>Buildings and physical security, hardware and storage infrastructure, core networking and hypervisor, provider-managed service components, physical hardware failures</td><td>&mdash;</td></tr>
+        <tr><td>Identity and access</td><td>&mdash;</td><td>Student and staff identities, authentication and authorisation, customer-controlled configuration</td></tr>
+        <tr><td>Applications and data</td><td>&mdash;</td><td>Applications and data, backups, retention and recovery</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The question to ask after an incident:</strong> if payroll leaks, ask <em>which control failed</em> &mdash; not merely &ldquo;provider or customer?&rdquo;. The exact boundary changes across IaaS, PaaS, SaaS and the service contract, so the useful answer names a control and an owner.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Key lifecycle in a cloud deployment</div>
+    <p>Encrypting every copy is necessary but not sufficient. Each key has a lifecycle: <strong>generate</strong> in a managed service or hardware module, <strong>distribute</strong> only to the components that need it, <strong>use</strong> under an access policy, <strong>rotate</strong> on a schedule or after an incident, <strong>revoke</strong> so that compromised material becomes useless, and <strong>destroy</strong> under dual control. Rotation is what makes the difference between one exposed key and one exposed dataset.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An administrator changes an object-storage setting and a dataset becomes readable by anyone on the internet. Who is responsible?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The provider secures the platform; the configuration of a customer's storage bucket sits with the customer. This is exactly the shared-responsibility boundary the deck draws.">The cloud provider, because the storage service is theirs to secure</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Customer-controlled configuration is a customer responsibility, and misconfiguration is a major cloud risk precisely because a single control change applies at enormous scale. The right follow-up is to name the failed control and its owner, not to argue about the boundary." data-bad="">The university, because customer-controlled configuration — including storage policy — is security <em>in</em> the cloud</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Shared responsibility is not shared blame. The boundary is defined per service model, and for configuration of your own bucket it lands on the customer.">Both parties equally, because the boundary is always shared 50/50</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 6 Recap</h2>
+  <p class="section-lead">Secure systems are built in layers: identity &rarr; permissions &rarr; data protection &rarr; secure cloud operations. The incident is only mysterious if you expect one layer to do another layer's job.</p>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Encryption is not authentication</h4>
+        <p>TLS protects the channel; encryption at rest protects stored data. Neither proves that the legitimate owner is present. That is the whole incident in one sentence.</p>
+        <div class="flip-hint">Core claim</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Identify &rarr; authenticate &rarr; authorise</h4>
+        <p>Three questions, three decisions: who do you claim to be, can you prove it, and what may you do? Naming the wrong layer loses the marks.</p>
+        <div class="flip-hint">Model</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Factors are counted by category</h4>
+        <p>Know, have, are &mdash; and each category must be independently verified. Password + PIN is two steps and one factor.</p>
+        <div class="flip-hint">MFA</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Least privilege and separation of duties</h4>
+        <p>Minimum scope, actions and duration; no single person controls the whole process. Scope should match responsibility, not status.</p>
+        <div class="flip-hint">Authorisation</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Encrypt every state and every copy</h4>
+        <p>In transit, at rest, in use &mdash; and the recovery copy too. Then manage the keys, the access policy and the restore procedure.</p>
+        <div class="flip-hint">Data</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Identity is the modern control plane</h4>
+        <p>In the cloud, requests are evaluated by identity and context rather than by network location. Configuration and monitoring decide how much damage one account can do.</p>
+        <div class="flip-hint">Cloud</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you explain the breach without using the word &ldquo;encryption&rdquo; as a cause? Can you name the five principles of strong authentication and the five of data, cloud and lifecycle security in the deck?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Where to go next</h3>
+      <p>The Foundations page carries the real numbers &mdash; entropy, key-size and security-strength tables, KDF cost parameters and the TLS key schedule. Then attempt the Quiz Hub and the Flashcards for Week 6.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; auditing a cloud migration against the deck's activity.</strong> Harbour University is migrating to the cloud. Work through the four headings the deck's activity uses and name what is missing, who owns it, and what evidence would prove it works.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Authentication.</strong> Password only, or password plus MFA, or passkeys? The decision that matters is whether the strongest available method is required for privileged roles. Owner: identity team. Evidence: enrolment rate for phishing-resistant factors, and the proportion of privileged accounts covered.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Authorisation.</strong> Are roles defined, is least privilege applied, and is privileged access time-boxed? The deck's question is whether a compromised privileged account can alter infrastructure affecting thousands of users. Owner: application and platform owners. Evidence: an access review record showing each role's permissions still match its responsibilities.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Data.</strong> Is every dataset classified, is every copy encrypted, and is retention justified? Owner: data owners per classification. Evidence: a register that maps each dataset to a class, an encryption state and a retention period &mdash; including the backup copy.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Operations.</strong> Is monitoring alerting on impossible travel, bulk download, repeated failures and privilege changes? Are backups isolated and tested? Owner: cloud operations. Evidence: an alert that fired in a game-day exercise, plus a dated restore test with a measured recovery time.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The answer that earns the marks.</strong> &ldquo;Cloud security is continuous, not a one-time configuration: identity first, secure configuration with drift detection, least privilege, continuous monitoring, and recovery and resilience.&rdquo; Name the five principles, then attach an owner and a piece of evidence to each.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; rating an authentication design for a student portal.</strong> The proposal: passwords for everyone, TOTP for staff, push approval for administrators, and a help desk that resets any account after confirming the caller's name and date of birth.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Match method to threat, not to fashion.</strong> Passwords for all 50,000 users buys compatibility and nothing else. TOTP for staff is a genuine second category and a real improvement, but codes can be phished in real time.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Look for the category error.</strong> Push approval for administrators is the highest-privilege role on the weakest second factor: push fatigue targets exactly the population with the most to lose. The deck's answer is a security key or passkey for high-risk authentication, with number matching at minimum.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Attack the recovery path.</strong> Name plus date of birth is weak identity evidence &mdash; both are widely known. As written, this help-desk path bypasses every stronger method above it, which is principle 5 in the negative. Replace it with out-of-band verification against enrolment records, and log every reset as a security event.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Add continuity.</strong> Authentication is continuous: a new browser at 3:14&nbsp;a.m. from an unusual country should require stronger evidence or restrict sensitive actions. That requires monitoring, which the proposal does not mention.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Verdict and fix order.</strong> The design is a reasonable first step and a poor finished state. Fix order: (1) close the recovery hole, (2) move administrators to phishing-resistant credentials, (3) add adaptive risk checks and monitoring, (4) reduce reliance on passwords for everyone else.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Final framing:</strong> identity &rarr; permissions &rarr; data protection &rarr; secure cloud operations. Week 6 is the week where cryptography stops being the answer and becomes one control among several.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

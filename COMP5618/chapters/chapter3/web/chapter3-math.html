@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 3: Networking Traversal</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 foundations for COMP5618: subnet arithmetic, TCP handshake sequence numbers and the scan-cost model, ACL first-match and NAT mapping notation, the defense-in-depth probability model, and a lab diagnosis checklist.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 3: Networking Traversal">
+<meta property="og:description" content="Week 3 foundations for COMP5618: subnet arithmetic, TCP handshake sequence numbers and the scan-cost model, ACL first-match and NAT mapping notation, the defense-in-depth probability model, and a lab diagnosis checklist.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter3-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 3 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-address" class="toc-link">Addressing &amp; subnet arithmetic</a></li>
+    <li><a href="#sec-m-transport" class="toc-link">TCP states &amp; handshake numbers</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-acl" class="toc-link">ACL, NAT &amp; tunnel notation</a></li>
+    <li><a href="#sec-m-design" class="toc-link">Depth and least privilege</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Lab &amp; engagement checklist</a></li>
+  </ul>
+  <a href="chapter3-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5618 &mdash; Week 3 supplement</p>
+  <h1>Foundations: addressing, transport arithmetic and control notation</h1>
+  <p class="hero-desc">Week 3 is a practical week, but the practical work rests on four small pieces of arithmetic and notation: how a prefix divides an address, how a handshake numbers its segments, how a rule list decides a packet, and what &ldquo;defense in depth&rdquo; means once you write it down. This page fixes all four, then ends with the checklist that diagnoses a broken pfSense lab.</p>
+  <div class="chip-list">
+    <span>Definitions and commands verified against the lecture deck and Tutorial 3</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Worked subnet, scan-cost and ACL examples</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-address">
+  <h2 class="section-title">Addressing &amp; subnet arithmetic</h2>
+  <p class="section-lead">A prefix length is the only thing that tells you which addresses are neighbours and which need a router. Get it wrong and every reachability conclusion after it is wrong too.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definitions that must be exact</div>
+    <p>An IPv4 address is 32 bits. A prefix length \(p\) (&ldquo;/24&rdquo;) takes the leftmost \(p\) bits as the <strong>network part</strong> and leaves \(32-p\) bits as the <strong>host part</strong>. The all-zero host part is the <strong>network address</strong> and the all-ones host part is the <strong>broadcast address</strong>; neither can be assigned to a host.</p>
+    <p style="margin-top:0.6rem;">Hosts in the same prefix reach each other at layer 2 (which is Week 2's territory: ARP and Ethernet). Hosts in different prefixes must send to a <strong>router</strong>, and the router's ACLs &mdash; not the address &mdash; decide whether that traffic is allowed.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. How many hosts fit in a prefix</h3>
+    <p>With prefix length \(p\), the prefix contains</p>
+    \[ N_{\text{addresses}} \;=\; 2^{\,32-p}, \qquad N_{\text{usable}} \;=\; 2^{\,32-p} - 2 \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The subtraction removes the network address and the broadcast address. The wider the prefix (the smaller \(32-p\)), the fewer hosts &mdash; a /30 is two hosts on a point-to-point link, a /24 is 254 hosts on a LAN.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Prefix</th><th>Addresses</th><th>Usable hosts</th><th>Where you meet it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>/24</code></td><td>\(2^{8} = 256\)</td><td>254</td><td>A typical lab LAN: the tutorial's developer network <code>192.168.56.0/24</code></td></tr>
+        <tr><td><code>/25</code></td><td>\(2^{7} = 128\)</td><td>126</td><td>Half a /24, often split for a separate management segment</td></tr>
+        <tr><td><code>/26</code></td><td>\(2^{6} = 64\)</td><td>62</td><td>A small server segment</td></tr>
+        <tr><td><code>/27</code></td><td>\(2^{5} = 32\)</td><td>30</td><td>A printer or appliance segment</td></tr>
+        <tr><td><code>/30</code></td><td>\(2^{2} = 4\)</td><td>2</td><td>A point-to-point link between two routers</td></tr>
+        <tr><td><code>/32</code></td><td>\(2^{0} = 1\)</td><td>1</td><td>A single-host route, used when describing one machine in a rule</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-prefixes"></div>
+  <script type="application/json" id="ix-prefixes">
+  {
+    "title": "Usable hosts per prefix",
+    "subtitle": "The same arithmetic as the table above, drawn to scale: halving the host bits halves the segment twice over.",
+    "max": 254,
+    "rows": [
+      { "name": "/24 — 8 host bits", "value": 254, "display": "254 usable" },
+      { "name": "/25 — 7 host bits", "value": 126, "display": "126 usable" },
+      { "name": "/26 — 6 host bits", "value": 62, "display": "62 usable" },
+      { "name": "/27 — 5 host bits", "value": 30, "display": "30 usable" },
+      { "name": "/30 — 2 host bits", "value": 2, "display": "2 usable" }
+    ]
+  }
+  </script>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Worked example &mdash; the tutorial's developer network.</strong> The developer network is <code>192.168.56.0/24</code>, so \(N_{\text{addresses}} = 2^{8} = 256\) and \(N_{\text{usable}} = 254\). The host machine already holds <code>192.168.56.1</code>, pfSense's LAN interface is set to <code>192.168.56.254</code>, and DHCP hands out <code>.2</code> through <code>.253</code>.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>Count the pool.</strong> The pool <code>.2</code>&ndash;<code>.253</code> is \(253 - 2 + 1 = 252\) addresses: 254 usable, minus the one the host took, minus the one the router holds. VirtualBox DHCP is switched off in the tutorial precisely so that this count is controlled by pfSense rather than by the hypervisor.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Do the same for the server side.</strong> The server network is <code>10.0.2.0/24</code> (the tutorial notes it may equally be <code>10.0.3.0</code> or <code>10.0.4.0</code> depending on your setup), with the DHCP range <code>.100</code>&ndash;<code>.200</code>, which is \(200 - 100 + 1 = 101\) addresses. A narrower pool is deliberate: static services keep addresses below it.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>Now the routing consequence.</strong> Kali is in <code>192.168.56.0/24</code>; DVWA is in <code>10.0.2.0/24</code>. Different prefixes, so every packet crosses pfSense, which is why the tutorial has you add an explicit route on the host (<code>route add -net &lt;server subnet&gt; gw &lt;pfSense LAN address&gt;</code>) and why every scan result reflects the ACL as much as the target.</p></div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">How many usable host addresses does <code>10.0.2.0/24</code> contain, and why is the answer not 256?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="256 is the total address count. The question is how many of them a host may actually be assigned.">256, because every address in the prefix can be assigned</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: 2^8 = 256 addresses, minus the network address 10.0.2.0 and the broadcast address 10.0.2.255, leaving 254 that can be assigned to hosts." data-bad="">254, because the network address and the broadcast address cannot be assigned to a host</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The gateway is just one of the usable addresses — it is reserved by configuration, not by the addressing scheme.">255, because one address is reserved for the router</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked calculation &mdash; reading a lease.</strong> The tutorial's screenshot shows pfSense handing DVWA the address <code>10.0.3.5/24</code>. Work out everything that follows from that one line.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Prefix and mask.</strong> \(p = 24\), so the host part is \(32 - 24 = 8\) bits and the mask is <code>255.255.255.0</code>. The network part is the first three octets: <code>10.0.3</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Network address.</strong> Zero the host bits: \(10.0.3.5 \wedge \text{mask} = 10.0.3.0\). That is the address that identifies the segment.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Broadcast address.</strong> Set every host bit: \(10.0.3.5 \vee \lnot\text{mask} = 10.0.3.255\). Everything sent there is delivered to every host in the segment.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Usable range.</strong> \(2^{8} - 2 = 254\) addresses, from <code>10.0.3.1</code> to <code>10.0.3.254</code>. DVWA sits at <code>.5</code>, comfortably below the tutorial's suggested <code>.100</code>&ndash;<code>.200</code> DHCP pool.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Why the gateway must not be <code>.1</code> or <code>.2</code>.</strong> The tutorial warns explicitly: do not set pfSense's gateway for either network to <code>*.*.*.1</code> or <code>*.*.*.2</code>, because in a VirtualBox NAT network those low addresses are used by the hypervisor to forward the host's loopback interface. Point the gateway there and the router's own traffic disappears into the hypervisor instead of reaching the segment.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-transport">
+  <h2 class="section-title">TCP states &amp; handshake numbers</h2>
+  <p class="section-lead">Every port state a scanner reports is a conclusion about a conversation it can only partly see. These are the numbers and states that conversation is built from.</p>
+
+  <div class="theorem-box">
+    <h3>1. The handshake, written out</h3>
+    <p>With \(x\) the client's initial sequence number and \(y\) the server's:</p>
+    \[ \underbrace{\text{SYN}(seq=x)}_{\text{client} \to \text{server}} \;\longrightarrow\; \underbrace{\text{SYN,ACK}(seq=y,\; ack=x+1)}_{\text{server} \to \text{client}} \;\longrightarrow\; \underbrace{\text{ACK}(seq=x+1,\; ack=y+1)}_{\text{client} \to \text{server}} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The acknowledgements are \(x+1\) and \(y+1\) rather than \(x\) and \(y\) because a SYN consumes one sequence number even though it carries no data.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. What an acknowledgement counts</h3>
+    <p>Every later segment acknowledges the peer's next expected byte:</p>
+    \[ ack \;=\; seq_{\text{peer}} \;+\; len(\text{data}) \;+\; \bigl[\, \text{SYN or FIN present} \,\bigr] \]
+    <p style="margin-top:0.6rem;">Practical reading: if a segment carries \(n\) bytes starting at \(seq = x+1\), the reply acknowledges \(x+1+n\). A FIN, like a SYN, advances the counter by one even when no data is carried &mdash; which is why teardown sequence numbers look off by one until you remember the rule.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Why the handshake sets the cost of a scan</h3>
+    <p>A full <strong>connect</strong> scan completes the handshake on every port; a <strong>SYN</strong> scan sends one segment and abandons the conversation. With \(n\) ports probed and round-trip time \(\mathrm{RTT}\):</p>
+    \[ T_{\text{connect}} \;\approx\; n \cdot 2\,\mathrm{RTT}, \qquad T_{\text{SYN}} \;\approx\; n \cdot \mathrm{RTT} \]
+    <p style="margin-top:0.6rem;">Segment count per port follows the same reasoning. An open port costs three segments on a connect scan (SYN, SYN-ACK, ACK) and two on a SYN scan (SYN, SYN-ACK, RST); a closed port costs two either way (SYN, RST). The formula is a lower bound: it ignores retransmission, and it says nothing about ports that never answer at all.</p>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Worked example.</strong> Probe \(n = 1000\) ports on one host with \(\mathrm{RTT} = 10\ \text{ms}\). Connect scan: \(T \approx 1000 \times 2 \times 10\ \text{ms} = 20\ \text{s}\). SYN scan: \(T \approx 1000 \times 10\ \text{ms} = 10\ \text{s}\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>Scale it to a segment.</strong> A /24 has 254 usable addresses. The same 1000-port probe across all of them is \(254 \times 1000 = 254{,}000\) ports: about 84 minutes with a SYN scan at that RTT, and about 2.8 hours with a connect scan &mdash; before any filtering timeouts.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Add the filtered case.</strong> A dropped probe produces no reply, so the scanner waits for a timeout \(t_{\text{out}}\) instead of one RTT. If every port is filtered, \(T \approx n \cdot t_{\text{out}}\) &mdash; the arithmetic reason a full-range scan against a well-filtered host is measured in hours, and the reason &ldquo;filtered&rdquo; is a finding about the firewall rather than the host.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>State the assumption.</strong> Both approximations assume one probe in flight at a time. Real scanners pipeline or parallelise, which is why they finish sooner &mdash; and why they generate the burst of SYNs that any IDS is looking for.</p></div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>State</th><th>Who holds it</th><th>What an observer concludes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>LISTEN</code></td><td>The server, before any connection</td><td>A service is bound to the port; a SYN will be answered</td></tr>
+        <tr><td><code>SYN_SENT</code></td><td>The client, after sending SYN</td><td>A connection attempt is in progress and awaiting a reply</td></tr>
+        <tr><td><code>SYN_RECEIVED</code></td><td>The server, after SYN without the final ACK</td><td>The signature of a SYN scan: half-open connections piling up</td></tr>
+        <tr><td><code>ESTABLISHED</code></td><td>Both ends</td><td>Data can flow; a connect scan reaches this state, a SYN scan never does</td></tr>
+        <tr><td><code>FIN_WAIT_1 / FIN_WAIT_2</code></td><td>The side that closed first</td><td>An orderly shutdown is under way but not yet complete</td></tr>
+        <tr><td><code>CLOSE_WAIT</code></td><td>The side that received the FIN</td><td>The peer has closed; the application has not released the socket yet</td></tr>
+        <tr><td><code>TIME_WAIT</code></td><td>The side that closed first, after the final ACK</td><td>A recent teardown; the port cannot be reused immediately</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-states"></div>
+  <script type="application/json" id="ix-states">
+  {
+    "title": "Self-test: say what the state proves before you flip",
+    "subtitle": "Each card names a situation seen on the wire or in a rule set; the back states what it does and does not prove.",
+    "cards": [
+      { "front": "SYN, ACK comes back", "back": "A listener is bound and the path is open in at least that direction. This is the only unambiguous 'open' a scan can obtain.", "hint": "Open" },
+      { "front": "RST, ACK comes back", "back": "The host is up and the path is open, but nothing is listening on that port. Closed ports still answer.", "hint": "Closed, host alive" },
+      { "front": "Nothing comes back at all", "back": "Either a rule dropped the probe or a listener chose not to answer. From outside these are indistinguishable: open|filtered.", "hint": "Filtered" },
+      { "front": "A connection reaches ESTABLISHED on both ends", "back": "A full connect scan has just made the application aware of it, because the handshake completed and the socket was accepted.", "hint": "Connect scan" },
+      { "front": "Many connections sit in SYN_RECEIVED", "back": "Half-open connections: the classic footprint of a SYN scan, which never completes the third segment.", "hint": "SYN scan" },
+      { "front": "A FIN arrives with no prior handshake", "back": "Not a legitimate teardown. A stateless filter may pass it; a stateful firewall and a modern stack will not treat it as part of a connection.", "hint": "Crafted close" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A client sends <code>SYN, seq = 4000</code>. The server replies <code>SYN, ACK, seq = 9000</code>. What acknowledgement number does the client's final segment carry?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="9000 would acknowledge nothing: the server's SYN itself consumes one sequence number, so the next expected byte is 9001.">9000</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: 9001. The server's SYN occupies sequence number 9000, so the client acknowledges 9000 + 1 and the connection is established with seq = 4001 from the client." data-bad="">9001</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="4001 is the client's own next sequence number, not the acknowledgement of the server's SYN.">4001</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-acl">
+  <h2 class="section-title">ACL, NAT &amp; tunnel notation</h2>
+  <p class="section-lead">The direction rules on the study page are written in prose in the deck. Here is the same content as something you can evaluate packet by packet.</p>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose and shows commands, not algebra. The symbols below are a <em>revision aid</em> introduced here so the rules can be reasoned about compactly; they are not lecture notation and should not be quoted as such.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. An ACL is an ordered list with a first match and an implicit deny</h3>
+    <p>Let the rule list be \(r_1, r_2, \dots, r_m\), each rule a predicate over the packet's source, destination, protocol and port, paired with an action:</p>
+    \[ \text{action}(pkt) \;=\; \text{action}\bigl(r_{i}\bigr) \quad\text{where}\quad i \;=\; \min\{\, j \;:\; pkt \models r_j \,\}, \qquad \text{default} = \text{deny} \]
+    <p style="margin-top:0.6rem;">Two consequences follow immediately. First, order is semantic: a broad permit placed above a narrow deny makes the deny unreachable. Second, the implicit deny at the end is what makes &ldquo;everything else is denied by default&rdquo; true &mdash; the deny rule is usually invisible because it is not written down.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Stateless and stateful rules treat replies differently</h3>
+    <p>A stateless list sees each packet alone, so a reply needs its own rule. A stateful device maintains a connection table and admits a reply because it belongs to a flow it already permitted:</p>
+    \[ \text{admit}(pkt) = \begin{cases} \text{match}(pkt, R) &amp; \text{stateless} \\[2pt] \text{match}(pkt, R) \;\lor\; \text{tracked}(pkt) &amp; \text{stateful} \end{cases} \]
+    <p style="margin-top:0.6rem;">This is exactly the deck's printer case: finance may initiate to the printer, and the printer's replies are admitted as replies &mdash; but a new connection originating at the printer matches neither branch and is dropped.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. NAT is a mapping with a lifetime</h3>
+    <p>For each outbound flow the translator stores</p>
+    \[ M:\; (ip_{\text{priv}},\, port_{\text{priv}}) \;\longleftrightarrow\; (ip_{\text{pub}},\, port_{\text{pub}}) \]
+    <p style="margin-top:0.6rem;">The entry exists only while the flow is alive; when it expires, replies have nothing to match and are dropped. That is why an unsolicited inbound connection fails <em>by construction</em> rather than by policy, and why reaching an internal service from outside needs a <em>static</em> mapping that does not depend on an outbound flow having created it.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-routerpath"></div>
+  <script type="application/json" id="ix-routerpath">
+  {
+    "title": "Order the decision path a packet takes through a router",
+    "subtitle": "A revision-aid model of the order in which pfSense-style filtering, translation and routing are applied.",
+    "steps": [
+      "Packet arrives on an interface (LAN, OPT1 or WAN)",
+      "Ingress rules for that interface are evaluated, first match wins",
+      "Translation is applied when the flow crosses between address spaces",
+      "The destination prefix is looked up to choose the outgoing interface",
+      "The state table is consulted so replies are admitted without a second rule",
+      "Egress rules for the outgoing interface are evaluated",
+      "The packet leaves, or is dropped and optionally logged"
+    ]
+  }
+  </script>
+
+  <div data-ix="matcher" data-ix-src="#ix-notation"></div>
+  <script type="application/json" id="ix-notation">
+  {
+    "title": "Match the notation to what it means in this unit",
+    "subtitle": "Click a symbol or command on the left, then its meaning on the right.",
+    "pairs": [
+      ["2^(32-p) − 2", "Usable host addresses in a prefix of length p, after removing network and broadcast"],
+      ["first match wins", "The rule that decides a packet is the first one it matches, so rule order is semantic"],
+      ["implicit deny", "What is not explicitly permitted at the end of a rule list is dropped"],
+      ["state table (conntrack)", "The record of established flows that lets replies in without a matching inbound rule"],
+      ["(privIP, privPort) ↔ (pubIP, pubPort)", "A NAT translation entry, kept only for as long as the flow is alive"],
+      ["TUN", "Layer 3 tunnel interface: carries packets, and is enough for almost every protocol"],
+      ["TAP", "Layer 2 tunnel interface: carries frames and puts you in the remote broadcast domain"],
+      ["ssh -L", "Local forward: a port on the SSH client reaches a service the SSH server can see"],
+      ["ssh -R", "Reverse forward: a port on the SSH server reaches a service next to the SSH client"]
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked evaluation &mdash; four packets against one policy.</strong> The router holds these rules in order, and everything else is denied:</p>
+    <div class="code-block">
+      <pre><code>1  permit  finance  -&gt; printer     tcp  any
+2  permit  printer  -&gt; finance     tcp  established
+3  permit  admin    -&gt; any         tcp  any
+4  deny    printer  -&gt; any         ip   any        (explicit, for logging)</code></pre>
+    </div>
+    <p>Evaluate each packet and say which rule decides it.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Finance &rarr; printer, new connection (SYN, no ACK).</strong> Rule 1 matches and the SYN has no ACK flag, so it is a new connection. <em>Verdict:</em> permitted by rule 1.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Printer &rarr; finance, reply to that connection (ACK set, matches the tracked flow).</strong> Rule 2 is written to match replies on an established flow. <em>Verdict:</em> permitted by rule 2 &mdash; note that on a stateful device this rule is implicit, and writing it explicitly is how a stateless list is made to behave.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Printer &rarr; finance, new connection (SYN, no ACK).</strong> Rule 2 does not match, because there is no established flow. Rule 3 requires the source to be <code>admin</code>. Rule 4 matches. <em>Verdict:</em> denied by rule 4 &mdash; this is the rogue printer case, and it is logged.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Finance &rarr; admin, any port.</strong> Rules 1 and 2 do not match the destination, rule 3 requires the source to be <code>admin</code>. Nothing matches, so the implicit deny applies. <em>Verdict:</em> denied &mdash; and this is the one that catches people out: the admin subnet may initiate everywhere, but that does not grant everyone a path <em>into</em> admin.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Why order matters, in one line.</strong> Swap rules 3 and 4 and the printer's denial disappears, because &ldquo;admin &rarr; any&rdquo; is unaffected but a hypothetical broad permit above rule 4 would shadow it. First match wins: the rule you meant to apply is not necessarily the rule that applies.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An ACL contains, in this order: (1) deny printer &rarr; finance, (2) permit finance &rarr; printer established. A reply from printer to finance on an established connection arrives. What happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Rule 1 only matches traffic originating at the printer. A reply on a tracked flow is matched by rule 2 — and even if rule 1 were broad, the reply does not originate a connection.">It is denied by rule 1, because deny rules are evaluated first</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: it is permitted by rule 2. Rules are evaluated in written order and the reply matches the established-flow rule; deny rules do not jump the queue." data-bad="">It is permitted by rule 2, because the reply matches the established-flow rule before rule 1 is reached</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The implicit deny only applies when no rule matches. Here rule 2 matches the reply, so the packet never reaches the end of the list.">It is denied by the implicit deny at the end of the list</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-design">
+  <h2 class="section-title">Depth &amp; least privilege, written as relationships</h2>
+  <p class="section-lead">The design half of the deck is qualitative, but two of its claims behave like formulas &mdash; and writing them down exposes the assumption that usually breaks them.</p>
+
+  <div class="theorem-box">
+    <h3>1. Defense in depth multiplies, and only under independence</h3>
+    <p>If control \(i\) is defeated with probability \(p_i\), and the controls are independent, the probability that all of them are defeated is</p>
+    \[ P(\text{breach}) \;=\; \prod_{i=1}^{n} p_i, \qquad P(\text{breach}) = p^{\,n} \ \text{ when every } p_i = p \]
+    <p style="margin-top:0.6rem;">With \(p = 0.5\): one control gives \(0.5\), two give \(0.25\), three give \(0.125\), four give \(0.0625\).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Independent controls \(n\)</th><th>\(p = 0.5\)</th><th>\(p = 0.2\)</th><th>Reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>0.500</td><td>0.200</td><td>A single control carries the whole risk &mdash; the deck's reason for taking the weight off one control</td></tr>
+        <tr><td>2</td><td>0.250</td><td>0.040</td><td>Two genuinely independent layers already change the order of magnitude</td></tr>
+        <tr><td>3</td><td>0.125</td><td>0.008</td><td>Segmentation plus filtering plus least privilege is three, not one repeated three times</td></tr>
+        <tr><td>4</td><td>0.063</td><td>0.002</td><td>Diminishing returns only if the layers really are independent</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Where the model fails.</strong> The product is only valid under independence. Two firewalls administered with one credential, or two layers that both trust the same unverified identity, have \(P(\text{breach}) \approx p\), not \(p^2\). When you argue for depth in an exam answer, name the failure mode each layer catches separately &mdash; that is the evidence of independence.
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Least privilege is a subset relation</h3>
+    <p>Write \(A_{\text{required}}\) for the actions a role actually needs and \(A_{\text{granted}}\) for what it is allowed. Least privilege is the requirement</p>
+    \[ A_{\text{granted}} \;\subseteq\; A_{\text{required}}, \qquad \text{everything in } \complement A_{\text{granted}} \text{ is denied by default} \]
+    <p style="margin-top:0.6rem;">The deck's example is the concrete form of it: a web server must not run as a root user, so the compromise of that service does not hand over the host. The over-privileged service is the pivot the week keeps coming back to.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Zero trust re-evaluates the decision per request</h3>
+    <p>Traditional models treat the perimeter as the trust boundary, so a decision is made once and inherited. Zero trust makes the decision a function of the request itself:</p>
+    \[ d \;=\; f\bigl(\text{identity},\ \text{device},\ \text{resource},\ \text{context}\bigr) \]
+    <p style="margin-top:0.6rem;">The deck's examples &mdash; IAM with MFA, and ACLs with network segmentation &mdash; are two ways of feeding those arguments. The defining property is that \(d\) is recomputed for every access, whether the request arrives from inside or outside the perimeter, because &ldquo;inside&rdquo; is no longer treated as evidence.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Two independent controls each stop an attack with probability 0.8. Under the product model, what is the breach probability, and what is the assumption?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Adding the failure probabilities would make the system weaker with every layer added, which is backwards.">0.4, because the failure probabilities add</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: each control is defeated with 0.2, so P = 0.2 × 0.2 = 0.04 — provided the two failures are independent. Shared credentials or a shared blind spot invalidate that." data-bad="">0.04, assuming the two controls fail independently</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Averaging the two does not describe a system in which both controls must fail before the breach happens.">0.2, because the stronger control dominates the average</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Lab &amp; engagement checklist</h2>
+  <p class="section-lead">Two checklists close the week: one for the pfSense lab, and one for the professional process the lab is a rehearsal for.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(p\)</div><div class="sym-cell">prefix length</div><div class="sym-cell">Bits in the network part of an address; /24 means \(p = 24\)</div>
+    <div class="sym-cell">\(2^{\,32-p} - 2\)</div><div class="sym-cell">usable hosts</div><div class="sym-cell">All addresses in the prefix except the network and broadcast addresses</div>
+    <div class="sym-cell">\(x,\ y\)</div><div class="sym-cell">initial sequence numbers</div><div class="sym-cell">The client's and the server's starting counters; each SYN or FIN advances its own by one</div>
+    <div class="sym-cell">\(ack\)</div><div class="sym-cell">acknowledgement</div><div class="sym-cell">\(seq_{\text{peer}} + len(\text{data}) + [\text{SYN or FIN}]\) — the next byte the sender expects</div>
+    <div class="sym-cell">\(\mathrm{RTT}\)</div><div class="sym-cell">round-trip time</div><div class="sym-cell">The waiting cost per probe; it sets how long a scan takes</div>
+    <div class="sym-cell">\(t_{\text{out}}\)</div><div class="sym-cell">timeout</div><div class="sym-cell">What a scanner waits when a probe is dropped — the price of a filtered port</div>
+    <div class="sym-cell">\(r_i\)</div><div class="sym-cell">the \(i\)-th rule</div><div class="sym-cell">Ordered predicates in an ACL; the first match decides the packet</div>
+    <div class="sym-cell">\(M\)</div><div class="sym-cell">NAT mapping</div><div class="sym-cell">\((ip_{\text{priv}}, port_{\text{priv}}) \leftrightarrow (ip_{\text{pub}}, port_{\text{pub}})\), alive only while the flow is</div>
+    <div class="sym-cell">\(\text{tracked}(pkt)\)</div><div class="sym-cell">state match</div><div class="sym-cell">The reply belongs to a flow the device already permitted</div>
+    <div class="sym-cell">\({\rm TUN} / {\rm TAP}\)</div><div class="sym-cell">tunnel type</div><div class="sym-cell">Layer 3 packets versus layer 2 frames on the virtual interface</div>
+    <div class="sym-cell">\(-L\ /\ -R\)</div><div class="sym-cell">forward direction</div><div class="sym-cell">Which end owns the listening port in an SSH port forward</div>
+    <div class="sym-cell">\(p_i\)</div><div class="sym-cell">control failure</div><div class="sym-cell">Probability that layer \(i\) is defeated; multiplied under independence</div>
+    <div class="sym-cell">\(A_{\text{granted}} \subseteq A_{\text{required}}\)</div><div class="sym-cell">least privilege</div><div class="sym-cell">Grant only what the role needs; deny the remainder by default</div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Before the lab</h3>
+      <p>Two VirtualBox NAT networks with DHCP disabled; pfSense with WAN bridged, LAN on the developer network and OPT1 renamed to Server; no IPv6; the router's LAN address outside the addresses your host already holds.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Routing and DHCP</h3>
+      <p>DHCP enabled on the interfaces whose pools you defined, with the gateway set to the router's address in that network &mdash; never <code>*.*.*.1</code> or <code>*.*.*.2</code> in a VirtualBox NAT network.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Detection</h3>
+      <p>Snort installed and running on the server interface with the custom rule enabled, and <code>tcpdump</code> running on the target so the same packets can be seen from both ends.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Engagement</h3>
+      <p>Scope, testing window, contacts, contract and NDA agreed before anything is scanned; fragile devices identified; authorisation kept on hand throughout.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked diagnosis &mdash; DVWA never receives an address.</strong> The tutorial's checkpoint is blunt: if the server host cannot get an IP address in the server network via DHCP, something is wrong. Work through it in the order that eliminates the most possibilities per step.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Is it a link problem or a service problem?</strong> Check that the DVWA virtual machine's adapter is attached to the server NAT network at all. No interface on the segment means no DHCP conversation is possible, whatever the router is configured to do.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Is the interface assigned and enabled?</strong> In the pfSense console, OPT1 must be assigned and enabled; in the web interface it must be renamed to Server and set to static IPv4 with an address chosen from the server prefix.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Does a rule allow the request?</strong> The tutorial's step is to create a firewall rule on the server network that passes traffic from any source to &ldquo;this firewall&rdquo;. Without it, the DHCP request reaches the router and is dropped by the implicit deny &mdash; a perfect illustration of the first-match/deny-by-default model earlier on this page.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Is the DHCP service configured with a sane scope?</strong> Range inside the prefix, gateway set to the router's address in that network, and not pointed at the hypervisor's reserved low addresses. A pool that overlaps the router's own address produces the same symptom from the other direction.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Can the client reach the router at all?</strong> From the developer side, add the route to the server network via pfSense's LAN address, then ping. If the ping works but DHCP does not, the problem is in the service, not the path; if neither works, go back to step 1.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Confirm the outcome, not the intention.</strong> The final check is the one the tutorial asks you to record: the lease appears on the server host, the address is inside the pool you configured, and a ping from the other network shows up in both the Snort Alerts page and the <code>tcpdump</code> output. When the firewall rule blocking ICMP is enabled, both views go quiet &mdash; that is continuous monitoring working as designed.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A host in the server network receives no DHCP lease, but the interface is assigned and the DHCP range looks correct. What is the most likely cause, given the material in this unit?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. With no pass rule on that interface, the request is dropped by the implicit deny — deny-by-default does not make an exception for the router's own services." data-bad="">No firewall rule permits traffic from the segment to the firewall, so the DHCP request is dropped</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The address space is not the constraint: a /24 has 254 usable addresses, and the pool was chosen to sit inside it.">The prefix is too small to hold the DHCP scope</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A TUN/TAP choice affects tunnels, not local DHCP on a physical interface. It has no bearing on this symptom.">The interface should have been configured as TAP rather than TUN</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the traversal narrative &mdash; ACL direction, the handshake stepper, the pivot animation and the seven stages. This page carries the arithmetic. Then attempt the Quiz Hub and the Flashcards for Week 3.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5618ChapterUI) return;
+    try {
+      window.initCOMP5618ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5618 chapter 3] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 5: Web Application Scanners</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 foundations for COMP5618: exact definitions for scanner classes and fuzzing, a taxonomy of black, white and grey box testing, and the arithmetic of detection probability, precision, recall, coverage and risk-based prioritisation.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 5: Web Application Scanners">
+<meta property="og:description" content="Week 5 foundations for COMP5618: definitions, scanner taxonomy, and the arithmetic of detection, precision, recall, coverage and risk scoring.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter5-study.html" data-i18n="math_back_study">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html" data-i18n-home>&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link" data-i18n-home>&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 5 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomy &amp; notation</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-model" class="toc-link">The arithmetic of scanning</a></li>
+    <li><a href="#sec-m-triage" class="toc-link">Worked triage arithmetic</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial lab review</a></li>
+  </ul>
+  <a href="chapter5-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5618 &mdash; Week 5 supplement</p>
+  <h1>Foundations: measuring what a scanner actually finds</h1>
+  <p class="hero-desc">Week 5 is a tooling week, so this page does the equivalent of a formula sheet: it pins down the definitions the lecture leans on, builds a taxonomy of scanner classes, and gives you the arithmetic that decides whether a scan was worth running &mdash; detection probability, coverage, precision and recall, and the risk score that orders the backlog.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 5 deck</span>
+    <span>Formulas are standard practice, not lecture notation</span>
+    <span>Triage arithmetic you can reproduce in the exam</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Vulnerability scanner</div>
+    <p>A tool that maps a target, sends safe tests for known weakness patterns, matches the responses against risk indicators, and reports prioritised evidence for remediation &mdash; output that still needs validation, ownership and remediation tracking.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">White box / black box / grey box</div>
+    <p><strong>White box</strong> examines source code, configuration files and internal messages, giving full visibility into internal workings. <strong>Black box</strong> scans over the network with no source access, identifying flaws from external observation and response analysis. <strong>Grey box</strong> combines both, with visibility that varies according to configuration and capabilities.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Fuzzing</div>
+    <p>A technique used by some vulnerability scanners to test the robustness and security of a web application by providing it with <strong>invalid, unexpected or random data</strong> as input.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Authenticated scanning</div>
+    <p>Configuring a scanner with a valid authentication cookie, obtained from a real login, so that its requests are treated as authenticated and can reach fields and functionality that are only available to logged-in users.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">False positive, false negative, severity</div>
+    <p>A <strong>false positive</strong> is a flaw the scanner reports that is not present or not exploitable. A <strong>false negative</strong> is a real flaw the scan did not report. <strong>Severity</strong> is how much harm exploitation could cause; <strong>risk</strong> adds how likely and how exposed that exploitation is.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Web application scanner</td><td>Crawl, probe, analyse, report &mdash; and the validation caveat</td><td>&ldquo;A tool that finds all the vulnerabilities in a website&rdquo;</td></tr>
+        <tr><td>White box scanning</td><td>Source, configuration and internal messages</td><td>Treating it as &ldquo;a scan you run from inside the network&rdquo;</td></tr>
+        <tr><td>Black box scanning</td><td>No source access; external observation and response analysis</td><td>Claiming it needs no target at all, or that it cannot produce false positives</td></tr>
+        <tr><td>Fuzzing</td><td>Invalid, unexpected or random input, sent to test robustness and security</td><td>&ldquo;Sending a virus to the server&rdquo;, or describing it as proof of exploitation</td></tr>
+        <tr><td>Web content scanner</td><td>Dictionary-based discovery of web objects; not a vulnerability scanner</td><td>Confusing it with a DAST scanner such as ZAP</td></tr>
+        <tr><td>Authenticated scanning</td><td>A valid authentication cookie obtained from a real login</td><td>&ldquo;Logging into the scanner&rdquo;; the cookie is what authenticates the request</td></tr>
+        <tr><td>Severity vs risk</td><td>Severity is impact; risk multiplies it by likelihood and exposure</td><td>Ranking a backlog on severity alone and calling it risk-based</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is fuzzing?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes exploitation, not testing technique. Fuzzing is a way of probing robustness with malformed or random input.">Automatically exploiting every vulnerability a scanner discovers</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: fuzzing supplies the application with invalid, unexpected or random data as input to test its robustness and security." data-bad="">Supplying an application with invalid, unexpected or random data to test its robustness and security</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is content discovery with a wordlist. Fuzzing mutates input values; the two are different techniques that often appear in the same toolkit.">Requesting common file and directory names from a wordlist</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomy &amp; notation</h2>
+  <p class="section-lead">Exam questions in this unit usually ask you to place a scanner somewhere. These are the three axes the Week 5 material gives you for doing that.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; knowledge of the target</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Class</th><th>What the scanner is given</th><th>Visibility</th><th>Characteristic failure</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>White box</strong></td><td>Source code, configuration, internal messages</td><td>Full internal visibility</td><td>Complexity and false positives from misreading code; no external perspective</td></tr>
+        <tr><td><strong>Black box</strong></td><td>A reachable target and, ideally, a session</td><td>External only</td><td>Limited visibility; false positives and negatives from response analysis</td></tr>
+        <tr><td><strong>Grey box</strong></td><td>Whatever the engagement grants: partial source, credentials, architecture notes</td><td>Variable, by configuration</td><td>Errors that depend on how much analysis the configuration actually enables</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; what is being analysed</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Artefact analysed</th><th>When it runs</th><th>Named in the deck</th><th>Reaches what a running-app scan cannot</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Source code</td><td>In development and CI</td><td>SonarQube, Checkmarx, Fortify, Coverity, Klocwork, CodeSonar</td><td>Dead code, unsafe patterns, insecure defaults not reachable from a request</td></tr>
+        <tr><td>Compiled binary</td><td>After build, without source</td><td>Veracode</td><td>Commercial off-the-shelf applications and third-party libraries</td></tr>
+        <tr><td>Query model of the code</td><td>Whenever a query is written</td><td>Semmle (CodeQL)</td><td>Custom, project-specific vulnerability patterns</td></tr>
+        <tr><td>Running application</td><td>Against a deployed instance</td><td>AppScan (dynamic mode), OWASP ZAP, sqlmap</td><td>Configuration, session handling and deployment-specific behaviour</td></tr>
+        <tr><td>Content and paths</td><td>Against a web server</td><td><code>dirb</code>, <code>dirbuster</code>, <code>gobuster</code></td><td>Unlinked pages and files &mdash; entry points, not vulnerabilities</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 3 &mdash; what the finding is about</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Security flaws</h3>
+      <p>Injection, script execution and authentication gaps: input reaches an interpreter or a browser without the right control in between. These need confirmation, because the indicator is a response difference rather than a proof.</p>
+    </div>
+    <div class="col-card">
+      <h3>Misconfigurations and weak areas</h3>
+      <p>Headers, TLS settings and exposed services are configurable facts, so a scanner can judge them with far higher confidence than it can judge an injection indicator. Weak areas are the prioritised issues handed to developers.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The Week 5 lecture is written in prose and gives no formulas. The symbols below are a <em>revision aid</em> introduced here so that the week's relationships can be written compactly; they are standard security-metrics notation, not lecture notation, and should not be quoted as such.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(D\)</div><div class="sym-cell">discovered</div><div class="sym-cell">Endpoints, parameters and forms found by the crawler</div>
+    <div class="sym-cell">\(P\)</div><div class="sym-cell">probed</div><div class="sym-cell">Subset of \(D\) that the prober actually exercised</div>
+    <div class="sym-cell">\(C = P/D\)</div><div class="sym-cell">coverage</div><div class="sym-cell">Fraction of the discovered surface that was tested; a session cookie raises it</div>
+    <div class="sym-cell">\(\mathrm{TP}, \mathrm{FP}\)</div><div class="sym-cell">true / false positive</div><div class="sym-cell">Reported findings that survive or fail manual confirmation</div>
+    <div class="sym-cell">\(\mathrm{FN}\)</div><div class="sym-cell">false negative</div><div class="sym-cell">Real flaws present in the target that the scan did not report</div>
+    <div class="sym-cell">\(\mathrm{TP} + \mathrm{FN}\)</div><div class="sym-cell">ground truth</div><div class="sym-cell">All real flaws, known only after manual testing</div>
+    <div class="sym-cell">\(p\)</div><div class="sym-cell">per-probe detection probability</div><div class="sym-cell">Chance that one probe reveals a given flaw; a property of the payload set</div>
+    <div class="sym-cell">\(n\)</div><div class="sym-cell">probes per slot</div><div class="sym-cell">Number of test requests sent to one parameter</div>
+    <div class="sym-cell">\(\Pr\)</div><div class="sym-cell">precision</div><div class="sym-cell">Share of alerts that are real: \(\mathrm{TP}/(\mathrm{TP}+\mathrm{FP})\)</div>
+    <div class="sym-cell">\(\mathrm{Re}\)</div><div class="sym-cell">recall</div><div class="sym-cell">Share of real flaws found: \(\mathrm{TP}/(\mathrm{TP}+\mathrm{FN})\)</div>
+    <div class="sym-cell">\(F_1\)</div><div class="sym-cell">harmonic mean</div><div class="sym-cell">Single number balancing precision and recall</div>
+    <div class="sym-cell">\(L, I\)</div><div class="sym-cell">likelihood, impact</div><div class="sym-cell">Inputs to a risk score; impact alone is severity</div>
+    <div class="sym-cell">\(R = L \times I\)</div><div class="sym-cell">risk</div><div class="sym-cell">Ordering key for the remediation backlog</div>
+    <div class="sym-cell">\(T_{\text{triage}}\)</div><div class="sym-cell">triage load</div><div class="sym-cell">Analyst time an alert queue costs before any fix is written</div>
+    <div class="sym-cell">\(\mathrm{MTTR}\)</div><div class="sym-cell">mean time to remediate</div><div class="sym-cell">Monitored alongside recurrence in the lifecycle's last stage</div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-model">
+  <h2 class="section-title">The arithmetic of scanning</h2>
+  <p class="section-lead">Five relationships explain almost every practical question about scanners: how likely a probe set is to find a flaw, why exhaustive fuzzing is impossible, how good the alert queue is, how much of the app was reached, and how to order the work.</p>
+
+  <div class="theorem-box">
+    <h3>1. Detection is a sampling problem</h3>
+    <p>If each probe independently reveals a given flaw with probability \(p\), then after \(n\) probes to the same input slot:</p>
+    \[ P(\text{detected}) \;=\; 1 - (1-p)^{n} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Consequence: raising \(n\) is what fuzzing does, and it has diminishing returns; raising \(p\) is what better probe design does &mdash; a payload set that understands the context of the parameter. Both matter, and neither can rescue a slot the crawler never discovered.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Probes per slot \(n\)</th><th>\(P(\text{detected})\) at \(p = 0.05\)</th><th>Reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>10</td><td>\(1 - 0.95^{10} \approx 0.40\)</td><td>A short payload list misses most flaws</td></tr>
+        <tr><td>20</td><td>\(1 - 0.95^{20} \approx 0.64\)</td><td>Still more than a third missed</td></tr>
+        <tr><td>60</td><td>\(1 - 0.95^{60} \approx 0.95\)</td><td>The usual operating point of a real scan</td></tr>
+        <tr><td>90</td><td>\(1 - 0.95^{90} \approx 0.99\)</td><td>Diminishing returns: 50% more requests, 4 points more detection</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Exhaustive fuzzing is not an option</h3>
+    <p>For a field of length at most \(L\) over an alphabet of size \(|\Sigma|\), the number of distinct inputs is</p>
+    \[ \left|\Sigma^{\le L}\right| \;=\; \sum_{k=1}^{L} |\Sigma|^{k} \;\approx\; \frac{|\Sigma|^{L+1}}{|\Sigma|-1} \]
+    <p style="margin-top:0.6rem;">A six-character field over the 95 printable ASCII characters has about \(7.4 \times 10^{11}\) candidates. At 100 requests per second that is roughly 233 years for one parameter. This is precisely why scanners ship curated payload sets and heuristics instead of brute force &mdash; and why understanding the vulnerability (the deck's emphasis on manual expertise) beats enumerating inputs.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The alert queue has a quality, and it is measurable</h3>
+    <p>Once a human has triaged a scan, the ground truth is known and the scanner can be scored:</p>
+    \[ \Pr \;=\; \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}, \qquad \mathrm{Re} \;=\; \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}}, \qquad F_1 \;=\; \frac{2\,\Pr\,\mathrm{Re}}{\Pr+\mathrm{Re}} \]
+    <p style="margin-top:0.6rem;">A false-positive rate in the strict sense, \(\mathrm{FP}/(\mathrm{FP}+\mathrm{TN})\), needs the number of true negatives &mdash; which a scan does not enumerate. Report the <em>false discovery rate</em> \(\mathrm{FP}/(\mathrm{TP}+\mathrm{FP})\) instead, and recall separately, because the two failure modes have different costs: precision costs analyst hours, recall costs missed vulnerabilities.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Coverage explains most silent failures</h3>
+    <p>With \(D\) endpoints discovered and \(P\) actually probed:</p>
+    \[ C \;=\; \frac{P}{D} \]
+    <p style="margin-top:0.6rem;">A scan without a session cookie typically reports \(C\) near zero for the authenticated part of the application, because every protected request returns a redirect instead of content. State coverage next to every result: a scan that reached 18% of the surface and found nothing has told you almost nothing.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Priority is risk, not severity</h3>
+    <p>Severity is impact; the ordering key for the backlog multiplies it by likelihood and exposure:</p>
+    \[ R \;=\; L \times I, \qquad \mathbb{E}[\text{loss}] \;=\; P(\text{exploit}) \times \text{impact} \]
+    <p style="margin-top:0.6rem;">Two findings with the same impact can differ by a factor of four in risk once likelihood is counted, which is why the lifecycle's <em>prioritize</em> stage ranks by risk context after the <em>assess</em> stage scores severity and impact.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Where the severity number comes from.</strong> The deck requires severity scoring but gives no formula. Industry practice is a composite such as CVSS: exploitability (attack vector, complexity, privileges required, user interaction) plus impact (confidentiality, integrity, availability), combined and rounded up to one decimal, \( \text{Base} = \operatorname{roundup}\!\big(\min(\text{Impact} + \text{Exploitability},\,10)\big) \) with \( \text{Exploitability} = 8.22 \times AV \times AC \times PR \times UI \) and \( \text{Impact} = 6.42 \times \mathrm{ISS} \) for an unchanged scope, where \( \mathrm{ISS} = 1-(1-C)(1-I)(1-A) \). Everything weighted maximum for a network-reachable flaw gives \( \mathrm{ISS} = 1-0.44^{3} = 0.9148 \), \( \text{Impact} = 5.87 \), \( \text{Exploitability} = 3.89 \) and a base score of 9.8 &mdash; the familiar critical rating. Cite it as standard practice, not as lecture content.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-metric-match"></div>
+  <script type="application/json" id="ix-metric-match">
+  {
+    "title": "Match the metric to the question it answers",
+    "subtitle": "Click a metric on the left, then the management question it settles on the right.",
+    "pairs": [
+      ["Coverage C = P/D", "How much of the discovered surface did we actually test?"],
+      ["Precision", "How much analyst time will the alert queue waste on findings that are not real?"],
+      ["Recall", "How many real flaws did the scan fail to report?"],
+      ["F1", "How do precision and recall balance in a single comparable number?"],
+      ["P(detected) = 1 − (1−p)^n", "How likely is this payload set to find a flaw in one slot?"],
+      ["Risk R = L × I", "Which finding should be fixed first?"],
+      ["Expected loss", "What is the financial exposure of leaving this unfixed?"],
+      ["MTTR and recurrence", "Are we meeting our remediation commitments, and do flaws come back?"]
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-coverage"></div>
+  <script type="application/json" id="ix-race-coverage">
+  {
+    "title": "Three scan configurations against the same 22 known flaws",
+    "subtitle": "Illustrative counts for the lab application discussed in the tutorial. The numbers show what authentication and source access buy, not measured vendor results.",
+    "max": 22,
+    "rows": [
+      { "name": "Black box, no session cookie", "value": 9, "display": "9 of 22 — 41%" },
+      { "name": "Black box, authenticated", "value": 18, "display": "18 of 22 — 82%" },
+      { "name": "White box source review", "value": 22, "display": "22 of 22 — 100%" },
+      { "name": "Manual testing only (same analyst hours)", "value": 11, "display": "11 of 22 — 50%" }
+    ]
+  }
+  </script>
+
+  <div data-ix="sequence" data-ix-src="#ix-measure-seq"></div>
+  <script type="application/json" id="ix-measure-seq">
+  {
+    "title": "Order the measurement workflow",
+    "subtitle": "Rebuild the order that turns a scan into numbers a team can act on.",
+    "steps": [
+      "Snapshot the scan output: every alert, endpoint and evidence pair",
+      "Confirm or dismiss each alert manually against the lab target",
+      "Compute precision, recall and the false discovery rate from the triaged set",
+      "State coverage alongside the results, including what the session could not reach",
+      "Score severity, then rank the confirmed findings by risk",
+      "Record the verification result and the recurrence of each flaw class"
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A scan reports 40 alerts. Manual triage confirms 24 of them and finds 6 further flaws the scan missed. What are the precision and recall?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Precision is 24/40 = 0.60 and recall is 24/(24+6) = 0.80, because the real flaws present are the 24 confirmed plus the 6 the scanner never reported." data-bad="">Precision 0.60, recall 0.80</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Recall divides by all real flaws, which includes the 6 the scanner missed — the denominator is 30, not 40.">Precision 0.60, recall 0.60</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="You have inverted the two metrics: precision is about the alerts produced, recall is about the flaws that exist.">Precision 0.80, recall 0.60</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-triage">
+  <h2 class="section-title">Worked triage arithmetic</h2>
+  <p class="section-lead">One scan of the lab application, worked end to end: coverage, precision, recall, the cost of the alert queue, and the effect of tuning the probe set.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>What the crawler found</h3>
+      <p>\(D = 400\) endpoints, parameters and forms across the public and authenticated parts of the application.</p>
+    </div>
+    <div class="glance-card">
+      <h3>What the prober reached</h3>
+      <p>\(P = 260\) of them, because part of the application needed a session the scan did not have.</p>
+    </div>
+    <div class="glance-card">
+      <h3>What came out</h3>
+      <p>30 alerts: 18 confirmed findings and 12 false positives. Manual review added 4 real flaws the scanner never reported.</p>
+    </div>
+    <div class="glance-card">
+      <h3>What it cost</h3>
+      <p>15 minutes of analyst time per alert, before a single fix was written.</p>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 1 &mdash; coverage</h3>
+    \[ C = \frac{P}{D} = \frac{260}{400} = 0.65 \]
+    <p style="margin-top:0.6rem;">Two thirds of the discovered surface was tested. The missing third is the authenticated area, which is exactly where the manual review later found the extra flaws.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 2 &mdash; precision, recall and their balance</h3>
+    \[ \mathrm{TP} = 18, \quad \mathrm{FP} = 12, \quad \mathrm{FN} = 4 \]
+    \[ \Pr = \frac{18}{30} = 0.600, \qquad \mathrm{Re} = \frac{18}{22} \approx 0.818 \]
+    \[ F_1 = \frac{2(0.600)(0.818)}{0.600+0.818} \approx 0.692 \]
+    <p style="margin-top:0.6rem;">The false discovery rate is \(12/30 = 0.40\): two alerts in five are wasted work. Recall is 82%, so roughly one real flaw in five was never surfaced by the tool.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 3 &mdash; the cost of the queue, and the cost of tuning</h3>
+    <p>At 15 minutes per alert, triage costs \(30 \times 15 = 450\) minutes, or 7.5 analyst-hours, of which \(12 \times 15 = 180\) minutes are spent on findings that turn out not to be real.</p>
+    <p style="margin-top:0.6rem;">Now suppose the probe set is tightened and nine alerts disappear: eight false positives and one true positive. Then \(\mathrm{TP} = 17\), \(\mathrm{FP} = 4\) and the queue is 21 alerts long, so</p>
+    \[ \Pr = \frac{17}{21} \approx 0.810, \qquad \mathrm{Re} = \frac{17}{22} \approx 0.773, \qquad F_1 \approx 0.791 \]
+    \[ T_{\text{triage}} = 21 \times 15 = 315\ \text{minutes} \]
+    <p style="margin-top:0.6rem;">Precision improves by 21 points and triage falls from 7.5 to 5.25 analyst-hours, at the price of one missed flaw. Whether that trade is acceptable is a risk decision, not a tooling decision &mdash; which is why the lifecycle keeps prioritisation and ownership with people.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Step 4 &mdash; ranking the backlog by risk</h3>
+    <p>Three confirmed findings, each scored with a likelihood \(L \in [0,1] \) and an impact \(I \in [1,5] \):</p>
+    \[ R_1 = 0.8 \times 5 = 4.0, \qquad R_2 = 0.5 \times 5 = 2.5, \qquad R_3 = 0.9 \times 2 = 1.8 \]
+    <p style="margin-top:0.6rem;">Order: \(F_1 \succ F_2 \succ F_3\). Ranking on impact alone would tie the first two and might promote the third, whose impact is lower but whose likelihood is the highest of the three. That difference is the whole point of the <em>prioritize</em> stage.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Sanity check on the numbers:</strong> precision and recall are only meaningful once the ground truth is known, so they are always computed <em>after</em> manual confirmation. Reporting them from scanner output alone would be circular &mdash; the scanner would be marking its own homework.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Using the numbers above, which statement about the scan is defensible?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Sixty-five percent coverage is a limitation, not a reassurance; the untested third is precisely where the manual review found four further flaws.">The scan tested two thirds of the surface, so the application is probably clean</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: coverage 0.65, precision 0.60 and recall 0.82 together describe a scan that is useful but incomplete and noisy, and the untested authenticated area is the known blind spot." data-bad="">The scan is useful but incomplete and noisy, with the authenticated area as a known blind spot</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Twelve false positives out of thirty alerts is a false discovery rate of 0.40, not a healthy queue — it consumed three analyst-hours on its own.">The alert queue is healthy, because only a third of the alerts were wasted effort</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked solution &mdash; how many probes are enough?</strong> A payload set detects a given flaw in one parameter with per-probe probability \(p = 0.04\).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Write the model.</strong> \(P(\text{detected}) = 1-(1-p)^{n}\), with \(1-p = 0.96\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Ask for 90% detection.</strong> \(0.96^{n} \le 0.10 \Rightarrow n \ln 0.96 \le \ln 0.10 \Rightarrow n \ge \frac{-2.3026}{-0.04082} \approx 56.4\). So 57 probes are needed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Check the doubling claim.</strong> Halving \(p\) to 0.02 needs \(n \ge \frac{-2.3026}{\ln 0.98} \approx 114.5\), so 115 probes: improving the payload set is worth as much as doubling the request count.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the caveat.</strong> The model assumes independence and a uniform \(p\). Real probes are correlated (the same payload family is tried in sequence) and \(p\) varies by parameter type, so treat the answer as an order of magnitude and validate it by measuring detection on the lab application.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked solution &mdash; scoring and ranking an injection finding.</strong> A confirmed SQL injection on a network-reachable search parameter: no authentication required, no user interaction, low complexity, and full loss of confidentiality, integrity and availability on the database tier. Scope is unchanged.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Impact.</strong> \(\mathrm{ISS} = 1-(1-0.56)^{3} = 0.9148\), so \(\text{Impact} = 6.42 \times 0.9148 = 5.873\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Exploitability.</strong> \(8.22 \times 0.85\,(AV{:}N) \times 0.77\,(AC{:}L) \times 0.85\,(PR{:}N) \times 0.85\,(UI{:}N) = 3.887\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Base score.</strong> \(\operatorname{roundup}(\min(5.873+3.887,\,10)) = \operatorname{roundup}(9.76) = 9.8\) &mdash; critical.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Turn the score into priority.</strong> Severity is one input. If this endpoint is internet-facing and holds customer records, \(L\) is high and \(R = L \times I\) puts it at the top of the backlog; the same 9.8 on an internal, single-user test instance would be ranked below it despite the identical score.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say what the score does not cover.</strong> It does not measure whether the flaw is reachable in your deployment, whether compensating controls exist, or what the data is worth. Those are the risk-context factors the lifecycle's prioritisation stage adds.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why is a false-positive rate of \(\mathrm{FP}/(\mathrm{FP}+\mathrm{TN})\) usually replaced by the false discovery rate in scanner triage?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. A scan enumerates alerts, not the enormous space of requests that produced no alert, so the true-negative count needed for the strict rate is unavailable." data-bad="">Because a scan does not enumerate true negatives, so the denominators for the strict rate are unknown</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Both quantities are defined from counts of alerts; the issue is which counts a scan can actually observe, not the scale of the numbers involved.">Because the strict rate is only meaningful for very large sample sizes</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The false discovery rate is not a vendor metric; it is simply the precision complement, FP/(TP+FP), and it is preferred when true negatives are unobservable.">Because the false discovery rate is the only figure scanner vendors publish</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial lab review</h2>
+  <p class="section-lead">Tutorial 5 is a tooling lab: content discovery, a proxy, a DAST scan with a report, an injection-specific scanner, and manual confirmation of everything the tools claimed. Use the checklist below to audit what you produced.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Content discovery</h3>
+      <p>Point a dictionary-based content scanner at your own DVWA host from the Kali VM and compare the output of two tools. Record which files and folders each one reports &mdash; and which one the other missed.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Proxy and request control</h3>
+      <p>Configure Burp Suite as the browser's proxy, log into DVWA, and capture the request to the brute-force page. Identify the session cookie, the parameters, and how a dictionary attack would differ from a manual attempt.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Scan and report</h3>
+      <p>Run ZAP (or OpenVAS) against DVWA and save the report. Group findings by mechanism and pick one representative SQLi, one XSS and one CSRF for manual confirmation.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Confirm and explain</h3>
+      <p>For each representative finding, reproduce it in the DVWA interface, state why it was detected, and name the control that is missing. That is the analysis step the deck describes.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Tutorial task</th><th>Tool</th><th>Evidence to capture</th><th>What it teaches about scanners</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Discover web objects</td><td><code>dirb</code>, <code>gobuster</code></td><td>Two result lists, with the differences highlighted</td><td>Discovery widens the surface a scanner can probe; it is not itself a vulnerability scan</td></tr>
+        <tr><td>Intercept and replay requests</td><td>Burp Suite</td><td>The captured request, the edited request, the site map</td><td>How a scanner's probe stage is constructed, and why one variable at a time matters</td></tr>
+        <tr><td>Attack the lab login by dictionary</td><td>Burp Suite, then Hydra</td><td>The request shape, the response on success and failure, the lockout behaviour</td><td>Credential testing is a distinct technique from injection scanning, and it has side effects</td></tr>
+        <tr><td>Scan and generate a report</td><td>OWASP ZAP or OpenVAS</td><td>The saved report, plus the session state used for the scan</td><td>Coverage depends on authentication: an unauthenticated scan cannot see the protected area</td></tr>
+        <tr><td>Confirm findings manually</td><td>DVWA web interface</td><td>One demonstrated SQLi, one XSS, one CSRF</td><td>Triage: a risk indicator is a candidate until a human reproduces it and names the cause</td></tr>
+        <tr><td>Targeted injection testing</td><td>sqlmap</td><td>Which technique worked, with verbose logging, and the evidence from the lab database</td><td>Specialised scanners trade breadth for depth and need a confirmed entry point to be useful</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-terms"></div>
+  <script type="application/json" id="ix-m-terms">
+  {
+    "title": "Self-test: terms and what they commit you to",
+    "subtitle": "Say the definition out loud before you flip the card.",
+    "cards": [
+      { "front": "Web content scanner", "back": "A dictionary-based tool that looks for web objects, hidden or otherwise, by requesting common paths and analysing the responses. It finds entry points, not vulnerabilities.", "hint": "Discovery" },
+      { "front": "Intercepting proxy", "back": "A tool placed between browser and server so every request can be read, edited, replayed and mapped — Burp Suite's core capability, with content scanning, site map and token analysis around it.", "hint": "Tooling" },
+      { "front": "Sequencer", "back": "The Burp Suite component that assesses the predictability and randomness of tokens such as session identifiers.", "hint": "Burp features" },
+      { "front": "False positive", "back": "An alert for a flaw that is not present or not exploitable — the reason a scan report is a work queue rather than a result.", "hint": "Triage" },
+      { "front": "Coverage C = P/D", "back": "The fraction of discovered endpoints the prober actually tested. It is the number that explains why an unauthenticated scan of a login-protected app finds nothing.", "hint": "Measurement" },
+      { "front": "Regression testing", "back": "Retesting modified components to confirm the fix removed the flaw without introducing a new vulnerability or breaking existing functionality.", "hint": "Lifecycle" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; triaging one scanner alert with the numbers attached.</strong> Alert: &ldquo;possible SQL injection&rdquo; on a search parameter of the lab application. Scanner confidence: medium. Time budgeted: 15 minutes.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Start from the evidence pair, not the title.</strong> Read the stored baseline and probe responses. If the difference is a status code alone, the alert is probably robustness; if the boolean pair returns different result sets, the indicator is strong.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Reproduce deterministically.</strong> Replay the exact request three times. Variation in the response by itself tells you the indicator is unstable and the alert needs more work before it can be scored.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Classify.</strong> Confirmed true positive: the parameter reaches a query and the response changes with the injected condition. Dismissed false positive: the string is escaped, or the difference is explained by dynamic content. Either way the decision is recorded with its evidence.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Score and rank.</strong> Score severity from impact, then compute \(R = L \times I\) using the exposure of this endpoint. One confirmed SQLi on an authenticated admin route outranks a dozen low-impact header findings, even though header findings are almost never false positives.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Feed the result back.</strong> A confirmed flaw belongs in the remediation backlog with an owner; a dismissed one is a data point for tuning the payload set. Both outcomes improve the next scan, and both are needed for precision and recall to be computed honestly.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A scan of the same application is run twice: once unauthenticated and once with a session cookie. Coverage rises from 0.18 to 0.83 and the alert count triples. What is the correct interpretation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="More alerts do not mean the application became less secure between two scans. The second scan simply reached a much larger part of it.">The application became less secure between the two scans</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The authenticated scan probed far more of the surface, so it produced more alerts — most of them in functionality the first scan could never reach. Compare precision and recall, not alert counts." data-bad="">The authenticated scan probed far more of the surface, so the larger alert count is expected</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Rising coverage does not invalidate the second scan; it is the reason the second scan is the meaningful one. The first scan's low coverage is what should be questioned.">The second scan is invalid because its alert count is not comparable to the first</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Scope and ethics, restated:</strong> every technique on this page is exercised against a deliberately vulnerable application on your own isolated virtual machines. Scanning, fuzzing or brute-forcing a system you do not own or have written authorisation to test is an offence. In this unit, authorisation is part of the tooling.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5618ChapterUI) return;
+    try {
+      window.initCOMP5618ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5618 chapter 5] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

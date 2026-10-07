@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind map — Week 4: Analogue Input and Output</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind map — Week 4 — Hierarchical mind map of analogue input and output on the Arduino: ADC resolution, PWM, voltage dividers, calibration and timing.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind map — Week 4: Analogue Input and Output">
+<meta property="og:description" content="Mind map — Week 4 — Hierarchical mind map of analogue input and output on the Arduino: ADC resolution, PWM, voltage dividers, calibration and timing.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter4-study.html">&larr; Study guide</a>
+  <a href="chapter4-math.html">Foundations</a>
+  <a href="../../../index.html">&#127968; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Week 4 mind map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand all</button>
+    <button id="btnCollapseAll">Collapse all</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Signals &amp; conversion</span>
+  <span><span class="dot" style="background:var(--green)"></span> Wiring &amp; sensors</span>
+  <span><span class="dot" style="background:var(--purple)"></span> Code patterns &amp; timing</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Numbers &amp; calibration</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Week 4: Analogue Input and Output (Arduino Part 2)",
+  label_zh: "第 4 周：模拟输入与输出（Arduino 第二部分）",
+  children: [
+    {
+      label: "Digital I/O recap",
+      label_zh: "数字输入输出回顾",
+      color: "blue",
+      href: "chapter4-study.html#sec-recap",
+      children: [
+        { label: "Microcontroller: CPU, memory and I/O on one chip", label_zh: "微控制器：CPU、内存与 I/O 集成于一芯片", href: "chapter4-study.html#sec-recap" },
+        { label: "Voltage, current, resistance, Ohm's law V = IR", label_zh: "电压、电流、电阻与欧姆定律 V = IR", href: "chapter4-study.html#sec-recap" },
+        { label: "digitalRead() and digitalWrite(): HIGH or LOW", label_zh: "digitalRead() 与 digitalWrite()：HIGH 或 LOW", href: "chapter4-study.html#sec-recap" },
+        { label: "Pull-up and pull-down resistors define a floating input", label_zh: "上拉与下拉电阻为悬空输入确定电平", href: "chapter4-study.html#sec-recap" },
+        { label: "The traffic light example, refactored", label_zh: "红绿灯示例及其重构", href: "chapter4-study.html#sec-recap" }
+      ]
+    },
+    {
+      label: "Non-blocking timing",
+      label_zh: "非阻塞定时",
+      color: "purple",
+      href: "chapter4-study.html#sec-timing",
+      children: [
+        { label: "delay() suspends loop(), so inputs are missed", label_zh: "delay() 挂起 loop()，输入因此被错过", href: "chapter4-study.html#sec-timing" },
+        { label: "millis() gives elapsed time since power-up", label_zh: "millis() 给出上电以来的流逝时间", href: "chapter4-study.html#sec-timing" },
+        { label: "Store when it happened, test every pass", label_zh: "记录发生时刻，每一趟都做判断", href: "chapter4-study.html#sec-timing" },
+        { label: "Subtract, so the wrap-around is safe", label_zh: "用减法比较，以安全应对溢出回绕", href: "chapter4-study.html#sec-timing" }
+      ]
+    },
+    {
+      label: "Debouncing button input",
+      label_zh: "按键输入去抖",
+      color: "green",
+      href: "chapter4-study.html#sec-debounce",
+      children: [
+        { label: "Mechanical contacts bounce for 0.5–10 ms", label_zh: "机械触点抖动 0.5–10 毫秒", href: "chapter4-study.html#sec-debounce" },
+        { label: "One press can count as three or four", label_zh: "一次按压可能被计为三四次", href: "chapter4-study.html#sec-debounce" },
+        { label: "Accept a level only after it stays stable", label_zh: "只有电平保持稳定后才予采纳", href: "chapter4-study.html#sec-debounce" },
+        { label: "RC filter and Schmitt trigger as the hardware option", label_zh: "RC 滤波加施密特触发器作为硬件方案", href: "chapter4-study.html#sec-debounce" }
+      ]
+    },
+    {
+      label: "Digital versus analogue",
+      label_zh: "数字与模拟之别",
+      color: "blue",
+      href: "chapter4-study.html#sec-analog",
+      children: [
+        { label: "Continuous world, discrete machine", label_zh: "连续的世界，离散的机器", href: "chapter4-study.html#sec-analog" },
+        { label: "Transducer, sensor, actuator", label_zh: "换能器、传感器、执行器", href: "chapter4-study.html#sec-analog" },
+        { label: "Sampling in time, quantisation in amplitude", label_zh: "时间上采样，幅度上量化", href: "chapter4-study.html#sec-analog" },
+        { label: "Arduinos are digital only — no DAC on the ATmega328P", label_zh: "Arduino 只有数字输出——ATmega328P 没有 DAC", href: "chapter4-study.html#sec-analog" }
+      ]
+    },
+    {
+      label: "analogRead() and the ADC",
+      label_zh: "analogRead() 与 ADC",
+      color: "purple",
+      href: "chapter4-study.html#sec-adc",
+      children: [
+        { label: "Pins A0–A5, one multiplexed 10-bit converter", label_zh: "A0–A5 引脚，共用一个 10 位转换器", href: "chapter4-study.html#sec-adc" },
+        { label: "0–1023 against a 5 V reference", label_zh: "以 5 V 为基准得到 0–1023", href: "chapter4-study.html#sec-adc" },
+        { label: "One code ≈ 4.883 mV; ~100 µs per conversion", label_zh: "一个码约 4.883 mV；每次转换约 100 µs", href: "chapter4-study.html#sec-adc" },
+        { label: "Step size q = V_REF / 2^N and the code count", label_zh: "步长 q = V_REF / 2^N 与码值数量", href: "chapter4-math.html#sec-m-quant" },
+        { label: "Sampling rate, Nyquist and averaging", label_zh: "采样率、奈奎斯特与平均", href: "chapter4-math.html#sec-m-sampling" }
+      ]
+    },
+    {
+      label: "analogWrite() and PWM",
+      label_zh: "analogWrite() 与 PWM",
+      color: "yellow",
+      href: "chapter4-study.html#sec-pwm",
+      children: [
+        { label: "Duty cycle D = t_on / T, average D × V_CC", label_zh: "占空比 D = t_on / T，平均值 D × V_CC", href: "chapter4-study.html#sec-pwm" },
+        { label: "8-bit output: 0–255 on the ~ pins", label_zh: "8 位输出：在带 ~ 的引脚上取 0–255", href: "chapter4-study.html#sec-pwm" },
+        { label: "PWM pins ~3, ~5, ~6, ~9, ~10, ~11 at ~490 Hz", label_zh: "PWM 引脚 ~3、~5、~6、~9、~10、~11，约 490 Hz", href: "chapter4-study.html#sec-pwm" },
+        { label: "RC filter: f_c = 1/(2πRC) and the ripple formula", label_zh: "RC 滤波：f_c = 1/(2πRC) 与纹波公式", href: "chapter4-math.html#sec-m-pwm" },
+        { label: "ESP32 alternatives: LEDC, delta-sigma, DAC on 25 and 26", label_zh: "ESP32 的替代方案：LEDC、delta-sigma、25 与 26 脚的 DAC", href: "chapter4-study.html#sec-pwm" }
+      ]
+    },
+    {
+      label: "Voltage dividers and sensors",
+      label_zh: "分压电路与传感器",
+      color: "green",
+      href: "chapter4-study.html#sec-divider",
+      children: [
+        { label: "V_out = V_in × R2 / (R1 + R2)", label_zh: "V_out = V_in × R2 / (R1 + R2)", href: "chapter4-study.html#sec-divider" },
+        { label: "A potentiometer is a divider with a moving junction", label_zh: "电位器就是接点可移动的分压器", href: "chapter4-study.html#sec-divider" },
+        { label: "Choose the fixed resistor near the mid-range resistance", label_zh: "固定电阻取值接近量程中点的电阻", href: "chapter4-study.html#sec-divider" },
+        { label: "Photoresistor, phototransistor, temperature, flex, force", label_zh: "光敏电阻、光电晶体管、温度、弯曲、压力", href: "chapter4-study.html#sec-sensors" },
+        { label: "Joystick, accelerometer, gyroscope, magnetometer", label_zh: "摇杆、加速度计、陀螺仪、磁力计", href: "chapter4-study.html#sec-sensors" }
+      ]
+    },
+    {
+      label: "Calibration and the serial monitor",
+      label_zh: "校准与串口监视器",
+      color: "yellow",
+      href: "chapter4-study.html#sec-calibration",
+      children: [
+        { label: "Two-point calibration: x = a·r + b", label_zh: "两点校准：x = a·r + b", href: "chapter4-math.html#sec-m-calibration" },
+        { label: "map() and constrain() in the sketch", label_zh: "在代码中使用 map() 与 constrain()", href: "chapter4-study.html#sec-calibration" },
+        { label: "Serial.begin(9600), print, and the Serial Plotter", label_zh: "Serial.begin(9600)、print 与串口绘图器", href: "chapter4-study.html#sec-calibration" },
+        { label: "Non-linearity: tables, power laws, Steinhart–Hart", label_zh: "非线性：查表、幂律、Steinhart–Hart 方程", href: "chapter4-math.html#sec-m-calibration" },
+        { label: "Pins 0 and 1 are the UART — keep them free", label_zh: "0 与 1 脚是串口——请留空", href: "chapter4-study.html#sec-calibration" }
+      ]
+    },
+    {
+      label: "Foundations bridge",
+      label_zh: "基础知识衔接",
+      color: "blue",
+      href: "chapter4-math.html#sec-m-defs",
+      children: [
+        { label: "Definitions and the symbol glossary", label_zh: "定义与符号表", href: "chapter4-math.html#sec-m-defs" },
+        { label: "Quantisation, LSB and choosing a resolution", label_zh: "量化、LSB 与分辨率的选择", href: "chapter4-math.html#sec-m-quant" },
+        { label: "PWM filtering: ripple versus settling time", label_zh: "PWM 滤波：纹波与建立时间的取舍", href: "chapter4-math.html#sec-m-pwm" },
+        { label: "The sensor bring-up checklist", label_zh: "传感器调试检查清单", href: "chapter4-math.html#sec-m-checklist" }
+      ]
+    }
+  ]
+};
+renderMindmap('mindmapCanvas', data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

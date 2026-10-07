@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 2: AI-Assisted Vulnerability Discovery</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 foundations for INFO5995: tokenisation and the context-window budget, the economics of AI-assisted code review, precision, recall and screening arithmetic for unverified findings, fuzzing coverage, and the cost model for choosing between AI scanning and human verification.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 2: AI-Assisted Vulnerability Discovery">
+<meta property="og:description" content="Week 2 foundations for INFO5995: tokenisation and the context-window budget, the economics of AI-assisted code review, precision, recall and screening arithmetic for unverified findings, fuzzing coverage, and the cost model for choosing between AI scanning and human verification.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 2 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-notation" class="toc-link">Notation for an investigation</a></li>
+  </ul>
+  <div class="toc-group">Quantities</div>
+  <ul>
+    <li><a href="#sec-m-tokens" class="toc-link">Tokens, context and cost</a></li>
+    <li><a href="#sec-m-screening" class="toc-link">Screening arithmetic</a></li>
+    <li><a href="#sec-m-coverage" class="toc-link">Coverage and the cost model</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Classifying an AI finding</a></li>
+  </ul>
+  <a href="chapter2-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 2 supplement</p>
+  <h1>Foundations: the arithmetic behind AI-assisted discovery</h1>
+  <p class="hero-desc">Week 2 is a workflow week, not a theorem week &mdash; so this page does the equivalent job. It pins down the definitions the lecture relies on, gives you a compact notation for an investigation, then quantifies the four things that actually decide whether AI-assisted discovery works: the token budget, the screening arithmetic of an unverified finding list, the coverage of a fuzzing campaign, and the cost of verifying a claim before you act on it.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the lecture deck</span>
+    <span>Screening and coverage maths is standard detection theory</span>
+    <span>Cost figures are illustrative, not lecture numbers</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">These five terms carry the whole week. Write each one in a single sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Hallucination</div>
+    <p>The model produces something that sounds correct but is <strong>not grounded in reality</strong>. In this unit: a reported vulnerability with no reachable path through the code &mdash; fluent, specific, and unverifiable.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Static analysis</div>
+    <p>Examining code <em>without executing it</em> &mdash; parsing it into a representation and applying rules or queries to that representation. It gives deterministic, reproducible, whole-codebase coverage with file-and-line output; it cannot observe runtime behaviour, and a warning is not a reachable vulnerability.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Fuzzing</div>
+    <p>Supplying generated or mutated inputs to a running program and observing the result. Unlike a static warning or an AI claim, a fuzzing crash is <strong>dynamic evidence</strong>: it demonstrates that the input actually reaches the fault.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Reasoning model</div>
+    <p>A model that performs additional internal processing &mdash; an internal scratchpad, often hundreds or thousands of tokens, exposed only as a &ldquo;thinking&rdquo; indicator and an effort setting &mdash; before producing its answer. The deck's caveat: more reasoning can improve performance, but it does <strong>not</strong> guarantee a correct answer.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">AI agent (security context)</div>
+    <p>A model that can decide whether to answer directly or <strong>call a tool to gather evidence</strong>, then reason over the tool's result. The tool supplies facts; the model supplies the decision about what to do next. Authority and boundaries are a separate design decision from capability.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hallucination</td><td>Sounds correct <em>and</em> is ungrounded</td><td>&ldquo;The model made a typo&rdquo; &mdash; that is an error, not a hallucination</td></tr>
+        <tr><td>Static analysis</td><td>No execution; rule or query over a parsed representation</td><td>Confusing it with a linter's style warnings, or claiming its output is proof of exploitability</td></tr>
+        <tr><td>Fuzzing</td><td>Generated inputs against a running target</td><td>Calling any automated testing &ldquo;fuzzing&rdquo; &mdash; the defining feature is input generation and observation</td></tr>
+        <tr><td>Reasoning model</td><td>Extra internal processing before the answer</td><td>&ldquo;A model that is always right&rdquo; &mdash; the deck explicitly denies the guarantee</td></tr>
+        <tr><td>AI agent</td><td>Decides whether to call a tool, and acts on the result</td><td>Saying it is &ldquo;just a chatbot with a bigger context window&rdquo;; the tool call is the defining behaviour</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about static analysis is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Not executing the program is the definition of static analysis. Running the target and observing behaviour is dynamic analysis.">It runs the program on crafted inputs and records how it behaves</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Static analysis examines code without executing it, which is what makes it deterministic and whole-codebase — and what stops it from proving reachability or exploitability on its own." data-bad="">It examines code without executing it and produces reproducible, file-and-line results</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A static warning shows that a pattern matched a rule. Whether any input reaches that code is a separate question that needs a data path or a dynamic test.">A warning it produces proves the vulnerability is exploitable</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">Notation for an investigation</h2>
+  <p class="section-lead">The lecture is written in prose and diagrams. The symbols below are a <em>revision aid</em> introduced on this page so you can write about the week's relationships compactly; they are not lecture notation and should not be quoted as such.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">tokens</div><div class="sym-cell">The unit an LLM actually processes; text, code and traces are all converted into token sequences</div>
+    <div class="sym-cell">\(W\)</div><div class="sym-cell">context window</div><div class="sym-cell">The maximum number of tokens visible to the model at once, prompt and response together</div>
+    <div class="sym-cell">\(L\)</div><div class="sym-cell">codebase size</div><div class="sym-cell">Total tokens of the target; in a real repository \(L \gg W\)</div>
+    <div class="sym-cell">\(\ell\)</div><div class="sym-cell">review unit</div><div class="sym-cell">The slice you actually supply: one entry point with its callees, not the whole tree</div>
+    <div class="sym-cell">\(c\)</div><div class="sym-cell">cost per token</div><div class="sym-cell">Price of input plus output tokens; the reason a workflow is designed around slices</div>
+    <div class="sym-cell">\(P\)</div><div class="sym-cell">precision</div><div class="sym-cell">Fraction of reported findings that are real; the inverse of the false-positive problem</div>
+    <div class="sym-cell">\(R\)</div><div class="sym-cell">recall</div><div class="sym-cell">Fraction of the real vulnerabilities present that were found</div>
+    <div class="sym-cell">\(\mathrm{FPR}\)</div><div class="sym-cell">false-positive rate</div><div class="sym-cell">\(1-P\): the share of the report you must dismiss by hand</div>
+    <div class="sym-cell">\(C_v\)</div><div class="sym-cell">verification cost</div><div class="sym-cell">Human minutes spent confirming or refuting one candidate finding</div>
+    <div class="sym-cell">\(E\)</div><div class="sym-cell">evidence</div><div class="sym-cell">The artefact that makes a claim checkable: file and line, data path, trace, minimal reproducer</div>
+    <div class="sym-cell">\(A\)</div><div class="sym-cell">authority</div><div class="sym-cell">Written scope: which targets, which tools, which actions are permitted</div>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">The one relationship to remember</div>
+    <p>A candidate finding is a <strong>claim</strong>, and a claim is only as useful as the evidence attached to it. Formally, a finding is a triple</p>
+    \[ F \;=\; \langle\, \text{location},\; \text{mechanism},\; E \,\rangle \]
+    <p>where \(E\) is the evidence. If \(E = \varnothing\) the triple describes a hypothesis, not a vulnerability &mdash; regardless of how fluent the prose around it is. All of this week's countermeasures exist to force \(E \neq \varnothing\).</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-terms"></div>
+  <script type="application/json" id="ix-m-terms">
+  {
+    "title": "Match the symbol to what it measures",
+    "subtitle": "Click a symbol on the left, then the quantity it stands for on the right.",
+    "pairs": [
+      ["\\(W\\)", "The maximum number of tokens the model can see at once"],
+      ["\\(L \\gg W\\)", "Why a whole repository cannot be reviewed in one prompt"],
+      ["\\(\\ell\\)", "The review unit: one entry point with its callees"],
+      ["\\(P = 1 - \\mathrm{FPR}\\)", "The share of reported findings that turn out to be real"],
+      ["\\(R\\)", "The share of real vulnerabilities that were actually found"],
+      ["\\(C_v\\)", "The human minutes needed to confirm or refute one candidate"],
+      ["\\(E = \\varnothing\\)", "A hypothesis rather than a vulnerability"]
+    ]
+  }
+  </script>
+</section>
+
+<section class="section" id="sec-m-tokens">
+  <h2 class="section-title">Tokens, context and the cost of looking</h2>
+  <p class="section-lead">The deck's three constraints are all quantities: repositories are huge, the context window is small, and text is processed in a relatively &ldquo;cheap&rdquo; way. Put numbers on them and the workflow design follows.</p>
+
+  <div class="theorem-box">
+    <h3>1. The context budget</h3>
+    <p>A prompt must fit the window, together with everything the model will generate and everything the conversation has already accumulated:</p>
+    \[ T_{\text{system}} + T_{\text{history}} + T_{\text{context}} + T_{\text{output}} \;\le\; W \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Practical consequence: a long investigation fills its own window. Every tool result and every earlier exchange competes with the code you still want to show &mdash; which is why the deck prescribes summarising what has already been checked into a file or a table instead of carrying the whole transcript.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Slicing a codebase that does not fit</h3>
+    <p>If \(L\) is the size of the target and \(\ell\) the size of one review unit, the number of units to process is</p>
+    \[ n \;=\; \left\lceil \frac{L}{\ell} \right\rceil \]
+    <p style="margin-top:0.6rem;">With \(L = 400\,000\) tokens (a mid-sized repository) and a generous \(\ell = 8\,000\) tokens, \(n = 50\) units. Note what this does <em>not</em> give you: a unit boundary cuts call chains, so cross-module data paths are exactly the ones a slice-and-prompt workflow is most likely to miss.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The cost of one pass</h3>
+    <p>Ignoring the conversation history term for a single-pass run:</p>
+    \[ \text{cost} \;\approx\; c \cdot n \cdot \left( \ell + \overline{T}_{\text{out}} \right) \]
+    <p style="margin-top:0.6rem;">Two facts about this expression matter more than the number it produces. Cost is linear in the number of units, so <strong>coverage is bought in slices</strong>. And the deck's countermeasure to missed findings &mdash; run multiple times, change the phrasing, use different models and temperatures &mdash; multiplies this expression by the number of passes \(m\). Re-running for coverage is a deliberate cost, not a free retry.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Workflow choice</th><th>Effect on the model</th><th>Cost consequence</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Supply syntax, language and build files with an obscure-language listing</td><td>Removes the need to <em>guess</em> token boundaries, keywords, structure and grammar &mdash; reduces hallucinated structure borrowed from C, Python or Java style</td><td>A few hundred extra input tokens per call, against a large reduction in wasted output</td></tr>
+        <tr><td>Ask one narrow question with a defined output format</td><td>Shortens \(T_{\text{out}}\) and makes the answer checkable</td><td>Falls directly</td></tr>
+        <tr><td>Ask &ldquo;review everything&rdquo; on a large artefact</td><td>The model samples the surface and stops at the first obvious issue</td><td>Cheap per call, and the expensive part is the human time spent on shallow findings</td></tr>
+        <tr><td>Escalate to a reasoning model at high effort</td><td>Hidden internal tokens are spent before the answer</td><td>\(T_{\text{out}}\) grows substantially; you pay for thinking you cannot audit directly</td></tr>
+        <tr><td>Let an agent drive tools instead of pasting files</td><td>The tool returns only the relevant evidence, so the window is spent on facts rather than on whole files</td><td>Shifts cost from tokens to tool calls and execution time</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why &ldquo;cheap text processing&rdquo; is the whole argument for agents.</strong> If the model can read text economically and a repository cannot fit in the window, the only way to see the whole repository is to <em>act</em> on it &mdash; search it, count it, diff it, run an analyser over it &mdash; and read back the small result. That is precisely the step from a reasoning model to a terminal AI agent.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team doubles the number of review passes over the same code to improve coverage. What happens to the quantities on this page?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Repeating a run is exactly the deck's countermeasure for models that miss things — it is expected to find additional issues, not the same ones.">Recall is unchanged because the same code is analysed</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Cost is linear in the number of passes, m, so it multiplies; the extra passes exist because recall is imperfect and non-deterministic, so they are expected to surface findings a single run missed — at the price of a longer list for a human to verify." data-bad="">Cost scales with the number of passes, and the extra passes are aimed at recall that a single run does not deliver</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Precision is a property of what gets reported. Running more passes typically adds both real findings and false positives, so precision does not improve automatically.">Precision improves because agreement between runs filters out false positives</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-screening">
+  <h2 class="section-title">Screening arithmetic: what an unverified list really costs</h2>
+  <p class="section-lead">An AI report is a screening test. Standard detection arithmetic tells you exactly what is wrong with acting on one before verification &mdash; and why the false-positive problem is a budget problem, not an annoyance.</p>
+
+  <div class="theorem-box">
+    <h3>1. Precision, recall and the false-positive rate</h3>
+    <p>Let \(TP\) be real vulnerabilities correctly reported, \(FP\) the fabricated or unreachable ones, and \(FN\) the real ones missed. Then</p>
+    \[ P \;=\; \frac{TP}{TP + FP}, \qquad R \;=\; \frac{TP}{TP + FN}, \qquad \mathrm{FPR} \;=\; \frac{FP}{TP + FP} \;=\; 1 - P \]
+    <p style="margin-top:0.6rem;">Recall measures what you failed to see; precision measures what you will waste time on. A tool can be excellent at one and useless at the other, so never quote a single number as &ldquo;the accuracy&rdquo;.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The verification budget</h3>
+    <p>If a report contains \(N = TP + FP\) candidates and each candidate costs \(C_v\) human minutes to confirm or refute, the screening cost is</p>
+    \[ T_{\text{verify}} \;=\; N \cdot C_v, \qquad T_{\text{wasted}} \;=\; FP \cdot C_v \;=\; (1-P)\cdot N \cdot C_v \]
+    <p style="margin-top:0.6rem;">Worked figure: \(N = 200\), \(C_v = 4\) minutes. Then \(T_{\text{verify}} = 800\) minutes &asymp; 13.3 hours. At \(P = 0.25\), three quarters of that &mdash; 600 minutes, 10 hours &mdash; is spent refuting fabrications. At \(P = 0.10\) the same list costs the same 13.3 hours for 20 real findings instead of 50. <em>Lower precision does not save time; it converts the same time into less result.</em></p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The cost of a miss</h3>
+    <p>A missed vulnerability is not free just because nothing was reported. With \(FN\) misses and an average cost of exposure \(C_{\text{exp}}\) (incident response, remediation, disclosure, downtime),</p>
+    \[ C_{\text{miss}} \;=\; FN \cdot C_{\text{exp}} \]
+    <p style="margin-top:0.6rem;">This is why the two failure modes are managed differently. Against hallucination you demand evidence, because every fabrication spends \(C_v\). Against misses you spend more passes and more techniques, because every miss hands \(C_{\text{exp}}\) to somebody else.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-race"></div>
+  <script type="application/json" id="ix-m-race">
+  {
+    "title": "Illustrative report composition at 200 candidates",
+    "subtitle": "Three illustrative precision levels on the same list size. A revision aid for the arithmetic above, not measured data from any tool.",
+    "max": 200,
+    "rows": [
+      { "name": "P = 0.50 — real findings", "value": 100, "display": "100 real · 100 to refute" },
+      { "name": "P = 0.25 — real findings", "value": 50, "display": "50 real · 150 to refute" },
+      { "name": "P = 0.10 — real findings", "value": 20, "display": "20 real · 180 to refute" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Why the deck's countermeasures are stated as questions, not settings.</strong> &ldquo;Ask for concrete proof. Ask for a minimal reproducible example. Ask for the exact execution trace.&rdquo; Each of those requests is a filter on the right-hand side of \(P = TP/(TP+FP)\): it does not make the model more capable, it makes candidates cheap to reject. A finding that cannot produce a trace can be dismissed in seconds instead of traced by hand, and \(T_{\text{wasted}}\) collapses.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A tool reports 200 candidates at \(P = 0.25\), and \(C_v = 4\) minutes per candidate. Roughly how much human time is spent refuting findings that are not real?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="800 minutes is the total verification cost N &middot; Cv. The question asks only for the wasted share, which is FP &middot; Cv.">About 800 minutes, because every candidate must be checked</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. FP = (1 - 0.25) &times; 200 = 150 candidates, and 150 &times; 4 = 600 minutes — ten hours of a 13.3-hour verification budget spent refuting fabrications." data-bad="">About 600 minutes: 150 false positives at 4 minutes each</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is TP &middot; Cv — the time spent on real findings, which is the part you want. The wasted time is the false-positive term.">About 200 minutes, the time spent confirming the 50 real findings</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-coverage">
+  <h2 class="section-title">Coverage, fuzzing and the cost of finding one bug</h2>
+  <p class="section-lead">Two more quantities decide whether a technique is worth running: how much of the input space it reaches, and how much effort each confirmed finding costs in total.</p>
+
+  <div class="theorem-box">
+    <h3>1. Coverage is a fraction of a space you cannot enumerate</h3>
+    <p>For a fuzzing campaign, define coverage over the observable surface of the target &mdash; basic blocks, branches, or the fraction of the input space that reaches them:</p>
+    \[ \text{cov} \;=\; \frac{|\text{covered}|}{|\text{reachable}|}, \qquad 0 \le \text{cov} \le 1 \]
+    <p style="margin-top:0.6rem;">Coverage is a proxy, not a verdict. High statement coverage with low <em>branch</em> coverage hides the paths that only execute under a rare guard, and those are where interesting faults live. Always ask which denominator a coverage number uses.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Campaigns find bugs at a decreasing rate</h3>
+    <p>Empirically, a fuzzing campaign's cumulative unique findings tend to follow a saturating curve rather than a line:</p>
+    \[ B(t) \;=\; B_{\max}\left(1 - e^{-\lambda t}\right) \]
+    <p style="margin-top:0.6rem;">where \(t\) is elapsed fuzzing time and \(\lambda\) the discovery rate constant. Three consequences worth remembering: the first minutes are the most productive; the marginal bug gets steadily more expensive; and you can only tell a plateau from a slow region by <em>changing the seed corpus, the mutation strategy or the harness</em> &mdash; the same lesson as &ldquo;a single prompt run misses things&rdquo;.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Cost per confirmed finding</h3>
+    <p>Putting the pieces together for one technique over one target:</p>
+    \[ C_{\text{finding}} \;=\; \frac{C_{\text{run}} + N \cdot C_v + C_{\text{proof}}}{TP_{\text{confirmed}}} \]
+    <p style="margin-top:0.6rem;">where \(C_{\text{run}}\) is compute and model spend, \(N\cdot C_v\) is the screening cost from the previous section, \(C_{\text{proof}}\) is the cost of building the minimal reproducer, and only <em>confirmed</em> findings are counted in the denominator. This is the number to compare between techniques &mdash; not raw finding counts, and not token price.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Technique</th><th>What it supplies</th><th>Typical blind spot</th><th>Evidence quality</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Manual review</td><td>Intent, contracts, design and logic flaws</td><td>Scale: it cannot cover a whole repository</td><td>Strong on the paths a human actually read</td></tr>
+        <tr><td>Static analysis</td><td>Deterministic whole-codebase rule coverage with locations</td><td>Reachability and runtime state; a match is not an exploit</td><td>Reproducible, but indirect</td></tr>
+        <tr><td>Fuzzing</td><td>Dynamic proof: an input that actually triggers the fault</td><td>Only reaches what the harness and corpus reach</td><td>Direct &mdash; the crash is observed</td></tr>
+        <tr><td>LLM code review</td><td>Pattern recognition at volume across unfamiliar languages</td><td>Hallucination, laziness and framing sensitivity; no ground truth</td><td>None until a human verifies &mdash; \(E = \varnothing\) by default</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Scenario</th><th>Dominant cost term</th><th>Right response</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Low precision report from a broad scan</td><td>\(N \cdot C_v\) &mdash; screening dominates</td><td>Filter the workflow: demand traces and minimal reproducers, and prioritise reachable paths before verifying anything</td></tr>
+        <tr><td>High precision, low recall</td><td>\(FN \cdot C_{\text{exp}}\) &mdash; misses dominate</td><td>More passes, different models and temperatures, a second technique, and self-critique prompts</td></tr>
+        <tr><td>Repository far larger than the window</td><td>\(n\) units &times; passes &mdash; \(L/\ell\) dominates</td><td>Move to an agent with tools so evidence is fetched on demand instead of pasted</td></tr>
+        <tr><td>Decompiled or proof-level artefacts</td><td>Effort per unit &mdash; the signal is weak</td><td>Treat AI output as hypothesis generation only; verify against the artefact itself</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A fuzzing campaign reports 90&nbsp;% statement coverage and 41&nbsp;% branch coverage after two hours, with no new crashes in the last 40 minutes. What is the best interpretation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Statement coverage counts lines executed, not the guards taken. The large gap between the two numbers is itself the warning sign.">The campaign is essentially complete because statement coverage is high</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The gap between statement and branch coverage means many guards are never evaluated in both directions, and a flat stretch can be a genuine plateau or a slow region — the only way to tell is to change the seed corpus, the mutation strategy or the harness." data-bad="">Many conditional paths are never exercised, and the flat stretch cannot be distinguished from a plateau without changing the corpus, mutation strategy or harness</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The curve B(t) = Bmax(1 − e^(−λt)) saturates, so elapsed time alone never proves there are no more bugs. Absence of crashes is not evidence of absence.">No crashes in 40 minutes proves the remaining branches contain no faults</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Classifying an AI finding</h2>
+  <p class="section-lead">Most Week 2 questions reduce to &ldquo;here is something a model said &mdash; what do you do with it?&rdquo;. Run the claim through these steps in order and the answer writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-classify"></div>
+  <script type="application/json" id="ix-m-classify">
+  {
+    "title": "Order the triage checklist",
+    "subtitle": "Rebuild the order in which to interrogate a claim before you spend human time on it.",
+    "steps": [
+      "Ask what evidence is attached — location, mechanism, trace, reproducer",
+      "Open the artefact and confirm the code at the stated location is what the claim describes",
+      "Trace the data path by hand from source to sink and check every hop exists",
+      "Decide whether the input is actually attacker-controlled under the stated preconditions",
+      "Test the trigger in an authorised environment and observe the effect",
+      "Minimise to the smallest reproducing case and state the impact with its limits",
+      "Record the verdict — confirmed, refuted or unresolved — and what was found clean"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Evidence</td><td>\(E \neq \varnothing\): file and line, data path, execution trace, minimal reproducer</td><td>You accept a fluent paragraph as proof</td></tr>
+        <tr><td>2. Location</td><td>Does that line say what the model said it says?</td><td>You trust the quotation without opening the file</td></tr>
+        <tr><td>3. Data path</td><td>Every hop is present in the code, not in the narrative</td><td>You assume a value reaches a sink because both exist somewhere in the project</td></tr>
+        <tr><td>4. Control</td><td>Is the input attacker-controlled and is the code reachable in the deployed configuration?</td><td>You ignore authentication, encoding or a framework control that breaks the chain</td></tr>
+        <tr><td>5. Trigger</td><td>Observed behaviour in an authorised environment</td><td>You describe what &ldquo;would&rdquo; happen instead of what did</td></tr>
+        <tr><td>6. Minimise and assess</td><td>Smallest reproducing case; impact stated with preconditions</td><td>You overstate impact or leave the reproduction unrepeatable</td></tr>
+        <tr><td>7. Verdict</td><td>Confirmed, refuted or unresolved &mdash; all three are results</td><td>You report only the confirmed items and let the rest be re-chased</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">The step students skip</div>
+    <p>Step 4. A data path can be complete and still not be a vulnerability, because the input cannot be controlled by an attacker in the deployment that matters, or because a control upstream removes the dangerous characters. &ldquo;The path exists&rdquo; and &ldquo;an attacker can walk it&rdquo; are two different claims, and the second one is the one that gets reported.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked classification.</strong> Three findings from an AI-assisted review of one service. Place each one with the checklist, using the arithmetic from this page.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>&ldquo;Critical: hardcoded credentials in the configuration loader.&rdquo;</strong> No file, no line, no excerpt. Step 1 fails immediately: \(E = \varnothing\). This is the hallucination case &mdash; and note the cost asymmetry. Five seconds to ask for the location; if you had sent it to an engineer instead, you would have paid \(C_v\) minutes for nothing. <em>Verdict:</em> reject and re-ask with the evidence contract attached.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>&ldquo;User-controlled string concatenated into a query at <code>search.js:118</code>&rdquo;, with the data path quoted.</strong> Steps 1&ndash;3 pass: the line matches, the path is real. Step 4 is where it is decided &mdash; an upstream encoder in the request pipeline neutralises the dangerous characters, so the input is not attacker-controlled at the sink. <em>Verdict:</em> refuted, with the control named. This is the honest false positive, and recording the reason is what stops it being re-chased next month.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>&ldquo;Integer overflow in the parser's length check, reachable with a 4&nbsp;GB body.&rdquo;</strong> Steps 1&ndash;4 pass on paper, but the deployment caps request bodies far below the trigger, and testing it requires a configuration the team does not run. <em>Verdict:</em> unresolved &mdash; not refuted, because the code genuinely overflows; not confirmed, because the preconditions are outside your authorised environment. State the limit and hand it over.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>What the triage cost.</strong> Suppose the first pass returned 200 candidates at \(C_v = 4\) minutes each: 800 minutes, 13.3 hours, to triage the list. Finding 1 is rejected before it reaches a human; finding 2 is refuted in about 6 minutes at the code; finding 3 is handed over. The economics of the week live in that first filter, not in the model's raw intelligence.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;An AI finding is a hypothesis until it carries evidence: I locate the code, trace the data path by hand, check that the input is attacker-controlled under the deployed configuration, observe the effect in an authorised environment, minimise the case, and record the verdict &mdash; confirmed, refuted or unresolved &mdash; because refuted candidates and unresolved limits are results too.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and quantities on this page, the LLM and agent mechanics plus the failure-mode countermeasures on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 2] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -3,9 +3,30 @@
 // Optional: set window.PROGRESS_TRACKER_CONFIG before this script (merged over URL auto-detect).
 // Example: { storageKey: "comp5270_progress", splitQuickChecks: false }
 
+/*
+ * Hub mount directory names, lower-cased. Detection used to rely on short
+ * numeric mount paths such as "/5270/", but the hubs were later renamed to
+ * descriptive directories ("5270RandomAlgo", "5318ML", …). Those renames
+ * silently broke detection: chapter pages fell through to the shared
+ * "studyhub_progress" fallback while index.html and progress-dashboard.html
+ * kept reading "compXXXX_progress", so Mission Control showed 0% forever.
+ * Matching the real directory names keeps detection honest.
+ */
+function normalizeHubPath(pathname) {
+  var lower = (pathname || "").toLowerCase();
+  var m = lower.match(/\/([^/]+)\//);
+  return m ? m[1] : lower;
+}
+
 function detectProgressTrackerConfig() {
   var path = (typeof location !== "undefined" && location.pathname) || "";
-  if (/\/5318(?:\/|$)/.test(path) || path.indexOf("/5318/") !== -1) {
+  var pathLower = path.toLowerCase();
+  var hub = normalizeHubPath(path);
+  if (
+    /\/5318(?:\/|$)/.test(path) ||
+    path.indexOf("/5318/") !== -1 ||
+    hub === "5318ml"
+  ) {
     return {
       storageKey: "comp5318_progress",
       splitQuickChecks: true,
@@ -16,7 +37,11 @@ function detectProgressTrackerConfig() {
       chapterProgressGetterName: "getComp5318ChapterProgress"
     };
   }
-  if (/\/5270(?:\/|$)/.test(path) || path.indexOf("/5270/") !== -1) {
+  if (
+    /\/5270(?:\/|$)/.test(path) ||
+    path.indexOf("/5270/") !== -1 ||
+    hub === "5270randomalgo"
+  ) {
     return {
       storageKey: "comp5270_progress",
       splitQuickChecks: false,
@@ -27,11 +52,11 @@ function detectProgressTrackerConfig() {
       chapterProgressGetterName: null
     };
   }
-  var pathLower = path.toLowerCase();
   if (
     /comp5046|5046-nlp/i.test(path) ||
     pathLower.indexOf("comp5046") !== -1 ||
-    pathLower.indexOf("5046-nlp") !== -1
+    pathLower.indexOf("5046-nlp") !== -1 ||
+    hub === "5046nlp"
   ) {
     return {
       storageKey: "comp5046_progress",
@@ -43,7 +68,11 @@ function detectProgressTrackerConfig() {
       chapterProgressGetterName: null
     };
   }
-  if (/COMP9001|comp9001/i.test(path) || pathLower.indexOf("comp9001") !== -1) {
+  if (
+    /COMP9001|comp9001/i.test(path) ||
+    pathLower.indexOf("comp9001") !== -1 ||
+    hub === "9001py"
+  ) {
     return {
       storageKey: "comp9001_progress",
       splitQuickChecks: false,
@@ -56,12 +85,36 @@ function detectProgressTrackerConfig() {
   }
   if (
     /9123|comp9123/i.test(path) ||
-    pathLower.indexOf("9123datastructurealgo") !== -1
+    pathLower.indexOf("9123datastructurealgo") !== -1 ||
+    hub === "9123datastructurealgo"
   ) {
     return {
       storageKey: "comp9123_progress",
       splitQuickChecks: true,
       enhancedQuickChecks: true,
+      accessibilityQuickChecks: true,
+      progressUpdateEvent: null,
+      contentRefreshEvent: null,
+      chapterProgressGetterName: null
+    };
+  }
+  // ── S2 2026 hubs ──────────────────────────────────────────────
+  // Mount directories are the plain unit codes, so match on those.
+  var S2_2026 = {
+    comp5047: "COMP5047",
+    comp5618: "COMP5618",
+    elec5620: "ELEC5620",
+    info5995: "INFO5995",
+    info6007: "INFO6007"
+  };
+  var s2key = Object.keys(S2_2026).filter(function (k) {
+    return pathLower.indexOf(k) !== -1 || hub === k;
+  })[0];
+  if (s2key) {
+    return {
+      storageKey: s2key + "_progress",
+      splitQuickChecks: true,
+      enhancedQuickChecks: false,
       accessibilityQuickChecks: true,
       progressUpdateEvent: null,
       contentRefreshEvent: null,
@@ -183,6 +236,16 @@ function trackQuickCheckFromInteraction(context) {
   }
 }
 
+/**
+ * Which page a quick-check lives on decides its bucket when the markup does not
+ * say. Foundations pages are `chapterN-math.html`, so the study/math split stays
+ * correct without every hub having to annotate each `.quick-check` block.
+ */
+function defaultQuickCheckContext() {
+  var p = (typeof location !== "undefined" && location.pathname) || "";
+  return /-math\.html$/i.test(p) ? "math" : "study";
+}
+
 function trackSection(sectionId) {
   var p = getProgress();
   if (!p[chKey]) p[chKey] = {};
@@ -259,22 +322,17 @@ function renderMathInDoc() {
 
 function bindQuickChecksEnhanced() {
   document.querySelectorAll(".quick-check").forEach(function(qc) {
-    if (qc.dataset.qcBound) return;
-    qc.dataset.qcBound = "1";
-    qc.setAttribute("role", "listbox");
+    // Tracking is uniform across every hub/mode: one .quick-check = one check.
+    bindQuickCheckBlock(qc);
+    if (qc.dataset.qcEnhanced) return;
+    qc.dataset.qcEnhanced = "1";
+
     var correctIdx = parseInt(qc.dataset.answer, 10);
     var feedback = qc.querySelector(".qc-feedback");
     if (isNaN(correctIdx) || !feedback) return;
-    var tracked = false;
+
     qc.querySelectorAll(".qc-opt").forEach(function(opt) {
-      opt.setAttribute("role", "option");
-      opt.setAttribute("tabindex", "0");
       function onPick() {
-        if (!tracked) {
-          tracked = true;
-          var ctx = qc.getAttribute("data-qc-context") || "study";
-          trackQuickCheckFromInteraction(ctx);
-        }
         var idx = parseInt(opt.dataset.idx, 10);
         qc.querySelectorAll(".qc-opt").forEach(function(o) {
           o.classList.add("chosen");
@@ -307,48 +365,53 @@ function bindQuickChecksEnhanced() {
 
 function bindQuickChecksSimple() {
   document.querySelectorAll(".quick-check").forEach(function(container) {
-    container.setAttribute("role", "listbox");
-  });
-  document.querySelectorAll(".quick-check .qc-opt").forEach(function(btn) {
-    btn.setAttribute("role", "option");
-    btn.setAttribute("tabindex", "0");
-    btn.addEventListener(
-      "click",
-      function handler() {
-        trackQuickCheckFromInteraction("study");
-        btn.removeEventListener("click", handler);
-      },
-      { once: true }
-    );
-    btn.addEventListener("keydown", function(e) {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        btn.click();
-      }
-    });
+    bindQuickCheckBlock(container);
   });
 }
 
 function bindQuickChecksAccessible() {
   document.querySelectorAll(".quick-check").forEach(function(container) {
-    container.setAttribute("role", "listbox");
+    bindQuickCheckBlock(container);
   });
-  document.querySelectorAll(".quick-check .qc-opt").forEach(function(btn) {
+}
+
+/**
+ * Block-level quick-check binding (tracking only).
+ *
+ * A quick-check counts ONCE toward the chapter's `checks` denominator, no
+ * matter how many options it offers or how many of them the learner clicks.
+ * The denominator is therefore simply the number of `.quick-check` blocks on
+ * the study + foundations pages, which is what chapter-manifest.js records.
+ *
+ * Previously this was bound per option, so a 4-option question could burn four
+ * "checks" — that made the denominator meaningless and let progress saturate
+ * after clicking a fraction of the options.
+ *
+ * Presentational behaviour (chosen / right / not-right classes, feedback text)
+ * stays with each hub's own binder: chapter-common.js, quick-check.js,
+ * chapter-ui.js or chapter-study-base.js.
+ */
+function bindQuickCheckBlock(container) {
+  if (container.dataset.qcBound) return;
+  container.dataset.qcBound = "1";
+  container.setAttribute("role", "listbox");
+
+  var tracked = false;
+
+  function report() {
+    if (tracked) return;
+    tracked = true;
+    trackQuickCheckFromInteraction(
+      container.getAttribute("data-qc-context") || defaultQuickCheckContext()
+    );
+  }
+
+  container.querySelectorAll(".qc-opt").forEach(function(btn) {
     btn.setAttribute("role", "option");
     btn.setAttribute("tabindex", "0");
-    btn.addEventListener(
-      "click",
-      function handler() {
-        trackQuickCheckFromInteraction("study");
-        btn.removeEventListener("click", handler);
-      },
-      { once: true }
-    );
+    btn.addEventListener("click", report);
     btn.addEventListener("keydown", function(e) {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        btn.click();
-      }
+      if (e.key === "Enter" || e.key === " ") report();
     });
   });
 }

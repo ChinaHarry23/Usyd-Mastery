@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 5: Modelling Structure</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 foundations for ELEC5620: the exact definitions behind structure modelling, a full symbol and notation reference card, the grammar of a precise association, the algebra of multiplicity, composition and lifetime, association specialisation with subsets and unions, and OCL invariants.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 5: Modelling Structure">
+<meta property="og:description" content="Week 5 foundations for ELEC5620: the exact definitions behind structure modelling, a full symbol and notation reference card, the grammar of a precise association, the algebra of multiplicity, composition and lifetime, association specialisation with subsets and unions, and OCL invariants.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter5-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 5 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-symbols" class="toc-link">Symbol reference card</a></li>
+  </ul>
+  <div class="toc-group">Laws</div>
+  <ul>
+    <li><a href="#sec-m-grammar" class="toc-link">The grammar of an association</a></li>
+    <li><a href="#sec-m-multiplicity" class="toc-link">The algebra of multiplicity</a></li>
+    <li><a href="#sec-m-specialisation" class="toc-link">Specialisation, subsets, unions</a></li>
+  </ul>
+  <div class="toc-group">Precision</div>
+  <ul>
+    <li><a href="#sec-m-ocl" class="toc-link">Invariants and OCL</a></li>
+    <li><a href="#sec-m-checklist" class="toc-link">Class-diagram checklist</a></li>
+  </ul>
+  <a href="chapter5-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">ELEC5620 &mdash; Week 5 supplement</p>
+  <h1>Foundations: the notation and the laws behind structure models</h1>
+  <p class="hero-desc">Week 5 is a notation week, so this page does the job a formula sheet would do for a numerical unit. It pins down the definitions the deck relies on, collects every structural symbol in one reference card, writes the associations you draw as a grammar you can check, gives multiplicity and composition their algebra, and ends with the OCL and checklist material that turns a plausible diagram into a specified one.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 5 decks</span>
+    <span>Notation card covers both parts and the tutorial</span>
+    <span>OCL fragments checked against standard UML</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on diagrams. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Structure modelling</div>
+    <p>The representation of entities that take up space (ultimately, physical) and which have state and may have behaviour: design-time <strong>classes</strong>, run-time <strong>instances</strong> (objects) and their relationships (links), and the specifications of those run-time entities and relationships.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Value, object, identity</div>
+    <p>A <strong>value</strong> represents information that is universal, unique and unchanging. An <strong>object</strong> is a complex value container with a unique identity conforming to a Class type, which may own attribute slots and perform behaviours. <strong>Object identity</strong> is an immanent property acquired upon creation and retained unchanged throughout the object's lifetime — it survives changes to attribute values and even to the object's type.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Link, class, association</div>
+    <p>A <strong>link</strong> is a tuple of value containers (link ends) that store object identifiers and conforming to an Association type. A <strong>class</strong> is a specification of a collection of object instances characterised by the same set of features and behaviours. An <strong>association</strong> is a specification of a collection of links whose ends conform respectively to the same type.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Classifier</div>
+    <p>A specification of a collection of entities that (1) share a set of characteristics (features) and (2) can be classified (divided) into sub-collections according to the nature of some of their characteristics. Classes and associations are both classifiers, and all classifiers can serve as types.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Generalisation and specialisation</div>
+    <p><strong>Generalisation</strong> is a subset&ndash;set relationship between a superclass and a subclass. <strong>Specialisation</strong> is the reverse process, in which a subclass refines or extends the characteristics of the superclass to create more specific subtypes. The arrow signifies a graphical operation: all features of the superclass are also present in the subclass.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Composition, aggregation, constraint</div>
+    <p><strong>Composition</strong> (filled diamond) implies ownership with <em>deletion semantics</em>: when the owner is removed, all its owned elements are removed with it. <strong>Aggregation</strong> (hollow diamond) supports a user-defined <em>weak</em> form of ownership; in standard UML its semantics are the same as a regular association. A <strong>constraint</strong> captures some semantics for elements of a namespace and is expressed in a formal or a natural language.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Object identity</td><td>Acquired at creation, unchanged for the lifetime, independent of attribute values</td><td>Confusing identity with a key attribute that happens to be unique</td></tr>
+        <tr><td>Association</td><td>A specification whose instances are <em>links</em></td><td>Calling it &ldquo;a line between two classes&rdquo;</td></tr>
+        <tr><td>Classifier</td><td>Both clauses: shared characteristics <em>and</em> divisibility into sub-collections</td><td>Quoting only the first clause, which makes every collection a classifier</td></tr>
+        <tr><td>Aggregation</td><td>Weak, user-defined ownership; standard semantics equal to a plain association</td><td>Claiming the hollow diamond means the parts are destroyed with the whole</td></tr>
+        <tr><td>Object diagram</td><td>A snapshot at one time, usable as an example rather than a specification</td><td>Treating one snapshot as the architecture</td></tr>
+        <tr><td>Collaboration</td><td>Roles and connectors, with identities abstracted away and no encapsulation shell</td><td>Saying a collaboration can be instantiated like a class</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about object identity is correct as the deck defines it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is an attribute slot. The deck's Prince example changes the name slot twice while the object stays the same object.">Identity is the current value of the object's key attribute</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Identity is acquired on creation and retained unchanged throughout the lifetime, even when attribute values change or the object's type is reclassified — which is why the diagram's multiplicities count identities rather than values." data-bad="">Identity is acquired at creation and is unaffected by attribute changes or type reclassification</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck states the opposite: type reclassification is explicitly listed as something that does not change identity.">Identity changes when the object's type is reclassified</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-symbols">
+  <h2 class="section-title">Symbol reference card</h2>
+  <p class="section-lead">Everything the Week 5 decks and the tutorial draw, in one grid. Read down the middle column: it is ordered from the elementary concepts to the architectural ones.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Name</div><div class="sym-header">Meaning</div>
+
+    <div class="sym-cell"><code>+ &minus; # ~</code></div><div class="sym-cell">Visibility</div><div class="sym-cell">public, private, protected, package. Members of the same class see all four; derived classes see public and protected; any other class sees public and package-in-package only.</div>
+
+    <div class="sym-cell"><code>/feature</code></div><div class="sym-cell">Derived feature</div><div class="sym-cell">Computed from other model elements rather than stored — the deck's <code>/customers : BankCustomer</code>, marked <code>{union}</code>.</div>
+
+    <div class="sym-cell"><code>name : Type = default</code></div><div class="sym-cell">Attribute</div><div class="sym-cell">A structural feature. The type follows the colon; a default value follows the equals sign. Maps onto a member variable in code.</div>
+
+    <div class="sym-cell"><code>op (p : T) : R</code></div><div class="sym-cell">Operation</div><div class="sym-cell">A behavioural feature. Parameter types follow each parameter name; the return type follows the closing bracket. Maps onto a class method.</div>
+
+    <div class="sym-cell"><code>{property}</code></div><div class="sym-cell">Property string</div><div class="sym-cell">A constraint written in line, such as <code>{readOnly}</code> on an attribute or <code>{unique, ordered}</code> on an association end.</div>
+
+    <div class="sym-cell"><code>&laquo;stereotype&raquo;</code></div><div class="sym-cell">Stereotype</div><div class="sym-cell">A profile-defined keyword that extends the meaning of an element: <code>&laquo;interface&raquo;</code>, <code>&laquo;abstract&raquo;</code>, <code>&laquo;signal&raquo;</code>, <code>&laquo;uses&raquo;</code>, <code>&laquo;represents&raquo;</code>, <code>&laquo;abstraction&raquo;</code>.</div>
+
+    <div class="sym-cell"><code>&mdash;&mdash;&mdash;</code></div><div class="sym-cell">Association</div><div class="sym-cell">A solid line between peer classes. Its instances are links. Both ends may carry a name (role) and a multiplicity.</div>
+
+    <div class="sym-cell"><code>m..n</code> or <code>*</code></div><div class="sym-cell">Multiplicity</div><div class="sym-cell">A range of permitted link counts at that end, read <em>from the class at the other end</em>. <code>0</code> allows absence; <code>*</code> (or <code>0..*</code>) is an open-ended upper bound.</div>
+
+    <div class="sym-cell"><code>&#9670;&mdash;&mdash;&mdash;</code></div><div class="sym-cell">Composition</div><div class="sym-cell">Filled diamond at the whole end. Ownership with deletion semantics: removing the owner removes the owned elements with it.</div>
+
+    <div class="sym-cell"><code>&#9671;&mdash;&mdash;&mdash;</code></div><div class="sym-cell">Aggregation</div><div class="sym-cell">Hollow diamond at the whole end. A weak, user-defined ownership — in standard UML, identical in meaning to a plain association.</div>
+
+    <div class="sym-cell"><code>&mdash;&mdash;&#9651;</code></div><div class="sym-cell">Generalisation</div><div class="sym-cell">Solid line with a hollow triangle pointing at the superclass. All superclass features are present in the subclass. A label on the shared arrowhead names the generalisation set criterion.</div>
+
+    <div class="sym-cell"><code>&#8942;&#8942;&#8942;&#9654;</code></div><div class="sym-cell">Dependency</div><div class="sym-cell">Dashed line with an open arrow from client to supplier. A change in the supplier affects the client. Loose semantics, specialisable with a stereotype such as <code>&laquo;manufacturedBy&raquo;</code>.</div>
+
+    <div class="sym-cell"><code>&#8942;&#8942;&#8942;&#9651;</code></div><div class="sym-cell">Realisation</div><div class="sym-cell">Dashed line with a hollow triangle from the realising classifier to the interface. The classifier must provide implementations for all interface features.</div>
+
+    <div class="sym-cell"><code>&#9675;&mdash;</code></div><div class="sym-cell">Provided interface (lollipop)</div><div class="sym-cell">An interface plus a realisation relationship — <em>not</em> an interface instance. Interfaces declare features only and cannot have instances.</div>
+
+    <div class="sym-cell"><code>&#9682;&mdash;</code></div><div class="sym-cell">Required interface (socket)</div><div class="sym-cell">The classifier needs the services of something that realises the interface. Ports can provide and require at the same time.</div>
+
+    <div class="sym-cell"><code>&#9645;</code></div><div class="sym-cell">Port</div><div class="sym-cell">A distinct interaction point for multiple, possibly simultaneous collaborations, allowing separation of roles without direct coupling to the collaborators.</div>
+
+    <div class="sym-cell"><code>part : Type</code></div><div class="sym-cell">Part</div><div class="sym-cell">A usage of another class inside a structured class's internal structure, wired by connectors.</div>
+
+    <div class="sym-cell"><code>&#8226;</code> at an end</div><div class="sym-cell">Owned end</div><div class="sym-cell">The black dot signifies that the association end is owned by the classifier at that end — the end is one of its features.</div>
+
+    <div class="sym-cell"><code>[note]</code></div><div class="sym-cell">Constraint</div><div class="sym-cell">Text in line (<code>size : Integer {size &gt;= 0}</code>) or attached as a note rectangle joined by a dashed line. Written in OCL, English — or, as the deck puts it, Australian.</div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-notation-map"></div>
+  <script type="application/json" id="ix-notation-map">
+  {
+    "title": "Read a class diagram end to end",
+    "subtitle": "Click each marker to see which notational decision it records and what would break if it were removed.",
+    "svg": "<svg viewBox=\"0 0 720 400\" role=\"img\" aria-label=\"UML class diagram of a small order system: Customer associated to Order and Payment, Order composed of OrderLine, OrderLine associated to Product, CardPayment and InvoicePayment generalising Payment.\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"720\" height=\"400\" fill=\"#fbfbff\"></rect><rect x=\"28\" y=\"120\" width=\"176\" height=\"96\" rx=\"6\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><line x1=\"28\" y1=\"148\" x2=\"204\" y2=\"148\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><line x1=\"28\" y1=\"186\" x2=\"204\" y2=\"186\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"116\" y=\"139\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#312e81\">Customer</text><text x=\"40\" y=\"169\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">customerId : String</text><text x=\"40\" y=\"204\" font-family=\"monospace\" font-size=\"11\" fill=\"#4f46e5\">placeOrder()</text><rect x=\"264\" y=\"106\" width=\"192\" height=\"124\" rx=\"6\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><line x1=\"264\" y1=\"134\" x2=\"456\" y2=\"134\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><line x1=\"264\" y1=\"180\" x2=\"456\" y2=\"180\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"360\" y=\"125\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#312e81\">Order</text><text x=\"276\" y=\"155\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">/total : Money</text><text x=\"276\" y=\"172\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">placed : DateTime</text><text x=\"276\" y=\"199\" font-family=\"monospace\" font-size=\"11\" fill=\"#4f46e5\">addLine(p : Product, q : Int)</text><text x=\"276\" y=\"216\" font-family=\"monospace\" font-size=\"11\" fill=\"#4f46e5\">submit()</text><rect x=\"516\" y=\"40\" width=\"176\" height=\"76\" rx=\"6\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><line x1=\"516\" y1=\"68\" x2=\"692\" y2=\"68\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"604\" y=\"59\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#312e81\">Payment</text><text x=\"528\" y=\"89\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">amount : Money</text><text x=\"528\" y=\"106\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">state : [Pend, Done]</text><line x1=\"456\" y1=\"168\" x2=\"516\" y2=\"100\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><path d=\"M516 100 L500 88 L500 112 Z\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"2\"></path><text x=\"500\" y=\"146\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">paid by</text><text x=\"472\" y=\"192\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"12\" font-weight=\"700\" fill=\"#0891b2\">0..*</text><text x=\"524\" y=\"86\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"12\" font-weight=\"700\" fill=\"#0891b2\">0..1</text><rect x=\"516\" y=\"200\" width=\"176\" height=\"62\" rx=\"6\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><line x1=\"516\" y1=\"228\" x2=\"692\" y2=\"228\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"604\" y=\"219\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"13\" font-weight=\"700\" fill=\"#312e81\">CardPayment</text><text x=\"528\" y=\"249\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">cardToken : String</text><rect x=\"516\" y=\"296\" width=\"176\" height=\"62\" rx=\"6\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><line x1=\"516\" y1=\"324\" x2=\"692\" y2=\"324\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"604\" y=\"315\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"13\" font-weight=\"700\" fill=\"#312e81\">InvoicePayment</text><text x=\"528\" y=\"345\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">dueDate : Date</text><line x1=\"604\" y1=\"260\" x2=\"604\" y2=\"296\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><line x1=\"604\" y1=\"116\" x2=\"604\" y2=\"200\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><path d=\"M604 200 L592 186 L616 186 Z\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"2\"></path><text x=\"672\" y=\"290\" font-family=\"monospace\" font-size=\"10\" fill=\"#0891b2\">{disjoint}</text><rect x=\"264\" y=\"286\" width=\"192\" height=\"92\" rx=\"6\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><line x1=\"264\" y1=\"314\" x2=\"456\" y2=\"314\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"360\" y=\"305\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#312e81\">OrderLine</text><text x=\"276\" y=\"335\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">quantity : Integer</text><text x=\"276\" y=\"352\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">{quantity &gt;= 1}</text><text x=\"276\" y=\"369\" font-family=\"monospace\" font-size=\"11\" fill=\"#4f46e5\">lineTotal() : Money</text><line x1=\"360\" y1=\"230\" x2=\"360\" y2=\"286\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><path d=\"M360 286 L344 258 L376 258 Z\" fill=\"#312e81\" stroke=\"#312e81\" stroke-width=\"2\"></path><text x=\"418\" y=\"252\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">lines</text><text x=\"418\" y=\"270\" font-family=\"monospace\" font-size=\"12\" font-weight=\"700\" fill=\"#0891b2\">1..*</text><rect x=\"24\" y=\"300\" width=\"176\" height=\"76\" rx=\"6\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><line x1=\"24\" y1=\"328\" x2=\"200\" y2=\"328\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"112\" y=\"319\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#312e81\">Product</text><text x=\"36\" y=\"349\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">sku : String</text><text x=\"36\" y=\"366\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">price : Money</text><line x1=\"264\" y1=\"332\" x2=\"200\" y2=\"332\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><line x1=\"204\" y1=\"332\" x2=\"264\" y2=\"332\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><path d=\"M264 332 L250 325 L250 339 Z\" fill=\"#4f46e5\" stroke=\"#4f46e5\"></path><text x=\"214\" y=\"324\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">for</text><line x1=\"204\" y1=\"168\" x2=\"264\" y2=\"168\" stroke=\"#4f46e5\" stroke-width=\"2\"></line><text x=\"234\" y=\"160\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"11\" fill=\"#312e81\">places</text><text x=\"212\" y=\"192\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"12\" font-weight=\"700\" fill=\"#0891b2\">0..*</text><text x=\"252\" y=\"146\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"12\" font-weight=\"700\" fill=\"#0891b2\">1</text></svg>",
+    "points": [
+      { "x": 16.1, "y": 42.0, "label": "Customer: class name and compartments", "detail": "The name compartment holds the class name; attributes go in the second partition and operations in the third. Visibility markers (+ public, - private, # protected, ~ package) precede each feature." },
+      { "x": 39.5, "y": 42.0, "label": "Order: a derived feature", "detail": "/total : Money is derived — computed from the order lines rather than stored. In the deck the derived end /customers : BankCustomer carries {union}, recording that it is the union of its subsets." },
+      { "x": 33.0, "y": 40.0, "label": "The places association", "detail": "A plain association between two peer classes with end names and multiplicities: 1 Customer places 0..* Orders, and each Order has exactly 1 Customer. Both multiplicities are read from the class at the opposite end." },
+      { "x": 50.0, "y": 61.0, "label": "The lines composition", "detail": "The filled diamond sits at the Order end, so Order is the whole. Deletion semantics apply: deleting the Order deletes its OrderLines, which is right because a line has no meaning apart from its order." },
+      { "x": 50.0, "y": 87.0, "label": "An in-line constraint on an attribute", "detail": "{quantity >= 1} constrains the attribute in place. Written on a note instead, the same text is joined to the element by a dashed line — the two notations assert exactly the same thing." },
+      { "x": 71.0, "y": 87.0, "label": "OrderLine to Product: no diamond", "detail": "A plain association, deliberately. A Product is shared between many order lines and outlives any of them, so this is exactly the case where a filled diamond would be wrong." },
+      { "x": 84.0, "y": 55.0, "label": "Payment generalisation with disjoint subsets", "detail": "CardPayment and InvoicePayment specialise Payment, so every feature of Payment is present in both. The {disjoint} property string records that no payment instance is in both subsets at once." },
+      { "x": 71.0, "y": 23.0, "label": "paid by: multiplicity on a specialised association", "detail": "0..* Orders to 0..1 Payment. Tightening a general 1..* end to 0..1 here is association specialisation, exactly as the deck tightens the corporate end of accounts / customers to 1." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A diagram shows a hollow triangle at the <code>Payment</code> end of <code>CardPayment &mdash; Payment</code>. What does the symbol assert?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Generalisation is a subset–set relationship, and the arrow signifies a graphical operation: all features of the superclass are also present in the subclass." data-bad="">That every feature of Payment is also a feature of CardPayment, and CardPayment instances are a subset of Payment instances</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hollow triangle is generalisation, not composition. Composition is a filled diamond, and it constrains deletion rather than classification.">That CardPayment owns every Payment it is linked to</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hollow triangle on a dashed line would be realisation. Here the line is solid, which makes it generalisation between classes rather than a classifier implementing an interface.">That CardPayment realises the interface declared by Payment</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-grammar">
+  <h2 class="section-title">The grammar of a precise association</h2>
+  <p class="section-lead">Almost every mark lost on a class diagram comes from an association that is missing one of five parts. Write the association as a sentence with slots and check them off in order.</p>
+
+  <div class="theorem-box">
+    <h3>1. An association is a five-slot sentence</h3>
+    <p>Write each association in this form and no slot can be silently omitted:</p>
+    \[ A:\ \underbrace{C_1}_{1}\ \underbrace{\text{name}_1}_{\text{role}}\ \underbrace{m_1}_{\text{mult}}\ \xrightarrow{\ \text{label}\ }\ \underbrace{m_2}_{\text{mult}}\ \underbrace{\text{name}_2}_{\text{role}}\ \underbrace{C_2}_{2} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The two classes fix what is linked, the two roles fix how the link reads in each direction, the two multiplicities fix how many links each instance may have, and the label names the association itself. Adding a diamond, a navigability arrow or a stereotype extends the sentence; it never replaces a slot.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Read a multiplicity from the far end</h3>
+    <p>For an association \(A\) with ends \(e_1\) on \(C_1\) and \(e_2\) on \(C_2\), the multiplicity written at \(e_1\) bounds the number of \(C_1\) instances reachable from <em>one</em> \(C_2\) instance:</p>
+    \[ \forall\, c_2 \in C_2:\ \bigl|\{\, c_1 \in C_1 \mid (c_1, c_2) \in L_A \,\}\bigr| \in [\,m_1^{lo},\, m_1^{hi}\,] \]
+    <p style="margin-top:0.6rem;">With the deck's <code>Adult 1..2 parents &mdash; 0..* children Child</code> this yields two constraints at once: every Child has between one and two Adult links, and a Child may have none at all — the second because \(0\) is the lower bound at the <code>children</code> end, which bounds the Adults reachable from a Child by \(0..*\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The set-valued reading of an end</h3>
+    <p>Each end is also a query. If the end <code>children</code> on <code>Adult</code> has multiplicity \(0..*\), then for a given <code>Adult</code> instance \(a\):</p>
+    \[ \texttt{a.children} \;=\; \{\, c \in \texttt{Child} \mid (a, c) \in L_A \,\}, \qquad \texttt{a.children-&gt;includes(Cory)} \iff (a, \texttt{Cory}) \in L_A \]
+    <p style="margin-top:0.6rem;">The deck writes both directions of the same link: <code>Karl.children-&gt;includes(Cory)</code> and <code>Cory.parents-&gt;includes(Karl)</code>. Two navigations, one link — which is why navigability arrows describe <em>reachability</em>, not the existence of the link.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Composition is a lifetime rule, not a strength</h3>
+    <p>Write \(W\) for the whole and \(P_w\) for the set of parts composed into \(w\). Composition adds one law that a plain association does not have:</p>
+    \[ w \notin \text{extent}(W) \;\Longrightarrow\; \forall\, p \in P_w:\ p \notin \text{extent}(\text{type}(p)) \]
+    <p style="margin-top:0.6rem;">Deleting the whole deletes its parts. Nothing in the notation says when a part is created, and nothing stops a part from being an ordinary object while it lives. Aggregation contributes no such law in standard UML: the hollow diamond is a hook for a profile-defined weak ownership, and without that profile it denotes the same set of links as a plain association.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Navigability in full.</strong> Given one instance in a relationship, an arrow tells you whether you can determine the instances of the other class that are related to it. The tutorial's spreadsheet example is the cleanest statement of the asymmetry: from a spreadsheet you can locate all the cells it contains, but from a cell you cannot determine its spreadsheet; from a cell you can obtain the related expression and value, but from a value you cannot find the cell it is an attribute of.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An association <code>A 0..1 &mdash; 1..* B</code> has its <code>0..1</code> written at the end attached to <code>A</code>. What does it constrain?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the reading of the other end. A multiplicity is read from the class at the opposite end of the line, which is the mistake the deck's Adult/Child example is designed to catch.">How many B instances each A is linked to</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The end at A bounds how many A instances a single B may reach: either none or one, while each A must reach at least one B because of the 1..* at the far end." data-bad="">How many A instances each B is linked to</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a global cardinality of the population, not an end multiplicity. End multiplicities are per-instance bounds on reachable links.">How many A instances may exist in the whole system</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-multiplicity">
+  <h2 class="section-title">The algebra of multiplicity</h2>
+  <p class="section-lead">Multiplicity is a constraint language with a small algebra. Knowing which strings are legal, what each default means, and what a range implies about the number of configurations is what separates a drawn diagram from a specified one.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Multiplicity string</th><th>Legal link counts</th><th>Reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>1</code></td><td>exactly 1</td><td>Mandatory, single</td></tr>
+        <tr><td><code>0..1</code></td><td>0 or 1</td><td>Optional, single — the deck uses it for <code>Person 0..1 name String</code> and <code>Node right 0..1</code></td></tr>
+        <tr><td><code>1..*</code></td><td>1 or more</td><td>Mandatory, collection — the tutorial's one-to-many</td></tr>
+        <tr><td><code>0..*</code></td><td>0 or more</td><td>Optional collection — the deck's <code>Child</code> end</td></tr>
+        <tr><td><code>*</code></td><td>0 or more</td><td>Shorthand for <code>0..*</code>: an open-ended upper bound</td></tr>
+        <tr><td><code>2..4</code></td><td>2, 3 or 4</td><td>A bounded range; any lower and upper bound may be written</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. A range has a lower and an upper bound</h3>
+    <p>Every multiplicity is a pair, and the two bounds do different jobs:</p>
+    \[ m = [\,m^{lo},\, m^{hi}\,], \qquad 0 \le m^{lo} \le m^{hi} \le \infty, \qquad m^{lo} = 0 \iff \text{optional}, \qquad m^{hi} = \infty \iff \texttt{*} \]
+    <p style="margin-top:0.6rem;">Legal collections are those scoring between the two bounds. Where \(m^{lo}=0\), an object may exist with no links at that end at all — which is a design decision worth stating out loud, because it says the system tolerates the absence.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. How many run-time configurations does a class diagram admit?</h3>
+    <p>Let \(n_1\) and \(n_2\) be the numbers of instances of the two ends. The number of possible link <em>sets</em> for the association is bounded by</p>
+    \[ |\mathcal{L}_A| \;\le\; 2^{\,n_1 n_2} \qquad\text{and, when both upper bounds are finite,}\qquad |\mathcal{L}_A| \;\le\; \binom{n_1 n_2}{\,n_1 m_2^{hi}\,} \]
+    <p style="margin-top:0.6rem;">The deck's questionnaire is the intuition: with one 1-to-1 pair of ends over two classes, configuration (1) is one <code>ClassA</code> and one <code>ClassB</code>, configuration (2) is two of each, configuration (3) is three, and so on without limit. <strong>A class diagram is a specification with infinitely many instances</strong>, which is exactly why a single object diagram cannot stand in for it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Multiplicity is not an association-only concept</h3>
+    <p>Multiplicity specifies usages that are collections — attributes, association ends, parameters — so the same ranges appear on attributes:</p>
+    \[ \texttt{name} : \texttt{String}\,[1..*] \qquad\text{and}\qquad \texttt{/customers} : \texttt{BankCustomer} \]
+    <p style="margin-top:0.6rem;">The first says the <code>name</code> slot holds one or more strings. The second says the derived feature is itself a collection of <code>BankCustomer</code>, which is why the deck can attach <code>{union}</code> to it when the association is specialised.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. The two modifiers, and their defaults</h3>
+    <p>The modifiers say what kind of collection the end holds:</p>
+    \[ \{unique\} \;=\; \text{default } true \qquad \{nonunique\} \;=\; \text{false} \qquad \{ordered\} \;=\; \text{default } false \qquad \{unordered\} \;=\; \text{true} \]
+    <p style="margin-top:0.6rem;">Two consequences worth memorising. Omitting <code>{unique}</code> asserts that no two elements of the collection have the same value, so a design that needs duplicates must write <code>{nonunique}</code> explicitly. And because <code>{ordered}</code> defaults to false, the deck's <code>{unique, ordered}</code> at the <code>parents</code> end is a real claim: the parents of a child form an ordered set, not a bag.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An end carries the multiplicity <code>0..*</code> with no modifier strings. What has the modeller asserted about that collection?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. {unique} defaults to true and {ordered} defaults to false, so the collection is an unordered set: no duplicate elements, no intended order." data-bad="">That it is an unordered set — elements are unique and the order is not meaningful</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="{ordered} defaults to false, not true. Writing nothing asserts the default, and the default is unordered.">That it is an ordered sequence of unique elements</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An absent modifier is still a claim: the defaults apply. Only {nonunique} would permit duplicates.">That duplicates are permitted, because nothing was said about uniqueness</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-specialisation">
+  <h2 class="section-title">Specialisation, subsets and unions</h2>
+  <p class="section-lead">The deck's refined <code>accounts / customers</code> model is the densest constraint diagram in Week 5. Written as set algebra it becomes easy to reproduce from memory.</p>
+
+  <div class="arch-diagram" style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:1.25rem;">
+    <svg viewBox="0 0 740 300" role="img" aria-label="Refined UML model: BankAccount associated to BankCustomer with ends accounts 1..* and customers 1..*, marked {union} on the derived ends; CorporateAccount and PersonalAccount specialise BankAccount, and CorporateCustomer and PrivateCustomer specialise BankCustomer; a specialised association links CorporateAccount to CorporateCustomer with a tightened multiplicity of 1, with end names C-accounts and owner." xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+      <rect x="26" y="106" width="180" height="70" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="26" y1="132" x2="206" y2="132" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="116" y="123" text-anchor="middle" font-family="monospace" font-size="13.5" font-weight="700" fill="#312e81">BankAccount</text>
+      <text x="38" y="152" font-family="monospace" font-size="11" fill="#312e81">{union}</text>
+      <text x="38" y="167" font-family="monospace" font-size="11" fill="#312e81">/accounts</text>
+      <rect x="534" y="106" width="180" height="70" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="534" y1="132" x2="714" y2="132" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="624" y="123" text-anchor="middle" font-family="monospace" font-size="13.5" font-weight="700" fill="#312e81">BankCustomer</text>
+      <text x="546" y="152" font-family="monospace" font-size="11" fill="#312e81">{union}</text>
+      <text x="546" y="167" font-family="monospace" font-size="11" fill="#312e81">/customers</text>
+      <line x1="206" y1="141" x2="534" y2="141" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="370" y="132" text-anchor="middle" font-family="monospace" font-size="11.5" fill="#312e81">accounts / customers</text>
+      <text x="240" y="130" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#0891b2">1..*</text>
+      <text x="500" y="130" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#0891b2">1..*</text>
+      <rect x="26" y="234" width="180" height="52" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="26" y1="258" x2="206" y2="258" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="116" y="249" text-anchor="middle" font-family="monospace" font-size="12.5" font-weight="700" fill="#312e81">CorporateAccount</text>
+      <text x="38" y="276" font-family="monospace" font-size="10.5" fill="#312e81">C-accounts 1..*</text>
+      <rect x="266" y="234" width="180" height="52" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="266" y1="258" x2="446" y2="258" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="356" y="249" text-anchor="middle" font-family="monospace" font-size="12.5" font-weight="700" fill="#312e81">PersonalAccount</text>
+      <text x="278" y="276" font-family="monospace" font-size="10.5" fill="#312e81">P-accounts 1..*</text>
+      <line x1="116" y1="176" x2="116" y2="234" stroke="#4f46e5" stroke-width="2"></line>
+      <path d="M116 234 L104 216 L128 216 Z" fill="#ffffff" stroke="#4f46e5" stroke-width="2"></path>
+      <line x1="356" y1="176" x2="356" y2="234" stroke="#4f46e5" stroke-width="2"></line>
+      <path d="M356 234 L344 216 L368 216 Z" fill="#ffffff" stroke="#4f46e5" stroke-width="2"></path>
+      <rect x="534" y="212" width="180" height="52" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <line x1="534" y1="236" x2="714" y2="236" stroke="#4f46e5" stroke-width="2"></line>
+      <text x="624" y="227" text-anchor="middle" font-family="monospace" font-size="12.5" font-weight="700" fill="#312e81">CorporateCustomer</text>
+      <text x="546" y="254" font-family="monospace" font-size="10.5" fill="#312e81">owner 1</text>
+      <rect x="534" y="272" width="180" height="26" rx="6" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"></rect>
+      <text x="624" y="289" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#312e81">PrivateCustomer</text>
+      <line x1="624" y1="176" x2="624" y2="212" stroke="#4f46e5" stroke-width="2"></line>
+      <path d="M624 212 L612 194 L636 194 Z" fill="#ffffff" stroke="#4f46e5" stroke-width="2"></path>
+      <line x1="206" y1="252" x2="534" y2="240" stroke="#4f46e5" stroke-width="2" stroke-dasharray="0"></line>
+      <path d="M534 240 L518 234 L518 246 Z" fill="#4f46e5" stroke="#4f46e5"></path>
+      <text x="370" y="238" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#312e81">C-accounts / owner</text>
+      <text x="230" y="270" font-family="monospace" font-size="10.5" fill="#0891b2">{subsets accounts}</text>
+      <text x="500" y="204" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#0891b2">{subsets customers}</text>
+      <text x="370" y="34" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="11.5" fill="#565d75">The general association stays; the specialised one is constrained to a class pair and a tighter multiplicity.</text>
+      <text x="370" y="56" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="11.5" fill="#565d75">Each refinement step only removes legal configurations — it never adds one.</text>
+    </svg>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. A specialised association is a subset of the general one</h3>
+    <p>Write \(L_g\) for the links of the general association and \(L_s\) for the links of a specialisation of it. Then</p>
+    \[ L_s \;\subseteq\; L_g, \qquad \text{extent}(C_s) \subseteq \text{extent}(C_g),\ \text{extent}(K_s) \subseteq \text{extent}(K_g) \]
+    <p style="margin-top:0.6rem;">where \(C\) and \(K\) are the two ends. The deck marks this in notation as <code>{subsets accounts}</code> on the specialised end. The practical consequence is the one the model exists for: a link between a <code>CorporateAccount</code> and a <code>PrivateCustomer</code> is not merely unusual, it is <em>unrepresentable</em>.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. A derived union end is the union of its subsets</h3>
+    <p>The general end is marked <code>{union}</code> and prefixed with <code>/</code>. Writing \(S_1, \dots, S_k\) for the specialised ends:</p>
+    \[ \texttt{/accounts} \;=\; \bigcup_{i=1}^{k} S_i \qquad \text{so no link exists at the general end that no subset covers} \]
+    <p style="margin-top:0.6rem;">Together, subsetting and union make the two views agree in both directions: nothing in a subset is outside the union, and nothing in the union is outside every subset. This is why the deck calls the result a <em>more refined specification</em> rather than a second, competing model.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Generalisation sets and their constraint strings</h3>
+    <p>A class may be partitioned by several criteria at once, one generalisation set per criterion. For a set with subsets \(T_1,\dots,T_n\) of a class extent \(E\):</p>
+    \[ \bigcup_{i} T_i = E \quad (\text{complete}) \qquad\text{or}\qquad \bigcup_{i} T_i \subsetneq E \quad (\text{incomplete}) \]
+    \[ T_i \cap T_j = \varnothing \ \ (i \neq j) \quad (\text{disjoint}) \qquad\text{or}\qquad T_i \cap T_j \neq \varnothing \quad (\text{overlapping}) \]
+    <p style="margin-top:0.6rem;">The deck's <code>Person</code> is partitioned by <em>age</em> into <code>Adult</code> and <code>Child</code>, and by <em>gender</em> into <code>Males</code> and <code>Females</code>. Each partition is complete and disjoint, and neither partition constrains the other — a person is in exactly one subset of each set, and the two axes vary independently.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Association class versus class plus two associations, as a cardinality claim</h3>
+    <p>Let \(J\) be the association class on an association between \(P\) and \(C\). Then</p>
+    \[ |\text{extent}(J)| \;=\; |L_{PC}| \qquad\text{whereas, in the reified form,}\qquad |\text{extent}(J)| \ \text{is constrained only by a coupling invariant} \]
+    <p style="margin-top:0.6rem;">The equality in the association-class form is structural: one <code>Job</code> per <code>Person</code>&ndash;<code>Company</code> link, by construction. In the reified form, <code>Job</code> is an ordinary object with two <code>0..*</code> ends, so nothing stops a job being rewired to another pair — which is precisely the &ldquo;coupling between links&rdquo; the deck warns about, and the reason it has to be written as a constraint rather than read off the diagram.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A general end is marked <code>{union} /accounts</code> and its two specialised ends are marked <code>{subsets accounts}</code>. Which legal configuration would break the model?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is exactly what subsetting and union are for: the specialised link is also a link of the general association, so both statements are consistent.">A corporate link that appears both in <code>C-accounts</code> and in <code>/accounts</code></div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. If the general end is the union of its subsets, no link may exist at the general end that no subset covers — the configuration has to be representable in a specialised end." data-bad="">A link that appears in <code>/accounts</code> but is covered by neither <code>C-accounts</code> nor <code>P-accounts</code></div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Subsets may perfectly well overlap in general — that is what the {disjoint} property string is for. Here each specialised account is linked to exactly one customer because its end multiplicity is 1, not because of subsetting.">Two corporate accounts linked to the same corporate customer</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; specify an association completely.</strong> Task: take the tutorial's &ldquo;every spreadsheet contains some number of cells&rdquo; relationship and write it as a precise model element, slot by slot.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Classes.</strong> <code>Spreadsheet</code> and <code>Cell</code>. Both are classifiers and both serve as types. <code>Cell</code> additionally relates to <code>Expression</code> and <code>Value</code>, which is the tutorial's second example and a separate association.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Roles.</strong> The end at <code>Spreadsheet</code> is named <code>containedIn</code>, and the end at <code>Cell</code> is named <code>cells</code>. Reading the association out loud gives &ldquo;every spreadsheet contains some number of cells&rdquo;, and reading it backwards gives &ldquo;a cell is contained in exactly one spreadsheet&rdquo; — which is the test the tutorial applies: a good relationship name makes sense when you read it out loud.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Multiplicities.</strong> <code>cells : 0..*</code> read from <code>Spreadsheet</code> would allow an empty spreadsheet; use <code>1..*</code> if an empty spreadsheet is not a legal object. <code>containedIn : 1</code> read from <code>Cell</code>, because the tutorial's navigability discussion states that from a cell you cannot determine its spreadsheet — that is about <em>reachability</em>, not about the link existing, so the end is still <code>1</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Navigability.</strong> Add an arrow towards <code>Cell</code> only. Given a spreadsheet you can locate all of its cells; given a cell the diagram gives you no way to reach the spreadsheet, even though the link exists and its multiplicity is 1. Navigability is a statement about the model's intended access paths.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The second association, and the constraint.</strong> <code>Cell evaluatesTo Value</code> and <code>Cell hasExpression Expression</code>, both navigable from the cell and not from the value or the expression. The invariant that makes the model work is <code>context Cell inv valueMatchesExpression: self.expression.evaluate() = self.value</code> — a statement no diamond, arrow or multiplicity can draw.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>The full sentence.</strong> &ldquo;<code>Spreadsheet 1 cells: Cell 1..* -&gt;</code>, <code>Cell containedIn: Spreadsheet 1</code>, navigable from <code>Spreadsheet</code> to <code>Cell</code> only, with the invariant that a cell's value equals the evaluation of its expression.&rdquo; Five slots filled, one constraint attached, and no ambiguity left for a reader to resolve.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-ocl">
+  <h2 class="section-title">Invariants and OCL</h2>
+  <p class="section-lead">The deck lists OCL as the formal option for constraints. This section gives you the small set of OCL forms that covers almost every structural rule a Week 5 model needs, each written over the notation already on this page.</p>
+
+  <div class="def-box">
+    <div class="def-label">Constraint and invariant</div>
+    <p>A constraint captures some semantics for elements of a namespace and may be written in a formal or a natural language. A constraint whose expression is a boolean that must hold in every valid system state is an <strong>invariant</strong>. OCL is the Object Constraint Language, and it is written <em>over</em> the model: its <code>self</code> is the element the constraint is attached to, and its navigation expressions are the association ends and attributes already in the diagram.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Structural rule</th><th>OCL form</th><th>Where the deck needs it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mandatory single part</td><td><code>self.owner-&gt;size() = 1</code></td><td>Composition: an account owns exactly one owner reference</td></tr>
+        <tr><td>Range check</td><td><code>self.size &gt;= 0</code></td><td>The deck's <code>Stack size : Integer {size &gt;= 0}</code></td></tr>
+        <tr><td>Membership</td><td><code>self.children-&gt;includes(c)</code></td><td>The deck's <code>Karl.children-&gt;includes(Cory)</code></td></tr>
+        <tr><td>Attached as a note or in line</td><td><code>context Stack inv nonNegative: self.size &gt;= 0</code></td><td>Both notations of the same constraint</td></tr>
+        <tr><td>Pairing across two ends</td><td><code>self.owner.customer = self.customer</code></td><td>Coupling a reified class's two associations</td></tr>
+        <tr><td>Exclusivity</td><td><code>self.payment-&gt;size() &lt;= 1</code></td><td>Turning a <code>0..1</code> end into an enforced rule when the notation is split across diagrams</td></tr>
+        <tr><td>Uniqueness of a collection</td><td><code>self.cards-&gt;isUnique(token)</code></td><td>Making <code>{unique}</code> explicit, or replacing <code>{nonunique}</code> with a narrower rule</td></tr>
+        <tr><td>Ordering</td><td><code>self.children-&gt;forAll(c1, c2 | c1.birthDate &lt; c2.birthDate)</code></td><td>Making <code>{ordered}</code> concrete on a sorted collection</td></tr>
+        <tr><td>Partition coverage</td><td><code>Payment.allInstances-&gt;forAll(p | p.oclIsKindOf(CardPayment) or p.oclIsKindOf(InvoicePayment))</code></td><td>A <code>{complete}</code> generalisation set</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. Every model element has a context, and the context is where the constraint lives</h3>
+    <p>The general shape of an attached constraint is</p>
+    \[ \texttt{context}\ \langle\text{element}\rangle\ \texttt{inv}\ \langle\text{name}\rangle:\ \langle\text{boolean expression over } \texttt{self}\rangle \]
+    <p style="margin-top:0.6rem;">The deck's <code>size : Integer {size &gt;= 0}</code> is the in-line form of a constraint whose context is the attribute's owning class; written out it becomes <code>context Stack inv nonNegativeSize: self.size &gt;= 0</code>. The inline form is shorter, the named form is referenceable — and an invariant is only useful when something can check it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. A cardinality bound is an invariant, so multiplicity and OCL say the same thing</h3>
+    <p>For an end <code>children</code> with multiplicity \(1..2\), the notation and the OCL are two spellings of one law:</p>
+    \[ \texttt{children} : [1..2] \quad\equiv\quad \texttt{self.children-&gt;size() &gt;= 1}\ \texttt{and}\ \texttt{self.children-&gt;size() &lt;= 2} \]
+    <p style="margin-top:0.6rem;">Two consequences follow for exam answers. First, drawing a multiplicity is doing specification, not decoration. Second, any rule that <em>cannot</em> be reduced to a bound — &ldquo;the sum of the quantities of the lines equals the order's item count&rdquo;, for instance — has to be a separate invariant, because there is no multiplicity symbol for it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The reified-association coupling, written properly</h3>
+    <p>The alternative to an association class needs one invariant per direction of the coupling. With <code>Job</code> linked to <code>Person</code> and to <code>Company</code>:</p>
+    \[ \texttt{context Job inv oneLinkPerPair:}\quad \texttt{Person.allInstances-&gt;forAll(p | Company.allInstances-&gt;forAll(c | p.jobs-&gt;select(j | j.company = c)-&gt;size() &lt;= 1))} \]
+    <p style="margin-top:0.6rem;">This is what &ldquo;a coupling between links of these associations&rdquo; means once it is written down, and it is the price of avoiding association class semantics. Note the shape of the argument: the constraint is not about one object, it is about a <em>pair</em> of objects, which is exactly what an association class expresses structurally.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Where structured classes change the question.</strong> Ports and parts are structural elements too, so their rules are also invariants: a delegated connector must join a port on the boundary to a part that provides or requires the matching interface, and a part's type must conform to the <code>part : Type</code> declaration. The deck's unanswered question — whether every attribute should become a part — is answerable in these terms: an element with no interaction points and no internal structure has nothing to which a connector could attach.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A modeller writes <code>context Order inv minOneLine: self.lines-&gt;size() &gt;= 1</code> on top of an association whose <code>lines</code> end is already <code>1..*</code>. What has happened?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. An end multiplicity is a per-instance cardinality bound, so the invariant restates the lower bound of the 1..* end in OCL. It is redundant, though harmless as documentation." data-bad="">The invariant restates the lower bound already carried by the multiplicity, so nothing new is constrained</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Multiplicity and OCL are not in conflict — a range bound is exactly the kind of law an OCL invariant expresses. Nothing is overridden, and the model is still consistent.">The invariant overrides the multiplicity and silently makes the end optional</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is legal OCL and expresses a per-instance bound. It is not a global population count; that would need an allInstances expression.">The constraint is illegal, because size() may only be used in global expressions</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; make a loose diagram precise.</strong> Starting point: the deck's questionnaire diagram, <code>ClassA al 1 &mdash; 1 ar ClassB</code>, drawn with two 1-to-1 association ends. Harden it in four moves.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the association, not the ends only.</strong> Replace <code>al</code> and <code>ar</code> with role names that read aloud: <code>leftOf</code> and <code>rightOf</code> if the structure is positional, or <code>parent</code> and <code>child</code> if it is hierarchical. An association label in the middle of the line names the relationship itself, and the deck's rule is that a good name makes sense when read out loud.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>State navigability in one direction only.</strong> If the intended traversal is from the container to its contents, arrow only that way. As the tutorial's spreadsheet example shows, being unable to reach back from a cell to its spreadsheet is a modelling decision, not an omission — but it must be a decision.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Decide whether the parts may be shared, and say so.</strong> A 1-to-1 pair of ends allows a chain and a ring; it does not by itself forbid one <code>ClassB</code> from being the <code>ar</code> of two different <code>ClassA</code> instances — the multiplicity at the <code>al</code> end would have to be <code>1</code> to enforce that, and it is. Write the exclusivity invariant anyway if the diagram is split across views: <code>context ClassB inv singleOwner: ClassA.allInstances-&gt;select(a | a.ar = self)-&gt;size() &lt;= 1</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Replace the unbounded count with a rule.</strong> The questionnaire showed that the diagram admits 1, 2, 3, &hellip; pairs. If the domain has a bound — say at most four — it must be written, because the notation has no global bound: <code>context ClassA inv boundedFanOut: self.ar-&gt;size() &lt;= 4</code>. And if the structure is required to be acyclic, that too is an invariant, and it is the classic example of a rule no class diagram can draw.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Check what is left unstated.</strong> Lifetime (composition or plain association), the collection's kind (<code>{unique}</code>, <code>{ordered}</code>), and any coupling between two associations. If all three are answered, the diagram is a specification; if any is unanswered, a reader is free to choose — and a different reader will choose differently.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Class-diagram checklist for the lab</h2>
+  <p class="section-lead">Laboratory 5 Part Two asks for a class diagram with classes and relationships, interfaces and their implementations, multiplicity on every association, and attributes and methods, using correct UML notation. Run this list before you submit.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the class-diagram review",
+    "subtitle": "Rebuild the order in which to audit a structure model, cheapest checks first.",
+    "steps": [
+      "Check that every class name is a noun and every association label reads aloud",
+      "Check that every association end has a role name and a multiplicity",
+      "Check that each end's multiplicity is read from the class at the other end",
+      "Decide composition or plain association for every part, and justify it by lifetime",
+      "Check that interfaces declare features only and that realisations are complete",
+      "Look for rules no symbol can carry and write them as constraints",
+      "Walk one concrete scenario through the diagram and see whether it is legal"
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Classes and relationships</h3>
+      <p>Every major class identified; associations, generalisations, aggregations and compositions distinguished, with the diamond only where lifetime is really bound.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Interfaces</h3>
+      <p>Declared with the <code>&laquo;interface&raquo;</code> keyword or the lollipop form, restricted to declarations, and realised by named classes with every feature implemented.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Multiplicity</h3>
+      <p>On every association, at both ends, with the modifiers written where the default would be wrong.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Attributes and methods</h3>
+      <p>Visibility markers on each feature, types after the colon, return types after the parameter list, and derived features marked with <code>/</code>.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>#</th><th>Check</th><th>Symptom of a failure</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Names read aloud as sentences</td><td>Ends called <code>a1</code> and <code>b1</code>, or association labels like &ldquo;has&rdquo;</td></tr>
+        <tr><td>2</td><td>Every end has a role name and a multiplicity</td><td>A bare line between two boxes</td></tr>
+        <tr><td>3</td><td>Each multiplicity is read from the far end</td><td>A <code>1</code> on the &ldquo;many&rdquo; side because the modeller read the diagram left to right</td></tr>
+        <tr><td>4</td><td>Diamonds justified by lifetime</td><td>A filled diamond between an order line and a shared product</td></tr>
+        <tr><td>5</td><td>Interfaces declare only, and are fully realised</td><td>An interface box with method bodies, or a realisation missing a feature</td></tr>
+        <tr><td>6</td><td>Non-symbolic rules written as constraints</td><td>A shared invariant left to the reader's common sense</td></tr>
+        <tr><td>7</td><td>One scenario walked through the diagram</td><td>A model that cannot represent the project's own main use case</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: say the answer before you flip",
+    "subtitle": "Six rules that decide whether a structure model is a specification or a sketch.",
+    "cards": [
+      { "front": "Which end does a multiplicity belong to?", "back": "It is written at one end and read from the class at the other end: it bounds how many instances of the far class one instance of this class may reach.", "hint": "Reading rule" },
+      { "front": "Composition versus aggregation in one line?", "back": "Composition (filled) is ownership with deletion semantics — remove the whole and the parts go with it. Aggregation (hollow) is weak, user-defined ownership that in standard UML means the same as a plain association.", "hint": "Two diamonds" },
+      { "front": "What are the defaults for the two multiplicity modifiers?", "back": "{unique} defaults to true, so duplicates must be requested with {nonunique}. {ordered} defaults to false, so an ordered collection must be requested with {ordered}.", "hint": "Modifiers" },
+      { "front": "What does {subsets accounts} on a specialised end assert?", "back": "That the links of the specialised association are a subset of the links of the general association, so the specialised pairing cannot introduce a link the general one forbids.", "hint": "Refinement" },
+      { "front": "How do you write a range constraint in OCL?", "back": "As an invariant over the collection: self.children->size() >= 1 and self.children->size() <= 2, which is the same law as the 1..2 multiplicity written in text.", "hint": "OCL" },
+      { "front": "Why can a collaboration not be instantiated?", "back": "Because it has no encapsulation shell. It abstracts the identities of its participants into roles and connectors, so it describes a pattern that concrete configurations conform to rather than a component that can be created.", "hint": "Complex structure" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the notation on this page, the elementary concepts and the association semantics on the study guide, then the Quiz Hub and Flashcards for Week 5. If you can write the five-slot association sentence and name the notation for every slot from memory, the exam question on class diagrams is a reproduction exercise rather than a puzzle.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initELEC5620ChapterUI) return;
+    try {
+      window.initELEC5620ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[ELEC5620 chapter 5] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

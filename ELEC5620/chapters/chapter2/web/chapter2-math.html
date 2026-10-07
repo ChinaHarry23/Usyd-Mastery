@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 2: Introduction to MBSE Practice</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 foundations for ELEC5620: exact definitions of model, engineering model, software model, viewpoint, metamodel, model repository and traceability; a UML notation reference card; the relationships behind abstraction, refinement and traceability; and a model-quality checklist.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 2: Introduction to MBSE Practice">
+<meta property="og:description" content="Week 2 foundations for ELEC5620: exact definitions of model, engineering model, software model, viewpoint, metamodel, model repository and traceability; a UML notation reference card; the relationships behind abstraction, refinement and traceability; and a model-quality checklist.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 2 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-notation" class="toc-link">UML notation reference card</a></li>
+  </ul>
+  <div class="toc-group">Relationships</div>
+  <ul>
+    <li><a href="#sec-m-relations" class="toc-link">Abstraction, refinement, traceability</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomies</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-quality" class="toc-link">Model quality checklist</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial &amp; lab review</a></li>
+  </ul>
+  <a href="chapter2-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">ELEC5620 &mdash; Week 2 supplement</p>
+  <h1>Foundations: the vocabulary, notation and relations of modelling</h1>
+  <p class="hero-desc">Week 2 is conceptual rather than mathematical, so this page does the equivalent job. It pins down the definitions the lecture relies on, turns UML notation into a reference card, writes the week's relationships as formulas you can reproduce, and ends with the checklist that decides whether a model is good enough.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 2 deck</span>
+    <span>Formulas are a revision aid, not lecture notation</span>
+    <span>Notation card covers the constructs used in the project</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Model</div>
+    <p>A representation of a part of the <strong>function</strong>, <strong>structure</strong> or <strong>behaviour</strong> of a system; a simplification of that system; something that can answer questions in place of the actual system (inference, prediction); built for a purpose (planning, design, risk analysis, testing).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Abstraction</div>
+    <p>Forgetting some details &mdash; deliberately, and for a reason. The deck's one-line form is <em>abstraction is forgetting (some) details</em>, and its engineering consequence is that raising the level of abstraction of the development technology is a basic means of guarding against accidental complexity.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Engineering model</div>
+    <p>A <strong>selective representation</strong> of some system that captures <strong>accurately and concisely</strong> all of its <strong>essential properties of interest</strong> for a <strong>given set of concerns</strong>. Every clause is load-bearing: selective, accurate, concise, essential, and relative to concerns.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Software model</div>
+    <p>An engineering model, specified using a modelling language, of some software that represents (1) <strong>design-time views</strong>: the structure and content of the software specification; and (2) <strong>run-time views</strong>: the structure and behaviour of the software in execution.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Model-based software engineering (MBSE) / model-based engineering (MBE)</div>
+    <p>An approach to system and software development in which software models play an indispensable role. It rests on two time-proven ideas: <strong>abstraction</strong> (the realm of modelling languages) and <strong>automation</strong> (the realm of tools).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Viewpoint and view</div>
+    <p>A <strong>viewpoint</strong> is a perspective together with the concerns it addresses and the language it uses to express them. A <strong>view</strong> is the model of the system produced from one viewpoint. The building metaphor is the deck's: architect, builder, designer, electrician, plumber &mdash; we do not see everything at once, and what we do see is adjusted to human understanding.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Modelling language, metamodel, stereotype</div>
+    <p>A <strong>modelling language</strong> has defined syntax and semantics for expressing models. Its <strong>metamodel</strong> defines which constructs exist (Class, Association, State, Transition), what properties they have and how they may legally be combined; a model is an instance of the metamodel. A <strong>stereotype</strong>, written &laquo;like this&raquo;, is a controlled metamodel extension that brands an existing element with domain meaning &mdash; as &laquo;sc_method&raquo; and &laquo;sc_slave&raquo; do in the deck's SystemC example.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Model repository</div>
+    <p>The versioned store that holds the models and that tools read, transform and validate against. It is what makes &ldquo;structured and versioned models&rdquo; operational: because the model lives in a repository, it can be diffed, reviewed, transformed, generated from and traced through.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Traceability</div>
+    <p>The recorded links between model elements and the things they exist to serve &mdash; requirements, decisions, tests, code. Traceability answers two questions mechanically: why does this element exist, and if this requirement changes, what must be revisited. The tutorial lists requirements traceability among the <em>established</em> capabilities of MBE today.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Model quality</div>
+    <p>Fitness of the representation to its purpose: accurate (it does not contradict the system), concise (nothing incidental survives), essential (the omissions are deliberate), concern-scoped (you can name the viewpoint it serves) and usable for the purpose it was built for &mdash; understanding, prediction, communication or specification.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Model</td><td>A selective representation of function, structure or behaviour, built for a purpose</td><td>&ldquo;A diagram of the code&rdquo; &mdash; which names an artefact, not the relationship</td></tr>
+        <tr><td>Abstraction</td><td>Deliberate omission of detail</td><td>&ldquo;A summary&rdquo; &mdash; a summary keeps everything, smaller</td></tr>
+        <tr><td>Engineering model</td><td>Accurate, concise, essential, for a given set of concerns</td><td>Dropping the &ldquo;for a given set of concerns&rdquo; clause, which is what makes selectivity judgeable</td></tr>
+        <tr><td>Software model</td><td>Design-time <em>and</em> run-time views</td><td>Mentioning only the static structure</td></tr>
+        <tr><td>Viewpoint</td><td>Perspective <em>plus</em> concerns <em>plus</em> language</td><td>Treating a viewpoint as a person rather than a convention</td></tr>
+        <tr><td>Metamodel</td><td>The definition of the language's constructs</td><td>Confusing it with the model, or with the tool's file format</td></tr>
+        <tr><td>Traceability</td><td>Recorded links, usable in both directions</td><td>&ldquo;A table of contents&rdquo; &mdash; traceability is a relation, not a list</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-defs"></div>
+  <script type="application/json" id="ix-m-defs">
+  {
+    "title": "Self-test: say the definition before you flip",
+    "subtitle": "If the second half of your sentence is missing, the definition is not finished.",
+    "cards": [
+      { "front": "Model", "back": "A representation of part of the function, structure or behaviour of a system — a simplification that can answer questions in place of the system, for a purpose.", "hint": "Definition" },
+      { "front": "Abstraction", "back": "Forgetting some details. The interesting question is never whether detail was dropped, but whether the right detail was kept for the concerns at hand.", "hint": "Method" },
+      { "front": "Engineering model", "back": "A selective representation that captures accurately and concisely all of a system's essential properties of interest for a given set of concerns.", "hint": "Definition" },
+      { "front": "Design-time view", "back": "The structure and content of the software specification — classes, associations, multiplicities, stereotypes, components.", "hint": "Software model, part 1" },
+      { "front": "Run-time view", "back": "The structure and behaviour of the software in execution — objects, states, transitions and interactions.", "hint": "Software model, part 2" },
+      { "front": "Metamodel", "back": "The definition of a modelling language's constructs and their legal combinations. A model is an instance of its metamodel.", "hint": "Language level" },
+      { "front": "Traceability", "back": "Recorded links between model elements and requirements, decisions, tests or code — so you can ask why this exists and what a change affects.", "hint": "Quality mechanism" },
+      { "front": "Model repository", "back": "The versioned store that makes the model a control surface: diffable, reviewable, transformable, generatable and traceable.", "hint": "Infrastructure" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is an engineering model?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes a document dump. The definition insists on concise and on essential properties, which is exactly what a full record is not.">A complete record of everything known about the system</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: a selective representation that captures accurately and concisely all essential properties of interest for a given set of concerns — the concern clause is what makes the selection judgeable." data-bad="">A selective representation that captures accurately and concisely the essential properties of interest for a given set of concerns</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a software model, and even then only its design-time half. The engineering-model definition is broader and is stated in terms of concerns.">Any UML diagram produced by a modelling tool</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">UML notation reference card</h2>
+  <p class="section-lead">Read a diagram by naming each element and asking what it commits the model to. This card collects the constructs this unit's project actually uses.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">What it commits the model to</div>
+    <div class="sym-cell">Name<br>+ attr : Type<br>op()</div><div class="sym-cell">Class with three compartments</div><div class="sym-cell">Name, attributes and operations of a type. An operation in the bottom compartment is behaviour owned by that class.</div>
+    <div class="sym-cell">a1 : Producer</div><div class="sym-cell">Instance specification</div><div class="sym-cell">One concrete object and its type. Used when the model is about the objects that exist at run time.</div>
+    <div class="sym-cell">&#171;sc_method&#187;</div><div class="sym-cell">Stereotype</div><div class="sym-cell">A metamodel extension branding an existing element with domain meaning. It adds vocabulary, not structure.</div>
+    <div class="sym-cell">&#9472;&#9472;&#9472;&#9472;</div><div class="sym-cell">Association</div><div class="sym-cell">Instances of the two classes can be linked. The first structural claim the code does not state at a glance.</div>
+    <div class="sym-cell">out1 / in1</div><div class="sym-cell">Association end name</div><div class="sym-cell">The port or role through which the link is realised at that end.</div>
+    <div class="sym-cell">1 &nbsp; 0..1 &nbsp; 0..* &nbsp; 1..*</div><div class="sym-cell">Multiplicity</div><div class="sym-cell">How many instances may sit at that end. Changing it changes the model's meaning, not its appearance.</div>
+    <div class="sym-cell">A &#9670;&#9472;&#9472; B</div><div class="sym-cell">Composition (filled diamond)</div><div class="sym-cell">B is part of A and its lifetime is bound to A's.</div>
+    <div class="sym-cell">A &#9671;&#9472;&#9472; B</div><div class="sym-cell">Aggregation (hollow diamond)</div><div class="sym-cell">B is part of A but can exist without A. The diamond is on the whole, never on the part.</div>
+    <div class="sym-cell">Sub &#9472;&#9472;&#9651; Super</div><div class="sym-cell">Generalization</div><div class="sym-cell">The subclass inherits the superclass's features and may be substituted for it. Hollow triangle points at the superclass.</div>
+    <div class="sym-cell">- - -&#9655;</div><div class="sym-cell">Dependency, e.g. &#171;deploy&#187;</div><div class="sym-cell">A change in the target may require a change in the source. The deck's deploy arrow from an application to a computing platform is one of these.</div>
+    <div class="sym-cell">( Use case )</div><div class="sym-cell">Use case</div><div class="sym-cell">A system goal. Each connecting line means one actor participating in one goal.</div>
+    <div class="sym-cell">Actor (stick figure)</div><div class="sym-cell">Actor</div><div class="sym-cell">An external role that interacts with the system to achieve a goal &mdash; a role, never a person's name.</div>
+    <div class="sym-cell">&#9484;&#9472;&#9472;&#9472;&#9488; boundary</div><div class="sym-cell">System boundary</div><div class="sym-cell">What the system is responsible for. Inside the rectangle: system goals. Outside: the people and services it depends on.</div>
+    <div class="sym-cell">include</div><div class="sym-cell">Include relationship</div><div class="sym-cell">The base use case always performs the included one. It is not optional behaviour.</div>
+    <div class="sym-cell">extend</div><div class="sym-cell">Extend relationship</div><div class="sym-cell">Behaviour that augments the base case under a condition, and does not run otherwise.</div>
+    <div class="sym-cell">&#9679;&#9472;&#9472;&#9654; NotStarted</div><div class="sym-cell">Initial state, state</div><div class="sym-cell">The state machine starts here, and the rounded rectangle is a state the object can be in.</div>
+    <div class="sym-cell">event [guard] / action</div><div class="sym-cell">Transition</div><div class="sym-cell">Resolving it reads the current state, accepts the event, checks the guard, runs the action and enters the target state.</div>
+    <div class="sym-cell">lifeline &#9474; dashed</div><div class="sym-cell">Lifeline and message</div><div class="sym-cell">In a sequence diagram, messages are ordered in time between lifelines. A communication diagram shows the same interaction as a network of links.</div>
+    <div class="sym-cell">association class</div><div class="sym-cell">Association class</div><div class="sym-cell">A link with an identity of its own, such as &#171;sc_link_mp&#187; link1 in the deck's model.</div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">How to use this card</div>
+    <p>For any element you draw, be able to say three things: <em>what it is called</em>, <em>what it means</em>, and <em>what would have to change in the system for it to be wrong</em>. If the third answer does not exist, the element is decoration.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-construct"></div>
+  <script type="application/json" id="ix-m-construct">
+  {
+    "title": "Match the modelling question to the construct that answers it",
+    "subtitle": "Click a question on the left, then the construct on the right.",
+    "pairs": [
+      ["Which objects are connected, and how many at each end?", "Association with multiplicity at each end"],
+      ["Does the part's lifetime depend on the whole?", "Aggregation (no) versus composition (yes)"],
+      ["Which behaviour always accompanies another use case?", "include"],
+      ["What is the behaviour of one object over time?", "State machine: states, events, transitions"],
+      ["Which messages are exchanged, and in what order?", "Sequence diagram with lifelines and messages"],
+      ["Which constructs may legally be combined in this language?", "The metamodel"],
+      ["Why does this element exist, and what changes with this requirement?", "Traceability links"],
+      ["What does this artefact run on?", "\u00ABdeploy\u00BB dependency"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A diagram connects two classes with a line, and the annotation at one end reads <code>0..*</code>. What has just been said about the system?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A line alone says instances can be linked. The multiplicity is the additional claim about how many, and that is the part with real modelling content.">Only that the two classes are related somehow</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Multiplicity constrains how many instances may sit at that end — here, any number from zero upwards. Change it to 1..* and the model forbids the empty case." data-bad="">That zero or more instances at that end may participate in the link</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would be the composition diamond, and it is a lifetime claim rather than a cardinality claim. The two are independent: you can have multiplicities with or without aggregation.">That the lifetime of the part is bound to the whole</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-relations">
+  <h2 class="section-title">Abstraction, refinement and traceability as relations</h2>
+  <p class="section-lead">The Week 2 deck is prose. The relations below are a revision aid written here so you can state the week's claims compactly &mdash; they are not lecture notation and should not be quoted as such.</p>
+
+  <div class="theorem-box">
+    <h3>1. A model is a projection of the system</h3>
+    <p>Let \(S\) be the system (or the situation it comes from) and let \(A\) be the set of aspects the model keeps. Then</p>
+    \[ M \;=\; \sigma_{A}(S), \qquad |A| \;<\; |S| \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The strict inequality is the definition doing its work: a model that keeps everything is not a model. Selecting \(A\) is what the deck calls <em>forgetting (some) details</em>, and \(A\) is chosen by the concerns, not by convenience.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The engineering-model definition is a predicate</h3>
+    <p>\(M\) is an engineering model of \(S\) for the concern set \(C\) when all three hold:</p>
+    \[ \text{accurate}:\; M \not\models \neg S, \qquad \text{concise}:\; |M| \ll |S|, \qquad \text{relevant}:\; A = A(C) \]
+    <p style="margin-top:0.6rem;">Read it as a checklist rather than as mathematics. Accuracy is a claim about truth, concision about size, relevance about the choice of \(A\). A model can fail any one of the three and still look impressive.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Effort splits, and abstraction attacks one half</h3>
+    <p>With \(\ell\) the level of abstraction of the development technology:</p>
+    \[ E_{\text{total}} \;=\; E_{\text{essential}} \;+\; E_{\text{accidental}}, \qquad \frac{\partial E_{\text{accidental}}}{\partial \ell} \;<\; 0, \qquad \frac{\partial E_{\text{essential}}}{\partial \ell} \;=\; 0 \]
+    <p style="margin-top:0.6rem;">The two derivatives are the deck's argument in one line. Raising the level of abstraction reduces accidental complexity and does not touch essential complexity &mdash; which is why modelling is not a cure for a hard problem, only for a badly expressed one.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Refinement: the model can become the system</h3>
+    <p>Refinement is a chain in which each step adds detail without contradicting the previous model:</p>
+    \[ M_0 \;\sqsubseteq\; M_1 \;\sqsubseteq\; \cdots \;\sqsubseteq\; M_n \;\equiv\; S \]
+    <p style="margin-top:0.6rem;">The deck's claim is that this chain can be carried all the way: models can be refined continuously until the application is fully specified, so that the model becomes the system it was modelling. Software is the medium in which this is possible without fundamental discontinuities in expertise, tools or methods, because the model and the system share the same medium.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Views partition the concerns, not the system</h3>
+    <p>With \(V_i\) the view produced from viewpoint \(i\) and \(C_i\) the concerns it addresses:</p>
+    \[ \bigcup_i V_i \;\supseteq\; \text{the parts of } S \text{ that matter}, \qquad V_i \cap V_j \;\neq\; \emptyset \;\text{ for related } i, j \]
+    <p style="margin-top:0.6rem;">Views overlap, and that is not a defect: the same class appears in a structural view and in an interaction view because both need it. The requirement is consistency between overlapping views, not disjointness &mdash; which is precisely what consistency checking verifies.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>6. Traceability is a relation, and it has a coverage</h3>
+    <p>Let \(R\) be the requirement set and \(E\) the model-element set. Then</p>
+    \[ T \;\subseteq\; R \times E, \qquad \text{coverage} \;=\; \frac{|\pi_R(T)|}{|R|}, \qquad \text{impact}(r) \;=\; \{\, e \;\mid\; (r, e) \in T \,\} \]
+    <p style="margin-top:0.6rem;">Coverage measures the fraction of requirements that any model element serves; impact is the set you must revisit when requirement \(r\) changes. A model whose traceability has low coverage is not wrong, it is <em>unreviewable</em>: you cannot tell whether a missing element was omitted deliberately.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>7. The tool-generated share is a ratio with two named data points</h3>
+    <p>For a codebase of \(L_{\text{total}}\) lines of which \(L_{\text{gen}}\) were produced by tools:</p>
+    \[ G \;=\; \frac{L_{\text{gen}}}{L_{\text{total}}}, \qquad G_{\text{base station}} = 0.87 \;\text{ of } 2\text{M lines}, \qquad G_{\text{network controller}} = 0.80 \;\text{ of } 4.5\text{M lines} \]
+    <p style="margin-top:0.6rem;">These are the deck's results for a major telecom equipment manufacturer using UML, Rational Technical Developer and the Rational Unified Process. The ratio measures leverage, not correctness: the deck's own generation slide shows a bug surviving into the generated switch statement.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>One sentence that ties the page together.</strong> Modelling is the deliberate choice of \(A\) for a stated \(C\), refinement is the disciplined growth of \(M\) towards \(S\), and traceability is what keeps the whole chain auditable when \(R\) changes.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team raises the level of abstraction of its development technology: they model the appointment workflow instead of hand-writing the state handling. According to relation 3, what should happen?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Essential complexity is inherent to the problem: no technology or technique removes it. The appointment rules stay as complicated as the domain makes them.">Both halves of the effort fall, because the model is simpler than the code</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Raising abstraction reduces the accidental half — the glue, the boilerplate, the mismatched technology — and leaves essential complexity where it was." data-bad="">Accidental effort falls and essential effort is unchanged</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That inverts the deck's claim. Abstraction does not make the problem harder; it removes work that came from the technology and the method.">Essential effort rises because the model must be reviewed as well</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; put the deck's numbers through the relations.</strong> The telecom result gives two data points; traceability gives a third quantity to compute.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Radio Base Station.</strong> \(L_{\text{total}} = 2{,}000{,}000\) lines and \(G = 0.87\), so \(L_{\text{gen}} = 1{,}740{,}000\) lines. The hand-written remainder is \(260{,}000\) lines &mdash; the part that carries the design decisions no transformation could make.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Network Controller.</strong> \(L_{\text{total}} = 4{,}500{,}000\) lines and \(G = 0.80\), so \(L_{\text{gen}} = 3{,}600{,}000\) lines, leaving \(900{,}000\) hand-written lines.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Combined leverage.</strong> Total lines \(= 6{,}500{,}000\); generated lines \(= 5{,}340{,}000\); so the pooled ratio is \(G = 5{,}340{,}000 / 6{,}500{,}000 \approx 0.822\), about <strong>82%</strong>. Note that the pooled figure is a weighted average: the larger system has the lower ratio, so it pulls the combined value down.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Traceability coverage on a small example.</strong> Suppose the appointment service has 24 requirements and the model traces 19 of them. Then \(|\pi_R(T)| = 19\) and coverage \(= 19/24 \approx 0.79\), or 79%. The five untraced requirements are the review agenda: for each one, either a model element is missing or the requirement is out of scope. Saying which is the point of measuring coverage at all.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Impact analysis.</strong> If \(T\) contains \((r_7, e_2), (r_7, e_5), (r_7, e_9), (r_7, e_{14})\), then \(\text{impact}(r_7) = \{e_2, e_5, e_9, e_{14}\}\) &mdash; four elements to revisit, all of them found by lookup rather than by memory. This is the mechanical answer the definition of traceability promises.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>What the ratio does not tell you.</strong> \(G = 0.87\) says nothing about correctness. Because generation is only as good as the model and the transformation, the reviewable artefact is the model plus its traceability &mdash; and the deck's generation slide shows a bug surviving into the generated code precisely to make that point.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomies</h2>
+  <p class="section-lead">Exam questions usually ask you to place something: a model at a level of abstraction, a diagram in a viewpoint, a tool in a class, a project on the MBSE spectrum.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; level of abstraction</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Level</th><th>What it describes</th><th>Who reads it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Problem domain</td><td>The situation as it is: users, goals, rules, constraints</td><td>Stakeholders and analysts</td></tr>
+        <tr><td>Model</td><td>The chosen aspects of structure, function and behaviour</td><td>Each reader from a viewpoint</td></tr>
+        <tr><td>High-level language</td><td>The model implemented in a programming language</td><td>Developers</td></tr>
+        <tr><td>Machine</td><td>What actually executes</td><td>Runtimes, hardware, tools</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; kind of software model</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Kind</th><th>What it represents</th><th>Typical diagrams</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Design-time view</td><td>The structure and content of the software specification</td><td>Class, component, use case, deployment</td></tr>
+        <tr><td>Run-time view</td><td>The structure and behaviour of the software in execution</td><td>State machine, sequence, communication, activity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 3 &mdash; MBSE style (abstraction and automation)</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Style</th><th>The deck's line</th><th>Where the truth lives</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Code only</td><td>&ldquo;What's a model?&rdquo;</td><td>In the code, and only there</td></tr>
+        <tr><td>Code visualization</td><td>&ldquo;The code is the model&rdquo;</td><td>In the code; diagrams are derived</td></tr>
+        <tr><td>Round trip engineering</td><td>&ldquo;Manage code and model&rdquo;</td><td>Shared, with synchronisation as the cost</td></tr>
+        <tr><td>Model-centric</td><td>&ldquo;The model is the code&rdquo;</td><td>In the model; code is generated</td></tr>
+        <tr><td>Model only</td><td>&ldquo;Who cares about the code?&rdquo;</td><td>In the model, which executes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 4 &mdash; tool class</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Class</th><th>What it can do</th><th>Examples from Tutorial 2</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Drawing tool</td><td>Notation and communication; no metamodel, so no validation or generation</td><td>draw.io &mdash; versatile and cross-platform, but not as refined as specialised tools</td></tr>
+        <tr><td>Modelling tool</td><td>Notation under a metamodel: checks legality, supports profiles and stereotypes</td><td>UMLet &mdash; open source, simple, lightweight, plugin compatible; lacks code generation and reverse engineering</td></tr>
+        <tr><td>Modelling plus generation</td><td>Metamodel plus transformations: code generation, reverse engineering, plugins</td><td>StarUML &mdash; professional level, with a paid licence (30-day trial)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-loop"></div>
+  <script type="application/json" id="ix-m-loop">
+  {
+    "title": "Order the software engineering loop",
+    "subtitle": "The deck draws two arrows between the problem domain and the solution domain. Rebuild the loop.",
+    "steps": [
+      "Problem domain: the situation, its users, goals and constraints",
+      "Implement: build a solution using the chosen technology",
+      "Solution domain: the software as it has actually been built",
+      "Validate: check the solution against the problem it was meant to solve",
+      "Feed what validation found back into the problem domain"
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A team uses a general drawing tool for its class diagrams and then wonders why it cannot check whether the diagrams are consistent. What is the structural reason?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Effort is not the issue: a modelling tool is not necessarily harder to use. The difference is whether the tool knows the language's constructs.">The tool is too simple to draw class diagrams correctly</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A drawing tool stores shapes; a modelling tool stores instances of a metamodel. Without the metamodel there is nothing for a consistency check to run against." data-bad="">A drawing tool stores shapes, so there is no metamodel for a consistency check to reason over</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Multiplicity and stereotypes can be drawn in a drawing tool. They just cannot be checked, transformed or generated from.">Drawing tools cannot express multiplicity or stereotypes</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-quality">
+  <h2 class="section-title">Model quality checklist</h2>
+  <p class="section-lead">The engineering-model definition is the rubric. Turn it into questions and it will tell you what is wrong with a model before a reviewer does.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Attribute</th><th>Question to ask</th><th>How it typically fails</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Accurate</strong></td><td>Does anything in the model contradict the system or the requirement?</td><td>A stale diagram that was right two iterations ago and is now trusted</td></tr>
+        <tr><td><strong>Concise</strong></td><td>Which of these elements would survive if the model had to be half its size?</td><td>Every attribute of every class reproduced, so nothing stands out</td></tr>
+        <tr><td><strong>Essential</strong></td><td>Was each omission a decision, and can you say why?</td><td>Omissions nobody noticed, discovered later as missing requirements</td></tr>
+        <tr><td><strong>Concern-scoped</strong></td><td>Which viewpoint does this element serve, and can you name its reader?</td><td>A diagram that mixes persistence, UI and protocol concerns in one picture</td></tr>
+        <tr><td><strong>Consistent</strong></td><td>Do overlapping views still agree about the same element?</td><td>A class renamed in one view and not in another; multiplicities that contradict</td></tr>
+        <tr><td><strong>Traceable</strong></td><td>Can every element be traced to a requirement, and every requirement to an element?</td><td>Coverage so low that nobody can tell omission from oversight</td></tr>
+        <tr><td><strong>Fit for purpose</strong></td><td>Does it do the job it was built for &mdash; understand, predict, communicate, specify?</td><td>A precise model that nobody can read, or a readable one nothing can be generated from</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The two questions that catch most bad models.</strong> <em>&ldquo;What does this element commit us to?&rdquo;</em> &mdash; if nothing, it is decoration. <em>&ldquo;What would have to change for this element to be wrong?&rdquo;</em> &mdash; if nothing could, it is not a claim about the system.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked audit &mdash; a model that looks complete.</strong> A team submits a 14-page class diagram of the one-person AI company: every entity, every attribute, every getter. Run the checklist over it.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Accuracy first, because everything else is worthless without it.</strong> Compare three elements against the running system. If the diagram still shows an <em>Order.status</em> field that the code deleted, stop: nothing downstream of an inaccurate model can be trusted.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Concision.</strong> Getters and setters are not design. Neither is an attribute that nothing else in the model refers to. Removing them is not losing information; it is restoring the signal-to-noise ratio that makes the diagram readable.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Essentiality of the omissions.</strong> The diagram has no state machine, no actor and no boundary. Are those omissions deliberate? For a structure-only view they might be &mdash; but then the model has no run-time view, and the software model is only half present.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Concern scope.</strong> The diagram serves no single concern: it is a persistence view and an API view and a UI view in one picture. Split it by viewpoint, and each part immediately becomes smaller and more checkable.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Traceability.</strong> Ask for the coverage figure. If nobody can produce one, the model cannot be reviewed for completeness &mdash; which is a stronger criticism than any individual mistake in it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Verdict and the sentence to write.</strong> &ldquo;The model is accurate but not concise and not concern-scoped: it reproduces implementation detail instead of the essential structure, so it supports communication weakly and specification not at all. Split it by viewpoint, drop the accessor noise, add a run-time view for the appointment workflow, and report traceability coverage.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A model is accurate, readable and well scoped, but nothing in it can be traced to a requirement. Which criticism is the strongest?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Accuracy, concision and scope are already satisfied here, so this criticism would be wrong as well as irrelevant.">It is inaccurate</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Readability is a real quality attribute and the scenario grants it. The missing property is the one that links the model to what it must deliver.">It is not concise enough</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Without traceability nobody can tell a deliberate omission from an oversight, so completeness cannot be reviewed — coverage is what makes the model auditable when a requirement changes." data-bad="">It cannot be reviewed for completeness, because deliberate omissions cannot be distinguished from oversights</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial 2 and Lab Note 2 review</h2>
+  <p class="section-lead">Tutorial 2 is a modelling studio on two sample projects; Lab Note 2 turns the theme into project requirements. Everything below comes from those two documents.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Actors are roles</h3>
+      <p>An actor is outside the system, interacts with it and has a goal. The shoe-store sample lists Customer, Store Adviser, Store Admin and an external Payment / Delivery Service. <em>Actor &ne; person name.</em></p>
+    </div>
+    <div class="glance-card">
+      <h3>The boundary defines responsibility</h3>
+      <p>Inside the shoe store: collect preferences, generate recommendations, explain and compare, manage product information, create an order request. Outside: the customer who chooses, the adviser who reviews, the service that processes payment.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Write the boundary rule down</h3>
+      <p>Tutorial 2's rule: <em>the AI may recommend and explain; it does not make the final purchase decision.</em> A boundary rule is a testable constraint, which is why it belongs in the model rather than in the pitch.</p>
+    </div>
+    <div class="glance-card">
+      <h3>The MVP question</h3>
+      <p>&ldquo;Can the assistant help a customer make a better shoe choice?&rdquo; Keep only the features needed to test that value; everything else &mdash; 3D try-on, social feed, voice assistant &mdash; is added later.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Lab Note 2 requirement</th><th>What it means for your model</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>At least three distinct AI roles performing primary stakeholder or business functions</td><td>Three actors with different goals, not three copies of one agent. Each needs its own use cases and its own boundary.</td></tr>
+        <tr><td>Every group member implements at least two core features and one optional feature</td><td>Each of those features is a model element traceable to a goal. The optional feature is explicitly outside the MVP and must be modelled as such.</td></tr>
+        <tr><td>A three-minute topic presentation: what real-world problem does it solve, and which roles should be performed or replaced by AI agents?</td><td>Two sentences that are really a problem-domain model and a boundary decision &mdash; the same two artefacts the tutorial asks you to draw.</td></tr>
+        <tr><td>Discuss feasibility with your tutor before committing</td><td>A feasibility argument is a claim about essential complexity: whether the problem can be solved by agents at all, before any notation is chosen.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and the notation card are on this page; the worked UML build, the state-machine execution and the toolchain live on the study guide; then attempt the Quiz Hub and the Flashcards for Week 2.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initELEC5620ChapterUI) return;
+    try {
+      window.initELEC5620ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[ELEC5620 chapter 2] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

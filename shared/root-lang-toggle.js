@@ -19,8 +19,7 @@
     "uni-badge": "悉尼大学",
     "tagline":
       "你的集中式学习指挥中心。为每门课程提供交互式指南、知识图谱、闪卡、测验和进度追踪。",
-    "semester-badge": "第一学期 &middot; 2026 &middot; 共 5 门课程",
-
+    "semester-badge": "第一学期与第二学期 &middot; 2026 &middot; 共 10 门课程",
     /* ── COMP 5270 ─────────────────────────────────────── */
     "card-5270-badge": "COMP 5270 &middot; 第一学期 2026",
     "card-5270-title": "随机化与高级算法",
@@ -76,6 +75,65 @@
     "card-9123-stat-toolkit-value": "图谱、测验、闪卡",
     "card-9123-stat-materials-label": "材料",
     "card-9123-stat-materials-value": "PDF + Python 参考代码",
+
+    /* ── S2 2026 cohort ────────────────────────────────── */
+    "stack-s1": "第一学期 &middot; 2026",
+    "stack-s2": "第二学期 &middot; 2026 &middot; 当前学期",
+
+    /* ── COMP 5047 ─────────────────────────────────────── */
+    "card-5047-badge": "COMP 5047 &middot; 第二学期 2026",
+    "card-5047-title": "普适计算",
+    "card-5047-desc":
+      "普适计算愿景、基于传感器的交互、Arduino 数字与模拟 I/O、数字制造、手势、触觉与智能交互系统 —— 配有动画仿真与中英双语支持。",
+    "card-5047-stat-weeks-label": "覆盖范围",
+    "card-5047-stat-weeks-value": "8 个结构化周次",
+    "card-5047-stat-toolkit-label": "工具箱",
+    "card-5047-stat-toolkit-value": "指南、仿真、图谱、测验",
+    "card-5047-stat-language-label": "语言",
+
+    /* ── COMP 5618 ─────────────────────────────────────── */
+    "card-5618-badge": "COMP 5618 &middot; 第二学期 2026",
+    "card-5618-title": "应用网络安全",
+    "card-5618-desc":
+      "工具链与伦理、网络分层与穿越、Web 应用攻击、Linux 提权与 Android 安全模型 —— 配有分步协议动画与实验导读。",
+    "card-5618-stat-weeks-label": "覆盖范围",
+    "card-5618-stat-weeks-value": "7 个讲授周次",
+    "card-5618-stat-toolkit-label": "工具箱",
+    "card-5618-stat-toolkit-value": "指南、实验、图谱、测验",
+    "card-5618-stat-language-label": "语言",
+
+    /* ── ELEC 5620 ─────────────────────────────────────── */
+    "card-5620-badge": "ELEC 5620 &middot; 第二学期 2026",
+    "card-5620-title": "基于模型的<br>软件工程",
+    "card-5620-desc":
+      "以模型表达需求、架构、结构与行为：UML 实战、模型组织与敏捷模型驱动开发 —— 配有逐步构建的图示动画。",
+    "card-5620-stat-weeks-label": "覆盖范围",
+    "card-5620-stat-weeks-value": "8 个结构化周次",
+    "card-5620-stat-toolkit-label": "工具箱",
+    "card-5620-stat-toolkit-value": "图示指南、图谱、测验",
+    "card-5620-stat-language-label": "语言",
+
+    /* ── INFO 5995 ─────────────────────────────────────── */
+    "card-5995-badge": "INFO 5995 &middot; 第二学期 2026",
+    "card-5995-title": "网络安全",
+    "card-5995-desc":
+      "安全基础、AI 辅助漏洞发现、移动安全、从 AES 到 PKI 的密码学、安全通信与系统安全 —— 配有逐步密码学动画。",
+    "card-5995-stat-weeks-label": "覆盖范围",
+    "card-5995-stat-weeks-value": "8 个结构化周次",
+    "card-5995-stat-toolkit-label": "工具箱",
+    "card-5995-stat-toolkit-value": "指南、密码学仿真、测验",
+    "card-5995-stat-language-label": "语言",
+
+    /* ── INFO 6007 ─────────────────────────────────────── */
+    "card-6007-badge": "INFO 6007 &middot; 第二学期 2026",
+    "card-6007-title": "IT 项目管理",
+    "card-6007-desc":
+      "十大知识领域实战：方法论、范围、时间、成本、质量、资源、风险与采购 —— 配有 EVM 与关键路径动画。",
+    "card-6007-stat-weeks-label": "覆盖范围",
+    "card-6007-stat-weeks-value": "8 个结构化周次",
+    "card-6007-stat-toolkit-label": "工具箱",
+    "card-6007-stat-toolkit-value": "指南、EVM 仿真、测验",
+    "card-6007-stat-language-label": "语言",
 
     /* ── Shared / Footer ───────────────────────────────── */
     "enter-course-hub": "进入课程中心 &rarr;",

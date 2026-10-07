@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress Dashboard — COMP5618</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../shared/progress-dashboard.css">
+<meta name="description" content="Progress Dashboard — COMP5618 — Weighted mastery per week, streaks, quiz history and SRS review load.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Progress Dashboard — COMP5618">
+<meta property="og:description" content="Progress Dashboard — COMP5618 — Weighted mastery per week, streaks, quiz history and SRS review load.">
+<meta property="og:locale" content="en_AU">
+</head>
+<link rel="stylesheet" href="../../shared/chat-panel.css">
+<body>
+
+<div class="top-bar">
+  <a href="../index.html" id="navHome">&#x1F3E0; Home</a>
+  <a href="flashcards.html" id="navFlash">&#x1F4E6; Flashcards</a>
+  <a href="quiz-hub.html" id="navQuiz">&#x1F4DD; Quiz Hub</a>
+  <a href="knowledge-graph.html" id="navGraph">&#x1F578; Knowledge Graph</a>
+  <a href="math-knowledge-graph.html" id="navMath">&#x1F4D0; Foundations</a>
+  <span class="title" id="pageTitle">&#x1F4CA; Progress Dashboard</span>
+  <span class="spacer"></span>
+  <button id="langToggle">中文</button>
+</div>
+
+
+
+<div class="dashboard">
+  <div class="overview-grid" id="overviewGrid">
+    <div class="stat-card" style="grid-row: span 2;">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 160 160">
+          <circle class="ring-bg" cx="80" cy="80" r="65"/>
+          <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="65"
+            stroke="var(--accent)" stroke-dasharray="408.4" stroke-dashoffset="408.4"
+            transform="rotate(-90 80 80)"/>
+          <text class="ring-text" x="80" y="76" text-anchor="middle" font-size="28" id="ringPct">0%</text>
+          <text class="ring-label" x="80" y="96" text-anchor="middle" id="ringLabel">Overall</text>
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card"><div class="icon">&#x1F4D6;</div><div class="value" id="statSections" style="color:var(--accent);">0</div><div class="label" id="lbl-sections">Sections Visited</div></div>
+    <div class="stat-card"><div class="icon">&#x2705;</div><div class="value" id="statQuizzes" style="color:var(--green);">0</div><div class="label" id="lbl-quizzes">Quiz Attempts</div></div>
+    <div class="stat-card"><div class="icon">&#x1F3AF;</div><div class="value" id="statAvgScore" style="color:var(--yellow);">—</div><div class="label" id="lbl-avg">Avg Quiz Score</div></div>
+    <div class="stat-card"><div class="icon">&#x26A1;</div><div class="value" id="statQuickChecks" style="color:var(--purple);">0</div><div class="label" id="lbl-qc">Quick Checks Done</div></div>
+    <div class="stat-card"><div class="icon">&#x1F9E9;</div><div class="value" id="statTutorials" style="color:var(--cyan);">0</div><div class="label" id="lbl-tutorials">Tutorial Self-Checks</div></div>
+  </div>
+  <p id="weightHint" style="font-size:0.78rem; color:var(--text-dim); text-align:center; margin:-0.5rem 0 1.25rem; line-height:1.45; max-width:720px; margin-left:auto; margin-right:auto;">Overall score: 20% sections read + 25% quick checks + 25% chapter quiz best + 30% tutorial self-checks (each chapter capped at 100%).</p>
+
+  <div class="section-title"><span class="sec-icon">&#x1F4E6;</span> <span id="title-flash">Flashcard review schedule</span></div>
+  <div class="flash-schedule" id="flashSchedule">
+    <div class="flash-stats" id="flashStats"></div>
+    <div style="overflow-x:auto;">
+      <table class="flash-table" id="flashTable"><thead><tr><th id="th-fl-date">When</th><th id="th-fl-n">Cards</th><th id="th-fl-ch">Chapters (preview)</th></tr></thead><tbody id="flashBody"></tbody></table>
+    </div>
+    <p class="flash-hint" id="flashHint">Ratings (Again / Hard / Good / Easy) set the next review time using a spaced-repetition curve.</p>
+  </div>
+
+  <div class="section-title"><span class="sec-icon">&#x1F4DA;</span> <span id="title-chapters">Chapter Progress</span></div>
+  <div class="chapters-grid" id="chaptersGrid"></div>
+
+  <section class="chart-section">
+    <div class="section-title"><span class="sec-icon">&#x1F4C8;</span> <span id="title-quiz-trend">Quiz Score Trend</span></div>
+    <div class="chart-wrap"><canvas id="quizTrendCanvas"></canvas><p class="chart-empty" id="quizTrendEmpty" style="display:none;">No quiz history yet.</p></div>
+  </section>
+  <section class="chart-section">
+    <div class="section-title"><span class="sec-icon">&#x1F5D3;</span> <span id="title-heatmap">Activity Heatmap (Last 5 Weeks)</span></div>
+    <div class="chart-wrap"><canvas id="heatmapCanvas"></canvas></div>
+  </section>
+
+  <div class="section-title" style="margin-top:2.5rem;"><span class="sec-icon">&#x1F4CB;</span> <span id="title-history">Quiz History</span></div>
+  <div style="overflow-x:auto;">
+    <table class="quiz-table"><thead><tr><th id="th-date">Date</th><th id="th-scope">Scope</th><th id="th-questions">Questions</th><th id="th-score">Score</th></tr></thead>
+      <tbody id="historyBody"><tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:2rem;" id="no-history">No quiz attempts yet. Try the <a href="quiz-hub.html" style="color:var(--accent);">Quiz Hub</a>!</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="section-title" style="margin-top:2.5rem;"><span class="sec-icon">&#x1F4E6;</span> <span id="title-fc-history">Flashcard sessions</span></div>
+  <div style="overflow-x:auto;">
+    <table class="quiz-table"><thead><tr><th id="th-fch-date">Date</th><th id="th-fch-scope">Scope</th><th id="th-fch-cards">Cards rated</th><th id="th-fch-done">Completed</th></tr></thead>
+      <tbody id="fcHistoryBody"><tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:2rem;" id="no-fc-history">No flashcard sessions yet.</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <button class="action-btn" onclick="location.href='quiz-hub.html'" id="btn-start-quiz">&#x1F4DD; Start a Quiz</button>
+    <button class="action-btn" onclick="location.href='flashcards.html'" id="btn-open-fc">&#x1F4E6; Open Flashcards</button>
+    <button class="action-btn danger" id="btn-reset">&#x1F5D1; Reset All Progress</button>
+  </div>
+</div>
+
+<script src="../data/flashcard-data.js"></script>
+<script>
+window.DASHBOARD_CONFIG = {
+  numChapters: 7,
+  progressKey: "comp5618_progress",
+  flashcardsKey: "comp5618_flashcards",
+  langKey: "comp5618_lang",
+  titleEn: "Progress Dashboard — COMP5618",
+  titleZh: "学习进度 — COMP5618",
+  chapterNames: {"1":"Week 1 — Fundamentals & Tooling","2":"Week 2 — Layers 1 & 2","3":"Week 3 — Networking Traversal","4":"Week 4 — Web Applications","5":"Week 5 — Web Scanners","6":"Week 6 — Linux OS","7":"Week 8 — Android Security"},
+  chapterNamesZh: {"1":"第1周","2":"第2周","3":"第3周","4":"第4周","5":"第5周","6":"第6周","7":"第8周"},
+  chapterColors: {"1":"#0891b2","2":"#0ea5e9","3":"#2563eb","4":"#6366f1","5":"#7c3aed","6":"#a855f7","7":"#db2777"},
+  weights: { sections: 0.20, qc: 0.25, quiz: 0.25, tutorials: 0.30 },
+  chapterShort: function (ch, lang) {
+    return lang === "zh" ? ("第" + ch + "周") : ("W" + ch);
+  },
+  translateScope: function (scope, lang) {
+    return scope;
+  }
+};
+</script>
+<script src="../data/chapter-manifest.js"></script>
+<script src="../../shared/progress-dashboard.js"></script>
+<script src="../../shared/chat-panel.js"></script>
+<script src="../../shared/site-reset.js"></script>
+</body>
+</html>

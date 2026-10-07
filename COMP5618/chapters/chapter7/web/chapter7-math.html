@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 8: Android Overview and Security Model</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 foundations for COMP5618: the definitions behind the Android sandbox, the permission model stated as a containment invariant, the signature-and-integrity relationship, the privilege-escalation chain, and an attack-surface checklist for APK review.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 8: Android Overview and Security Model">
+<meta property="og:description" content="Week 8 foundations for COMP5618: the definitions behind the Android sandbox, the permission model stated as a containment invariant, the signature-and-integrity relationship, the privilege-escalation chain, and an attack-surface checklist for APK review.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter7-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128274;</span>
+    <h2>Week 8 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-boundaries" class="toc-link">Architecture as trust boundaries</a></li>
+  </ul>
+  <div class="toc-group">Model</div>
+  <ul>
+    <li><a href="#sec-m-model" class="toc-link">The sandbox as a containment invariant</a></li>
+    <li><a href="#sec-m-integrity" class="toc-link">Signature, integrity and Janus</a></li>
+    <li><a href="#sec-m-escalation" class="toc-link">The escalation chain</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Attack-surface checklist</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Lab write-up modelled</a></li>
+    <li><a href="#sec-m-exam" class="toc-link">Answer patterns</a></li>
+  </ul>
+  <a href="chapter7-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5618 &mdash; Week 8 supplement</p>
+  <h1>Foundations: the Android security model, stated precisely</h1>
+  <p class="hero-desc">Week 8 is a systems week, not a mathematics week, so this page does the equivalent job. It fixes the definitions the lecture relies on, reads the architecture diagram as a sequence of trust boundaries, states the sandbox and permission model as relationships you can reason with, writes down what a package signature actually guarantees, and ends with the checklist that turns &ldquo;I looked at the APK&rdquo; into a defensible finding.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 8 deck</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Attack-surface checklist for APK review</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Android sandbox</div>
+    <p>A <strong>user-based protection model in Linux</strong>: each application is assigned its own user identity, so the kernel confines it to its own files and process. Apps therefore <em>cannot talk to each other</em> and have only <em>limited access to the operating system</em>.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Permission</div>
+    <p>The declared and granted capability by which an app steps outside its sandbox. In the lecture's phrasing: apps must <strong>share resources and actions by declaring permissions</strong>. A permission is simultaneously a manifest declaration, a grant decision, and &mdash; for low-level capabilities &mdash; a mapping onto a kernel identity.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">APK (Android Application Package)</div>
+    <p>The build output of an Android application: a ZIP-format package containing the manifest, DEX bytecode, the resource table and resources, and a signature block. Unzipped it is mostly binary and unreadable; <strong>apktool</strong> disassembles it into readable smali and decoded resources and can reassemble it.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Static analysis</div>
+    <p>Inspecting the code of a program to understand its purpose <strong>without executing it</strong>. The Week 8 tutorial applies it to Android apps and notes that the same techniques are applied to malware analysis.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Rooting vs jailbreaking</div>
+    <p><strong>Jailbreaking iOS</strong> removes the check that refuses to execute apps not signed with Apple's key; the deck is explicit that <em>no changes are made to the iOS operating system</em>. <strong>Rooting Android</strong> obtains <em>superuser access</em>; because Android is open source and already allows installing apps from outside the official store, rooting's distinctive consequence is that it lets you replace the OS with custom ROMs.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Sandbox</td><td>Linux user-based isolation; per-app identity; no app-to-app access</td><td>&ldquo;A virtual machine that runs the app in a container&rdquo;</td></tr>
+        <tr><td>Permission</td><td>Declared <em>and</em> granted; the route out of the sandbox</td><td>&ldquo;Something the app asks for&rdquo; with no mention of the grant decision</td></tr>
+        <tr><td>Intent</td><td>A message describing an operation; explicit names a target, implicit does not</td><td>Confusing an intent with the component that receives it</td></tr>
+        <tr><td>Exported component</td><td>Reachable by other apps &mdash; the deliberate hole in the sandbox</td><td>Assuming any component can be called by any app</td></tr>
+        <tr><td>Signature verification</td><td>Confirms who packaged the artefact, not what it does</td><td>&ldquo;A signed app is a safe app&rdquo;</td></tr>
+        <tr><td>Static analysis</td><td>Understanding purpose without execution</td><td>Describing it as running the app in a sandbox and watching it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about the Android sandbox would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Android does not run each app in a virtual machine. Isolation comes from the per-app Linux user identity, which is cheaper and enforced by the kernel.">Each app runs inside its own virtual machine, which prevents it from reaching the OS</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: it is a user-based protection model in Linux. A per-app identity means apps cannot talk to each other and have limited OS access, so sharing has to happen through declared permissions." data-bad="">It is a user-based protection model in Linux: a per-app identity means apps cannot talk to each other and have limited access to the OS unless permissions are declared</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That inverts the model. The sandbox does not elevate apps to system privilege; a system app is trusted because of what it is, not because the sandbox made it so.">It gives every app system-level privilege but audits what the app does with it</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-boundaries">
+  <h2 class="section-title">The architecture diagram as trust boundaries</h2>
+  <p class="section-lead">The lecture's Android architecture slide is usually read as plumbing. Read as a security document it is a list of levels, each of which enforces a different kind of control and each of which has been defeated at least once.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Layer</th><th>Control it enforces</th><th>What it assumes</th><th>Defeated by</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>System apps</td><td>Nothing &mdash; they are ordinary sandboxed apps holding declared permissions</td><td>That the platform beneath them is intact</td><td>Certifi-Gate: a pre-installed support app held more trust than it deserved</td></tr>
+        <tr><td>Java API framework</td><td>Permission checks and intent resolution</td><td>That the caller's identity is known and the request is well-formed</td><td>Exported, unguarded components that never asked who was calling</td></tr>
+        <tr><td>Native libraries and runtime</td><td>Nothing by itself; it is a large parsing surface</td><td>That input handed to a parser is well-formed</td><td>Stagefright: a crafted MMS reached the media parser</td></tr>
+        <tr><td>HAL</td><td>Mediated hardware access</td><td>That the framework checked the permission first</td><td>Any privilege that lets a caller skip the framework</td></tr>
+        <tr><td>Linux kernel</td><td>UID/GID ownership, DAC, SELinux, namespaces, binder</td><td>That the kernel itself is correct</td><td>A kernel memory-safety bug turns an app into the whole device</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The structural claim worth memorising:</strong> every layer above the kernel is a <em>convenience and policy</em> layer; the kernel is the <em>enforcement</em> layer. That is why the escalation chain on this page always ends at kernel privilege &mdash; until then, an attacker has merely borrowed someone else's policy.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Stagefright reached code execution through media parsing. Which architectural claim does that incident illustrate?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The native media libraries are a large parsing surface that receives input from outside the device; a crafted MMS reached it without the user doing anything, which is exactly the &ldquo;treat parsing as hostile input&rdquo; lesson." data-bad="">Native parsing code is a large attack surface that receives untrusted input from outside the device</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The sandbox did not fail here — the flaw was in the code that had already been reached. Isolation and memory safety are different controls.">The per-app sandbox was bypassed, so isolation does not work against media files</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The permission model governs an app's reach, not the correctness of the platform's own parsers. Stagefright needed no app permission at all.">The permission model failed because no permission guarded the media library</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-model">
+  <h2 class="section-title">The sandbox and permissions as a containment invariant</h2>
+  <p class="section-lead">Four relationships are worth being able to write from memory: what confines an app, what a capability is, how a request is gated, and what the whole model guarantees.</p>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The Week 8 lecture is written in prose and diagrams. The symbols below are a <em>revision aid</em> introduced here so that the model can be written compactly; they are not lecture notation and should not be quoted as such.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(A\)</div><div class="sym-cell">an application</div><div class="sym-cell">The unit the platform installs, sandboxes and grants permissions to</div>
+    <div class="sym-cell">\(\mathrm{uid}(A)\)</div><div class="sym-cell">the app's Linux user id</div><div class="sym-cell">Assigned at install; distinct per app and the basis of the sandbox</div>
+    <div class="sym-cell">\(r\)</div><div class="sym-cell">a resource</div><div class="sym-cell">A file, a socket, a device, a content provider, another component's interface</div>
+    <div class="sym-cell">\(\mathrm{own}(r)\)</div><div class="sym-cell">owner of a resource</div><div class="sym-cell">The UID that owns \(r\); for app-private data this is \(\mathrm{uid}(A)\)</div>
+    <div class="sym-cell">\(\mathrm{allow}(u, r)\)</div><div class="sym-cell">the kernel permits it</div><div class="sym-cell">The kernel's access-control decision for user \(u\) on resource \(r\)</div>
+    <div class="sym-cell">\(M_A\)</div><div class="sym-cell">manifest permissions</div><div class="sym-cell">The set of permissions app \(A\) declares in <code>AndroidManifest.xml</code></div>
+    <div class="sym-cell">\(G_A\)</div><div class="sym-cell">granted permissions</div><div class="sym-cell">What the platform or the user actually granted &mdash; install-time or runtime</div>
+    <div class="sym-cell">\(\mathrm{cap}(A)\)</div><div class="sym-cell">the app's capability set</div><div class="sym-cell">What \(A\) can actually do: the intersection of declaration and grant</div>
+    <div class="sym-cell">\(\mathrm{exp}(c)\)</div><div class="sym-cell">component is exported</div><div class="sym-cell">True when component \(c\) may be reached by applications other than its owner</div>
+    <div class="sym-cell">\(\mathrm{guard}(c)\)</div><div class="sym-cell">component's permission guard</div><div class="sym-cell">The permission a caller must hold before \(c\) will accept the request</div>
+    <div class="sym-cell">\(H(\cdot)\)</div><div class="sym-cell">a collision-resistant hash</div><div class="sym-cell">The digest function behind the signature block</div>
+    <div class="sym-cell">\(\mathrm{Sign}_K(\cdot)\)</div><div class="sym-cell">signature under key \(K\)</div><div class="sym-cell">The developer's private key over the package digests</div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>1. The sandbox is a UID predicate, not a feature</h3>
+    <p>Isolation is exactly the statement that one app's identity does not satisfy another app's ownership check:</p>
+    \[ \forall A \neq B,\; \forall r : \mathrm{own}(r) = \mathrm{uid}(B) \;\Longrightarrow\; \lnot\,\mathrm{allow}\big(\mathrm{uid}(A), r\big) \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Practical consequence: the sandbox is only as strong as the kernel's decision. It says nothing about behaviour within your own identity, which is why a malicious app with legitimate permissions is inside the rules rather than outside them.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Capability is an intersection, not a declaration</h3>
+    <p>An app can do what it declared <em>and</em> was granted &mdash; nothing more:</p>
+    \[ \mathrm{cap}(A) \;=\; M_A \;\cap\; G_A \]
+    <p style="margin-top:0.6rem;">Two immediate corollaries. A permission that was declared but denied contributes nothing, so a runtime denial is a real reduction in reach. And a permission that is granted but unnecessary is pure attack surface: the intersection is only as small as the grant you agreed to.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Every IPC request is a conjunction of checks</h3>
+    <p>A component \(c\) owned by \(B\) accepts a request from \(A\) only if the component is reachable <em>and</em> the caller satisfies the guard:</p>
+    \[ \mathrm{accept}(A \to c) \;=\; \mathrm{exp}(c) \;\wedge\; \big(\mathrm{guard}(c) = \bot \;\vee\; \mathrm{guard}(c) \in \mathrm{cap}(A)\big) \]
+    <p style="margin-top:0.6rem;">Read the second clause carefully, because it is where reviews go wrong. An exported component with no guard accepts <em>every</em> app on the device. Exported with a guard is a contract; exported without one is a public API nobody designed.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. What the model guarantees, and what it does not</h3>
+    <p>Sandboxing bounds <strong>reach</strong>; it does not bound <strong>behaviour</strong>. Formally, the model constrains which \(r\) an app may touch, but places no constraint on what the app does with the resources it legitimately holds. The lecture's three claims &mdash; user-based protection, no app-to-app access, sharing by declared permissions &mdash; are all reach claims. Keep that distinction and the exam answers write themselves.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An app declares <code>READ_CONTACTS</code> and <code>CAMERA</code>, and the user grants only <code>CAMERA</code> at the runtime prompt. What is \(\mathrm{cap}(A)\) with respect to these two?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Capability is \(M_A \cap G_A\): the declared set is both permissions, the granted set is only the camera, so the app can use the camera and cannot read contacts." data-bad="">The app can use the camera; contact access is not in its capability set because the declaration alone grants nothing</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This treats the declaration as sufficient. If declaring were enough, runtime prompts would be decorative — they are the grant step of the model.">The app can use both, because both were declared in the manifest</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A denial removes that permission from the granted set; it does not remove the app's other granted capabilities.">The app can use neither, because a denial invalidates the whole permission set</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-m-containment"></div>
+  <script type="application/json" id="ix-m-containment">
+  {
+    "title": "The containment loop: install → confine → request → grant",
+    "subtitle": "The platform's own view of the model. Each node is a place where the invariant can be weakened.",
+    "nodes": [
+      { "label": "Install", "note": "The package is verified and unpacked; the PackageManager assigns the app a unique UID." },
+      { "label": "Confine", "note": "A private data directory owned by that UID is created and every process the app starts carries that identity." },
+      { "label": "Declare", "note": "The manifest states the capabilities the app wants. Declaration is a request, not a right." },
+      { "label": "Grant", "note": "The platform grants low-risk permissions at install and prompts for dangerous ones at first use — the granted set is filled in here." },
+      { "label": "Request", "note": "The app calls a framework API. The framework checks its capability set and, for low-level capabilities, the kernel checks the mapped identity." },
+      { "label": "Share", "note": "Crossing to another app happens only through an exported, guard-evaluated interface: an intent, a provider, a bound service." }
+    ]
+  }
+  </script>
+</section>
+
+<section class="section" id="sec-m-integrity">
+  <h2 class="section-title">Signature, integrity and what Janus broke</h2>
+  <p class="section-lead">The lecture's Janus slide makes one claim: signature verification matters. This section writes down what a package signature actually computes, so the claim has a mechanism behind it.</p>
+
+  <div class="theorem-box">
+    <h3>1. What signing computes</h3>
+    <p>A signer hashes the package's content and signs the digest with a private key; a verifier recomputes the digest from the artefact it holds and checks the signature against the public key in the certificate:</p>
+    \[ \sigma \;=\; \mathrm{Sign}_{K_{\text{priv}}}\big(H(\text{content})\big), \qquad \text{accept} \iff \mathrm{Verify}_{K_{\text{pub}}}\big(\sigma,\, H(\text{content})\big) \]
+    <p style="margin-top:0.6rem;">Two things follow. Verification detects a <em>change</em> in the hashed content. And verification tells you who packaged the artefact &mdash; it says nothing at all about whether the code is safe.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Entry-wise verification leaves room to append</h3>
+    <p>A scheme that verifies the digests of the archive's <em>entries</em> constrains each entry while leaving the surrounding archive unconstrained. If the verifier never binds the set of entries, content can be added:</p>
+    \[ \text{Verify}\big(\sigma, H(\text{entries})\big) = \top \;\;\not\Rightarrow\;\; \text{artefact} = \text{signed artefact} \]
+    <p style="margin-top:0.6rem;">This is the structure of <strong>Janus (2017)</strong>: APK/DEX bytes added to the package without changing its signature, so the app could be updated without the developer's knowledge. The lesson is not &ldquo;hashing is broken&rdquo; but &ldquo;verify the whole artefact, not the parts you happened to enumerate&rdquo;.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why the certificate answers the tutorial's question</h3>
+      <p>The certificate carries the signer's identity, validity period and key details. Two packages from the same developer carry matching signer identity because the same private key signed both. That is evidence, and it is checkable &mdash; unlike icons, names or vendor prefixes, which a repackager can copy.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why a different signer is the finding</h3>
+      <p>If a package claiming to update another was signed by a different key, then whoever built it did not hold the original signing key. The signature has done its job: it has not stopped the rebuild, but it has made the substitution visible to anyone who checks.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An APK passes signature verification. What has been established?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Signature verification is an integrity and attribution check, not a behavioural one. A correctly signed package can be full of malicious code.">The app is safe to install, because a valid signature means the code was reviewed</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. It establishes that the artefact matches what was signed by the holder of that key. It says nothing about behaviour, and Janus showed that if the verification is entry-wise rather than whole-artefact, even integrity can be circumvented." data-bad="">That the artefact matches what was signed by the holder of the signing key — nothing about what the code does, and nothing about integrity if the scheme only checks entries</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Obfuscation is a separate control (ProGuard, DexGuard, DashO) applied by the developer before signing. A signature does not obscure anything.">That the code has been obfuscated, which is why the signature is required</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-escalation">
+  <h2 class="section-title">The escalation chain</h2>
+  <p class="section-lead">Rooting is the endpoint of a path, not a single event. Writing the path as a chain of prerequisites makes it clear which control removes which step.</p>
+
+  <div class="theorem-box">
+    <h3>1. Escalation is reachability plus transferred trust</h3>
+    <p>An unprivileged app \(A\) gains privilege \(P\) if there is a component that \(A\) can reach, that runs with privilege at least \(P\), and that acts on what \(A\) supplies:</p>
+    \[ \exists\, c : \mathrm{accept}(A \to c) \;\wedge\; \mathrm{priv}(c) \succeq P \;\wedge\; c \text{ acts on } A\text{'s input} \;\Longrightarrow\; A \rightsquigarrow P \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Note what is absent: no kernel bug is required. The cheapest escalations are components that were trusted more than the callers they accept &mdash; which is exactly the Certifi-Gate shape.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Kernel privilege is the terminal state</h3>
+    <p>Once the path reaches kernel-level privilege, every userspace control above it becomes advisory, because those controls are themselves userspace policy evaluated by code that now runs at the attacker's privilege:</p>
+    \[ \mathrm{priv}(A) = \text{root} \;\Longrightarrow\; \forall\, \text{control } C \text{ above the kernel},\; C \text{ no longer constrains } A \]
+    <p style="margin-top:0.6rem;">This is why rooting is described as removing the model rather than defeating one control: the sandbox, the permission gate and the signature check all sit above the kernel.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Each control removes one conjunct</h3>
+    <p>Read the chain as a conjunction and the defences map onto it one for one:</p>
+    \[ \underbrace{\text{reachable}}_{\text{unexport / guard}} \;\wedge\; \underbrace{\text{privileged component}}_{\text{least privilege, review pre-installed apps}} \;\wedge\; \underbrace{\text{acts on input}}_{\text{validate, authenticate the caller}} \;\wedge\; \underbrace{\text{carries the data out}}_{\text{egress control, no unnecessary permissions}} \]
+    <p style="margin-top:0.6rem;">A chain is only as strong as its weakest conjunct, and removing any one of the four breaks the path. That is the concrete meaning of the deck's instruction to design defence in depth.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Cost, not impossibility.</strong> Anti-reverse-engineering controls (ProGuard, DexGuard, DashO) follow the same logic. They do not make an app unreadable; they make reading it expensive enough that casual repackaging stops being worth it. State that trade-off explicitly &mdash; the lecture does, and it is the honest answer.
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Attack-surface checklist for APK review</h2>
+  <p class="section-lead">Run any sample through these steps in order. Each one maps to something the Week 8 lecture or tutorial actually asks you to do.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the APK attack-surface review",
+    "subtitle": "Rebuild the order in which to interrogate a package before you report on it.",
+    "steps": [
+      "Record how the sample was acquired and hash it, so the finding names an artefact",
+      "Read the decoded manifest: package identity, declared permissions, exported components",
+      "Inspect the signing certificate and note who packaged this build",
+      "Disassemble the DEX and locate the code paths behind the declared capabilities",
+      "Enumerate reachable entry points: exported components, providers, receivers, deep links",
+      "Trace what each entry point does with caller-supplied data",
+      "State the finding as reach plus consequence plus the control that would remove it"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Provenance</td><td>Source of the APK, and a hash of the artefact analysed</td><td>You report a finding about &ldquo;the app&rdquo; without saying which bytes you read</td></tr>
+        <tr><td>2. Manifest</td><td>Declared permissions and the <code>exported</code> status of every component</td><td>You list permissions without asking whether the app's purpose needs them</td></tr>
+        <tr><td>3. Certificate</td><td>Signer identity, validity period, key and signature algorithm</td><td>You attribute packages by name or icon instead of by certificate</td></tr>
+        <tr><td>4. Code</td><td>The smali behind each declared capability</td><td>You treat a declaration as proof of use, or a missing call as proof of safety</td></tr>
+        <tr><td>5. Entry points</td><td>What another app on the device can actually reach</td><td>You assess components in isolation from who can call them</td></tr>
+        <tr><td>6. Data handling</td><td>Validation, authentication of the caller, egress of collected data</td><td>You describe a capability without saying what it is used for</td></tr>
+        <tr><td>7. Finding</td><td>Reach + consequence + the control that removes it</td><td>You assert a vulnerability with no reachable path to it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A package declares no dangerous permissions, but exports a receiver with no permission guard that writes caller-supplied values into its own database. Which conclusion is best supported?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Reach is provided by the unguarded exported receiver, and the consequence is modification of the app's own private data — permission-free escalation of capability across the sandbox boundary." data-bad="">The package has a real finding: an exported, unguarded receiver is reachable by any app, and it lets a caller write into this app's private storage without needing any permission</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Permission declarations are not the only route out of the sandbox. An exported component is itself a route, and this is exactly the case the checklist's step 5 is designed to catch.">There is no finding, because the app declares no dangerous permissions and therefore cannot reach sensitive data</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Whether a receiver is malicious is a separate question. The finding is about the reachable interface, which exists regardless of the developer's intent.">The finding is that the app is malware, because exported receivers are always a sign of malicious intent</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-notation"></div>
+  <script type="application/json" id="ix-m-notation">
+  {
+    "title": "Self-test: notation and what each symbol commits you to",
+    "subtitle": "Say the meaning out loud before you flip the card.",
+    "cards": [
+      { "front": "uid(A)", "back": "The app's Linux user id, assigned at install. It is the sandbox: ownership checks compare this identity, so one app does not satisfy another's access control.", "hint": "Confine" },
+      { "front": "cap(A) = M_A intersected with G_A", "back": "An app can do only what it declared and was granted. A denial shrinks reach; an unnecessary grant is pure attack surface.", "hint": "Capability" },
+      { "front": "exp(c) ∧ guard(c)", "back": "The two conditions for reaching a component from another app: it must be exported, and the caller must satisfy the guard if one exists. Exported with no guard accepts every app.", "hint": "IPC" },
+      { "front": "Sign_K(H(content))", "back": "The package signature: a digest of the content signed with the developer's private key. It detects change and identifies the packager — not the behaviour.", "hint": "Integrity" },
+      { "front": "Entry-wise verification", "back": "Checking the digest of each archive entry while leaving the archive as a whole unconstrained — the Janus shape, where bytes can be added without invalidating the signature.", "hint": "Janus" },
+      { "front": "reachable ∧ privileged ∧ acts on input", "back": "The escalation conjunction. Removing any one conjunct breaks the path, which is what each mitigation actually does.", "hint": "Escalation" },
+      { "front": "Static analysis", "back": "Understanding a program's purpose without executing it. The tutorial's method for Android apps, and the same technique used in malware analysis.", "hint": "Method" },
+      { "front": "ProGuard / DexGuard / DashO", "back": "Obfuscation (ProGuard, ships with Android Studio) and encryption (DexGuard, DashO). They raise the cost of reverse engineering; they do not make it impossible, and the deck names the trade-off.", "hint": "Defence" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; writing up one APK review as a finding.</strong> Sample: a decompiled app whose manifest declares <code>INTERNET</code>, <code>CAMERA</code>, <code>READ_CONTACTS</code> and <code>ACCESS_FINE_LOCATION</code>, exports one activity and one receiver, and whose certificate owner differs from the vendor's published signer.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>State the artefact.</strong> &ldquo;Sample <code>app-x.apk</code>, acquired by pulling from the test device with the ADB shell, SHA-256 recorded at acquisition, decompiled with apktool.&rdquo; Every later claim is about these bytes and these bytes only.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Separate justified from unjustified capability.</strong> Camera and network follow from the stated purpose. Contacts and precise location do not &mdash; and in terms of the model, they are two permission sets inside \(M_A\) whose value to the app is unexplained.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Establish reach.</strong> The exported receiver with no guard satisfies \(\mathrm{accept}(A \to c)\) for <em>any</em> app on the device. It is not a hypothetical entry point; it is one the platform will deliver to on request.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Trace the consequence.</strong> Follow the receiver's smali to whatever it does with the caller's extras. If it writes them to the app's own storage or forwards them to a privileged operation, the reach converts into capability the caller never had.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Report the signer discrepancy as its own item.</strong> A certificate that does not match the vendor's published signer means this build was not produced by the party the user believes produced it. That is a separate finding from the exported receiver, and it is the first thing to check when a package claims to be an update.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Write the finding in the three-part form.</strong> &ldquo;<em>Reach:</em> any installed app can deliver an intent to the exported, unguarded receiver. <em>Consequence:</em> caller-supplied values reach the app's private write path, so data inside the sandbox can be modified without holding any permission. <em>Control that removes it:</em> mark the receiver unexported, or give it a signature-level permission guard.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">The lab, modelled</h2>
+  <p class="section-lead">The Week 8 tutorial is a static-analysis lab with three deliverables. Treat each as a claim you must be able to evidence, not a command you must run.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Setup is part of the task</h3>
+      <p>apktool installed, JDK and Android SDK available, and an Android Virtual Device created. A second device image is what makes an install-and-verify step possible at all.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Certificates are evidence</h3>
+      <p>Decompile the samples, read each certificate with the certificate tooling, and decide which apps share a developer &mdash; then justify it from certificate identity, not from appearances.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Change the behaviour, prove the change</h3>
+      <p>Swap the resource mapping, rebuild with apktool, sign with a key you created with keytool, install with adb, and demonstrate the app behaving differently on the emulator.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Then change the logic</h3>
+      <p>The final task edits smali rather than resources. The resource edit proves the toolchain; the smali edit proves you can read the bytecode.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; why a rebuilt package will not install, and what that proves.</strong> After <code>apktool b</code> you have a structurally valid APK that the device refuses. Explain the refusal.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the check that failed.</strong> Installation verifies the signature over the package. Rebuilding changed the content while the old signature block no longer matches it, so verification fails and the install is refused.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Say what this demonstrates.</strong> It demonstrates that signature verification is a real gate on the path from a modified artefact to an installed app. Repackaging is easy; getting the result installed is the part the platform actually defends.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Explain the remedy and why it is not a loophole.</strong> Creating your own key with <code>keytool</code> and signing with <code>jarsigner</code> produces a valid package &mdash; under <em>your</em> signer identity. The app now installs; what it no longer has is the original developer's certificate, which is precisely the evidence a user or a store would use to detect the substitution.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Connect it to the week's lesson.</strong> These are the same steps as the tutorial: rebuild, re-sign, install, observe. Against a sample you were given they are analysis. Against an application you do not own they are repackaging &mdash; advertisement hijacking, malware redistribution, credential harvesting &mdash; and the only thing standing between the two is authorisation.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and the containment invariant here, the architecture stack and the lab workflow on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+<section class="section" id="sec-m-exam">
+  <h2 class="section-title">Answer patterns: turning the model into marks</h2>
+  <p class="section-lead">Three question shapes dominate this week's material. Each has a structure that can be written from the model rather than recalled.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question shape</th><th>Structure of a full-mark answer</th><th>What to avoid</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;Explain the Android security model&rdquo;</td><td>Sandbox first (per-app Linux identity, no app-to-app access), then permissions (declared and granted, the route out), then the platform controls above them (signature verification, updates)</td><td>Listing features without saying what each one confines</td></tr>
+        <tr><td>&ldquo;What does a signature prove?&rdquo;</td><td>Detects change in the hashed content and identifies the packager; says nothing about behaviour; entry-wise schemes can be appended to (Janus)</td><td>&ldquo;That the app is safe&rdquo;</td></tr>
+        <tr><td>&ldquo;Assess this APK&rdquo;</td><td>Provenance, manifest, certificate, code paths behind capabilities, reachable entry points, consequence, control that removes it</td><td>A capability inventory with no reachability analysis</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; &ldquo;Compare jailbreaking iOS with rooting Android.&rdquo;</strong> A short comparison question that is easy to answer superficially and easy to answer well.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the control each one defeats.</strong> Jailbreaking defeats <em>code-signing enforcement</em>: Apple signs the source code of App Store apps, iOS holds Apple's public key and verifies signatures, unsigned apps cannot execute, and jailbreaking removes that check. Rooting defeats the <em>privilege model</em>: it obtains superuser access.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>State the structural difference.</strong> On iOS the deck is explicit that no changes are made to the operating system &mdash; the check is what moves. On Android, obtaining superuser access is what then permits replacing the operating system with a custom ROM.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Dispose of the usual red herring.</strong> The motivation people cite for jailbreaking &mdash; installing apps from outside the store &mdash; does not transfer to Android, because Android is open source and already allows installation from outside the official store. So on Android the distinctive consequence of rooting really is privilege, not sideloading.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Close on the security consequence.</strong> Both end states remove the platform's ability to constrain what runs. On a rooted device the sandbox, the permission gate and the signature check all sit above the kernel, so all three become advisory &mdash; which is why the deck's user guidance is not to root or jailbreak unless it is absolutely necessary.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5618ChapterUI) return;
+    try {
+      window.initCOMP5618ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5618 chapter 7] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

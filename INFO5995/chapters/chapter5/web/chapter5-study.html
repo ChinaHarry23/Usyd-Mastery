@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 5: Cryptography Basics Part 2 — INFO5995</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter5-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 study guide for INFO5995: public-key cryptography with RSA and Diffie-Hellman, hash functions, MAC and HMAC, digital signatures, and how X.509 certificates and PKI bind a public key to an identity.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 5: Cryptography Basics Part 2 — INFO5995">
+<meta property="og:description" content="Week 5 study guide for INFO5995: public-key cryptography with RSA and Diffie-Hellman, hash functions, MAC and HMAC, digital signatures, and how X.509 certificates and PKI bind a public key to an identity.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F510;</span>
+      <h2>Week 5</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-why" class="nav-link" data-section="why">Beyond Confidentiality</a></li>
+    <li><a href="#sec-hash" class="nav-link" data-section="hash">Hash Functions</a></li>
+    <li><a href="#sec-mac" class="nav-link" data-section="mac">MAC &amp; HMAC</a></li>
+    <li><a href="#sec-signatures" class="nav-link" data-section="signatures">Digital Signatures</a></li>
+    <li><a href="#sec-pubkey" class="nav-link" data-section="pubkey">Public-Key Crypto &amp; RSA</a></li>
+    <li><a href="#sec-dh" class="nav-link" data-section="dh">Diffie-Hellman</a></li>
+    <li><a href="#sec-trust" class="nav-link" data-section="trust">Certificates &amp; PKI</a></li>
+    <li><a href="#sec-tools" class="nav-link" data-section="tools">Choosing a Primitive</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter5-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter5-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Week 5 lecture built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">INFO5995 — Cybersecurity</p>
+    <h1>Week 5: Cryptography Basics Part 2</h1>
+    <p class="hero-subtitle">Beyond confidentiality: hash functions, MAC and HMAC, public-key cryptography with RSA and Diffie-Hellman, digital signatures, and how certificates and PKI bind a public key to an identity.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50E;</span>
+        <span>Hash = fingerprint of data</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F511;</span>
+        <span>MAC = shared-key authenticity</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x270D;</span>
+        <span>Signature = public verification</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4DC;</span>
+        <span>Certificate = identity binding</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter5-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter5-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 5 lecture deck (<em>Cryptography Basics Part 2</em>) and the Week 5 extra-resources sheet, with NIST FIPS 180-4, FIPS 186-5 and FIPS 198-1 as the reference standards</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-why" class="section" data-track="why">
+  <h2 class="section-title">Beyond Confidentiality: What Encryption Cannot Do</h2>
+  <p class="section-lead">Week 4 ended with confidentiality. This week starts from the two attacks that confidentiality alone does not stop &mdash; and from the question that organises everything that follows: <em>what guarantee is missing?</em></p>
+
+  <div class="concept-box">
+    <p><strong>Where we are coming from.</strong> The one-time pad gives the strongest possible confidentiality guarantee, but only under four strict conditions: the key is truly random, as long as the message, used exactly once, and kept secret. A 1&nbsp;GB message therefore needs a fresh 1&nbsp;GB key &mdash; the hard part was never the XOR, it was managing the key. So the question changed to <strong>semantic security</strong>: no efficient attacker should learn significant information from the ciphertext. This week asks what <em>else</em> a real system has to guarantee.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Attack</th><th>What the attacker actually does</th><th>Guarantee that is missing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Message modification</strong></td><td>Flips bits or splices ciphertext so that C becomes C&#8242;. The receiver decrypts to a different message and never notices.</td><td>Integrity &mdash; detecting unauthorised modification</td></tr>
+        <tr><td><strong>Replay</strong></td><td>Records a valid encrypted message &mdash; &ldquo;extend the assignment deadline by 1 day&rdquo; &mdash; and sends exactly the same bytes again later. No understanding and no modification is required.</td><td>Freshness &mdash; proof that the message is new and not stale</td></tr>
+        <tr><td><strong>Forgery / imitation</strong></td><td>Creates a message that appears to come from Alice, without Alice ever sending it.</td><td>Authenticity &mdash; proof of who created the message</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The gap in one sentence</div>
+    <p>Encryption gives <strong>confidentiality</strong>: it hides the content. It does not prove that a message is <em>unchanged</em> (integrity) or <em>new</em> (freshness), and it does not prove who sent it (authenticity). Confidentiality hides content; integrity, freshness and authenticity make a message trustworthy.</p>
+  </div>
+
+  <div class="diagram-flow">
+    <div class="flow-node">1. Hide the message</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">2. Detect changes</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">3. Prove origin</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">4. Trust the key</div>
+  </div>
+  <p style="color:var(--text-muted); font-size:0.9rem; text-align:center;">Confidentiality (encryption / AEAD) &rarr; integrity (hash / MAC / AEAD) &rarr; authenticity (MAC / digital signature) &rarr; identity binding (certificates / fingerprints).</p>
+
+  <div class="callout">
+    <strong>The lecture's closing instruction, used as a method:</strong> when you meet a security problem, do not reach for an algorithm. Ask first <em>which guarantee is missing</em>, then choose the primitive that provides exactly that guarantee.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Eve records an encrypted instruction that transfers $100, and re-sends the identical ciphertext to the bank an hour later. The bank decrypts it correctly. Which guarantee failed?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Confidentiality was not broken — Eve never read anything, and the ciphertext was never decrypted by her.">Confidentiality, because the ciphertext travelled over the network twice</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing was modified: the bytes are identical to the original. Integrity checks would pass.">Integrity, because the message reached the bank twice</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A replay attack needs neither reading nor modifying the message; encryption cannot tell a fresh message from a recorded one. Freshness needs a nonce, timestamp or sequence number." data-bad="">Freshness: the bank cannot tell a new message from a recorded one</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-hash" class="section" data-track="hash">
+  <h2 class="section-title">Hash Functions: A Fingerprint, Not a Secret</h2>
+  <p class="section-lead">A hash turns an input of any practical length into a fixed-length digest. It answers one question very well &mdash; <em>has this data changed?</em> &mdash; and says nothing about who produced it.</p>
+
+  <div class="def-box">
+    <div class="def-label">Cryptographic hash function</div>
+    <p>A function that maps an input of any practical length to a fixed-length <strong>digest</strong>. It is <strong>deterministic</strong> (the same input always gives the same digest), <strong>fixed-length</strong> (a short and a huge input produce the same output size), <strong>one-way</strong> (recovering the input from the digest should be hard), efficient to compute, and exhibits the <strong>avalanche effect</strong>: a tiny input change produces a widespread, unpredictable output change. Hashing is <em>not</em> encryption &mdash; there is no key and no decryption.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>What the attacker is given</th><th>Expected classical work for an <em>n</em>-bit digest</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Pre-image resistance</strong></td><td>A digest h(x); find the input x</td><td>About 2<sup>n</sup> &mdash; brute force over the input space</td></tr>
+        <tr><td><strong>Second-pre-image resistance</strong></td><td>A specific input x; find x&#8242; &ne; x with the same digest</td><td>About 2<sup>n</sup> &mdash; also a fixed target</td></tr>
+        <tr><td><strong>Collision resistance</strong></td><td>Nothing; find <em>any</em> pair x &ne; y with h(x) = h(y)</td><td>About 2<sup>n/2</sup> &mdash; the birthday effect, so collisions are the cheapest attack</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">SHA-256("hello")  = 2cf24dba5fb0a30e26e83b2ac5b9e29e&hellip;
+SHA-256("hell0")  = 04a6f55face2f46be8c23f627d539827&hellip;
+SHA-256("password123") = ef92b778bafe771e89245b89ecbc08a4&hellip;
+
+one character in, about half of the 256 output bits change</div>
+  <p style="color:var(--text-muted); font-size:0.9rem;">Digests truncated for display, as in the lecture demo. Changing one character should scatter the output unpredictably &mdash; that is the avalanche effect, and it is why a hash is a fingerprint rather than a summary.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Where hashes are used</th><th>What is actually being checked</th><th>Typical modern choice</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>File integrity</strong></td><td>Recompute the digest and compare it with the expected value</td><td>SHA-256 / SHA-3</td></tr>
+        <tr><td><strong>Password storage</strong></td><td>A password-hashing function or KDF with a tunable cost &mdash; never raw SHA-256, and never an unsalted hash</td><td>Argon2id / scrypt / bcrypt / PBKDF2</td></tr>
+        <tr><td><strong>Signatures and MACs</strong></td><td>The digest (or a keyed construction over it) is what gets authenticated</td><td>HMAC / digital signatures</td></tr>
+        <tr><td><strong>Content addressing</strong></td><td>Content is named or identified by its digest</td><td>Git, package verification, deduplication</td></tr>
+        <tr><td><strong>Proof of work</strong></td><td>Find an input whose digest has a required prefix &mdash; expensive to find, cheap to verify</td><td>Hash-based puzzles</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Which hash would you choose today?</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>MD5</strong> &mdash; do not choose: collision resistance is broken</li>
+        <li><strong>SHA-1</strong> &mdash; do not choose: collision resistance is broken</li>
+        <li><strong>SHA-256</strong> &mdash; good default, widely supported</li>
+        <li><strong>SHA-3</strong> &mdash; good alternative from a different design family; it is a standardised modern option, not merely a future one</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Hashing a password does not create a key</h3>
+      <p>SHA-256("password123") looks random, but <em>looks random is not high entropy</em>. A hash can spread the bits of its input; it cannot create unpredictability that was never there. A human-chosen password has far fewer than 256 bits of entropy, so its digest is guessable at the same cost as the password itself. For cryptographic keys, generate randomness with a CSPRNG.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why hashing can be used for proof of work.</strong> Find a number x such that <code>hash("send email" || x)</code> starts with <code>000000</code>. The sender must try many values of x; the verifier checks a single hash. Asymmetry &mdash; expensive to find, cheap to verify &mdash; is the whole point, and it exists only because hashing is one-way.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Alice sends a message M together with SHA-256(M). Eve replaces both the message and the digest with her own pair. Bob recomputes the hash and it matches. What has Bob actually verified?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hash has no key at all, so there is nothing for Eve to be missing. That is exactly why a plain hash cannot prove origin.">That Eve does not know the secret key used to compute the digest</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The digest matches the message, so the message is internally consistent — but anyone can recompute a hash, so Bob has learned nothing about who created it." data-bad="">Only that the message is consistent with the digest &mdash; not who created it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The message was never hidden; hashing is not encryption and provides no confidentiality.">That the message content stayed confidential</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-mac" class="section" data-track="mac">
+  <h2 class="section-title">MAC and HMAC: A Digest With a Secret Key</h2>
+  <p class="section-lead">A plain hash is a fingerprint anyone can recompute. Add a shared secret and the fingerprint becomes a tag that only a key holder can produce.</p>
+
+  <div class="def-box">
+    <div class="def-label">Message authentication code (MAC)</div>
+    <p>A keyed tag over a message. Three operations: <strong>KeyGen</strong> produces a shared key K; <strong>Tag(K, M) &rarr; T</strong> produces the tag; <strong>Verify(K, M, T) &rarr; {0,1}</strong> accepts only when the recomputed tag matches. <strong>HMAC</strong> is the standardised hash-based MAC construction (NIST FIPS 198-1). A MAC provides integrity <em>and</em> sender authenticity &mdash; but only for parties who share the secret key.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Case</th><th>What arrives at Bob</th><th>Decision</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>A</strong></td><td>M and T arrive unchanged</td><td>Accept</td><td>The recomputed tag matches under the shared key K</td></tr>
+        <tr><td><strong>B</strong></td><td>M has been changed, the old T is replayed</td><td>Reject</td><td>The tag no longer matches the message</td></tr>
+        <tr><td><strong>C</strong></td><td>A new fake M with a new fake T, created without K</td><td>Reject</td><td>Eve cannot compute a valid tag without the key</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The attacker's goal is to <strong>pass verification without K</strong>. That means either <em>modifying</em> an existing valid pair (change the amount or the deadline) or <em>forging</em> a completely new one (fake a new instruction). Even after observing many valid message&ndash;tag pairs, Eve still cannot produce a new pair that verifies.</p>
+
+  <div id="ix-hmac"></div>
+
+  <div class="def-box">
+    <div class="def-label">The HMAC construction (FIPS 198-1)</div>
+    <p>HMAC(K, m) = H( (K<sub>0</sub> &oplus; opad) &#8214; H( (K<sub>0</sub> &oplus; ipad) &#8214; m ) ). The key K is first turned into a block-sized key K<sub>0</sub> (hashed first if it is longer than the block, zero-padded if it is shorter). <strong>ipad</strong> is the byte 0x36 repeated B times and <strong>opad</strong> is 0x5c repeated B times, where B is the hash block size (64 bytes for SHA-256). The nested inner/outer structure is the point: a naive keyed hash such as H(K &#8214; m) inherits structural weaknesses from the underlying hash.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What a MAC cannot do</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>No public verification:</strong> a MAC proves authenticity only while K stays secret from attackers</li>
+        <li><strong>Anyone with K can forge:</strong> if many people share one key, every one of them can create a valid tag</li>
+        <li><strong>No replay protection by itself:</strong> a recorded message and tag still verify tomorrow &mdash; add a nonce, timestamp or sequence number</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Where MAC fits in a modern stack</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Encryption</strong> &mdash; confidentiality only</li>
+        <li><strong>MAC / HMAC</strong> &mdash; integrity and authenticity between key holders</li>
+        <li><strong>AEAD</strong> &mdash; both together (AES-GCM, ChaCha20-Poly1305)</li>
+        <li><strong>Secure channel</strong> &mdash; TLS / HTTPS, which is where you actually meet all of this</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The boundary that motivates the next section.</strong> A MAC says &ldquo;whoever made this tag knew K&rdquo;. If millions of users must verify a software update, sharing K with all of them means any single user can forge an update that everyone else accepts. Public verification breaks the shared-secret model &mdash; which is exactly why digital signatures exist.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Eve changes one byte of a message that is protected by HMAC-SHA-256 and replays the original tag unchanged. What happens at the verifier?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The verifier recomputes the tag over the modified message; it no longer matches the replayed tag, so verification fails. To succeed Eve would need K." data-bad="">Verification fails, because the recomputed tag over the modified message no longer matches</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="HMAC is not encryption and has no decryption step. The tag is a keyed digest compared against a recomputed value.">The verifier decrypts the tag and repairs the modified byte</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing about the tag is public: without K, Eve cannot produce a replacement tag for the modified message.">Verification succeeds, because the tag was never changed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-signatures" class="section" data-track="signatures">
+  <h2 class="section-title">Digital Signatures: Private Signing, Public Verification</h2>
+  <p class="section-lead">Hash detects change; a MAC adds a shared secret; a signature solves the remaining problem &mdash; many verifiers, one signer, and no secret handed out.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>MAC / HMAC</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>One shared secret key K</li>
+        <li>If many people know K, any of them can create a valid tag</li>
+        <li>Good for closed groups that already share a secret</li>
+        <li>Cannot support public verification</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Digital signature</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>One private signing key SK<sub>A</sub>, many public verification keys PK<sub>A</sub></li>
+        <li>Only the owner can sign; anyone with the public key can verify</li>
+        <li>Designed for public verification at scale</li>
+        <li>This is why software updates, app packages and certificates use signatures</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The scenario that settles the argument.</strong> A publisher ships an update to millions of users. If the publisher shared one MAC key with everyone, then any malicious user would hold K, could publish a fake update with a perfectly valid tag, and every other user would accept it. A MAC proves authenticity only while its key is secret from attackers &mdash; so it cannot be used for public verification.
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-sig-seq"></div>
+  <script type="application/json" id="ix-sig-seq">
+  {
+    "title": "Order the digital signature process",
+    "subtitle": "Click the steps in the order the Week 5 deck presents them.",
+    "steps": [
+      "Hash the message to create a digest of M",
+      "Sign that digest with the sender's private key to produce S",
+      "Send the message M together with the signature S",
+      "Recompute the digest and verify the signature with the sender's public key",
+      "Accept only if M and S match under the sender's public key"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Digital signatures provide</th><th>What that means</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Integrity</strong></td><td>The signed content cannot be changed unnoticed &mdash; change either the message or the signature and verification fails</td></tr>
+        <tr><td><strong>Origin authentication</strong></td><td>The signature is tied to the signer's private key, so a valid signature proves control of that key</td></tr>
+        <tr><td><strong>Public verifiability</strong></td><td>Anyone who has the public key can check the signature, without being able to create one</td></tr>
+        <tr><td><strong>Non-repudiation support</strong></td><td>Only when identity, key ownership and audit evidence are established &mdash; the signature alone is not a legal conclusion</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>What signatures do <em>not</em> provide</th><th>Precise wording to use instead</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Confidentiality.</strong> Signing does not encrypt the message; anyone who receives it can still read it unless encryption is also used.</td><td>&ldquo;Encrypt to hide; sign to prove origin and detect changes.&rdquo;</td></tr>
+        <tr><td><strong>A raw mathematical guarantee of identity.</strong> A valid signature proves control of a private key &mdash; connecting that key to a person or domain is a separate trust problem.</td><td>&ldquo;A valid signature proves control of a private key; the certificate says whose key it is.&rdquo;</td></tr>
+        <tr><td><strong>Safety from a badly built scheme.</strong> Raw textbook RSA signatures are malleable; approved schemes apply an encoding such as PSS (RSA-PSS, ECDSA and EdDSA are the FIPS 186-5 options).</td><td>&ldquo;Hash, then sign with an approved padding scheme &mdash; never raw RSA.&rdquo;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Never describe signing as &ldquo;encrypting with the private key&rdquo;.</strong> The two operations use the same mathematics in RSA, but they carry different guarantees: encryption hides content for one recipient; signing proves origin and detects change for anyone. The lecture is explicit that signing does not hide the message.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; a secure software update, end to end.</strong> The developer publishes an update; the user device decides whether to install it.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Publish.</strong> The developer produces the update file M and its signature: the published package is M plus S. The private signing key SK<sub>dev</sub> never leaves the developer.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Hash.</strong> H = H(M) reduces the update to a fixed-length digest, so the signature only has to cover a short value.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Sign.</strong> S = Sign(SK<sub>dev</sub>, H(M)). Only the holder of SK<sub>dev</sub> can produce S.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Verify.</strong> The device recomputes H(M&#8242;) from what it downloaded and checks Verify(PK<sub>dev</sub>, M, S). A single changed byte changes the digest and breaks verification; a fake update signed with somebody else's key fails under PK<sub>dev</sub>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Decide.</strong> Valid signature &rarr; install. Modified or fake update &rarr; reject <em>before</em> install. This is why signatures, not shared MAC keys, protect software distribution.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Name the remaining gap.</strong> Everything above assumes the device holds the <em>right</em> PK<sub>dev</sub>. A valid signature proves control of a private key; it does not prove whose key it is. That is the certificate and PKI problem in the next two sections.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A vendor signs its installer with a private key and publishes the installer plus the signature. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Distributing the private key would let anyone sign; the public key is what users need. Keeping the private key secret is the whole point.">The vendor must distribute its private key so that users can verify the installer</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Verification uses the vendor's public key, and the installer stays readable — signing proves origin and detects change, it does not hide the content." data-bad="">Users verify with the vendor's public key, and the installer remains readable to anyone</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Signing provides no confidentiality. If the installer had to be secret, it would also need encryption (for example an AEAD scheme).">Signing encrypts the installer, so only users with the public key can read it</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-pubkey" class="section" data-track="pubkey">
+  <h2 class="section-title">Public-Key Cryptography: RSA</h2>
+  <p class="section-lead">Symmetric cryptography assumes both sides already share a key. Public-key cryptography splits the key in two, so one half can be published and the other never leaves its owner.</p>
+
+  <div class="def-box">
+    <div class="def-label">Public-key (asymmetric) cryptography</div>
+    <p>A key pair whose two halves are mathematically linked: a <strong>public key</strong> that may be shared widely, and a <strong>private key</strong> that must remain with its owner. The pair performs three different jobs &mdash; <strong>encrypt</strong> (public key encrypts, private key decrypts: RSA-OAEP), <strong>sign</strong> (private key signs, public key verifies: RSA-PSS, ECDSA, EdDSA) and <strong>agree</strong> (each side combines its own private value with the peer's public value: Diffie-Hellman, ECDH).</p>
+  </div>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 720 190" role="img" aria-label="One-way function diagram: a private value x maps easily to a public value y, but recovering x from y is hard" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="c5arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"></path>
+        </marker>
+        <marker id="c5arrowgrey" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"></path>
+        </marker>
+      </defs>
+      <rect x="26" y="58" width="168" height="72" rx="12" class="node-box-green"></rect>
+      <text x="110" y="86" text-anchor="middle" class="node-label" style="font-size:13px;">private: x</text>
+      <text x="110" y="108" text-anchor="middle" class="node-label" style="font-size:11px;">a random exponent a</text>
+      <rect x="276" y="58" width="168" height="72" rx="12" class="node-box"></rect>
+      <text x="360" y="86" text-anchor="middle" class="node-label" style="font-size:13px;">y = g&#8202;&#x02E3;&#8202;mod&#8202;p</text>
+      <text x="360" y="108" text-anchor="middle" class="node-label" style="font-size:11px;">easy: repeated squaring</text>
+      <rect x="526" y="58" width="168" height="72" rx="12" class="node-box-purple"></rect>
+      <text x="610" y="86" text-anchor="middle" class="node-label" style="font-size:13px;">public: y</text>
+      <text x="610" y="108" text-anchor="middle" class="node-label" style="font-size:11px;">published, safe to share</text>
+      <line x1="198" y1="94" x2="270" y2="94" stroke="#059669" stroke-width="2" marker-end="url(#c5arrow)"></line>
+      <line x1="448" y1="94" x2="520" y2="94" stroke="#059669" stroke-width="2" marker-end="url(#c5arrow)"></line>
+      <line x1="520" y1="150" x2="198" y2="150" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#c5arrowgrey)"></line>
+      <text x="360" y="172" text-anchor="middle" class="node-label" style="font-size:11px;">hard: recover x from y (discrete logarithm) &mdash; for RSA the hard direction is factoring n = p&#8202;&middot;&#8202;q</text>
+      <text x="360" y="30" text-anchor="middle" class="node-label" style="font-size:12px;">Publish y &mdash; not x. This one-way gap is what makes public-key cryptography possible.</text>
+    </svg>
+    <p class="arch-caption">Multiplying two large primes is easy; factoring their product is believed hard. Raising g to a power modulo p is easy; inverting it is the discrete logarithm problem. Everything in this section is built on one of those two gaps.</p>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">RSA key generation, step by step</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Operation</th><th>Toy values used below</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Choose two distinct large primes p and q</td><td>p = 61, q = 53</td></tr>
+        <tr><td>2</td><td>Compute the modulus n = p &middot; q &mdash; its bit length is the &ldquo;key size&rdquo;</td><td>n = 3233</td></tr>
+        <tr><td>3</td><td>Compute &phi;(n) = (p &minus; 1)(q &minus; 1)</td><td>&phi;(n) = 3120</td></tr>
+        <tr><td>4</td><td>Choose a public exponent e with 1 &lt; e &lt; &phi;(n) and gcd(e, &phi;(n)) = 1</td><td>e = 17</td></tr>
+        <tr><td>5</td><td>Compute the private exponent d &equiv; e<sup>&minus;1</sup> (mod &phi;(n))</td><td>d = 2753</td></tr>
+        <tr><td>6</td><td>Publish (n, e); keep (n, d) secret &mdash; p, q and &phi;(n) must never be published</td><td>public (3233, 17) &middot; private (3233, 2753)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-rsa"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why decryption recovers the message</h3>
+      <p>Because e &middot; d &equiv; 1 (mod &phi;(n)), raising a ciphertext to the power d undoes raising the message to the power e: m<sup>e&middot;d</sup> &equiv; m (mod n). That is Euler's theorem, and it is also why &phi;(n) must stay secret &mdash; anyone who learns p and q can compute d in moments.</p>
+    </div>
+    <div class="col-card">
+      <h3>Three rules that matter in practice</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Never use raw RSA.</strong> Textbook RSA is deterministic and malleable; approved schemes apply OAEP for encryption and PSS for signatures.</li>
+        <li><strong>One key pair, one job.</strong> NIST FIPS 186-5 states that an RSA signature key pair shall not be used for other purposes such as key establishment.</li>
+        <li><strong>Respect the minimum size.</strong> The standard requires a modulus of at least 2048 bits, with p and q of equal bit length and 2<sup>16</sup> &lt; e &lt; 2<sup>256</sup>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why hybrid encryption exists.</strong> Modular exponentiation with a 2048-bit modulus is orders of magnitude slower than AES. Real systems therefore use public-key cryptography only to protect a short secret &mdash; encrypt a random session key with RSA-OAEP, or agree one with Diffie-Hellman &mdash; and then protect the bulk data with AES-GCM or ChaCha20-Poly1305. The asymmetric step is the short setup, not the payload.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about an RSA key pair is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Recovering d from (n, e) requires factoring n. That is the hard problem the whole scheme rests on — publishing n and e gives nothing away.">Anyone who knows n and e can compute the private exponent d</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. n and e are public, so anyone can encrypt or verify; only the holder of d can decrypt or sign. d must never leave the owner." data-bad="">Publishing n and e lets anyone encrypt or verify, while only d can decrypt or sign</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="RSA is far too slow for bulk data. It protects a short secret, and the payload goes through a symmetric AEAD cipher.">RSA replaces AES, so bulk files are encrypted directly with the public key</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; RSA with the toy parameters p = 61, q = 53, e = 17, message m = 65.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Modulus.</strong> n = p &middot; q = 61 &times; 53 = 3233. The key size is the bit length of n, so this toy key is about 12 bits &mdash; real keys are 2048 bits or more.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Totient.</strong> &phi;(n) = (p &minus; 1)(q &minus; 1) = 60 &times; 52 = 3120.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Check e.</strong> gcd(17, 3120) = 1, so e = 17 is a valid public exponent. (The Euclidean algorithm gives 3120 = 17 &times; 183 + 9, then 17 = 9 + 8, then 9 = 8 + 1.)</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Private exponent.</strong> Running the extended Euclidean algorithm backwards gives 1 = 2 &times; 3120 &minus; 367 &times; 17, so d &equiv; &minus;367 &equiv; 2753 (mod 3120). Check: 17 &times; 2753 = 46&nbsp;801 = 15 &times; 3120 + 1. &#10003;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Encrypt.</strong> c = m<sup>e</sup> mod n = 65<sup>17</sup> mod 3233 = 2790, computed with repeated squaring rather than 17 multiplications.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Decrypt.</strong> m = c<sup>d</sup> mod n = 2790<sup>2753</sup> mod 3233 = 65. The arithmetic is modular exponentiation in both directions; what makes it safe is that computing d needs the factorisation of n, and nothing published reveals it.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-dh" class="section" data-track="dh">
+  <h2 class="section-title">Diffie-Hellman: Agreeing on a Secret in Public</h2>
+  <p class="section-lead">Diffie-Hellman solves key establishment, not bulk encryption: two parties who have never met derive the same secret while an observer sees every value they exchange.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Who</th><th>What happens</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Public</td><td>Agree on a large prime p and a generator g. Eve can see both.</td></tr>
+        <tr><td>2</td><td>Alice</td><td>Pick a secret exponent a, compute A = g<sup>a</sup> mod p, send A to Bob. Keep a private.</td></tr>
+        <tr><td>3</td><td>Bob</td><td>Pick a secret exponent b, compute B = g<sup>b</sup> mod p, send B to Alice. Keep b private.</td></tr>
+        <tr><td>4</td><td>Both</td><td>Alice computes B<sup>a</sup> mod p; Bob computes A<sup>b</sup> mod p. Both equal g<sup>ab</sup> mod p &mdash; the shared secret.</td></tr>
+        <tr><td>5</td><td>Both</td><td>Run the shared value through a key-derivation function to obtain fresh session keys, then protect the traffic with an AEAD cipher.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-dh"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What Diffie-Hellman alone does not give you</h3>
+      <p>Nothing about <em>who</em> is on the other end. Eve can sit in the middle, replace Alice's public value with her own when talking to Bob (and vice versa), and end up sharing one secret with Alice and a different one with Bob. Diffie-Hellman creates a shared secret; authentication is what tells you who shares it &mdash; a certificate or signature binds the public values to a verified identity.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why ephemeral keys are the default</h3>
+      <p>If each session generates a fresh exponent and discards it afterwards, then compromising a long-term key later does not reveal past session keys. Ephemeral Diffie-Hellman over elliptic curves (ECDHE) is the usual choice, and approved group parameters matter: bad primes or unvalidated public values enable small-subgroup attacks that leak the private exponent.</p>
+    </div>
+  </div>
+
+  <div class="diagram-flow">
+    <div class="flow-node">1. Authenticate</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">2. Agree (ECDHE)</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">3. Derive (KDF)</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">4. Protect (AEAD)</div>
+  </div>
+  <p style="color:var(--text-muted); font-size:0.9rem; text-align:center;">Key agreement is one layer, not the whole protocol: a certificate or signature verifies the peer, ECDHE produces the shared secret, a KDF creates fresh session keys, and an AEAD cipher protects the traffic.</p>
+
+  <div data-ix="race" data-ix-src="#ix-key-race"></div>
+  <script type="application/json" id="ix-key-race">
+  {
+    "title": "Relative security strength of common choices",
+    "subtitle": "Comparable security strength in bits, not key length: a 2048-bit RSA key gives roughly the protection of a 128-bit symmetric key. Figures follow NIST SP 800-57 and FIPS 186-5 guidance.",
+    "max": 128,
+    "rows": [
+      { "name": "AES-128 (symmetric)", "value": 128, "display": "128-bit security" },
+      { "name": "ECDH / ECDSA with P-256", "value": 128, "display": "about 128-bit security" },
+      { "name": "RSA-3072 (encryption or signatures)", "value": 128, "display": "about 128-bit security" },
+      { "name": "RSA-2048 (encryption or signatures)", "value": 112, "display": "about 112-bit security" },
+      { "name": "SHA-256 collision resistance", "value": 128, "display": "about 2^128 work" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Read the key sizes correctly.</strong> Key length is not security level. A 2048-bit RSA modulus is assessed at roughly 112 bits of security because the best known attack is factoring, not brute force; a 256-bit elliptic curve gives about 128 bits because the best known attack is the discrete logarithm in a much smaller group. Matching a primitive to a required security level is a lookup in the standards, not a guess.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Alice and Bob complete an unauthenticated Diffie-Hellman exchange over a channel Eve can read and write. What do they actually know at the end?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Diffie-Hellman authenticates nobody. Without a certificate or signature, the peer could be anyone — including Eve.">That they are talking to each other, because only Alice knows a and only Bob knows b</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. They share a secret value with somebody who knows a matching exponent — but Eve can run two separate exchanges and sit in the middle, so identity requires authentication." data-bad="">That they share a secret with <em>somebody</em> who knows a matching exponent &mdash; not who that somebody is</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Every value sent was public: p, g, A and B. Confidentiality comes from the derived secret, not from the exchange itself.">That the exchanged values g, p, A and B stayed confidential</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; a Diffie-Hellman exchange with the toy group p = 23, g = 5.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Public parameters.</strong> p = 23 and g = 5 are published. In a real deployment p would be a large prime (or an approved elliptic-curve group), and 23 would be breakable by hand.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Alice.</strong> Picks a = 6, computes A = 5<sup>6</sup> mod 23. Using repeated squaring: 5<sup>2</sup> = 25 &equiv; 2, 5<sup>3</sup> &equiv; 10, so 5<sup>6</sup> = (5<sup>3</sup>)<sup>2</sup> &equiv; 100 &equiv; 100 &minus; 92 = 8. She sends A = 8 and keeps a = 6.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Bob.</strong> Picks b = 15, computes B = 5<sup>15</sup> mod 23. From 5<sup>12</sup> &equiv; 18 and 5<sup>3</sup> &equiv; 10, B &equiv; 18 &times; 10 = 180 &equiv; 180 &minus; 161 = 19. He sends B = 19 and keeps b = 15.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Alice's side.</strong> K = B<sup>a</sup> mod p = 19<sup>6</sup> mod 23. Since 19 = 5<sup>15</sup>, this is 5<sup>90</sup> mod 23; the order of 5 modulo 23 is 22, and 90 &equiv; 2 (mod 22), so K = 5<sup>2</sup> mod 23 = 2.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Bob's side.</strong> K = A<sup>b</sup> mod p = 8<sup>15</sup> mod 23 = (5<sup>6</sup>)<sup>15</sup> = 5<sup>90</sup> &equiv; 5<sup>2</sup> = 2 (mod 23). Both sides agree on K = 2 without ever sending it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Why this is safe at scale.</strong> Eve sees p = 23, g = 5, A = 8, B = 19 and would only have to search 22 exponents here. With a real group of about 256 bits the search space is around 2<sup>256</sup>, and no efficient classical method for the discrete logarithm is known. The toy numbers show the mechanism, not the security.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-trust" class="section" data-track="trust">
+  <h2 class="section-title">Whose Key Is It? Certificates and PKI</h2>
+  <p class="section-lead">A valid signature proves control of a private key. It does not prove whose key it is. If Eve swaps in her own public key, every signature check still succeeds &mdash; for the wrong person.</p>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 720 215" role="img" aria-label="Key substitution attack: Eve replaces Alice's public key with her own before Bob receives it" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="66" width="150" height="76" rx="12" class="node-box-green"></rect>
+      <text x="95" y="94" text-anchor="middle" class="node-label" style="font-size:13px;">Alice</text>
+      <text x="95" y="116" text-anchor="middle" class="node-label" style="font-size:11px;">sends PK_A</text>
+      <rect x="285" y="66" width="150" height="76" rx="12" class="node-box-purple"></rect>
+      <text x="360" y="94" text-anchor="middle" class="node-label" style="font-size:13px;">Eve</text>
+      <text x="360" y="116" text-anchor="middle" class="node-label" style="font-size:11px;">substitutes PK_A &rarr; PK_E</text>
+      <rect x="550" y="66" width="150" height="76" rx="12" class="node-box"></rect>
+      <text x="625" y="94" text-anchor="middle" class="node-label" style="font-size:13px;">Bob</text>
+      <text x="625" y="116" text-anchor="middle" class="node-label" style="font-size:11px;">accepts the wrong key</text>
+      <line x1="172" y1="104" x2="279" y2="104" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5"></line>
+      <line x1="437" y1="104" x2="544" y2="104" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5"></line>
+      <text x="360" y="34" text-anchor="middle" class="node-label" style="font-size:12px;">A valid signature proves control of a private key. It does not prove whose key it is.</text>
+      <text x="360" y="176" text-anchor="middle" class="node-label" style="font-size:11px;">Eve never breaks the algorithm. She replaces the key &mdash; and every mathematical check still passes.</text>
+      <text x="360" y="198" text-anchor="middle" class="node-label" style="font-size:11px;">The real question is not only &ldquo;is the signature valid?&rdquo; but &ldquo;whose key verified it?&rdquo;</text>
+    </svg>
+    <p class="arch-caption">Trust is a binding problem, not only a mathematics problem. Something outside the signature has to connect a public key to an identity.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Identity claim</th><th>Trusted binding: evidence and process</th><th>What it gives you</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;This is Alice&rdquo; / &ldquo;This is example.com&rdquo;</td><td><strong>Certificates</strong> &mdash; a CA signs a public key for a domain or organisation</td><td>A key bound to a name by a party you already trust</td></tr>
+        <tr><td>Web PKI</td><td><strong>Certificate authorities</strong> &mdash; trusted third parties whose roots ship with the operating system or browser</td><td>You trust a small set of roots instead of every key you meet</td></tr>
+        <tr><td>Directory lookup</td><td><strong>Public-key directories</strong> &mdash; a trusted service publishes identity&ndash;key mappings</td><td>Scalable lookup, but the directory itself must be trusted</td></tr>
+        <tr><td>Server identity in SSH</td><td><strong>Known host keys</strong> &mdash; the client remembers the server key after first trust</td><td>Trust on first use; a changed key becomes a loud warning</td></tr>
+        <tr><td>Out-of-band check</td><td><strong>Key fingerprints</strong> &mdash; humans compare a short representation of the key</td><td>Verification that does not depend on any infrastructure</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-trust-spectrum"></div>
+  <script type="application/json" id="ix-trust-spectrum">
+  {
+    "title": "Ways to bind a public key to an identity",
+    "subtitle": "A spectrum from fully automated to human-verified, not a chronology: move along it as the value of the identity claim rises.",
+    "events": [
+      { "label": "Fingerprint", "title": "Humans compare a short key representation", "detail": "No infrastructure required, but it only scales to a handful of keys. Useful when a channel already exists — read the digest aloud, or compare it in person." },
+      { "label": "Known host key", "title": "Trust on first use", "detail": "The client stores the server key the first time it connects. Convenient and unauthenticated at that first moment; a later change is treated as a possible man-in-the-middle." },
+      { "label": "Directory", "title": "A trusted service publishes identity–key mappings", "detail": "Central and scalable, but the security now depends on the directory: whoever can write to it can substitute keys." },
+      { "label": "Certificate", "title": "A CA signs the public key together with the identity", "detail": "The signature travels with the key, so verification needs no online lookup and no prior contact — only trust in the issuing CA." },
+      { "label": "Web PKI", "title": "Roots, intermediates and revocation", "detail": "The full machinery: a small trusted root set, delegated intermediates, validity windows, name checks and revocation status. Automated, revocable, and only as trustworthy as the CAs in the chain." }
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">What an X.509 certificate actually contains</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Field</th><th>Why it exists</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Version and serial number</strong></td><td>Identifies the certificate uniquely so it can be referenced, renewed and revoked</td></tr>
+        <tr><td><strong>Issuer</strong></td><td>Names the CA that signed this certificate &mdash; the next link in the chain</td></tr>
+        <tr><td><strong>Validity (not before / not after)</strong></td><td>A bounded lifetime; an expired certificate is invalid even if every signature checks out</td></tr>
+        <tr><td><strong>Subject</strong></td><td>The identity being bound: a domain name for a server certificate, or an organisation</td></tr>
+        <tr><td><strong>Subject public key info</strong></td><td>The algorithm and the public key itself &mdash; the thing being certified</td></tr>
+        <tr><td><strong>Extensions</strong></td><td>Subject alternative names, key usage, and basic constraints such as &ldquo;this key may sign other certificates&rdquo;</td></tr>
+        <tr><td><strong>Signature algorithm and value</strong></td><td>The CA's signature over all of the fields above; changing any of them breaks it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Chain validation, in the order a client should do it.</strong> Build a chain from the server certificate to a locally trusted root; verify each signature up the chain; check that every certificate is inside its validity window; check that the name you asked for appears in the subject or the subject alternative names; and check revocation (CRL or OCSP) and key usage. Only then is the public key &ldquo;the server's key&rdquo; in any meaningful sense.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You verify a server's signature with the public key you were handed, and it is valid. What have you established?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The maths proves possession of the matching private key. That the key belongs to the domain you asked for comes from the certificate and the chain to a trusted root — not from the signature." data-bad="">That whoever produced the signature holds the matching private key &mdash; the key's owner still depends on the certificate</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is exactly the substitution attack: the key could belong to Eve. Identity binding requires a certificate, a directory or a fingerprint check.">That the key necessarily belongs to the domain you intended to reach</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Signatures provide integrity and origin authentication, never confidentiality. The traffic is still readable unless it is also encrypted.">That the session content is confidential</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tools" class="section" data-track="tools">
+  <h2 class="section-title">Choosing a Primitive: Guarantee First</h2>
+  <p class="section-lead">Four tools, four key models. Choosing between them is a question about the guarantee you need &mdash; confidentiality, integrity, authenticity, or public verification &mdash; not about which one sounds strongest.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Tool</th><th>Key model</th><th>Confidentiality</th><th>Integrity / authenticity</th><th>Public verification</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Hash</strong></td><td>No key</td><td>No</td><td>Change detection only</td><td>Anyone can recalculate it</td></tr>
+        <tr><td><strong>MAC / HMAC</strong></td><td>Shared secret</td><td>No</td><td>Yes &mdash; between key holders</td><td>No</td></tr>
+        <tr><td><strong>Digital signature</strong></td><td>Private / public key pair</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td><strong>AEAD</strong></td><td>Shared secret</td><td>Yes</td><td>Yes &mdash; between key holders</td><td>No</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-tool-match"></div>
+  <script type="application/json" id="ix-tool-match">
+  {
+    "title": "Match the requirement to the primitive",
+    "subtitle": "Click a requirement on the left, then the primitive that provides exactly that guarantee.",
+    "pairs": [
+      ["Did the downloaded file change in transit?", "A cryptographic hash compared against a published digest"],
+      ["Did someone who holds the shared secret create this tag?", "A MAC / HMAC verified with the shared key"],
+      ["Does this update verify under the publisher's public key?", "A digital signature checked with the publisher's public key"],
+      ["Whose public key is this, really?", "A certificate, a trusted directory or a compared fingerprint"],
+      ["Are the contents hidden and authenticated at the same time?", "An AEAD cipher such as AES-GCM or ChaCha20-Poly1305"],
+      ["Can two strangers derive the same key over an open channel?", "Diffie-Hellman key agreement, authenticated by a certificate"]
+    ]
+  }
+  </script>
+
+  <div data-ix="pipeline" data-ix-src="#ix-update-pipeline"></div>
+  <script type="application/json" id="ix-update-pipeline">
+  {
+    "title": "Secure software update: the verification path",
+    "subtitle": "What a device does before it installs anything. Any failure ends the sequence with a rejection.",
+    "nodes": [
+      { "label": "Download", "note": "Fetch the update file M and its detached signature S over an untrusted network." },
+      { "label": "Recompute the digest", "note": "Hash the downloaded bytes: H(M′). One changed byte changes the digest completely." },
+      { "label": "Verify the signature", "note": "Check Verify(PK_dev, M, S) with the developer's trusted public key." },
+      { "label": "Check the digest", "note": "Confirm the signed digest matches the recomputed one, so the signature really covers these bytes." },
+      { "label": "Check the certificate", "note": "Confirm PK_dev is bound to the expected publisher by a valid chain to a trusted root." },
+      { "label": "Install or reject", "note": "Install only if every check passed; otherwise refuse before anything is written to the system." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question to ask</th><th>Primitive that answers it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Did the data change?</td><td>Hash (SHA-256 / SHA-3)</td></tr>
+        <tr><td>Did someone with the shared secret create this valid tag?</td><td>MAC / HMAC</td></tr>
+        <tr><td>Does this message verify under this public key?</td><td>Digital signature (RSA-PSS, ECDSA, EdDSA)</td></tr>
+        <tr><td>Whose public key is this?</td><td>Certificates, trusted directories, fingerprints</td></tr>
+        <tr><td>Are the contents protected and authenticated together?</td><td>AEAD (AES-GCM, ChaCha20-Poly1305)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The takeaway to memorise:</strong> hash = fingerprint. MAC = shared-key authenticity. Signature = public verification. AEAD = encryption and integrity together. Modern systems combine these blocks rather than asking one tool to do every job &mdash; and getting the combination wrong is a design failure, not a mathematical one.
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card con" style="background:var(--red-bg); border-color:rgba(220,38,38,0.28);">
+      <h4>Common misuses</h4>
+      <ul>
+        <li>Using a MAC where millions must verify &mdash; any key holder can forge</li>
+        <li>Using a plain hash as proof of origin &mdash; anyone can recompute it</li>
+        <li>Describing a signature as encryption &mdash; it hides nothing</li>
+        <li>Trusting a valid signature without checking whose key it is</li>
+      </ul>
+    </div>
+    <div class="why-card pro">
+      <h4>What good practice looks like</h4>
+      <ul>
+        <li>AEAD by default for traffic; AES-GCM or ChaCha20-Poly1305</li>
+        <li>Hash, then sign with an approved scheme &mdash; never raw RSA</li>
+        <li>Bind public values to identities with certificates or signatures</li>
+        <li>Add a nonce, timestamp or sequence number wherever replay matters</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 5 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Hash = fingerprint</h4>
+        <p>Any practical input becomes a fixed-length digest. It detects change, scales to many files, and proves nothing about who created the data.</p>
+        <div class="flip-hint">Integrity only</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>MAC = shared-key authenticity</h4>
+        <p>Add a secret to the digest and only key holders can produce a valid tag. Great inside a closed group; useless for public verification.</p>
+        <div class="flip-hint">Integrity + authenticity</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Signature = public verification</h4>
+        <p>Private signing key, public verification key. Integrity, origin authentication and public verifiability &mdash; without hiding the message.</p>
+        <div class="flip-hint">One signer, many verifiers</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Trust = binding, not mathematics</h4>
+        <p>Certificates, CAs, directories and fingerprints are what connect a public key to an identity. A valid signature only proves control of a key.</p>
+        <div class="flip-hint">PKI</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Self-test: say the answer before you flip",
+    "subtitle": "Six questions the Week 5 material is built around.",
+    "cards": [
+      { "front": "What is the main difference between hashing and encryption?", "back": "A hash is a one-way fingerprint with no key and no decryption; encryption is reversible with the right key and hides the content.", "hint": "Primitive roles" },
+      { "front": "Why can a plain hash detect change but not prove the sender?", "back": "Because it contains no secret: anyone who can replace the message can recompute the digest, so a match proves only internal consistency.", "hint": "No key" },
+      { "front": "What does the shared secret add in a MAC / HMAC?", "back": "Only a key holder can produce a valid tag, so verification proves integrity and that the sender knew K — between key holders only.", "hint": "Symmetric authenticity" },
+      { "front": "Why is a MAC unsuitable when millions of users must verify one publisher's update?", "back": "Every user would need K, and anyone holding K can forge a valid tag for a fake update. Public verification needs signatures.", "hint": "Key model" },
+      { "front": "Which keys create and verify a digital signature?", "back": "The signer's private key creates it; the matching public key verifies it. Signing does not hide the message.", "hint": "Private sign, public verify" },
+      { "front": "Why must the public key itself be trusted?", "back": "A signature proves control of a private key, not identity. Without a trusted binding, Eve can substitute her own public key and every check still passes.", "hint": "Certificates and PKI" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page works through the modular arithmetic behind RSA and Diffie-Hellman, the HMAC construction, hash sizes and the birthday bound, and the notation you need to read a certificate. Then attempt the Quiz Hub and the Flashcards for Week 5.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you state what a hash, a MAC, a signature and an AEAD scheme each guarantee, say which key does what in RSA and Diffie-Hellman, and explain why a valid signature still needs a certificate?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Exam framing</h3>
+      <p>Start every answer from the missing guarantee, not the algorithm. Name the primitive, name the key model, then name what it does <em>not</em> provide &mdash; and never write &ldquo;encrypt with the private key&rdquo;.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

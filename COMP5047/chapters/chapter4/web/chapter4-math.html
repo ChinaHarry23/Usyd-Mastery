@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 4: Analogue Input and Output</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 foundations for COMP5047: the arithmetic of analogue input and output — quantisation and ADC resolution, PWM duty cycle and filtering, sampling time, voltage dividers and two-point calibration.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 4: Analogue Input and Output">
+<meta property="og:description" content="Week 4 foundations for COMP5047: the arithmetic of analogue input and output — quantisation and ADC resolution, PWM duty cycle and filtering, sampling time, voltage dividers and two-point calibration.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter4-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#127909;</span>
+    <h2>Week 4 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions &amp; symbols</a></li>
+    <li><a href="#sec-m-quant" class="toc-link">Quantisation &amp; resolution</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-pwm" class="toc-link">PWM: duty cycle &amp; filtering</a></li>
+    <li><a href="#sec-m-sampling" class="toc-link">Sampling in time</a></li>
+    <li><a href="#sec-m-calibration" class="toc-link">Calibration algebra</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Bring-up checklist</a></li>
+  </ul>
+  <a href="chapter4-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5047 &mdash; Week 4 supplement</p>
+  <h1>Foundations: the arithmetic of analogue input and output</h1>
+  <p class="hero-desc">Week 4 is the most quantitative week of the unit. Four relationships do most of the work: how a voltage becomes an integer (quantisation), how an integer becomes an average voltage (PWM), how fast a continuous signal can be sampled (sampling time), and how raw counts become physical units (calibration). This page states each one, works a number through it, and ends with the bring-up checklist that turns the arithmetic into a wired, working sensor.</p>
+  <div class="chip-list">
+    <span>Formulas checked against the Arduino Uno's 10-bit ADC and 8-bit PWM</span>
+    <span>Every symbol in the glossary table</span>
+    <span>Worked numbers for a 5&nbsp;V board</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions &amp; symbols</h2>
+  <p class="section-lead">Marks in this unit are usually lost on the difference between a reading and the thing it stands for. These are the definitions to write out exactly.</p>
+
+  <div class="def-box">
+    <div class="def-label">Analogue and digital signals</div>
+    <p>An <strong>analogue</strong> signal is continuous in both time and amplitude: between any two values there is another value. A <strong>digital</strong> signal takes one of a finite set of levels, and a digital <em>representation</em> of an analogue signal is a finite list of numbers &mdash; discrete in time (sampling) and discrete in amplitude (quantisation).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Resolution, reference and code</div>
+    <p><strong>Resolution</strong> \(N\) is the number of bits per conversion, so a converter has \(2^{N}\) codes. The <strong>reference voltage</strong> \(V_{REF}\) defines the top of the range. The <strong>code</strong> is the integer the converter returns &mdash; 0&hellip;1023 for the Uno, 0&hellip;255 for its PWM output. One <strong>LSB</strong> (least significant bit) is the voltage step that one code represents.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Duty cycle, ratiometric, and calibration</div>
+    <p><strong>Duty cycle</strong> \(D\) is the fraction of a PWM period the output spends high. A measurement is <strong>ratiometric</strong> when the sensor and the ADC reference share the same supply, so supply drift cancels. <strong>Calibration</strong> is the mapping from codes to physical units, established at known reference points.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning and units</div>
+    <div class="sym-cell">\(V_{REF}\)</div><div class="sym-cell">reference voltage</div><div class="sym-cell">Top of the ADC's input range. 5&nbsp;V by default on an Uno, settable through AREF</div>
+    <div class="sym-cell">\(N\)</div><div class="sym-cell">resolution</div><div class="sym-cell">Bits per conversion: 10 in, 8 out on an Uno</div>
+    <div class="sym-cell">\(2^{N}\)</div><div class="sym-cell">code count</div><div class="sym-cell">1024 input codes, 256 output steps</div>
+    <div class="sym-cell">\(q\)</div><div class="sym-cell">LSB size</div><div class="sym-cell">\(V_{REF}/2^{N}\) volts per code &mdash; 4.883&nbsp;mV at 5&nbsp;V and 10 bits</div>
+    <div class="sym-cell">\(k\)</div><div class="sym-cell">code</div><div class="sym-cell">The integer analogRead() returns, 0&hellip;1023</div>
+    <div class="sym-cell">\(V_{in}\)</div><div class="sym-cell">input voltage</div><div class="sym-cell">The voltage present on the analogue pin, 0&hellip;\(V_{REF}\)</div>
+    <div class="sym-cell">\(D\)</div><div class="sym-cell">duty cycle</div><div class="sym-cell">\(t_{on}/T\), a fraction; the sketch sets it as \(v/255\)</div>
+    <div class="sym-cell">\(T, f_{PWM}\)</div><div class="sym-cell">period, frequency</div><div class="sym-cell">PWM timing: \(T = 1/f_{PWM}\); &asymp;490&nbsp;Hz (&asymp;2.04&nbsp;ms) on most Uno PWM pins</div>
+    <div class="sym-cell">\(V_{avg}\)</div><div class="sym-cell">average voltage</div><div class="sym-cell">\(D \cdot V_{CC}\) &mdash; what a meter or a slow load sees</div>
+    <div class="sym-cell">\(R_1, R_2\)</div><div class="sym-cell">divider resistors</div><div class="sym-cell">\(R_2\) is the one between the output node and ground</div>
+    <div class="sym-cell">\(R_s, R_f\)</div><div class="sym-cell">sensor, fixed resistor</div><div class="sym-cell">Used to recover a resistance from a measured divider voltage</div>
+    <div class="sym-cell">\(t_{conv}\)</div><div class="sym-cell">conversion time</div><div class="sym-cell">&asymp;100&nbsp;&micro;s per analogRead() on an Uno</div>
+    <div class="sym-cell">\(f_s\)</div><div class="sym-cell">sampling rate</div><div class="sym-cell">How often the input is measured, in samples per second</div>
+    <div class="sym-cell">\(N_{avg}\)</div><div class="sym-cell">averaging window</div><div class="sym-cell">Number of readings averaged; random noise falls by \(\sqrt{N_{avg}}\)</div>
+    <div class="sym-cell">\(a, b\)</div><div class="sym-cell">calibration coefficients</div><div class="sym-cell">Slope and offset of the linear map \(x = a r + b\)</div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Resolution</td><td>The number of bits, hence the number of codes</td><td>Confusing it with accuracy, which is what the reading is actually worth</td></tr>
+        <tr><td>analogRead()</td><td>An integer 0&ndash;1023 against a reference voltage</td><td>&ldquo;It returns volts&rdquo; &mdash; it returns a code; the volts are your arithmetic</td></tr>
+        <tr><td>analogWrite()</td><td>A duty cycle on a PWM pin, 0&ndash;255</td><td>&ldquo;It outputs an analogue voltage&rdquo; &mdash; there is no DAC on the ATmega328P</td></tr>
+        <tr><td>Duty cycle</td><td>The fraction of the period spent high</td><td>Reading it as a voltage; it is a ratio, and the voltage is \(D \cdot V_{CC}\)</td></tr>
+        <tr><td>Calibration</td><td>A mapping from codes to physical units from known reference points</td><td>Calling the raw number a measurement &mdash; it has no unit until it is calibrated</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about a 10-bit ADC with \(V_{REF} = 5\)&nbsp;V is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the definition of resolution, not accuracy. A converter can be finely divided and still wrong, because of noise, reference drift and non-linearity.">Its accuracy is 5/1024 volts</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: 1024 codes span the 0–5 V range, so one code (one LSB) is 5/1024 ≈ 4.883 mV." data-bad="">One code represents 5/1024 ≈ 4.883&nbsp;mV</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the resolution of the PWM output. The input converter has ten bits: 1024 codes, not 256.">It has 256 codes, because eight bits is the usual resolution</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-quant">
+  <h2 class="section-title">Quantisation &amp; resolution</h2>
+  <p class="section-lead">The input side is a division problem: a voltage range is divided into a fixed number of equal steps, and the converter reports which step the input fell into.</p>
+
+  <div class="theorem-box">
+    <h3>1. Step size and code count</h3>
+    <p>The converter divides the reference range into \(2^{N}\) steps of equal width:</p>
+    \[ q \;=\; \frac{V_{REF}}{2^{N}} \qquad\text{and}\qquad V_{in} \;\approx\; k \cdot q \;=\; k\cdot\frac{V_{REF}}{2^{N}} \]
+    <p style="margin-top:0.6rem;">For the Uno: \(q = 5/1024 = 4.883\)&nbsp;mV, and the codes run from 0 (0&nbsp;V) to 1023 (one step below 5&nbsp;V).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. From a voltage to a code, and back</h3>
+    <p>Going in, the converter reports the step the input falls in, clamped at the top of the range:</p>
+    \[ k \;=\; \min\!\left(2^{N}-1,\ \left\lfloor \frac{V_{in}}{q} \right\rfloor\right) \]
+    <p style="margin-top:0.6rem;">Going out, the reconstruction is \(V \approx k\,q\). Because a code stands for a whole step, the error of an ideal converter is bounded by half a step, \(|e| \le q/2\), and for a signal that sweeps the range the error is roughly uniform, so its RMS value is \(q/\sqrt{12}\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The two conventions you will see in sketches</h3>
+    <p>Arduino code usually writes the inverse as \(V = k \cdot V_{REF}/(2^{N}-1)\), i.e. <code>raw * (5.0 / 1023.0)</code>, because <code>map()</code> treats 1023 as the end of the range. The ideal quantiser uses \(2^{N} = 1024\) steps. The two differ by a factor \(1024/1023\) &mdash; 0.1&nbsp;%, far below the noise &mdash; but you should be able to say which one your sketch uses and why.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Choosing a resolution</h3>
+    <p>Work backwards from the smallest change you must detect, \(\Delta x\), over the range \(X\):</p>
+    \[ N \;\ge\; \left\lceil \log_2 \frac{X}{\Delta x} \right\rceil \]
+    <p style="margin-top:0.6rem;">and the textbook dynamic-range and signal-to-noise results follow from the same step size: \(\mathrm{DR} = 6.02N\) dB, and \(\mathrm{SNR} \approx 6.02N + 1.76\) dB for a full-scale sine wave. (Those two are standard converter theory rather than lecture material; they are here so that the phrase &ldquo;10-bit&rdquo; has a magnitude attached to it.)</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-bits"></div>
+  <script type="application/json" id="ix-m-bits">
+  {
+    "title": "How many bits does the job need?",
+    "subtitle": "Resolution is a design decision: match it to the smallest change the interaction depends on, not to the biggest number available.",
+    "max": 24,
+    "rows": [
+      { "name": "Is it dark? (threshold only)", "value": 1, "display": "1 bit · 2 states" },
+      { "name": "Coarse light or position level", "value": 8, "display": "8 bits · 256 codes · 19.5 mV" },
+      { "name": "Arduino Uno ADC — knobs, flex, force", "value": 10, "display": "10 bits · 1024 codes · 4.88 mV" },
+      { "name": "Audio, load cells, fine position", "value": 16, "display": "16 bits · 65 536 codes · 76 µV" },
+      { "name": "Instrumentation, seismometers", "value": 24, "display": "24 bits · 16.7 M codes · 0.3 µV" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Why more bits are not automatically better.</strong> Every extra bit halves the step size, and eventually the step is smaller than the noise on the ground, supply and reference. Past that point the extra bits are faithfully digitising noise. This is why a 10-bit converter with a clean layout and a calibration beats a 16-bit converter with a long unshielded cable.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A sensor's output spans 0&ndash;5&nbsp;V and you need to detect a 2&nbsp;mV change. Is the Uno's 10-bit ADC enough?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Ten bits gives 1024 codes over 5 V, so one code is about 4.88 mV — more than twice the change you need to see.">Yes, because 1024 codes is far more than the 2500 steps required</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct — one code is 4.883 mV, so a 2 mV change may not move the reading at all. You need at least 12 bits, or a gain stage that amplifies 2 mV into something the converter can resolve." data-bad="">No &mdash; the step is 4.88&nbsp;mV, so 2&nbsp;mV can vanish; you need about 12 bits or an amplifier</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Averaging reduces random noise, but it cannot recover a change smaller than one quantisation step. The step size has to be small enough first.">Yes, as long as you average about sixteen readings together</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked numbers &mdash; the quantisation chain for one reading.</strong> A potentiometer is wired across 5&nbsp;V and GND with its wiper on A0. The knob is turned to about three-quarters of its travel.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Step size.</strong> \(q = V_{REF}/2^{N} = 5/1024 = 4.883\)&nbsp;mV. This single number sets the floor on everything else in the chain.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Ideal voltage at the wiper.</strong> Three-quarters of the track gives \(V_{in} = 0.75 \times 5 = 3.75\)&nbsp;V.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Code.</strong> \(k = \lfloor 3.75 / 0.004883 \rfloor = \lfloor 768 \rfloor = 768\). Reconstructing gives \(768 \times 4.883\ \text{mV} = 3.750\)&nbsp;V, so this particular reading happens to land exactly on a step.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>What the code cannot tell you.</strong> Any input between \(768\,q\) and \(769\,q\) &mdash; a band 4.883&nbsp;mV wide &mdash; produces the same 768. The reconstruction error is at most 2.44&nbsp;mV, and the best possible RMS error over a swept input is \(q/\sqrt{12} = 1.41\)&nbsp;mV.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Percentage view.</strong> As a fraction of the knob's travel the reading is \(768/1023 = 75.07\)&nbsp;%, and one code is \(1/1024 \approx 0.098\)&nbsp;% of the track. That is the finest position change this hardware can report, before any mechanical slop in the pot is considered.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-pwm">
+  <h2 class="section-title">PWM: duty cycle and filtering</h2>
+  <p class="section-lead">The output side is the mirror image. There is no digital-to-analogue converter, so an analogue-looking output is built from time: switch fast, and let the average do the work.</p>
+
+  <div class="theorem-box">
+    <h3>1. Duty cycle, average voltage, and the sketch value</h3>
+    <p>With period \(T = 1/f_{PWM}\) and on-time \(t_{on}\):</p>
+    \[ D = \frac{t_{on}}{T}, \qquad V_{avg} = D \cdot V_{CC}, \qquad D = \frac{v}{255} \]
+    <p style="margin-top:0.6rem;">where \(v\) is the value passed to <code>analogWrite()</code>. On a 5&nbsp;V board, \(v = 128\) gives \(D = 0.502\), so \(V_{avg} = 2.51\)&nbsp;V. The output is always either 0&nbsp;V or 5&nbsp;V at any instant: the average exists only over a period.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Filtering: from switching to steady</h3>
+    <p>A first-order RC low-pass after the pin turns the square wave into a steady level with a small ripple:</p>
+    \[ f_c = \frac{1}{2\pi RC}, \qquad \Delta V_{ripple} \;\approx\; \frac{V_{CC}\,D\,(1-D)}{f_{PWM}\,RC} \]
+    <p style="margin-top:0.6rem;">The design rule is \(f_c \ll f_{PWM}\) &mdash; at least a decade below. Two consequences follow from the same equation: bigger \(RC\) means less ripple <em>and</em> a slower response, because the filter settles in roughly \(5RC\). Ripple is worst at \(D = 0.5\), where \(D(1-D)\) peaks.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. What PWM cannot do</h3>
+    <p>The average is a voltage, but the current still arrives in pulses. A load that responds faster than one period &mdash; a piezo element, a small motor's windings, a photodiode &mdash; sees the square wave, not the average. That is why a PWM-driven speaker buzzes at \(f_{PWM}\), and why the same pin powering a sensor will inject switching noise into the measurement.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked design &mdash; a 2.0&nbsp;V reference from a PWM pin.</strong> Use the Uno's 5&nbsp;V supply, a PWM pin at &asymp;490&nbsp;Hz, and an RC filter that keeps the ripple under 20&nbsp;mV.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Duty cycle.</strong> \(D = V_{avg}/V_{CC} = 2.0/5 = 0.4\). In sketch terms \(v = 0.4 \times 255 = 102\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Ripple requirement.</strong> \(\Delta V = V_{CC}D(1-D)/(f RC) = 5 \times 0.4 \times 0.6/(490\,RC) = 1.2/(490\,RC) \le 0.02\)&nbsp;V, so \(RC \ge 1.2/(490 \times 0.02) = 0.122\)&nbsp;s.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Pick components.</strong> \(R = 10\)&nbsp;k&Omega; and \(C = 22\)&nbsp;&micro;F give \(RC = 0.22\)&nbsp;s and a ripple of \(1.2/(490 \times 0.22) = 11\)&nbsp;mV &mdash; comfortably inside the budget.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Check the cutoff.</strong> \(f_c = 1/(2\pi \times 0.22) \approx 0.72\)&nbsp;Hz, which is nearly three decades below 490&nbsp;Hz. The filter is doing exactly what it was chosen to do.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the trade-off.</strong> The same 0.22&nbsp;s time constant means the output takes about \(5RC \approx 1.1\)&nbsp;s to reach a new value. If the application needs to change level quickly, the filter has to be smaller and the ripple budget has to grow &mdash; or the PWM frequency has to be raised.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You halve the value passed to <code>analogWrite()</code> from 200 to 100. What happens to the output?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct: the average voltage halves, from about 3.92 V to about 1.96 V, because the duty cycle halves. The pin voltage itself is still switching between 0 and 5 V." data-bad="">The average voltage halves</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The pin never outputs an intermediate voltage — that is the whole point of PWM. Only the average changes.">The pin voltage falls smoothly to half of 5&nbsp;V</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The duty cycle halves at the same time, so the two effects cancel: the average voltage is halved regardless of the frequency.">The average stays the same but the frequency halves</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-sampling">
+  <h2 class="section-title">Sampling in time</h2>
+  <p class="section-lead">Quantisation limits how finely a value is known. Sampling limits how often it is known &mdash; and those are different errors with different cures.</p>
+
+  <div data-ix="timeline" data-ix-src="#ix-m-lifecycle"></div>
+  <script type="application/json" id="ix-m-lifecycle">
+  {
+    "title": "The lifecycle of one analogue reading",
+    "subtitle": "Step through what happens between a physical change and a number on the serial monitor.",
+    "events": [
+      { "label": "t₀", "title": "The quantity changes", "detail": "Light, force or position varies continuously in the world. This is the signal everything downstream is trying to describe." },
+      { "label": "Condition", "title": "The transducer and the divider", "detail": "The sensor converts the quantity into a resistance, and the divider converts that resistance into a voltage inside the 0–5 V input range." },
+      { "label": "Hold", "title": "Sample-and-hold", "detail": "A capacitor tracks the input voltage and is then disconnected, freezing one instant for the duration of the conversion." },
+      { "label": "≈100 µs", "title": "Ten successive comparisons", "detail": "A successive-approximation ADC tests each bit from the most significant down, comparing against the reference ten times. That is where the ≈100 µs conversion time comes from." },
+      { "label": "Code", "title": "analogRead() returns 0–1023", "detail": "The result is an integer in steps of V_REF/1024. Everything physical has now been quantised twice: once in time, once in amplitude." },
+      { "label": "Map", "title": "Calibrate and scale", "detail": "Two reference points turn the code into a physical value: a percentage, a force, an angle. Averaging and hysteresis are applied here." },
+      { "label": "Act", "title": "Actuate or report", "detail": "The value drives an analogWrite() duty cycle, or is printed to the serial monitor — where it becomes a graph you can check the design against." }
+    ]
+  }
+  </script>
+
+  <div class="theorem-box">
+    <h3>1. Conversion time sets the ceiling</h3>
+    <p>One <code>analogRead()</code> occupies the converter for about \(t_{conv} \approx 100\)&nbsp;&micro;s, so the fastest sampling rate a single channel supports is</p>
+    \[ f_s \;\le\; \frac{1}{t_{conv}} \;\approx\; 10\ \text{kS/s} \]
+    <p style="margin-top:0.6rem;">and in practice rather less, because the loop has other work to do. Anything faster than that has to be handled by the hardware &mdash; an interrupt, a timer, or a dedicated converter.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Nyquist, and what aliasing does to a reading</h3>
+    <p>A signal containing frequencies up to \(f_{max}\) is only represented faithfully if</p>
+    \[ f_s \;\ge\; 2 f_{max} \]
+    <p style="margin-top:0.6rem;">Below that, higher frequencies fold down and appear as a slow oscillation that was never in the signal. The practical consequence for a sensor that only needs slow information &mdash; light level, room temperature &mdash; is the opposite of the usual advice: sample <em>slowly</em>, and put an RC low-pass in front so that the fast noise is gone before it can alias.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Averaging buys resolution back from noise</h3>
+    <p>For \(N_{avg}\) readings corrupted by independent random noise with standard deviation \(\sigma\),</p>
+    \[ \sigma_{\bar{x}} \;=\; \frac{\sigma}{\sqrt{N_{avg}}} \]
+    <p style="margin-top:0.6rem;">Sixteen readings improve the noise by a factor of four, which costs 1.6&nbsp;ms at 100&nbsp;&micro;s per reading. Averaging cannot, however, break the quantisation floor: if the noise is smaller than one LSB, every reading is identical and the average is identical too.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A photoresistor circuit picks up 50&nbsp;Hz flicker from mains lighting, and the sketch reads it every 100&nbsp;ms. What is the sensible fix?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Sampling faster does not remove the flicker and can alias it. The sampling theorem says the frequency content has to be limited before sampling, not after.">Sample much faster, so the flicker is captured rather than missed</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: average over a whole number of mains cycles (20 ms at 50 Hz) or filter in hardware, so the flicker cancels instead of aliasing into the reading." data-bad="">Average readings over a whole number of mains cycles, or add an RC low-pass before the pin</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Raising the reference does not touch a disturbance that is present in the signal itself. The flicker is in the light, not in the reference.">Increase V<sub>REF</sub> so that the flicker is a smaller fraction of the range</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-calibration">
+  <h2 class="section-title">Calibration algebra</h2>
+  <p class="section-lead">Two known points define a line. That single fact is behind every calibration you will write this week, including the Arduino's own <code>map()</code>.</p>
+
+  <div class="theorem-box">
+    <h3>1. Two points give slope and offset</h3>
+    <p>With a known physical value \(x_1\) at raw reading \(r_1\) and \(x_2\) at \(r_2\):</p>
+    \[ x \;=\; a\,r + b, \qquad a = \frac{x_2 - x_1}{r_2 - r_1}, \qquad b = x_1 - a\,r_1 \]
+    <p style="margin-top:0.6rem;">Arduino's <code>map()</code> is the same expression in integer arithmetic:</p>
+    \[ y \;=\; \frac{(x - in_{min})(out_{max} - out_{min})}{in_{max} - in_{min}} + out_{min} \]
+    <p style="margin-top:0.6rem;">and it does <em>not</em> clamp: a reading outside the input range produces an output outside the output range, which is why <code>constrain()</code> belongs next to it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Recovering a resistance from a divided voltage</h3>
+    <p>Since the same current flows through both resistors of a divider, a measured \(V_{out}\) gives the sensor's resistance directly:</p>
+    \[ R_s = R_f \cdot \frac{V_{CC} - V_{out}}{V_{out}} \quad\text{(sensor on top)} \qquad R_s = R_f \cdot \frac{V_{out}}{V_{CC} - V_{out}} \quad\text{(sensor at the bottom)} \]
+    <p style="margin-top:0.6rem;">This is the step that lets you compare a datasheet curve &mdash; which is written in ohms, against lux, force or temperature &mdash; with the numbers your sketch is printing.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Non-linearity: when two points are not enough</h3>
+    <p>Thermistors, photoresistors and force sensors are strongly non-linear. The standard fixes, in increasing order of effort: piecewise-linear interpolation between a table of measured points; a power law or exponential model fitted to the datasheet; or the Steinhart&ndash;Hart equation for a thermistor,</p>
+    \[ \frac{1}{T} \;=\; A + B\ln R + C(\ln R)^{3} \]
+    <p style="margin-top:0.6rem;">In all three cases the workflow is identical: measure the real device at several known points, compare, and choose the simplest model that stays inside your error budget.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked calibration &mdash; a force-sensing resistor, and the honest conclusion.</strong> The FSR is the top resistor of a divider with \(R_f = 10\)&nbsp;k&Omega; to ground on a 5&nbsp;V board. Three known loads are applied and the codes recorded.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>The measurements.</strong> 0&nbsp;N &rarr; \(r_1 = 8\); 9.81&nbsp;N (1&nbsp;kg) &rarr; \(r_2 = 640\); 19.6&nbsp;N (2&nbsp;kg) &rarr; \(r_3 = 812\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Fit through the first two points.</strong> \(a = (9.81-0)/(640-8) = 0.01552\)&nbsp;N per count, \(b = 0 - a \times 8 = -0.124\)&nbsp;N. So \(F \approx 0.01552\,r - 0.124\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Test it on the third point.</strong> The model predicts \(0.01552 \times 812 - 0.124 = 12.5\)&nbsp;N where the true load is 19.6&nbsp;N &mdash; a 36&nbsp;% error. A straight line through two points does not describe this sensor.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Diagnose it.</strong> An FSR's resistance falls roughly as \(1/F\), so the conductance is close to linear in force. Converting each code to a resistance with \(R_s = R_f (V_{CC} - V_{out})/V_{out}\), then \(V_{out} = k\,q\), and fitting \(1/R_s\) against force, brings the third point to within a few percent.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say what the design can honestly claim.</strong> If the interaction only needs &ldquo;touched / pressed / squeezed hard&rdquo;, report three bands and stop. If it needs newtons, calibrate per unit with the real mounting, and state the operating range over which the fit holds. Choosing the weaker claim is a legitimate engineering answer.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A flex sensor reads 300 flat and 620 fully bent, but the sketch uses <code>map(raw, 0, 1023, 0, 180)</code>. What is the consequence?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct: the sensor only occupies 300–620 of the 0–1023 range, so the output sweeps only about 53–109° — the useful swing is compressed into a fraction of the available range." data-bad="">The output only moves through part of the 0&ndash;180&deg; range, wasting most of the sensor's resolution</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The arithmetic is fine; what is wrong is the assumed input span, not the mapping direction.">The mapping is inverted, so bending the sensor decreases the angle</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Linear mapping is appropriate here — the input span is the problem. Non-linearity would be a separate, additional correction.">Nothing, provided the sensor is linear</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Bring-up checklist</h2>
+  <p class="section-lead">Every analogue input in this unit goes through the same eight steps. Run them in order and most problems are caught by step 3 instead of by an hour of guessing.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-bringup"></div>
+  <script type="application/json" id="ix-m-bringup">
+  {
+    "title": "Order the sensor bring-up procedure",
+    "subtitle": "Click the steps into the order that finds faults earliest.",
+    "steps": [
+      "Read the datasheet: what changes, over what range, and how non-linearly",
+      "Measure the sensor's resistance at both extremes with a multimeter",
+      "Choose the divider resistor so the output sits near mid-range at the middle of the interesting span",
+      "Wire the divider and check the node with a multimeter before connecting it to the board",
+      "Print the raw code to the serial monitor and confirm it moves over the full 0–1023 range",
+      "Exercise the sensor through its extremes and record the minimum and maximum codes",
+      "Map and constrain the code into physical units, then add averaging and a deadband",
+      "Verify against a known reference — a weight, a thermometer, a protractor — and record the error"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>What you are checking</th><th>Symptom if you skip it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Datasheet</td><td>The direction, span and linearity of the response</td><td>You discover at the demo that the sensor is non-linear over half its range</td></tr>
+        <tr><td>2. Measure the extremes</td><td>\(\min R_s\) and \(\max R_s\) in the states that matter</td><td>The divider resistor is off by decades and the reading saturates at one end</td></tr>
+        <tr><td>3. Choose \(R_f\)</td><td>That the output swing lands inside 0&ndash;\(V_{REF}\)</td><td>You spend the project inside the top 5&nbsp;% of the range</td></tr>
+        <tr><td>4. Check the node</td><td>The voltage with a meter, before the ADC is involved</td><td>You debug software for a wiring fault</td></tr>
+        <tr><td>5. Print the raw code</td><td>That the signal actually moves, and reaches both ends</td><td>You tune thresholds against a number that never changes</td></tr>
+        <tr><td>6. Record the extremes</td><td>The two points the calibration needs</td><td>Every reading is in arbitrary units and cannot be reported</td></tr>
+        <tr><td>7. Map, constrain, filter</td><td>Units, bounds and stability</td><td>The output flickers at a threshold and reads negative at rest</td></tr>
+        <tr><td>8. Verify against a reference</td><td>The error, in the units you claim</td><td>You cannot say how wrong the measurement is &mdash; which is the one thing a design report must state</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-recall"></div>
+  <script type="application/json" id="ix-m-recall">
+  {
+    "title": "Self-test: the formulas and what they commit you to",
+    "subtitle": "Say the relationship out loud, with a number, before you flip the card.",
+    "cards": [
+      { "front": "LSB size", "back": "q = V_REF / 2^N. At 5 V and 10 bits, q ≈ 4.883 mV — the smallest voltage change the Uno can distinguish.", "hint": "Quantisation" },
+      { "front": "Code from voltage", "back": "k = min(2^N − 1, floor(V_in / q)). A 3 V input on a 5 V, 10-bit converter gives floor(3 / 0.004883) = 614.", "hint": "Quantisation" },
+      { "front": "Average voltage of a PWM pin", "back": "V_avg = D × V_CC with D = v/255. analogWrite(pin, 128) gives about 2.51 V on a 5 V board.", "hint": "PWM" },
+      { "front": "RC filter ripple", "back": "ΔV ≈ V_CC·D(1−D)/(f·RC), worst at D = 0.5. Bigger RC means less ripple and a slower response (≈5RC to settle).", "hint": "Filtering" },
+      { "front": "Fastest sampling rate", "back": "About 1/t_conv ≈ 10 kS/s, with t_conv ≈ 100 µs per analogRead() — and Nyquist says f_s ≥ 2·f_max if you want the signal, not an alias.", "hint": "Sampling" },
+      { "front": "Two-point calibration", "back": "x = a·r + b with a = (x₂−x₁)/(r₂−r₁) and b = x₁ − a·r₁. This is exactly what map() computes, without the clamping.", "hint": "Calibration" },
+      { "front": "Resistance from a divider", "back": "Sensor on top: R_s = R_f(V_CC − V_out)/V_out. Sensor at the bottom: R_s = R_f·V_out/(V_CC − V_out).", "hint": "Conditioning" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The one-sentence version of the whole week.</strong> A physical quantity is conditioned into a voltage, quantised into a code against a reference, calibrated into units with two known points, and driven back out again as a duty cycle that averages to the voltage you wanted &mdash; and every one of those five stages has a number attached to it that you should be able to state.
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the wiring, the <code>millis()</code> and debounce patterns, and the sensor survey; this page carries the arithmetic behind them. Then attempt the Quiz Hub and the Flashcards for Week 4.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5047ChapterUI) return;
+    try {
+      window.initCOMP5047ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5047 chapter 4] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

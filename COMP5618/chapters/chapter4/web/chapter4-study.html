@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4: Web Applications — COMP5618</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter4-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 study guide for COMP5618: what a web application is, the client–web–application–database stack, HTTP requests and responses, sessions and broken authentication, injection flaws, XSS and CSRF, access-control and misconfiguration failures, and how an intercepting proxy or WAF changes what an attacker sees.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 4: Web Applications — COMP5618">
+<meta property="og:description" content="Week 4 study guide for COMP5618: the web application stack, HTTP, sessions and cookies, the classic injection and scripting flaws, access-control failures, and the interception tooling around them.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" data-i18n-home style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F310;</span>
+      <h2>Week 4</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-webapp" class="nav-link" data-section="webapp">What a Web App Is</a></li>
+    <li><a href="#sec-stack" class="nav-link" data-section="stack">The Request Stack</a></li>
+    <li><a href="#sec-http" class="nav-link" data-section="http">HTTP &amp; Sessions</a></li>
+    <li><a href="#sec-auth" class="nav-link" data-section="auth">Authentication</a></li>
+    <li><a href="#sec-injection" class="nav-link" data-section="injection">Injection</a></li>
+    <li><a href="#sec-clientside" class="nav-link" data-section="clientside">XSS &amp; CSRF</a></li>
+    <li><a href="#sec-access" class="nav-link" data-section="access">Access Control</a></li>
+    <li><a href="#sec-tooling" class="nav-link" data-section="tooling">Proxies &amp; WAFs</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter4-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter4-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Chapter 4 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5618 — Applied Cybersecurity</p>
+    <h1>Week 4: Web Applications</h1>
+    <p class="hero-subtitle">How a web application is assembled from a browser, a web server, an application server and a database &mdash; and how HTTP, sessions, injection flaws and client-side trust failures turn that assembly into an attack surface.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F310;</span>
+        <span>HTTP is the whole interface</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F36A;</span>
+        <span>State lives in cookies</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F489;</span>
+        <span>Input that becomes code</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6E1;</span>
+        <span>Filter at the edge</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter4-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter4-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 4 lecture deck (<em>Web Application</em>) and the Week 4 NAXSI / DVWA tutorial</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-webapp" class="section" data-track="webapp">
+  <h2 class="section-title">What a Web Application Is</h2>
+  <p class="section-lead">A web application is a software application accessed through a browser or web-enabled device. That single sentence is the whole reason this week exists: the attacker's entry point is the same interface the user gets.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>A <strong>web application</strong> is a software application accessed through a web browser or web-enabled device. Unlike a traditional desktop application it is <strong>hosted on a remote server</strong> and reached over a network, and it delivers its functionality through web technologies &mdash; HTML, CSS and JavaScript &mdash; rather than through an installed binary.</p>
+  </div>
+
+  <p>The lecture breaks the thing into three simultaneous descriptions, and all three matter for security work:</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The code and assets</h3>
+      <p>Server and client scripts, images, stylesheets and templates define what the application <em>does</em>. Every one of those artefacts is reachable by URL unless something stops it, which is why directory listing, backup files and unreferenced endpoints are a recurring finding.</p>
+    </div>
+    <div class="col-card">
+      <h3>The request/response machine</h3>
+      <p>The application receives HTTP requests and generates HTTP responses. It has no other way to be talked to. Anything an attacker can express as a request is therefore in scope &mdash; including requests the user interface would never send.</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Third description: a complex system with layers and dependencies.</strong> A web server, a database, an API and third-party services all sit behind one page load. Each dependency is another component whose trust assumptions can be wrong, and each one widens the blast radius of a single injection flaw.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Everyday example from the deck</th><th>What users do</th><th>What that means for an attacker</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Social platforms</strong> (Facebook, Twitter, Instagram)</td><td>Connect with friends, share updates, join communities</td><td>User-generated content is rendered for other users &mdash; the classic stored-XSS delivery path</td></tr>
+        <tr><td><strong>Online banking</strong></td><td>Manage accounts, transact, reach financial services</td><td>Session handling is the security boundary: a stolen session is a stolen identity</td></tr>
+        <tr><td><strong>E-commerce</strong> (Amazon, eBay, Shopify)</td><td>Browse products, purchase, track orders</td><td>Catalogues, carts and orders are database-backed, so query construction is a first-class attack surface</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> do not answer &ldquo;a web application is a website with functionality&rdquo;. The markable version names the three properties: it is <em>accessed through a browser</em>, it is <em>hosted remotely and reached over a network</em>, and it <em>speaks HTTP</em>. Those three properties are also what makes it attackable from anywhere.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which property of a web application most directly explains why an attacker on another continent can reach it without any user action?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Using HTML, CSS and JavaScript explains how content is rendered, not how it is reached. Rendering is a client-side concern.">It is written in HTML, CSS and JavaScript</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The application is hosted remotely and speaks HTTP, so its entire interface is a network endpoint — reachable by anyone who can route to it, whether or not a legitimate user is involved." data-bad="">It is hosted on a remote server and its interface is HTTP</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Complexity widens the impact of a flaw once it is found, but it is not what exposes the application to the network in the first place.">It depends on a database, an API and third-party services</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-stack" class="section" data-track="stack">
+  <h2 class="section-title">The Request Stack: Web Server, App Server, Database</h2>
+  <p class="section-lead">One click travels through four components. Knowing which component is responsible for what is how you decide where a defence belongs &mdash; and which findings belong to which layer of a report.</p>
+
+  <div class="def-box">
+    <div class="def-label">Web server</div>
+    <p>A <strong>web server</strong> is a software application that handles the delivery of web content: it receives and processes HTTP requests from clients and returns HTTP responses containing the requested content. It is the intermediary between clients and the hosted application, listening on a port and either serving a resource directly or passing the request on.</p>
+  </div>
+
+  <p>The deck lists five responsibilities a web server carries: <strong>serving static content</strong>, <strong>processing dynamic content</strong>, <strong>handling HTTP methods</strong>, <strong>managing connections</strong>, and <strong>implementing security measures</strong>. The last one is where TLS termination, request-size limits and &mdash; in this week's tutorial &mdash; the WAF plugin live.</p>
+
+  <div class="def-box">
+    <div class="def-label">Application server</div>
+    <p>An <strong>application server</strong> handles the actual processing of HTTP requests that the web server forwards to it. It executes the back-end code, implements the business logic, accesses databases and manages caching.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Component</th><th>Job in one line</th><th>Typical technologies from the deck</th><th>What goes wrong there</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Web server</strong></td><td>Receive, route, deliver</td><td>NginX, Apache</td><td>Misconfiguration, exposed files, missing security headers</td></tr>
+        <tr><td><strong>Application server</strong></td><td>Run back-end code and business logic</td><td>Python (Flask, Django), PHP (Codeigniter, CakePHP), Ruby (Rails), JavaScript (Express.js on Node.js), ASP.NET</td><td>Injection, broken auth, missing function-level checks</td></tr>
+        <tr><td><strong>Cache</strong></td><td>Skip repeat database trips</td><td>In-memory store in front of the database</td><td>Serving one user's data to another; stale authorisation decisions</td></tr>
+        <tr><td><strong>Database</strong></td><td>Persist data</td><td>SQL: MySQL, PostgreSQL, SQLite, Microsoft SQL Server &mdash; NoSQL: MongoDB, Redis, Cassandra, CouchDB</td><td>Direct object access; queries built from user input</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-request"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>SQL versus NoSQL &mdash; the exam contrast</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>SQL</strong>: structured data with a predefined schema, relationships enforced between tables, one query language, suited to complex joins</li>
+        <li><strong>NoSQL</strong>: flexible or schema-less model, minimal relationship enforcement, a query language that depends on the data model, suited to large volumes of unstructured or semi-structured data</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Where the database sits changes the blast radius</h3>
+      <p>The deck notes that databases can reside on the same host as the app server or on a separate host. Co-location makes the database reachable from a compromised application host with no network boundary in between; separation adds a boundary but not an authorisation control, because the application still holds working credentials.</p>
+    </div>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Approaches to dependencies: <em>Putting it all together</em></h3>
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p>The user sends a request to the <strong>web server</strong>.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p>The web server forwards it to the <strong>application server</strong>, which holds the business logic and talks to the database.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p>The application server updates the <strong>database</strong> and, once the update completes, generates a response.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p>The response goes back through the web server to the client, which renders the updated information or a message.</p></div>
+    </div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-stack-map"></div>
+  <script type="application/json" id="ix-stack-map">
+  {
+    "title": "Where each flaw lives in the request path",
+    "subtitle": "Click a marker to see the component, the failure that belongs to it, and the control that belongs there.",
+    "svg": "<svg viewBox=\"0 0 860 420\" role=\"img\" aria-label=\"Block diagram of a web application request path: client, web server, application server, cache, database and a web application firewall\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"860\" height=\"420\" fill=\"#fdf6f8\"></rect><rect x=\"26\" y=\"120\" width=\"118\" height=\"96\" rx=\"12\" fill=\"#ffffff\" stroke=\"#e11d48\" stroke-width=\"2\"></rect><text x=\"85\" y=\"155\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"14\" font-weight=\"600\" fill=\"#141826\">Client</text><text x=\"85\" y=\"178\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">untrusted input</text><rect x=\"238\" y=\"118\" width=\"108\" height=\"100\" rx=\"12\" fill=\"#ffffff\" stroke=\"#7c3aed\" stroke-width=\"2\"></rect><text x=\"292\" y=\"152\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"14\" font-weight=\"600\" fill=\"#141826\">WAF</text><text x=\"292\" y=\"174\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">inspect</text><text x=\"292\" y=\"192\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">allow / deny</text><rect x=\"438\" y=\"118\" width=\"112\" height=\"100\" rx=\"12\" fill=\"#ffffff\" stroke=\"#2563eb\" stroke-width=\"2\"></rect><text x=\"494\" y=\"150\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"600\" fill=\"#141826\">Web server</text><text x=\"494\" y=\"172\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">static content</text><text x=\"494\" y=\"190\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">routes requests</text><rect x=\"438\" y=\"266\" width=\"112\" height=\"92\" rx=\"12\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"2\"></rect><text x=\"494\" y=\"300\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"600\" fill=\"#141826\">App server</text><text x=\"494\" y=\"322\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">business logic</text><text x=\"494\" y=\"340\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">builds queries</text><rect x=\"652\" y=\"118\" width=\"102\" height=\"100\" rx=\"12\" fill=\"#ffffff\" stroke=\"#f59e0b\" stroke-width=\"2\"></rect><text x=\"703\" y=\"152\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"600\" fill=\"#141826\">Cache</text><text x=\"703\" y=\"174\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">1-2 ms hit</text><text x=\"703\" y=\"192\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">50-100 ms miss</text><rect x=\"652\" y=\"266\" width=\"102\" height=\"92\" rx=\"12\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2\"></rect><text x=\"703\" y=\"300\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"13\" font-weight=\"600\" fill=\"#141826\">Database</text><text x=\"703\" y=\"322\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">records</text><text x=\"703\" y=\"340\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">SQL / NoSQL</text><path d=\"M144 168 L232 168\" stroke=\"#e11d48\" stroke-width=\"2\" fill=\"none\"></path><path d=\"M232 168 l-9 -5 l0 10 z\" fill=\"#e11d48\"></path><path d=\"M346 168 L432 168\" stroke=\"#e11d48\" stroke-width=\"2\" fill=\"none\"></path><path d=\"M432 168 l-9 -5 l0 10 z\" fill=\"#e11d48\"></path><path d=\"M494 218 L494 260\" stroke=\"#059669\" stroke-width=\"2\" fill=\"none\"></path><path d=\"M494 260 l-5 -9 l10 0 z\" fill=\"#059669\"></path><path d=\"M550 200 L646 168\" stroke=\"#f59e0b\" stroke-width=\"2\" fill=\"none\" stroke-dasharray=\"6 5\"></path><path d=\"M550 300 L646 300\" stroke=\"#0e7490\" stroke-width=\"2\" fill=\"none\"></path><path d=\"M646 300 l-9 -5 l0 10 z\" fill=\"#0e7490\"></path><path d=\"M646 330 L560 330\" stroke=\"#0e7490\" stroke-width=\"2\" fill=\"none\"></path><path d=\"M560 330 l9 -5 l0 10 z\" fill=\"#0e7490\"></path><path d=\"M432 300 L356 300\" stroke=\"#565d75\" stroke-width=\"2\" fill=\"none\"></path><path d=\"M356 300 l9 -5 l0 10 z\" fill=\"#565d75\"></path><path d=\"M232 216 L144 216\" stroke=\"#565d75\" stroke-width=\"2\" fill=\"none\"></path><path d=\"M144 216 l9 -5 l0 10 z\" fill=\"#565d75\"></path><text x=\"188\" y=\"158\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"10\" fill=\"#565d75\">request</text><text x=\"389\" y=\"158\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"10\" fill=\"#565d75\">allowed</text><text x=\"188\" y=\"240\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"10\" fill=\"#565d75\">response</text><text x=\"494\" y=\"250\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"10\" fill=\"#565d75\">query</text><text x=\"597\" y=\"160\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"10\" fill=\"#565d75\">cache hit</text><text x=\"703\" y=\"292\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"10\" fill=\"#565d75\">cache miss</text><text x=\"430\" y=\"400\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"11\" fill=\"#565d75\">One HTTP request is the unit of defence: every component below the top row is reachable through it</text></svg>",
+    "points": [
+      { "x": 9.9, "y": 40.0, "label": "Client (browser)", "detail": "Untrusted by definition. Form fields, hidden inputs, URL parameters, headers and cookies are all attacker-controlled: everything a proxy can send, a client can send. Input validation here is a convenience for the user, never a security control." },
+      { "x": 34.0, "y": 40.0, "label": "Web application firewall", "detail": "Sits between client and web server, on-premises or in the cloud, analysing and filtering requests and responses. It buys time by shielding known weaknesses until a proper patch is deployed — the deck is explicit that this is mitigation, not a fix." },
+      { "x": 57.4, "y": 40.0, "label": "Web server", "detail": "Receives and processes HTTP requests, serves static content, handles HTTP methods, manages connections and implements security measures. In the Week 4 tutorial this is NginX rather than Apache, with the NAXSI module compiled in." },
+      { "x": 81.7, "y": 40.0, "label": "Cache", "detail": "Stores frequently accessed data in memory so the app server can skip repeat database trips: roughly 1-2 ms for a hit against 50-100 ms for a miss. Security consequence: anything cached must be keyed on the identity that is allowed to see it." },
+      { "x": 57.4, "y": 74.0, "label": "Application server", "detail": "Executes the back-end code, implements the business logic, accesses the database and manages caching. Injection, broken authentication and missing function-level access control are all flaws of this layer — it is where user input is turned into instructions." },
+      { "x": 81.7, "y": 74.0, "label": "Database", "detail": "Persists data and enforces the relationships of a relational schema. On the same host as the app server or on a separate one, it is reached with credentials the application already holds, so authorisation has to be enforced by the application." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">An application server is described as having &ldquo;methods or libraries to interact with databases&rdquo;. What security consequence does that create?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Encryption in transit is a real concern but it is not what the database interface methods create. Those methods create a path from user input to stored data.">Database traffic can be intercepted on the network</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The application holds working database credentials and a code path from request to query. If that path concatenates user input into the query, the user is effectively writing part of the query — that is the injection class." data-bad="">The application has an authorised path from request data into the database, so query construction becomes a security boundary</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Caching affects performance and data freshness; it is a separate concern from the interface methods described in the lecture.">Repeated queries will overload the database</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-http" class="section" data-track="http">
+  <h2 class="section-title">HTTP, Statelessness and Sessions</h2>
+  <p class="section-lead">HTTP has no memory. The application has to rebuild the idea of &ldquo;you&rdquo; on every single request, and it does that with a cookie. Almost every web flaw in this unit is a failure of that reconstruction.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Piece of a request</th><th>What it carries</th><th>Why an attacker cares</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Method and path</strong></td><td>What action is requested and on which resource, e.g. a GET of a page or a POST of a form</td><td>The web server's method handling is a listed responsibility; methods the UI never uses are still usually accepted</td></tr>
+        <tr><td><strong>Query string</strong></td><td>Parameters appended to the URL</td><td>Fully attacker-controlled, appears in logs and history, and is the easiest place to test an injection</td></tr>
+        <tr><td><strong>Body</strong></td><td>Form fields and uploaded content</td><td>Where file upload and direct object access flaws usually arrive</td></tr>
+        <tr><td><strong>Headers</strong></td><td>Metadata: host, user agent, content type, referer</td><td>Some applications trust headers for decisions they should make themselves</td></tr>
+        <tr><td><strong>Cookies</strong></td><td>The session identifier</td><td>Possession of the cookie <em>is</em> the authenticated identity &mdash; the root of broken authentication</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Statelessness and the session</div>
+    <p>HTTP is <strong>stateless</strong>: each request is independent and the server keeps no memory of the previous one. A <strong>session</strong> is the application's workaround &mdash; after login the server issues a token, the browser stores it in a <strong>cookie</strong> and returns it automatically with every subsequent request, and the server uses it to look up who you are. The cookie is therefore a bearer credential: whoever holds it is treated as the user.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What a session cookie buys the application</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Identity across stateless requests</li>
+        <li>A place to store authorisation decisions</li>
+        <li>A single artefact to expire on logout</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What it costs</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Theft of the cookie is theft of the session</li>
+        <li>The browser attaches it to requests the user never intended to make &mdash; the CSRF precondition</li>
+        <li>In an intercepting proxy it is visible, editable and replayable</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Same-origin policy.</strong> The browser's core containment rule: script served from one origin cannot read the responses of another origin. The origin is the scheme, host and port together. It is what stops a page on an attacker's site from silently reading your bank's pages &mdash; and it is why XSS and CSRF matter so much, since both find ways to act <em>as</em> the trusted origin instead of reading across origins.
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-http-seq"></div>
+  <script type="application/json" id="ix-http-seq">
+  {
+    "title": "Order the life of an authenticated request",
+    "subtitle": "Click the steps in the order they happen when a logged-in user submits a form.",
+    "steps": [
+      "The browser sends the request, attaching the session cookie for that origin",
+      "The web server terminates the connection and routes the request to the application server",
+      "The application resolves the session token to a user identity",
+      "The application checks whether that identity is permitted to perform this action",
+      "The application reads or writes the database through its database interface methods",
+      "The application builds the response and the web server returns it to the client"
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Where to look in an exam question:</strong> the interesting failure is rarely at step 1 or step 6. Ask which of steps 2&ndash;5 can be made to happen with a token that belongs to somebody else, or without the check at step 4 ever running.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does a session cookie make CSRF possible at all?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Cookies can be marked HttpOnly, and that does block script access — but CSRF works without script access to the cookie, so this is not the mechanism.">Because cookies can be read by JavaScript on the page</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The browser attaches the cookie automatically to requests for that origin, so a request triggered from another site still arrives authenticated — the server cannot tell it apart from a legitimate one." data-bad="">Because the browser attaches the cookie automatically to any request for that origin, however that request was triggered</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Session lifetimes are a real weakness but not the CSRF mechanism. CSRF exploits automatic attachment, not persistence.">Because sessions never expire on the server side</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-auth" class="section" data-track="auth">
+  <h2 class="section-title">Broken Authentication: Sessions, Tokens and 2FA</h2>
+  <p class="section-lead">Broken authentication is what the lecture calls hijacking a session by stealing tokens, passwords or keys. The lecture's one-line summary is worth memorising: <em>stolen credentials are a stolen identity</em>.</p>
+
+  <div class="concept-box">
+    <p><strong>The attack chain in the deck:</strong> credential theft &rarr; the attacker steals credentials &rarr; the attacker impersonates the user &rarr; the attacker hijacks the session. Shoulder surfing and social engineering are the named entry points.</p>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>The defence chain in the deck:</strong> stop impersonation &rarr; a complex, unique password policy &rarr; a second verification step &rarr; stolen credentials alone fail and the session stays secure. The bottom line the deck draws: <em>even if a password leaks, 2FA stops an attacker from completing the login.</em></p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why a strong password policy is not enough</h3>
+      <p>A unique, complex password defeats guessing and credential stuffing, but it does nothing against a credential that is stolen directly &mdash; phishing, keylogging, shoulder surfing or a breach at another service where the same password was reused.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why 2FA is not enough on its own</h3>
+      <p>A second factor protects the <em>login</em>. It does not protect a session token that was already issued: if the cookie is stolen after authentication, the second factor has already been satisfied and is not consulted again.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Failure</th><th>How it happens in a web application</th><th>Control the deck names</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Credentials stolen</td><td>Shoulder surfing, social engineering, phishing, re-use after another breach</td><td>Complex, unique passwords</td></tr>
+        <tr><td>Credential used successfully</td><td>Nothing further is demanded, so the attacker is now the user</td><td>Two-factor authentication</td></tr>
+        <tr><td>Session hijacked</td><td>Token, password or key captured and replayed; the server sees a valid session</td><td>Re-authentication for sensitive actions; short session lifetimes</td></tr>
+        <tr><td>Session forged from another site</td><td>The cookie is attached automatically to a request the user did not intend</td><td>CSRF tokens; re-authentication</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> authentication answers &ldquo;who are you?&rdquo;, authorisation answers &ldquo;what may you do?&rdquo; and session management answers &ldquo;how do I know it is still you on the next request?&rdquo;. Broken authentication is a failure of the first and the third together, which is why it undermines every authorisation check that follows.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An application enforces complex passwords and 2FA at login. An attacker still reaches another user's data. Which explanation fits the lecture's broken-authentication material?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Password policy and 2FA address guessing and credential theft. Neither explains how an existing session is taken over.">The password policy was too weak, so the password was guessed</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The lecture's defence chain protects the login step; a token that is stolen after login is replayed as a valid session, and the second factor is never consulted again." data-bad="">The session token was stolen after login and replayed, so the second factor never came into play</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="2FA does raise the cost of credential theft, but the question states it is already in place. It is not what the attacker defeated here.">2FA is not a real defence because attackers can always bypass it</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-injection" class="section" data-track="injection">
+  <h2 class="section-title">Injection: When Input Becomes Code</h2>
+  <p class="section-lead">SQL injection is the lecture's Part I vulnerability: a malicious user injects a string into a field to manipulate the application's actions or reveal unauthorised data. Everything else about the class follows from one sentence &mdash; user input is treated as part of an instruction instead of as data.</p>
+
+  <div class="def-box">
+    <div class="def-label">SQL injection</div>
+    <p>A flaw in which a user-supplied string is inserted into a database query in a way that changes the query's meaning, letting the attacker manipulate the application's actions or reveal unauthorised data. The deck's impact statement: the attacker can view all records in a table &mdash; including sensitive data such as credit card numbers or personal information.</p>
+  </div>
+
+  <p>The deck's three-frame story is the one to reproduce: a <strong>vulnerable input field</strong> receives a payload, the <strong>query is manipulated</strong>, and <strong>data is exposed</strong> &mdash; unauthorised records returned. The payload shown in the deck is a condition that is simply true, which is why the filter the developer wrote stops filtering anything.</p>
+
+  <div id="ix-sqli"></div>
+
+  <div data-ix="matcher" data-ix-src="#ix-attack-defence"></div>
+  <script type="application/json" id="ix-attack-defence">
+  {
+    "title": "Match each flaw to the control the lecture pairs with it",
+    "subtitle": "Click a flaw on the left, then the mitigation on the right.",
+    "pairs": [
+      ["SQL injection", "Validate and constrain input, then keep user data out of the query's instruction structure"],
+      ["Cross-site scripting", "Validate and sanitise input, and use anti-XSS libraries that encode or escape output"],
+      ["Cross-site request forgery", "Reauthentication and CSRF tokens"],
+      ["Broken authentication", "Strong password policy plus a second verification step (2FA)"],
+      ["Insecure direct object access", "Implement access controls and validate and sanitise all user input"],
+      ["Security misconfiguration", "Configure to security best practice and standards such as OWASP and NIST"],
+      ["Missing function-level access control", "Verify user access privileges before granting access to any function or feature"],
+      ["Invalidated redirects and forwards", "Validate every redirect and forward, and never build one from user-supplied data"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Why input validation alone is a weak answer.</strong> The deck's solution to SQL injection is input validation &mdash; ensure user input is the correct format and length before it reaches the query, and reject or sanitise anything that does not match. That is necessary but incomplete: it depends on predicting every dangerous input. The durable fix is structural &mdash; keep the query's structure fixed and bind the user's data into it as data, so no input can be a clause.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Insecure direct object access (Part V)</h3>
+      <p>The application allows direct access to an internal object, such as a file, without proper access controls. The deck's example is a file upload feature that does not validate the file type and therefore accepts any file, including a malicious one. <em>Solution:</em> implement access controls and properly validate and sanitise all user input.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why this is the same flaw in another costume</h3>
+      <p>Both injection and direct object access are <strong>missing-authorisation</strong> bugs on a user-controlled identifier. The identifier is a query fragment in one case and a file or record reference in the other; in both cases the application acts on what the user supplied without asking whether the user is allowed to reach it.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; reading an injection bug from a page's behaviour</strong> (conceptual, using the lecture's own description rather than a runnable payload).</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Find the seam between data and instruction.</strong> A product search sends the text you type into a database query. If the query is assembled by concatenating that text into the statement, the seam is the point where user data joins the instruction.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Ask what the developer assumed.</strong> The assumption is that the field contains a product name. An input that contains a quotation mark and a condition breaks that assumption, and the deck's example is exactly a condition that always evaluates true.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Notice what changed in the result, not just the error.</strong> The manipulated statement no longer selects a product; it selects the whole table. The observable symptom is a result set larger than any product search could legitimately return.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the impact in the deck's terms.</strong> Unauthorised records returned: the attacker can now view all records in the products table, including sensitive data such as credit card numbers or personal information.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Write the layered fix.</strong> Input validation with an expected format and length, rejection or sanitisation of anything that does not match, <em>and</em> a query structure in which user data can never become a clause. Then add least-privilege database credentials so a successful injection reaches as little as possible, and log the queries the application actually runs.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Scope and ethics:</strong> every example on this page is a description of a defect class from the lecture, exercised only against the deliberately vulnerable application in your own tutorial virtual machine, which is why that tutorial insists the machine sits on a host-only adapter.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement best captures <em>why</em> SQL injection works?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The database is not being broken into by force. It is executing a statement that the application itself constructed and asked it to run.">The database's authentication can be bypassed by a specially formed string</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The query is built as text, so user data can end up outside the data position and inside the instruction structure — at which point the database is faithfully executing the attacker's arrangement of the query." data-bad="">User input is assembled into the query text, so it can occupy an instruction position rather than a data position</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Storing passwords in plain text is a serious separate weakness, but it is not the mechanism of SQL injection.">The application stores passwords in plain text</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-clientside" class="section" data-track="clientside">
+  <h2 class="section-title">XSS, CSRF and the Same-Origin Policy</h2>
+  <p class="section-lead">The next two flaws move the attack into the victim's browser. Both abuse the trust the browser places in the site's own origin, and both are defeated by making the browser able to distinguish content the site wrote from content an attacker wrote.</p>
+
+  <div class="def-box">
+    <div class="def-label">Cross-site scripting (XSS)</div>
+    <p>An application allows untrusted data to be included in a web page without proper validation or escaping, so attacker-supplied script executes in the victim's browser in the context of the trusted site. The deck gives two types:</p>
+    <ul style="padding-left:1.1rem; line-height:1.8;">
+      <li><strong>Reflected</strong> &mdash; the untrusted data comes back in the immediate response to the request that carried it.</li>
+      <li><strong>Stored</strong> &mdash; the untrusted data is persisted by the application and served later to other users.</li>
+    </ul>
+    <p><strong>Solutions from the deck:</strong> validate and sanitise all user input so malicious code cannot be included in the application, and use anti-XSS libraries that automatically encode or escape user input.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Reflected XSS</h3>
+      <p>A search page echoes your query back to you. If that echo is inserted into the HTML without escaping, the page will execute what you searched for. Delivery needs a victim to follow a crafted link, and the payload lives only for that one response.</p>
+    </div>
+    <div class="col-card">
+      <h3>Stored XSS</h3>
+      <p>A comment, profile field or product review is saved and rendered to everyone who views the page. One submission executes for every later visitor, with no crafted link required &mdash; which is why stored XSS is the more serious of the two.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why the same-origin policy raises the stakes.</strong> Because script running on the trusted origin can read that origin's pages and act with the user's session, an XSS flaw does not just affect the page it appears on: it converts a script injection into full control of the user's authenticated session on that site.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Cross-site request forgery (CSRF)</div>
+    <p>An attack that performs actions on behalf of the victim without their knowledge or consent. The deck's example: when a victim visits an attacker's malicious website, the script automatically submits a hidden form to the vulnerable website, using the victim's authentication information and cookies so that the request appears legitimate.</p>
+    <p><strong>Solutions from the deck:</strong> reauthentication, and CSRF tokens.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question</th><th>XSS</th><th>CSRF</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What is abused?</td><td>The site's trust in the <em>content</em> it renders</td><td>The browser's habit of attaching the <em>cookie</em> automatically</td></tr>
+        <tr><td>Does the attacker need to read the response?</td><td>Not necessarily, but script in the origin can</td><td>No &mdash; the attacker only needs the request to be sent</td></tr>
+        <tr><td>Does the attacker need to know the token?</td><td>Yes, if it is a session token being stolen</td><td>No, and that is the point &mdash; a CSRF token must therefore be unguessable and tied to the user</td></tr>
+        <tr><td>Does it need user interaction?</td><td>Reflected: a click on a crafted link. Stored: none beyond viewing the page</td><td>Yes: the victim must load the attacker's page while logged in</td></tr>
+        <tr><td>Control from the deck</td><td>Validate and sanitise input; anti-XSS encoding or escaping libraries</td><td>Reauthentication and CSRF tokens</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Tutorial grounding.</strong> The Week 4 tutorial has you attack the XSS and SQLi sections of DVWA while NAXSI is running in front of NginX, first in learning mode &mdash; logging suspicious requests to the Nginx error log without acting &mdash; and then with learning mode disabled, so the same request is refused and the browser shows a different response code. Seeing the identical payload logged but allowed, then blocked, is the clearest demonstration of what an application-layer filter does and does not fix.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A profile page stores a display name and shows it to every visitor; the name is inserted into the HTML without escaping. Which flaw is this, and what is the correct control?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="CSRF is about a request being triggered with the victim's cookie. Here the problem is content the site renders, so the flaw is XSS — and a CSRF token would not fix it.">CSRF; add a CSRF token to the form</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Untrusted data is stored and later included in a page without escaping, which is stored XSS. The deck's controls are input validation and sanitisation plus anti-XSS libraries that encode or escape output." data-bad="">Stored XSS; validate and sanitise input and use encoding or escaping libraries</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Direct object access is about reaching an internal object without an access check. Nothing here is being accessed directly by identifier; the flaw is in how the value is rendered.">Insecure direct object access; implement access controls on the profile record</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; classifying an XSS finding through the tutorial's exercises.</strong> The Week 4 tutorial has you attack the XSS section of the vulnerable application with the filter first learning and then enforcing. Turn that into a finding.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Decide which type it is.</strong> If the submitted value is echoed back only in the response to your own request, the flaw is reflected: it needs a victim to follow a crafted link. If it is stored and shown to other visitors, it is stored XSS, and its reach is every later viewer with no crafted link at all.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Name the interpreter.</strong> The value is being consumed by the browser's HTML parser in a position that can carry executable content. That is the data-flow statement of the finding, and it belongs in the report.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>State the impact in the same-origin terms.</strong> Script running in the site's origin can read that origin's pages, so it can act with the victim's session and read material such as CSRF tokens. An XSS flaw is therefore a full compromise of the user's session on that site, not a cosmetic page defect.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Separate the two controls.</strong> Input validation and sanitisation reduce what can be stored; output encoding or escaping through an anti-XSS library is what makes the value render as text. Fixing only the input leaves stored data that was written before the fix &mdash; which is why output encoding is the control that must hold for every render path.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say what the filter changed.</strong> The tutorial's requests are refused before the application sees them, so the response no longer carries the script. That is a mitigation at the edge: the page still renders untrusted data unescaped, and any encoding difference between the filter and the browser is the gap an attacker works in. The library fix and the rule-based fix are not interchangeable.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-access" class="section" data-track="access">
+  <h2 class="section-title">Access Control and Misconfiguration</h2>
+  <p class="section-lead">The remaining lecture vulnerabilities share a theme: the application knows who you are but does not check what you are allowed to do &mdash; or it was deployed with the developer's defaults still switched on.</p>
+
+  <div class="def-box">
+    <div class="def-label">Security misconfigurations (Part VI)</div>
+    <p>Applications that are not properly configured are left vulnerable to attack. The deck's example is human error: leaving default passwords in place, or misconfiguring firewalls. <strong>Solution:</strong> configure according to security best practices and standards, such as OWASP and NIST guidelines.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Missing function-level access control (Part VII)</div>
+    <p>The application fails to verify user access privileges before allowing access to a particular function or feature. The deck's example: the user modifies the URL, or follows a direct link, and reaches the administrative panel without being challenged for proper credentials or permissions. <strong>Solution:</strong> implement access controls and verify user access privileges before granting access to any function or feature.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Invalidated redirects and forwards (Part VIII)</div>
+    <p>When an application uses a redirect or forward feature to send users to a different page, an attacker can use it to send them to a malicious site or to steal sensitive information. The deck's example: modifying the redirect URL so that it points at the attacker's site. <strong>Solutions:</strong> validate every redirect and forward request before it is executed, and avoid using user-supplied data &mdash; input fields or query parameters &mdash; in redirect or forward requests at all.</p>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-lecture-vulns"></div>
+  <script type="application/json" id="ix-lecture-vulns">
+  {
+    "title": "The lecture's vulnerability set, recalled from the flaw side",
+    "subtitle": "Say the cause, the impact and at least one control out loud before you flip the card.",
+    "cards": [
+      { "front": "SQL injection (Part I)", "back": "A malicious user injects a string into a field to manipulate the application's actions or reveal unauthorised data — for example a condition that is always true, so all records in the table are returned, including credit card numbers and personal information.", "hint": "Cause + impact" },
+      { "front": "Cross-site scripting (Part II)", "back": "Untrusted data is included in a page without validation or escaping, so script executes in the victim's browser. Reflected and stored are the two types named in the deck.", "hint": "Reflected vs stored" },
+      { "front": "Cross-site request forgery (Part III)", "back": "Actions are performed on behalf of the victim without their knowledge or consent: visiting the attacker's site auto-submits a hidden form to the vulnerable site, using the victim's cookies so the request looks legitimate.", "hint": "Who is authenticated" },
+      { "front": "Broken authentication (Part IV)", "back": "Attackers hijack a session by stealing tokens, passwords or keys. Stolen credentials are a stolen identity. Defences: strong unique passwords and a second verification step, so stolen credentials alone fail.", "hint": "Attack chain" },
+      { "front": "Insecure direct object access (Part V)", "back": "The application allows direct access to an internal object, such as a file, without proper access controls — for example a file upload that does not validate the file type and accepts anything.", "hint": "Object reference" },
+      { "front": "Security misconfiguration (Part VI)", "back": "The application is not properly configured: human error such as default passwords left in place or firewalls misconfigured. Fix by configuring to best practice and standards such as OWASP and NIST.", "hint": "Human error" },
+      { "front": "Missing function-level access control (Part VII)", "back": "Access privileges are not verified before a function or feature is used, so changing the URL or following a direct link reaches the administrative panel without a challenge.", "hint": "URL editing" },
+      { "front": "Invalidated redirects and forwards (Part VIII)", "back": "A redirect or forward that uses user-supplied data can be modified by an attacker to send users to a malicious site or steal sensitive information. Validate every redirect, or avoid user data in them entirely.", "hint": "Off-site delivery" }
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The reportable sentence for each flaw</h3>
+      <p>Cause, then impact, then control. &ldquo;The application fails to verify access privileges before loading the admin function, so any authenticated user who edits the URL reaches administrative functionality; the fix is an authorisation check on the server for every function, not a hidden link in the interface.&rdquo;</p>
+    </div>
+    <div class="col-card">
+      <h3>Why hiding a link is not a control</h3>
+      <p>Missing function-level access control is exactly the case where the interface is the only thing standing between a user and a feature. If the check lives in the menu that renders the link, removing the link from the request removes the check.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A user who is logged in as a normal account changes one path segment in the URL and reaches the admin console. Which vulnerability is this, and where must the fix live?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing here manipulates a query, and the request is well formed. The failure is that authorisation was never verified for the function being reached.">SQL injection; the fix belongs in the query builder</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Redirect flaws concern where the application sends users, not which functions they may reach. The URL was edited by the attacker, not the application.">Invalidated redirect; the fix belongs in the redirect handler</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. This is missing function-level access control: privileges were never verified before the function ran. The deck's solution is to implement access controls and verify privileges before granting access to any function or feature — server-side, for every entry point." data-bad="">Missing function-level access control; the fix belongs in a server-side authorisation check on the function</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tooling" class="section" data-track="tooling">
+  <h2 class="section-title">Intercepting Proxies and Web Application Firewalls</h2>
+  <p class="section-lead">Two pieces of tooling bracket this week. A proxy sits on the attacker's side and shows you what the application actually receives; a WAF sits on the defender's side and decides what the application is allowed to receive.</p>
+
+  <div class="def-box">
+    <div class="def-label">Intercepting proxy</div>
+    <p>A tool that sits between the browser and the server so that every HTTP request and response can be inspected, paused, edited and replayed. Because the application's whole interface is HTTP, editing a request in a proxy is how you reach states the user interface would never produce: parameters the form does not send, values outside the form's own validation, and methods the page never uses.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why the browser's developer tools come first</h3>
+      <p>The tutorial begins by opening the browser's developer tools so the requests can be watched while the attack is attempted. That establishes the baseline: which request carries the parameter, what the server answers when the input is well behaved, and what changes when it is not.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why disabling client-side validation proves nothing</h3>
+      <p>A form's length checks and input types are conveniences. If removing them in the proxy produces a request the server accepts, the server never validated the input at all &mdash; which is the finding, expressed as a single edited request.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Web application firewall (WAF)</div>
+    <p>A security solution designed to protect web applications from various types of attacks and vulnerabilities. It acts as a shield between the web application and the client, analysing and filtering incoming requests and responses. It is typically placed in front of the application, on-premises or in the cloud &mdash; positioned between the client and the web server, intercepting and inspecting all traffic that passes through it.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>WAF function from the deck</th><th>What it does</th><th>What it does not do</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Attack detection</strong></td><td>Flags malicious requests and known attack patterns in real time</td><td>Prove the code is correct &mdash; a pattern library only knows patterns it has</td></tr>
+        <tr><td><strong>Traffic filtering</strong></td><td>Filters incoming traffic against defined rules before it reaches the app</td><td>Understand the application's business rules</td></tr>
+        <tr><td><strong>Vulnerability mitigation</strong></td><td>Shields known weaknesses until a proper patch is deployed</td><td>Replace the patch. The deck's word is <em>until</em>.</td></tr>
+        <tr><td><strong>Bot protection</strong></td><td>Detects and blocks malicious bots, scrapers and automated abuse</td><td>Distinguish a determined human from an automated client reliably</td></tr>
+        <tr><td><strong>Logging and monitoring</strong></td><td>Records requests and raises alerts so teams can review and respond</td><td>Read the log for you; in learning mode the log is the only output</td></tr>
+        <tr><td><strong>Security policy customisation</strong></td><td>Lets teams tailor rules to the application's own risk profile</td><td>Run itself: on a high-traffic site, the tutorial warns, tuning takes real effort</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Learning mode.</strong> NAXSI's learning mode prevents the filter from taking any action except logging suspicious requests to the Nginx error log. Those logged lines are then used to write exceptions so that legitimate requests are not blocked. Without that step, a WAF's first day in production is a denial-of-service against your own users &mdash; which is why the tutorial has you observe blocked and allowed requests in <code>/var/log/nginx/error.log</code> before trusting the rules.
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-waf-pipeline"></div>
+  <script type="application/json" id="ix-waf-pipeline">
+  {
+    "title": "What an application-layer filter does with your request",
+    "subtitle": "The path a request takes once a WAF is placed in front of the web server.",
+    "nodes": [
+      { "label": "Receive", "note": "The request arrives at the filter before the application sees anything." },
+      { "label": "Normalise", "note": "Encoding is canonicalised, because the same attack can be written many ways." },
+      { "label": "Match rules", "note": "Signature and rule checks run against the request and its parameters." },
+      { "label": "Decide", "note": "Allow through to the web server, or refuse and log the event." },
+      { "label": "Learning mode", "note": "With action disabled, the request is allowed and only the log line is produced." },
+      { "label": "Patch", "note": "The rule buys time; the application code still has to be fixed." }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Tutorial exercise walked through &mdash; demonstrating that NAXSI is filtering, not fixing.</strong> The Week 4 tutorial asks for a screencast in which the same XSS and SQLi attempts are shown both blocked and allowed.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Establish that the stack is up.</strong> Stop the PHP-FPM and NginX services, start them again, and show the services running. This is the checkpoint the tutorial asks for first, and it matters because every later observation depends on the same configuration being live.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Prove the application is reachable through the server, not around it.</strong> Load the PHP configuration page and log in to DVWA from the host through the browser. NginX does not have built-in PHP support, so PHP-FPM is the CGI bridge between the server and the application &mdash; showing both working proves the request path is real.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Send a suspicious request from the command line.</strong> Using <code>curl</code> rather than a browser removes the interface from the picture, so the response you get is the filter's decision and nothing else. Then show the corresponding line in <code>/var/log/nginx/error.log</code>: the request was detected.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Attempt XSS and SQLi with learning mode on.</strong> The attack reaches the application and only a log line appears, because learning mode takes no action other than logging. Record the log lines: they are the evidence used to write exceptions for legitimate traffic.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Disable learning mode and repeat the identical requests.</strong> Now the response changes &mdash; the tutorial has you watch the response code in the browser's developer tools &mdash; and the request never reaches the application. Turn learning mode back on afterwards.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>State the conclusion in the report.</strong> The filter changed what reached the application without changing the application. The underlying flaws are still present, so the correct framing is <em>mitigated pending patching</em>, and the log is the artefact that proves both the detection and the gap.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A WAF blocks your injection attempt while it is enforcing, and the same request succeeds once learning mode is enabled. What is the correct conclusion?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is the reverse of what the evidence supports. The request reached the application when the filter took no action, which shows the flaw is still in the application.">The application was patched, and learning mode temporarily disabled the patch</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The filter changes what reaches the application; it does not change the application. Learning mode logs without acting, which is exactly why the tutorial uses it to collect exceptions before enforcing — and why the deck calls WAF protection mitigation until a proper patch is deployed." data-bad="">The filter is a mitigation layer, not a fix: the vulnerable code is unchanged and the request succeeds whenever the filter is not enforcing</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Compiling NAXSI with NginX is a setup detail from the tutorial, not the explanation. The distinction being demonstrated is between filtering and fixing.">NAXSI is ineffective because it was compiled rather than installed from a package</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 4 Recap</h2>
+  <p class="section-lead">Five ideas carry the whole week. If you can state them and attach one control to each, the exam question is answerable.</p>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>HTTP is the entire interface</h4>
+        <p>Requests in, responses out. Anything expressible as a request is in scope, including the requests the UI never sends.</p>
+        <div class="flip-hint">Attack surface</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>State is rebuilt from a cookie</h4>
+        <p>HTTP is stateless; the session token is the identity. Steal the token and you have stolen the identity, second factor included.</p>
+        <div class="flip-hint">Broken authentication</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Input must never become instruction</h4>
+        <p>SQL injection, XSS and path-style object access are the same failure at three different interpreters.</p>
+        <div class="flip-hint">Injection class</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Authorise on the server, every time</h4>
+        <p>Hidden links, client-side checks and unvalidated redirects are not controls. The check belongs on the function, server-side.</p>
+        <div class="flip-hint">Access control</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>A WAF buys time, it does not fix</h4>
+        <p>Inspect, filter, log &mdash; and shield known weaknesses <em>until</em> a proper patch is deployed.</p>
+        <div class="flip-hint">Defence in depth</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-report-seq"></div>
+  <script type="application/json" id="ix-report-seq">
+  {
+    "title": "Order the lab write-up",
+    "subtitle": "The tutorial's checkpoints, in the order that makes the evidence readable.",
+    "steps": [
+      "Start and stop the services and show that the web server is running",
+      "Show the PHP configuration page from the host, proving the request path works",
+      "Send a request with curl and show the filter recording it in error.log",
+      "Log in to the vulnerable application from the host browser",
+      "Attempt XSS and SQLi with the filter enforcing, and record the response codes",
+      "Enable learning mode, repeat the same attempts, and show they now reach the application",
+      "Write the finding: mitigated by the filter, still present in the code"
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the four components of the request stack, say which one owns each of the lecture's eight vulnerability classes, and give one control per class?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Before the next lab</h3>
+      <p>The tutorial ends by requiring you to research every vulnerability in the vulnerable application's menu and be able to say what causes it, how it is attacked, what it leads to, and how it is prevented. The lecture's eight classes are that list.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Where to go next</h3>
+      <p>The Foundations page turns this week's vocabulary into definitions, status-code semantics, session and authorisation notation and a threat-model checklist. Then the Quiz Hub and Flashcards for retrieval practice.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Ethics, one more time:</strong> everything here is exercised only against the deliberately vulnerable application running in your own tutorial virtual machine on a host-only network. Sending the same requests at a system you do not own or have written permission to test is a criminal offence and a disciplinary matter, not an exercise.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

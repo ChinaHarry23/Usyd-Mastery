@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 4: Architectural Design and Modelling</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 foundations for ELEC5620: exact definitions of architecture, viewpoint, view, model of computation and control; a UML notation reference card; the relationships between design space, views, patterns and V&amp;V; and a classification checklist for exam answers.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 4: Architectural Design and Modelling">
+<meta property="og:description" content="Week 4 foundations for ELEC5620: exact definitions of architecture, viewpoint, view, model of computation and control; a UML notation reference card; the relationships between design space, views, patterns and V&amp;V; and a classification checklist for exam answers.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter4-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 4 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-notation" class="toc-link">UML notation reference card</a></li>
+  </ul>
+  <div class="toc-group">Relationships</div>
+  <ul>
+    <li><a href="#sec-m-relations" class="toc-link">Design space, views and V&amp;V</a></li>
+    <li><a href="#sec-m-checklist" class="toc-link">Classification checklist</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial 4 and Lab 4 review</a></li>
+  </ul>
+  <a href="chapter4-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">ELEC5620 &mdash; Week 4 supplement</p>
+  <h1>Foundations: the definitions and notation of architectural modelling</h1>
+  <p class="hero-desc">Week 4 is a modelling week, so the foundations page is a notation page. It pins down the definitions the lecture relies on, draws the UML notation you are expected to read and produce, states the relationships between design space, viewpoints, patterns and V&amp;V as compact expressions, and ends with the checklist that turns a vague architecture answer into a markable one.</p>
+  <div class="chip-list">
+    <span>Definitions quoted from the Week 4 decks</span>
+    <span>Notation drawn from the 4+1, component, package and deployment views</span>
+    <span>Classification checklist for exam answers</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Architecture &mdash; ISO/IEC/IEEE 42010</div>
+    <p>&ldquo;[the] fundamental concepts or properties of a system in its environment embodied in its elements, relationships, and in the principles of its design and evolution&rdquo;. An <strong>architecture description</strong> is &ldquo;[a] work product used to express an architecture&rdquo;.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Architectural principle</div>
+    <p>A general design principle or <strong>invariant that holds across the system</strong> &mdash; for example &ldquo;there shall be no single point of failure in components deemed critical&rdquo;. Principles are what make a proposed change decidable: they are the rules the detailed design must not break.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Viewpoint and view &mdash; IEEE 1471</div>
+    <p>A <strong>viewpoint</strong> identifies the set of concerns and the representation techniques used to describe the architecture to address those concerns. A <strong>view</strong> is a representation of a whole system from the perspective of a related set of concerns: the result of applying a viewpoint to a particular system.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Model of computation (MoC)</div>
+    <p>The rules governing how computational components <em>execute</em>, <em>communicate</em>, <em>synchronise</em> and <em>exchange data</em>, which explain how the behaviour of the whole system is the result of the behaviour of each of its components. Two families: <strong>structure-dominant</strong>, and <strong>behaviour-dominant</strong> &mdash; the latter splitting into procedural (control-flow based) and data flow.</p>
+  </div>
+
+  <div class="def-box theorem-box">
+    <div class="def-label">Control in architecture</div>
+    <p>The set of (additional) mechanisms and actions required to bring a system into the desired operational state and to maintain it in that state in the face of various planned and unplanned disruptions: start-up and shut-down, failure detection/reporting/recovery, administration, maintenance and provisioning, and on-line software upgrade.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Architectural design pattern</div>
+    <p>Defines types of elements and relationships that work together in order to solve a particular problem from some perspective (viewpoint). It is composed of a <strong>context</strong> (a recurring common situation), a <strong>problem</strong> arising in that context, and a <strong>reused solution</strong> to that recurring design problem. Its value is abstraction, minimal change and a general structure.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Architecture</td><td>Elements <em>and</em> relationships <em>and</em> principles of design and evolution</td><td>A box-and-line diagram of the modules</td></tr>
+        <tr><td>Architecture description</td><td>The work product that expresses the architecture</td><td>Treating the description and the architecture as the same thing</td></tr>
+        <tr><td>Viewpoint</td><td>The concerns <em>and</em> the representation techniques</td><td>&ldquo;A way of looking at the system&rdquo;, with no notation attached</td></tr>
+        <tr><td>View</td><td>The result of applying a viewpoint to a particular system</td><td>Treating a view as a synonym for a diagram</td></tr>
+        <tr><td>Model of computation</td><td>Rules for execution, communication, synchronisation and data exchange</td><td>Confusing it with the agent's own reasoning loop</td></tr>
+        <tr><td>Control</td><td>Reaching <em>and maintaining</em> the operational state under disruption</td><td>Calling it error handling and leaving it out of the design</td></tr>
+        <tr><td>Verification</td><td>Conformance to the specification: building the product right</td><td>Swapping it with validation</td></tr>
+        <tr><td>Validation</td><td>Meeting what the user really wants: building the right product</td><td>Assuming a passing test suite validates the requirements</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is a viewpoint?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That describes a view — the result of applying a viewpoint to a particular system — rather than the viewpoint itself.">A representation of the whole system from the perspective of a related set of concerns</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A viewpoint is the convention: the concerns plus the representation techniques used to address them. A view is what you get when you apply it to a system." data-bad="">The set of concerns and the representation techniques used to describe the architecture to address those concerns</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is one viewpoint's answer — the deployment question. A viewpoint is the concern plus notation, not a single location.">The hardware node on which each component is deployed</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">UML notation reference card</h2>
+  <p class="section-lead">The lectured views are named by the notation that expresses them, so the notation is examinable content. This is the card to reproduce from memory.</p>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Notation</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">&laquo;name&raquo;</div><div class="sym-cell">stereotype</div><div class="sym-cell">Extends the vocabulary of the notation: &laquo;component&raquo;, &laquo;interface&raquo;, &laquo;package&raquo;, &laquo;device&raquo;, &laquo;artifact&raquo;, &laquo;include&raquo;, &laquo;extend&raquo;, &laquo;import&raquo;</div>
+    <div class="sym-cell">&#9633; Name<br>+ attr : Type<br>+ op() : Type</div><div class="sym-cell">class</div><div class="sym-cell">Compartmented rectangle: name, attributes, operations. Visibility: + public, &minus; private, # protected, ~ package. The notation of the <em>logical</em> view</div>
+    <div class="sym-cell">&#9671;&mdash;&mdash;</div><div class="sym-cell">aggregation (shared)</div><div class="sym-cell">Hollow diamond at the whole. The part can belong to several wholes and can outlive the whole it is drawn against</div>
+    <div class="sym-cell">&#9670;&mdash;&mdash;</div><div class="sym-cell">composition</div><div class="sym-cell">Filled diamond at the whole. Exclusive ownership: the part is created and destroyed with the whole</div>
+    <div class="sym-cell">&mdash;&mdash;</div><div class="sym-cell">association</div><div class="sym-cell">A structural link between classifiers, with multiplicity at each end (1, 0..1, 0..*, 1..*)</div>
+    <div class="sym-cell">&#9655;&mdash;&mdash;</div><div class="sym-cell">generalization</div><div class="sym-cell">Hollow triangle at the supertype: an is-a relationship that licenses substitution</div>
+    <div class="sym-cell">&#8674;&#8674; dashed</div><div class="sym-cell">dependency</div><div class="sym-cell">A uses-relationship: &laquo;use&raquo;, &laquo;import&raquo; between packages. Source depends on target; target can change without notice</div>
+    <div class="sym-cell">&#9633; + tabs</div><div class="sym-cell">&laquo;component&raquo;</div><div class="sym-cell">A substitutable, encapsulated unit of the system that exposes behaviour through interfaces and hides its implementation</div>
+    <div class="sym-cell">&mdash;&#9679;</div><div class="sym-cell">provided interface (ball)</div><div class="sym-cell">The component offers this interface. Drawn as a circle on a line from the component boundary</div>
+    <div class="sym-cell">&mdash;(</div><div class="sym-cell">required interface (socket)</div><div class="sym-cell">The component needs this interface. A ball from a provider nests into the socket when the two are assembled</div>
+    <div class="sym-cell">&#9634; on the border</div><div class="sym-cell">port</div><div class="sym-cell">An explicitly named interaction point on a component's boundary: the component's control and functional interfaces are reachable only through ports</div>
+    <div class="sym-cell">&#128193; folder tab</div><div class="sym-cell">&laquo;package&raquo;</div><div class="sym-cell">A namespace for organising the model. The notation of the <em>development</em> view; &laquo;import&raquo; makes elements visible across packages</div>
+    <div class="sym-cell">&#9635; 3-D box</div><div class="sym-cell">&laquo;device&raquo; / &laquo;execution environment&raquo;</div><div class="sym-cell">A deployment node: hardware or a runtime environment that hosts artefacts. The notation of the <em>physical</em> view</div>
+    <div class="sym-cell">&#9633; inside a node</div><div class="sym-cell">&laquo;artifact&raquo;</div><div class="sym-cell">A concrete deployed element: an executable, a library, a configuration file, a prompt or policy file</div>
+    <div class="sym-cell">&#9634;&#10142;&#9634;</div><div class="sym-cell">activity: action &rarr; decision &rarr; merge</div><div class="sym-cell">Rounded rectangle for an action, diamond for a decision or merge, thick bar for fork and join, swimlane for the responsible partition. The notation of the <em>process</em> view</div>
+    <div class="sym-cell">&#9679;&rarr;&#9673;</div><div class="sym-cell">initial &rarr; final node</div><div class="sym-cell">Filled circle starts a behaviour; a circled bullseye ends it. States are rounded rectangles with named transitions between them</div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-notation-diagram"></div>
+  <script type="application/json" id="ix-notation-diagram">
+  {
+    "title": "Read the notation off a real diagram",
+    "subtitle": "A component diagram drawn in the notation of the development and physical views. Click each marker.",
+    "svg": "<svg viewBox='0 0 840 520' role='img' aria-label='Component diagram showing a package that imports a TriageAgent component with two ports, a provided interface ball realised by an interface classifier, a NotificationService component with a required interface socket, and a device node containing an artifact' xmlns='http://www.w3.org/2000/svg'><rect x='0' y='0' width='840' height='520' fill='#fbfbff'></rect><rect x='30' y='40' width='110' height='26' fill='#f5f3ff' stroke='#4f46e5' stroke-width='1.8'></rect><rect x='30' y='58' width='250' height='122' fill='#fafaff' stroke='#4f46e5' stroke-width='1.8'></rect><text x='44' y='58' font-family='sans-serif' font-size='11' fill='#4f46e5'>«package»</text><text x='44' y='82' font-family='sans-serif' font-size='13.5' font-weight='700' fill='#312e81'>healthcare::triage</text><text x='44' y='112' font-family='monospace' font-size='11' fill='#475569'>TriageAgent</text><text x='44' y='132' font-family='monospace' font-size='11' fill='#475569'>SchedulingService</text><text x='44' y='152' font-family='monospace' font-size='11' fill='#475569'>NotificationService</text><text x='44' y='172' font-family='monospace' font-size='11' fill='#475569'>IAppointmentPort</text><path d='M282 120 L344 120' stroke='#4f46e5' stroke-width='1.8' stroke-dasharray='7 5' fill='none'></path><polygon points='344,120 331,114 331,126' fill='#4f46e5'></polygon><text x='286' y='110' font-family='sans-serif' font-size='11' fill='#4f46e5'>«import»</text><rect x='350' y='58' width='250' height='124' rx='8' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><text x='475' y='86' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#4f46e5'>«component»</text><text x='475' y='112' text-anchor='middle' font-family='sans-serif' font-size='15' font-weight='700' fill='#312e81'>TriageAgent</text><text x='475' y='140' text-anchor='middle' font-family='monospace' font-size='11' fill='#475569'>triage(msg) : Advice</text><text x='475' y='160' text-anchor='middle' font-family='monospace' font-size='11' fill='#475569'>escalate(case)</text><rect x='342' y='92' width='16' height='14' fill='#ffffff' stroke='#4f46e5' stroke-width='2'></rect><rect x='342' y='140' width='16' height='14' fill='#ffffff' stroke='#4f46e5' stroke-width='2'></rect><text x='296' y='86' font-family='sans-serif' font-size='10.5' fill='#64748b'>port</text><path d='M600 104 L636 104' stroke='#059669' stroke-width='2' fill='none'></path><circle cx='650' cy='104' r='12' fill='#ffffff' stroke='#059669' stroke-width='2.2'></circle><text x='662' y='80' font-family='sans-serif' font-size='10.5' fill='#059669'>«interface»</text><path d='M654 118 L726 204' stroke='#059669' stroke-width='1.8' stroke-dasharray='7 5' fill='none'></path><polygon points='726,204 716,192 706,202' fill='none' stroke='#059669' stroke-width='1.8'></polygon><rect x='640' y='206' width='180' height='110' rx='8' fill='#ecfdf5' stroke='#059669' stroke-width='2'></rect><text x='730' y='232' text-anchor='middle' font-family='sans-serif' font-size='11' fill='#059669'>«interface»</text><text x='730' y='254' text-anchor='middle' font-family='sans-serif' font-size='13.5' font-weight='700' fill='#065f46'>IAppointmentPort</text><text x='730' y='280' text-anchor='middle' font-family='monospace' font-size='10.5' fill='#475569'>book(slot) : Confirmation</text><text x='730' y='300' text-anchor='middle' font-family='monospace' font-size='10.5' fill='#475569'>cancel(id)</text><rect x='40' y='352' width='230' height='110' rx='8' fill='#ffffff' stroke='#4f46e5' stroke-width='2'></rect><text x='155' y='382' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#4f46e5'>«component»</text><text x='155' y='408' text-anchor='middle' font-family='sans-serif' font-size='13.5' font-weight='700' fill='#312e81'>NotificationService</text><text x='155' y='436' text-anchor='middle' font-family='monospace' font-size='10.5' fill='#475569'>notify(patient, msg)</text><path d='M270 428 L312 428' stroke='#6366f1' stroke-width='2' fill='none'></path><path d='M326 414 A 14 14 0 0 0 326 442' fill='none' stroke='#6366f1' stroke-width='2.2'></path><path d='M326 428 L332 428' stroke='#6366f1' stroke-width='2' fill='none'></path><circle cx='344' cy='428' r='12' fill='#ffffff' stroke='#059669' stroke-width='2.2'></circle><text x='152' y='492' font-family='sans-serif' font-size='10.5' fill='#64748b'>required socket engaged with a provided ball</text><rect x='540' y='360' width='250' height='100' rx='6' fill='#f8fafc' stroke='#334155' stroke-width='2'></rect><polygon points='540,360 564,336 814,336 790,360' fill='#e2e8f0' stroke='#334155' stroke-width='2'></polygon><polygon points='790,360 814,336 814,436 790,460' fill='#eef2f6' stroke='#334155' stroke-width='2'></polygon><text x='558' y='386' font-family='sans-serif' font-size='11' fill='#334155'>«device»</text><text x='558' y='408' font-family='sans-serif' font-size='13' font-weight='700' fill='#1e293b'>Private GPU node</text><rect x='556' y='418' width='214' height='32' fill='#ffffff' stroke='#64748b' stroke-width='1.6'></rect><text x='566' y='431' font-family='sans-serif' font-size='9' fill='#64748b'>«artifact»</text><text x='566' y='444' font-family='monospace' font-size='10.5' fill='#334155'>triage-policy.yaml</text></svg>",
+    "points": [
+      { "x": 18.5, "y": 21.2, "label": "«package»", "detail": "A namespace, drawn as a folder tab plus body. The development view is nothing but packages and the «import» dependencies between them — which is why an agentic application's prompts, policies and schemas have to be placed in this view, not treated as loose files." },
+      { "x": 56.5, "y": 21.5, "label": "«component» TriageAgent", "detail": "A substitutable, encapsulated unit. Note what the diagram does and does not say: it names the component and two of its operations, but says nothing about how triage is implemented — that is the abstraction the 42010 definition calls \"fundamental\"." },
+      { "x": 41.5, "y": 19.0, "label": "Port", "detail": "A named interaction point on the component boundary. Ports are how the core control pattern keeps control separate from function: the control interface and the functional interface are distinct, explicitly identified ports." },
+      { "x": 77.4, "y": 20.0, "label": "Provided interface (ball)", "detail": "The component offers IAppointmentPort. A ball on a line means the component commits to that interface's contract, so any component that needs the interface can be wired to it without knowing which implementation sits behind it." },
+      { "x": 86.9, "y": 48.8, "label": "«interface» classifier", "detail": "The interface itself, listed with the operations it declares. The dashed line with the hollow triangle from the ball to the classifier is the realization relationship: this is what the ball stands for." },
+      { "x": 39.3, "y": 82.3, "label": "Required interface (socket)", "detail": "NotificationService needs an appointment source. The socket is the mirror of the ball: on its own it says only that a dependency exists, and assembly is the act of nesting a ball into it. Read together, ball plus socket is the whole of dependency management in a component model." },
+      { "x": 67.4, "y": 67.3, "label": "«device» deployment node", "detail": "A deployment node stands for hardware or a runtime environment. The physical view is the mapping of artefacts onto these nodes — and the architectural question \"should the complete patient record be sent to an external LLM?\" is answered by which node an artefact is placed on." },
+      { "x": 83.3, "y": 82.7, "label": "«artifact» inside the node", "detail": "The concrete deployed thing. Traditional modules deploy source, configuration and libraries; an agentic application also deploys prompts, tool definitions, guardrails, policies, workflow definitions, model configurations and schemas — .yaml for prompts and rules, .json for data schemas." }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>How to use the card.</strong> Cover the middle column. For each notation, say the name of the relationship <em>and</em> the one thing it commits you to: aggregation is shared ownership, composition is exclusive ownership, generalization licenses substitution, a dependency promises nothing about stability. Naming the glyph without the commitment is worth half the marks.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A model shows a filled diamond at the end of an association between <code>Consultation</code> and <code>TranscriptLine</code>. What has been asserted?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hollow diamond is aggregation — shared ownership, where the part can outlive the whole. The filled diamond is the stronger claim.">That the transcript line can exist independently and may belong to several consultations</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The filled diamond is composition: exclusive ownership, with the part created and destroyed together with the whole. In a deployment sense it also tells you the transcript line cannot be stored or deleted on its own." data-bad="">That the transcript line is exclusively owned by the consultation: it is created and destroyed with it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is generalization, drawn as a hollow triangle at the supertype. A diamond is an association end, not a subtype link.">That a transcript line is a kind of consultation</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-relations">
+  <h2 class="section-title">Design space, views and V&amp;V as relationships</h2>
+  <p class="section-lead">Five relationships are worth being able to write from memory. They are revision notation: compact statements of what the lecture says in prose.</p>
+
+  <div class="theorem-box">
+    <h3>1. An architecture is a projection of the solution space</h3>
+    <p>Let \(R\) be the requirement set, \(S_0\) the set of solutions that satisfy \(R\), and \(A\) an architecture for \(R\). Then</p>
+    \[ S_A \;=\; \{\, s \in S_0 \;:\; s \text{ conforms to } A \,\}, \qquad S_A \subset S_0 \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The point is not the set theory but the asymmetry: \(S_A\) is much smaller than \(S_0\), and every later decision is taken inside \(S_A\). An architecture that does not shrink \(S_0\) has not decided anything.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The full specification is a union of views</h3>
+    <p>With \(L\) logical, \(D\) development, \(P\) process and \(Ph\) physical, and a scenario \(u\) drawn from the use-case view:</p>
+    \[ \text{Spec} \;=\; L \cup D \cup P \cup Ph, \qquad \text{slice}(u) \;=\; \bigl(L_u,\; D_u,\; P_u,\; Ph_u\bigr) \]
+    <p style="margin-top:0.6rem;">Each view describes different aspects of the system, so no view is complete and none is redundant. The scenario is a vertical slice through all four, which is why it is the &ldquo;+1&rdquo; and not a fifth competing view. Consistency is a separate obligation: the views must agree where they overlap.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Coupling is a counting argument</h3>
+    <p>For \(n\) participants, a fully connected point-to-point architecture needs</p>
+    \[ E_{\text{p2p}} \;=\; \frac{n(n-1)}{2} \;=\; O(n^2), \qquad E_{\text{mediator}} \;=\; n \;=\; O(n) \]
+    <p style="margin-top:0.6rem;">At \(n = 6\) that is 15 links against 6; at \(n = 20\), 190 against 20. The saving is bought with a new critical component: the mediator is now a single point of failure and a potential bottleneck, which is exactly the kind of statement an architectural principle has to rule on.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Control predicates function</h3>
+    <p>Let \(\mathrm{op}(t)\) mean the system is in its operational state at time \(t\), and \(\mathrm{fn}(t)\) mean it is performing its primary function. Then</p>
+    \[ \mathrm{fn}(t) \;\Longrightarrow\; \exists\, t_0 < t \;:\; \mathrm{op}(t_0) \;\wedge\; \text{maintained}(t_0, t) \]
+    <p style="margin-top:0.6rem;">Control is a precondition, not a feature. The deck's second observation is the engineering consequence: the process by which a system reaches its operational state is often the same regardless of the component's functionality, so control can be designed once &mdash; provided it is separated from function and centralised rather than retrofitted into a framework built for functionality.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Verification and validation test different things</h3>
+    <p>Write \(I\) for the implementation, \(Sp\) for the specification and \(N\) for what the user actually needs:</p>
+    \[ \text{verification}: \quad I \models Sp \qquad\qquad \text{validation}: \quad Sp \models N \]
+    <p style="margin-top:0.6rem;">The two are independent. \(I \models Sp\) can hold perfectly while \(Sp \models N\) fails, which is the failure the deck's joke is about: nothing works and nobody knows why. A pattern, similarly, is a triple</p>
+    \[ \Pi \;=\; \langle\, C,\; Pr,\; So \,\rangle \]
+    <p>context, problem and solution &mdash; and quoting \(So\) without \(C\) is quoting a solution to a problem nobody has.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-notation-match"></div>
+  <script type="application/json" id="ix-notation-match">
+  {
+    "title": "Match the notation to what it commits you to",
+    "subtitle": "Click a notation on the left, then its semantics on the right. The pairs are chosen because each pair is easy to confuse.",
+    "pairs": [
+      ["Aggregation (hollow diamond)", "Shared ownership: the part can belong to several wholes and can outlive the whole"],
+      ["Composition (filled diamond)", "Exclusive ownership: the part is created and destroyed together with the whole"],
+      ["«include»", "The base use case always contains this behaviour; it is a mandatory, reusable step"],
+      ["«extend»", "Optional behaviour inserted at an extension point when its condition holds"],
+      ["Sequence diagram", "Time-ordered message exchange between instances, emphasising ordering"],
+      ["Communication diagram", "The same exchange of messages, emphasising the structural links between the objects"],
+      ["Design-time view", "Static organisation of the specification in a repository: classes, associations, «import»"],
+      ["Run-time view", "Dynamic organisation of the instances created by an executing program"],
+      ["Verification", "The software conforms to its specification — are we building the product right?"],
+      ["Validation", "The software does what the user really wants — are we building the right product?"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Why these ten pairs.</strong> Each one is a distinction that a single word hides: shared versus exclusive ownership, mandatory versus optional inclusion, ordering versus structure, specification versus instances, and conformance versus adequacy. Exam questions in this unit are usually built from exactly these contrasts.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team proves that their implementation conforms to the specification, and separately proves that the specification satisfies every recorded stakeholder requirement. What have they established?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Conformance of the implementation to the specification is verification; it is the first half of what they proved, not the whole of it.">Verification only, because the second proof is also about the specification</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. I ⊨ Sp is verification and Sp ⊨ N is validation. Establishing both is the strongest position available — and note that validation still depends on N having been recorded correctly, which is why requirements work matters." data-bad="">Verification and validation: conformance of the artefact to the specification, and adequacy of the specification to the needs</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Formal verification is a method; verification and validation are the two claims. The question asks which claims were established.">Neither, because only formal methods were used</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; putting numbers on the design-space and coupling arguments.</strong> A team must connect six clinical subsystems: triage, records, scheduling, notification, knowledge base and audit.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Count the point-to-point case.</strong> \(E_{\text{p2p}} = n(n-1)/2 = 6 \times 5 / 2 = 15\) links between six subsystems. Every subsystem must know five peers' protocols, and every change to one protocol is potentially five edits.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Count the mediator case.</strong> \(E_{\text{mediator}} = n = 6\) links. Each subsystem knows one interface; adding a seventh subsystem is one new connection, not six.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Price the saving.</strong> The mediator is now on every path, so it is a single point of failure and a throughput ceiling. That directly contradicts the principle &ldquo;there shall be no single point of failure in components deemed critical&rdquo; unless the mediator is replicated or the clinical paths that must survive it are routed around it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Express the design-space claim.</strong> Before the decision, the requirement set admits both the fully connected design and the mediated one plus hybrid variants: \(S_0\) contains all of them. After choosing mediation, \(S_A\) contains only the mediated family with different replication strategies. That reduction is the architecture's contribution &mdash; and it is also the reason the decision is expensive to reverse later.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Write it as a principle, not a preference.</strong> &ldquo;All inter-subsystem communication passes through the integration mediator; critical clinical paths have a declared direct fallback.&rdquo; Now the next team can decide whether a proposed shortcut is admissible, which is the whole purpose of recording principles.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Classification checklist</h2>
+  <p class="section-lead">Most Week 4 questions reduce to &ldquo;which viewpoint, which model of computation, which pattern &mdash; and why?&rdquo;. Run the system through these steps in order and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-classify"></div>
+  <script type="application/json" id="ix-m-classify">
+  {
+    "title": "Order the architectural decision checklist",
+    "subtitle": "Rebuild the order in which to interrogate a system before you name a viewpoint, a MoC or a pattern.",
+    "steps": [
+      "Name the quality attributes the architecture must satisfy, and turn each into an architecture question",
+      "Decide where the computation lives and what that removes from the solution space",
+      "Choose the dominant model of computation: structure-dominant, procedural or data flow",
+      "Decide the control structure: what reaches and maintains the operational state, and where policy lives",
+      "Choose the pattern whose context and problem match the forces you wrote down, and state its known disadvantage",
+      "Assign the result to viewpoints, draw each view in its own notation, and check the views for consistency",
+      "Record the principles and the rejected alternatives as design rationale"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Decision</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Quality attributes</td><td>Safety, privacy, security, reliability, availability, performance, scalability, auditability, maintainability, explainability</td><td>You list features instead of the properties the architecture must guarantee</td></tr>
+        <tr><td>2. Locus of computation</td><td>One node or many; what the choice eliminates from the solution space</td><td>You describe a deployment without saying what it ruled out</td></tr>
+        <tr><td>3. Model of computation</td><td>Structure-dominant, procedural or data flow &mdash; and the trigger that starts a component</td><td>You confuse an agent's reasoning loop with the system's MoC</td></tr>
+        <tr><td>4. Control structure</td><td>Start-up, failure detection and recovery, administration, on-line upgrade; policies versus mechanisms</td><td>You treat control as error handling bolted on afterwards</td></tr>
+        <tr><td>5. Pattern</td><td>Context, problem, solution &mdash; and the published disadvantage</td><td>You name a pattern without the context that makes it valid</td></tr>
+        <tr><td>6. Viewpoints</td><td>Which concerns each view addresses, in which notation, and where the views must agree</td><td>You draw one diagram and call it the architecture</td></tr>
+        <tr><td>7. Rationale</td><td>The principles, and the alternatives that were rejected</td><td>You leave the next team to reconstruct intent from the code &mdash; the road to decay</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A system reads a stream of claims, validates each one, enriches it from a shared reference database and writes it to a queue. Which pair of decisions is most defensible?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Discrete items passing through replaceable transformations is the data-flow context, so the data-flow MoC and the pipe-and-filter pattern fit — and the shared reference database is a shared-data concern inside the pipeline, which is exactly how patterns compose." data-bad="">Data-flow model of computation with the pipe-and-filter pattern; shared-data for the reference database</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A structure-dominant MoC is for interconnected objects holding state that react to stimuli. Here the components are stateless transforms triggered by data availability, not by messages.">Structure-dominant model of computation with the blackboard pattern</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="MVC addresses presentation churn; nothing in the description mentions a user interface, and layering would be a decomposition choice rather than the governing decision.">Model-View-Controller with a layered decomposition</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked classification &mdash; the agentic healthcare consultation, run through the checklist.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Quality attributes.</strong> Safety (can unsafe agent actions be prevented or escalated?), privacy (which agents can access patient information?), auditability (can we reconstruct why an action occurred?), availability (can patients reach critical services during failures?), explainability (can important decisions be traced?). Five attributes, each already phrased as an architecture question.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Locus of computation.</strong> Identifiable data stays in a private environment; de-identified context may reach an external LLM. That one decision eliminates every solution in which a single general-purpose model sees the full record &mdash; including some that would have been cheaper and more capable.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Model of computation.</strong> Agents are components that hold state and react to stimuli and messages, so the system-level MoC is structure-dominant; the chaining of retrieval, reasoning and action inside one agent is a data-flow pattern at the agent level. Say both, and say which level each belongs to.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Control.</strong> Separate control from function: the guardrails, approval rules and escalation policies live in the control components; the mechanisms live inside each agent. Centralise the decision to escalate. If the required behaviour is a fixed collect&ndash;assess&ndash;book order, choose workflow control, which is predictable and auditable; if the order must adapt, choose supervisor control and accept that the supervisor becomes the component to test.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Pattern.</strong> The intake is data-flow; the knowledge base is shared-data; the clinician's review screen is MVC; the LLM workflow is preprocess&ndash;construct&ndash;infer. State the disadvantage you have accepted for each: limited interactivity in the pipeline, scalability at the shared store, extra indirection in MVC.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Viewpoints and rationale.</strong> Logical for responsibilities, development for the prompt and policy artefacts, process for concurrency and the coordination problem, physical for data and model placement, scenario for a vertical slice. Then record the principles &mdash; no identifiable data in an external call, high-impact actions require approval &mdash; so that the next team can tell a violation from a change.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial 4 and Lab 4 review</h2>
+  <p class="section-lead">Tutorial 4 recaps the lecture and then asks how viewpoint analysis is actually performed and documented. Lab 4 asks you to do it on your own project. Use this page to audit the result.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Define objectives and scope</h3>
+      <p>Clarify the analysis goals, define the scope and the relevant viewpoints, identify the stakeholders who are affected or interested, and define viewpoints aligned with their concerns.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Select viewpoints</h3>
+      <p>Choose by system complexity and requirements, and fix the focus of each viewpoint. &ldquo;4+1&rdquo; is the model the unit expects unless you can justify another.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Collect and organise</h3>
+      <p>Gather requirements documents and design specifications, and organise them into analysable formats &mdash; diagrams, using proper tools such as UML.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Analyse and integrate</h3>
+      <p>Analyse each viewpoint in detail, identify the interactions and dependencies between them, then summarise everything into one architecture description &mdash; consistent, without contradictions or conflicts.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">What the report must contain</div>
+    <p><strong>Organise the results:</strong> compile the findings from all viewpoints, including identified issues and improvement suggestions. <strong>Structure the report:</strong> introduction (purpose and scope of the analysis), viewpoint analysis (results for each viewpoint), issues and recommendations (problems and suggested improvements), conclusion (key findings and next steps). <strong>Use visual aids:</strong> diagrams and models that visualise complex structures and interactions, kept simple and focused on key information. <strong>Purpose:</strong> clear guidance for development and maintenance, and a long-term reference for understanding the system.</p>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-selfcheck"></div>
+  <script type="application/json" id="ix-m-selfcheck">
+  {
+    "title": "Self-test: the vocabulary you will be marked on",
+    "subtitle": "Say the answer out loud before you flip the card.",
+    "cards": [
+      { "front": "Architectural decay", "back": "The gradual corruption of a system's architecture through seemingly minor fixes and modifications, caused by difficulties in perceiving the architecture and in enforcing architectural decisions.", "hint": "Failure mode" },
+      { "front": "Aggregation versus composition", "back": "Aggregation is shared ownership: the part may belong to several wholes and outlive them. Composition is exclusive: the part is created and destroyed with the whole.", "hint": "Notation" },
+      { "front": "«include» versus «extend»", "back": "«include» is mandatory and always executed by the base use case; «extend» is optional behaviour inserted at an extension point when its condition holds.", "hint": "Use cases" },
+      { "front": "\"4+1\" views and their notation", "back": "Logical — class and sequence; Development — package; Process — activity; Physical — deployment. The +1 scenario slices through all four.", "hint": "Viewpoints" },
+      { "front": "The three models of computation", "back": "Structure-dominant (state-holding objects reacting to stimuli), procedural (control-flow, triggered by predecessor completion) and data flow (transforms triggered by input availability).", "hint": "Design decision" },
+      { "front": "Control versus function", "back": "Control brings the system into its operational state and keeps it there; function is what it does once there. Separate them, and centralise the control decision making.", "hint": "Design principle" },
+      { "front": "Verification versus validation", "back": "Verification: does the software conform to its specification? Validation: does the software do what the user really wants?", "hint": "V&V" },
+      { "front": "Pattern = context + problem + solution", "back": "A recurring common situation, the problem that arises in it, and the reused solution. Quoting the solution without the context is worth nothing.", "hint": "Patterns" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Tutorial-style worked answer &mdash; a viewpoint analysis report outline for the agentic healthcare consultation.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Introduction &mdash; purpose and scope.</strong> &ldquo;This analysis documents the architecture of the patient consultation service so that the clinical safety and privacy requirements can be reviewed against a single description. In scope: triage, clinical knowledge retrieval, appointment scheduling and notification, plus the clinician review step. Out of scope: billing and the hospital's appointment system internals, which are treated as an external tool.&rdquo; Stakeholders named: patient, clinician, hospital privacy officer, operations.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Viewpoint analysis &mdash; one subsection per view.</strong> <em>Logical:</em> the agents and shared services, with the responsibilities of each drawn as a class or sequence diagram. <em>Development:</em> the package structure, including where prompts, guardrails, policies and schemas live &mdash; this is where an agentic system stops looking like an ordinary codebase. <em>Process:</em> concurrent agent execution and the coordination problem, drawn as an activity diagram with the communication service that prevents two agents speaking to the patient at once. <em>Physical:</em> the private node and the external model endpoints, with the artefact placement that enforces the data boundary. <em>Scenario:</em> &ldquo;patient reports headache and fever&rdquo;, traced through all four.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Issues and recommendations.</strong> Issue: the follow-up and appointment agents can both initiate patient contact, which is a coordination defect visible only in the process view. Recommendation: route all patient-facing messages through the communication service and record the decision as a control policy. Issue: the development view does not yet place the prompt templates under version control. Recommendation: treat them as artefacts with the same review process as code.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Consistency check across views.</strong> Every logical component must appear in the development view as an owned artefact, every concurrently executing agent must appear in the process view, and every process entity must be mapped to a node in the physical view. A component that appears in the logical view and nowhere else is either undocumented or unwanted &mdash; either way the description is inconsistent.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Conclusion and next steps.</strong> Summarise the findings, state which principles the architecture now commits to, and list what still has to be decided. The report's stated purpose is to give clear guidance for development and maintenance and to serve as a long-term reference &mdash; which is the same objective as avoiding architectural decay.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the notation card and definitions on this page, the 4+1 views, models of computation, control and the pattern catalogue on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initELEC5620ChapterUI) return;
+    try {
+      window.initELEC5620ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[ELEC5620 chapter 4] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3: Mobile Security — INFO5995</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter3-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 study guide for INFO5995: the mobile threat landscape, Android's sandbox, intents and permissions, APK structure and reverse engineering, deep links, the UI tree and mobile agents.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 3: Mobile Security — INFO5995">
+<meta property="og:description" content="Week 3 study guide for INFO5995: the mobile threat landscape, Android's sandbox, intents and permissions, APK structure and reverse engineering, deep links, the UI tree and mobile agents.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F4F1;</span>
+      <h2>Week 3</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-platform" class="nav-link" data-section="platform">Platform Landscape</a></li>
+    <li><a href="#sec-layers" class="nav-link" data-section="layers">Layered Defence</a></li>
+    <li><a href="#sec-threats" class="nav-link" data-section="threats">Threat Classification</a></li>
+    <li><a href="#sec-apk" class="nav-link" data-section="apk">Inside an APK</a></li>
+    <li><a href="#sec-decompile" class="nav-link" data-section="decompile">Decompilation</a></li>
+    <li><a href="#sec-components" class="nav-link" data-section="components">App Components</a></li>
+    <li><a href="#sec-intents" class="nav-link" data-section="intents">Intents</a></li>
+    <li><a href="#sec-manifest" class="nav-link" data-section="manifest">Manifest &amp; Filtering</a></li>
+    <li><a href="#sec-deeplinks" class="nav-link" data-section="deeplinks">Deep Links</a></li>
+    <li><a href="#sec-uiautomation" class="nav-link" data-section="uiautomation">UI Tree &amp; Agents</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter3-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter3-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Week 3 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">INFO5995 — Cybersecurity</p>
+    <h1>Week 3: Mobile Security</h1>
+    <p class="hero-subtitle">The mobile threat landscape, how Android isolates applications behind a layered stack of guards, how to read an APK and its manifest, and where deep links and automated agents widen the attack surface.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4F1;</span>
+        <span>Android is the gatekeeper</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F512;</span>
+        <span>Sandbox, intents, permissions</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4E6;</span>
+        <span>An APK is a ZIP you can read</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F916;</span>
+        <span>Agents extend the attack surface</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter3-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter3-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 3 lecture deck, <em>Mobile Security</em> (INFO5995, S2 2026)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-platform" class="section" data-track="platform">
+  <h2 class="section-title">Mobile Security in the Age of AI</h2>
+  <p class="section-lead">The deck opens with a warning against complacency: AI does not replace mobile security, it creates <em>new actors</em> that can interact with mobile systems. The valuable data has not moved &mdash; it is still on the phone.</p>
+
+  <div class="concept-box">
+    <p><strong>The organising question for the whole week:</strong> what crosses each boundary in a mobile platform, and who should be allowed through?</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Selected smartphone operating systems (2026)</div>
+    <p><strong>Android ~70%</strong> &mdash; used by Samsung, Xiaomi, Oppo, Vivo, Google Pixel and others; an open-source core (the Android Open Source Project, AOSP) with many vendor variants. <strong>iOS ~30%</strong> &mdash; used only on iPhones. <strong>Everything else &lt;1%</strong> &mdash; HarmonyOS (Huawei), KaiOS, and Linux-based experimental systems such as Sailfish OS and Ubuntu Touch. Sources: gs.statcounter.com and appmagic.rocks, as cited in the deck.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Why the split matters for defence:</strong> the deck makes Android the focus because of its market share and because its architecture is open enough to inspect. Market share sets where attacker effort goes; architecture sets which controls you can actually reason about.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Platform</th><th>Share (2026)</th><th>Ecosystem shape</th><th>Security consequence</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Android</strong></td><td>~70%</td><td>AOSP core plus many vendor variants and app stores</td><td>Vendor customisation adds code and channels that the AOSP security model does not cover by itself</td></tr>
+        <tr><td><strong>iOS</strong></td><td>~30%</td><td>One vendor, one device family, one store</td><td>A smaller, more uniform surface &mdash; but the same class of risk for the data an app already holds</td></tr>
+        <tr><td><strong>HarmonyOS, KaiOS</strong></td><td>&lt;1%</td><td>Regional and low-end ecosystems</td><td>Fewer eyes, shorter support windows, and update paths that are harder to audit</td></tr>
+        <tr><td><strong>Sailfish OS, Ubuntu Touch</strong></td><td>&lt;1%</td><td>Linux-based experimental systems</td><td>Useful for study because their permission and packaging models are visible, not because they are widely attacked</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-share"></div>
+  <script type="application/json" id="ix-share">
+  {
+    "title": "Reported mobile OS share, 2026",
+    "subtitle": "Figures as quoted in the Week 3 deck. Read the bar length as where attacker attention goes, not as a measure of how secure a platform is.",
+    "max": 70,
+    "rows": [
+      { "name": "Android", "value": 70, "display": "~70%" },
+      { "name": "iOS", "value": 30, "display": "~30%" },
+      { "name": "HarmonyOS", "value": 0.5, "display": "<1%" },
+      { "name": "KaiOS", "value": 0.2, "display": "<1%" },
+      { "name": "Sailfish OS / Ubuntu Touch", "value": 0.1, "display": "<1%" }
+    ]
+  }
+  </script>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Why Android is not entirely open source</h3>
+  <p>AOSP is the open core. A shipping phone is not AOSP: vendors add proprietary hardware drivers and their own applications, and Google's own mobile services and app store are separate, licensed components. The <em>security</em> consequence is concrete &mdash; anything added above the core is code you must reason about separately, and anything that ships as a system app carries the privileges of a system app.</p>
+
+  <div id="ix-evolution"></div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team is designing a security review process and can only cover one platform deeply. On what grounds does the deck justify choosing Android?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck claims roughly the opposite: AOSP is an open core, but a shipping phone carries vendor drivers, vendor apps and separately licensed services.">Because every line of Android on a shipping phone is open source and therefore auditable</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Android carries about 70% of the market, so attacker effort concentrates there, and its layered architecture is inspectable enough to reason about boundaries." data-bad="">Because it holds about 70% of the market and its architecture is open enough to inspect</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="iOS is roughly 30% and is still a high-value target. The reason for the Android focus is share plus inspectability, not the claim that iOS is safe.">Because iOS has no meaningful attack surface left to study</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-layers" class="section" data-track="layers">
+  <h2 class="section-title">Android Is the Gatekeeper</h2>
+  <p class="section-lead">Apps are isolated by default. Your app starts isolated from every other app, and Android decides what may cross each boundary. Communication happens only through controlled mechanisms.</p>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 760 250" role="img" aria-label="Three columns: your app, the Android gatekeeper with sandbox, intents and permissions, and protected destinations such as other apps, system resources, camera, files and location">
+      <rect class="node-box" x="16" y="52" width="180" height="150" rx="14"></rect>
+      <text class="node-label" x="106" y="78" style="font-size:11px;">YOUR APP</text>
+      <text class="node-label" x="106" y="104" style="font-size:9.5px;">app process</text>
+      <text class="node-label" x="106" y="124" style="font-size:9.5px;">starts isolated</text>
+      <text class="node-label" x="106" y="144" style="font-size:9.5px;">from every other app</text>
+      <text class="node-label" x="106" y="176" style="font-size:9.5px;">safe by default</text>
+
+      <rect class="node-box-green" x="238" y="34" width="270" height="186" rx="14"></rect>
+      <text class="node-label" x="373" y="58" style="font-size:11px;">ANDROID &#8212; THE GATEKEEPER</text>
+      <rect class="node-box" x="256" y="72" width="234" height="40" rx="9"></rect>
+      <text class="node-label" x="373" y="92" style="font-size:9.5px;">1  SANDBOX &#8212; keeps apps separated</text>
+      <rect class="node-box" x="256" y="120" width="234" height="40" rx="9"></rect>
+      <text class="node-label" x="373" y="140" style="font-size:9.5px;">2  INTENTS &#8212; controls app-to-app messages</text>
+      <rect class="node-box-purple" x="256" y="168" width="234" height="40" rx="9"></rect>
+      <text class="node-label" x="373" y="188" style="font-size:9.5px;">3  PERMISSIONS &#8212; controls resource access</text>
+
+      <rect class="node-box" x="550" y="52" width="194" height="150" rx="14"></rect>
+      <text class="node-label" x="647" y="78" style="font-size:11px;">PROTECTED DESTINATIONS</text>
+      <text class="node-label" x="647" y="104" style="font-size:9.5px;">other apps</text>
+      <text class="node-label" x="647" y="124" style="font-size:9.5px;">system resources</text>
+      <text class="node-label" x="647" y="144" style="font-size:9.5px;">camera &#183; files &#183; location</text>
+      <text class="node-label" x="647" y="176" style="font-size:9.5px;">where things go wrong</text>
+
+      <line class="arrow-line" x1="198" y1="127" x2="234" y2="127"></line>
+      <line class="arrow-line" x1="510" y1="127" x2="546" y2="127"></line>
+    </svg>
+    <p class="arch-caption">Every request leaves your app through a gate that Android controls. A missing or misconfigured control is what exposes an app and its data.</p>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">How an app reaches the hardware</h3>
+  <p>The app asks Android to perform an action; it never controls the device directly. A camera app calls the camera API, Android checks the permission, the framework manages the request, and a hardware abstraction layer translates it for the actual device. <strong>Every layer controls what the layer above it can do.</strong></p>
+
+  <div id="ix-guards"></div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">More privilege means more impact</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Layer</th><th>Trust level</th><th>What a compromise there buys an attacker</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Apps</td><td>lowest</td><td>Whatever that single app can reach: its own files, its granted permissions, the components it can start</td></tr>
+        <tr><td>Framework services</td><td>medium</td><td>The ability to answer permission and intent questions on behalf of the system</td></tr>
+        <tr><td>Native services / HAL</td><td>high</td><td>Direct control of hardware: camera, microphone, radios, sensors</td></tr>
+        <tr><td>Kernel</td><td>highest</td><td>The device itself &mdash; every sandbox, every app and every control at once</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The point of layering:</strong> to control the whole phone, malicious code must escape its sandbox <em>and</em> cross several security boundaries. No single control is the only line of defence &mdash; that is what makes the model survivable when one control fails.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the deck insist that a privileged or system app is a bigger problem than a normal app when it is compromised?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Privilege is transitive in effect: code that runs higher in the stack can answer or bypass the checks that protect everything below it." data-bad="">Because a privileged app can do more and therefore causes more harm if compromised</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Every app still runs inside the sandbox model. The extra risk comes from the privileges it holds, not from being outside the architecture.">Because system apps run outside the sandbox and the permission model</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Install volume is a distribution question. The security argument is about what the compromised code is allowed to do.">Because system apps are installed on more devices</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-threats" class="section" data-track="threats">
+  <h2 class="section-title">Where Can an Android Attack Happen?</h2>
+  <p class="section-lead">Android has several layers, so a threat can target the device, the software running on it, or the access an app is allowed to use. The deck splits that space into three bands.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Band</th><th>Where the attack acts</th><th>Deck examples</th><th>Question that separates it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Hardware</strong></td><td>Physical access and connected devices</td><td>Juice jacking at a compromised public USB charging station</td><td>Can I trust what I am plugging into?</td></tr>
+        <tr><td><strong>Runtime</strong></td><td>Bugs while software is executing</td><td>Buffer overflow, use-after-free, type confusion</td><td>Can crafted input make the program misbehave?</td></tr>
+        <tr><td><strong>Gray zone</strong></td><td>Legitimate app access that creates harm</td><td>Contacts, photo-library and location access that goes beyond what the feature needs</td><td>Was the access necessary, proportionate and used responsibly?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Two ways an attack can enter:</strong> a <em>hardware attack</em> begins when the phone is physically connected to something untrusted &mdash; unsafe connection. A <em>runtime attack</em> begins when software fails while it is running &mdash; unsafe execution. The difference is where the attack starts, not how damaging it turns out to be.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-entry"></div>
+  <script type="application/json" id="ix-entry">
+  {
+    "title": "Rebuild the threat classification",
+    "subtitle": "The deck's order: fix the classification scheme, then apply it to the two attack entries, then confront the case that no bug is involved at all.",
+    "steps": [
+      "Classify by where the threat enters or acts: hardware, runtime or gray zone",
+      "Hardware path — the device or connection is untrusted, so the attack starts at physical contact",
+      "Runtime path — software fails while executing, so crafted input can corrupt memory or state",
+      "Gray zone — a legitimate permission is granted, so ask whether the access was necessary and proportionate",
+      "Countermeasure — add a control at the boundary the threat crossed, and re-test the boundary"
+    ]
+  }
+  </script>
+
+  <div data-ix="matcher" data-ix-src="#ix-attack-defence"></div>
+  <script type="application/json" id="ix-attack-defence">
+  {
+    "title": "Match the attack pattern to its countermeasure",
+    "subtitle": "Click an attack on the left, then the control that addresses it on the right.",
+    "pairs": [
+      ["Juice jacking at a public USB port", "Treat public charging as a data channel: use a power-only adapter or charge from your own supply"],
+      ["Buffer overflow in native code", "Bounds-checking, safer languages and memory-safety hardening so a write cannot leave its buffer"],
+      ["Use-after-free", "Memory ownership discipline and runtime mitigations that make freed memory unusable"],
+      ["Type confusion", "Validate the type of an object before using it, and keep the type system sound across boundaries"],
+      ["Over-broad contact or photo permission", "Data minimisation plus just-in-time, in-context permission requests"],
+      ["An exported activity with no authentication check", "Require authentication before the sensitive action, and export only what must be public"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The gray zone is a design question, not a bug.</strong> WhatsApp may hold contacts access, TikTok or REDNOTE may hold photo-library access, and Google Maps may hold precise location. In each case the deck's question is the same: does the feature need the <em>entire</em> address book, the <em>entire</em> album, location <em>all the time</em>? The user allowed it, but the security question is also whether the access was necessary and proportionate.
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-threat-history"></div>
+  <script type="application/json" id="ix-threat-history">
+  {
+    "title": "How the mobile attack surface kept widening",
+    "subtitle": "Four shifts that each added a new class of mobile threat. Use this as a prompt for the 'what is new here?' exam question.",
+    "events": [
+      { "label": "Physical", "title": "The device as an object", "detail": "Hardware attacks need contact: a hostile charger, a hostile dock, a stolen unlocked phone. The control is physical custody and treating public ports as data channels." },
+      { "label": "Network", "title": "The device as a client", "detail": "Radio interfaces and untrusted networks expose traffic and metadata. The control is transport security and careful certificate validation rather than trust in the network." },
+      { "label": "Platform", "title": "The device as a platform", "detail": "Third-party apps run inside the sandbox and request permissions. The control is the sandbox itself, the permission model, and a signed update path." },
+      { "label": "Agentic", "title": "The device as a target for automation", "detail": "Deep links, exported components and automated agents let requests arrive without a human intent behind them. The control is validating input, checking the session and confirming sensitive actions." }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-4">Show solution</button>
+  <div class="solution-content" id="sol-4">
+    <p><strong>Worked example &mdash; working one incident through the classification.</strong> Scenario: a conference attendee charges a phone at a free public charging kiosk. The kiosk also presents itself as a data device, and the phone's screen offers &ldquo;allow access to phone data&rdquo;. The attendee taps <em>Allow</em>.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Place it in the classification.</strong> Nothing has corrupted memory and no app permission is involved, so this is not a runtime attack and not the gray zone. The attack begins at physical contact with an untrusted device: hardware band, unsafe connection.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Find the boundary that was crossed.</strong> The USB port was treated as a power channel but it is also a data channel. The device, not the attacker, asked the question &mdash; so the control that failed is the one that decides what a connected host may do.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>State the attacker's requirement honestly.</strong> The compromise needs the user to accept a prompt, or a platform flaw that answers it without the user. That is why the countermeasure is framed as trust in the <em>connection</em> and not merely as user education.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--red);">4</div>
+        <div class="step-body"><p><strong>Write the countermeasures at the right level.</strong> Carry your own power supply or a power-only adapter; treat an unfamiliar port as a data port; keep the device locked and decline data prompts; and for managed fleets, restrict what a host connection is permitted to do by policy.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--accent);">5</div>
+        <div class="step-body"><p><strong>Answer the control question.</strong> The deck's question for this band is &ldquo;can I trust what I am plugging into?&rdquo;. The defensible answer is that you cannot know, so the design decision must be to make trust unnecessary &mdash; charge without a data connection.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A banking app's transfer screen opens correctly from a link, but the app never verifies that the person tapping the link is the logged-in account holder. Which band does this failure belong to?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="No memory corruption is involved. The program does exactly what it was written to do — the missing control is an authorization check.">Runtime attack, because the failure happens while the software is executing</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing physical is involved here; the request arrives over a link, not over a cable.">Hardware attack, because the request came from outside the device</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The failure sits in the gray zone: the link and the permission are legitimate, but the access was not proportionate to the user's actual intent, so a session check is missing." data-bad="">Gray zone, because legitimate access is being used to produce an unintended effect</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-apk" class="section" data-track="apk">
+  <h2 class="section-title">An APK Is the App on Disk</h2>
+  <p class="section-lead">Android apps are installed as APK files &mdash; the installable package that carries code, resources and settings from the developer to the device. The developer builds it; the device installs and runs it.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>User-installed apps</h3>
+      <p>WhatsApp, Spotify, and the app your team builds. Installed from a store or a file, running under an ordinary app user ID, limited to what it is granted.</p>
+    </div>
+    <div class="col-card">
+      <h3>System apps</h3>
+      <p>Settings, Phone, and vendor applications. Shipped with the platform, often holding privileges an ordinary app cannot obtain &mdash; which is why a flaw there matters more.</p>
+    </div>
+  </div>
+
+  <div class="diagram-flow">
+    <div class="flow-node">SafeCampus.apk<br><small>your app</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">App bundle<br><small>code + resources + settings</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Android device<br><small>installs and runs it</small></div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Four parts to inspect first</div>
+    <p>An APK behaves like a ZIP archive. For security analysis, start with <code>AndroidManifest.xml</code> (components, permissions and security configuration), <code>classes.dex</code> (compiled application code), <code>res/</code> and <code>assets/</code> (screens, images and packaged files), and <code>META-INF/</code> (signing and certificate information).</p>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-apk-map"></div>
+  <script type="application/json" id="ix-apk-map">
+  {
+    "title": "SafeCampus.apk — the analysis surface",
+    "subtitle": "An APK is a container, not a black box. Click each marker to see what that entry is for and what an analyst does with it.",
+    "svg": "<svg viewBox=\"0 0 760 440\" role=\"img\" aria-label=\"An APK drawn as an open ZIP container with entries for the manifest, compiled bytecode, resources and signing information\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"760\" height=\"440\" fill=\"#f7fbfa\"></rect><rect x=\"40\" y=\"24\" width=\"680\" height=\"54\" rx=\"14\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"2\"></rect><text x=\"64\" y=\"58\" font-family=\"ui-monospace, monospace\" font-size=\"17\" fill=\"#047857\">SafeCampus.apk</text><text x=\"700\" y=\"58\" text-anchor=\"end\" font-family=\"system-ui, sans-serif\" font-size=\"12\" fill=\"#7b829a\">a ZIP container</text><rect x=\"40\" y=\"94\" width=\"3\" height=\"16\" fill=\"#cbd5e1\"></rect><rect x=\"40\" y=\"126\" width=\"3\" height=\"16\" fill=\"#cbd5e1\"></rect><rect x=\"40\" y=\"158\" width=\"3\" height=\"16\" fill=\"#cbd5e1\"></rect><rect x=\"40\" y=\"190\" width=\"3\" height=\"16\" fill=\"#cbd5e1\"></rect><rect x=\"40\" y=\"222\" width=\"3\" height=\"16\" fill=\"#cbd5e1\"></rect><rect x=\"40\" y=\"254\" width=\"3\" height=\"16\" fill=\"#cbd5e1\"></rect><path d=\"M40 102 L40 118 L64 118\" fill=\"none\" stroke=\"#cbd5e1\" stroke-width=\"1.6\"></path><path d=\"M40 134 L40 150 L64 150\" fill=\"none\" stroke=\"#cbd5e1\" stroke-width=\"1.6\"></path><path d=\"M40 166 L40 182 L64 182\" fill=\"none\" stroke=\"#cbd5e1\" stroke-width=\"1.6\"></path><path d=\"M40 198 L40 214 L64 214\" fill=\"none\" stroke=\"#cbd5e1\" stroke-width=\"1.6\"></path><path d=\"M40 230 L40 246 L64 246\" fill=\"none\" stroke=\"#cbd5e1\" stroke-width=\"1.6\"></path><path d=\"M40 262 L40 278 L64 278\" fill=\"none\" stroke=\"#cbd5e1\" stroke-width=\"1.6\"></path><rect x=\"64\" y=\"96\" width=\"656\" height=\"38\" rx=\"10\" fill=\"#ffffff\" stroke=\"#cbd5e1\"></rect><text x=\"84\" y=\"120\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">AndroidManifest.xml</text><text x=\"700\" y=\"120\" text-anchor=\"end\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#7b829a\">components, permissions, config</text><rect x=\"64\" y=\"140\" width=\"656\" height=\"38\" rx=\"10\" fill=\"#ffffff\" stroke=\"#cbd5e1\"></rect><text x=\"84\" y=\"164\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">classes.dex</text><text x=\"700\" y=\"164\" text-anchor=\"end\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#7b829a\">compiled application code</text><rect x=\"64\" y=\"184\" width=\"656\" height=\"38\" rx=\"10\" fill=\"#ffffff\" stroke=\"#cbd5e1\"></rect><text x=\"84\" y=\"208\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">res/layout/</text><text x=\"700\" y=\"208\" text-anchor=\"end\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#7b829a\">app screens and UI</text><rect x=\"64\" y=\"228\" width=\"656\" height=\"38\" rx=\"10\" fill=\"#ffffff\" stroke=\"#cbd5e1\"></rect><text x=\"84\" y=\"252\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">res/raw/</text><text x=\"700\" y=\"252\" text-anchor=\"end\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#7b829a\">packaged data used by the app</text><rect x=\"64\" y=\"272\" width=\"656\" height=\"38\" rx=\"10\" fill=\"#ffffff\" stroke=\"#cbd5e1\"></rect><text x=\"84\" y=\"296\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">res/xml/</text><text x=\"700\" y=\"296\" text-anchor=\"end\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#7b829a\">network security and preferences</text><rect x=\"64\" y=\"316\" width=\"656\" height=\"38\" rx=\"10\" fill=\"#ffffff\" stroke=\"#cbd5e1\"></rect><text x=\"84\" y=\"340\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">META-INF/</text><text x=\"700\" y=\"340\" text-anchor=\"end\" font-family=\"system-ui, sans-serif\" font-size=\"11.5\" fill=\"#7b829a\">APK signing and certificates</text><rect x=\"40\" y=\"386\" width=\"680\" height=\"32\" rx=\"10\" fill=\"#eef7f4\" stroke=\"#059669\" stroke-width=\"1\" stroke-dasharray=\"5 4\"></rect><text x=\"380\" y=\"407\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"12\" fill=\"#047857\">security analysis reads configuration and code together</text></svg>",
+    "points": [
+      { "x": 8.4, "y": 19.5, "label": "AndroidManifest.xml", "detail": "The app's identity card and security map: which components exist, which one starts first, which permissions are requested, and which components other apps are allowed to reach." },
+      { "x": 8.4, "y": 32.3, "label": "classes.dex", "detail": "Compiled application code. Decompile it to read source-like logic — remember that the result approximates, and never exactly reproduces, the original source." },
+      { "x": 8.4, "y": 45.0, "label": "res/layout/", "detail": "The XML that describes each screen. Compare it with the activity code to see what the user is shown versus what the code actually does." },
+      { "x": 8.4, "y": 57.7, "label": "res/raw/ and res/xml/", "detail": "Packaged data and configuration. This is where network-security settings, hard-coded endpoints and bundled assets appear — a common place to find secrets that should have stayed on a server." },
+      { "x": 8.4, "y": 70.5, "label": "META-INF/", "detail": "Signing and certificate information: who built and signed this package, and whether the signature still covers what you are reading." }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Security analysis focuses on both configuration and code.</strong> A manifest that exports a component is not a vulnerability on its own, and neither is code that computes a price. The finding appears where a configuration decision and a code path meet.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An analyst has one hour and an unfamiliar APK. According to the deck's ordering, where should the reading start?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The layout describes what the screen looks like. It says nothing about who may reach that screen, which is the question that decides exposure.">In res/layout/, to see every screen the app can display</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck's assignment rule is to open the manifest before the Java code: it tells you what exists, what starts first, what is requested and what is exposed." data-bad="">In AndroidManifest.xml, to establish what exists and what is exposed</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="META-INF tells you who signed the package and whether it is intact. Useful for provenance, but it will not tell you which components a stranger may start.">In META-INF/, to confirm the signing certificate first</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-decompile" class="section" data-track="decompile">
+  <h2 class="section-title">Decompiling classes.dex</h2>
+  <p class="section-lead">Developers write readable Java or Kotlin; an APK carries compiled bytecode for Android to run. To understand that bytecode, you decompile it back into readable, source-like code.</p>
+
+  <div class="diagram-flow">
+    <div class="flow-node">Source code<br><small>readable Java / Kotlin</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Compiler<br><small>converts the code</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">classes.dex<br><small>compiled bytecode</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Decompiler<br><small>makes it readable again</small></div>
+  </div>
+
+  <div class="code-block"><code>jadx -d decompiled/ SafeCampus.apk</code></div>
+
+  <p>JADX reads the APK's bytecode and writes a folder of readable source-like files. The direction of the transformation matters for how much you can trust the result:</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Artefact</th><th>Who produced it</th><th>What it preserves</th><th>What it loses</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Original source</td><td>The developer</td><td>Names, comments, structure, intent</td><td>&mdash;</td></tr>
+        <tr><td><code>classes.dex</code></td><td>The compiler</td><td>Executable behaviour</td><td>Comments, formatting, and any name the compiler chose to strip or shorten</td></tr>
+        <tr><td>Decompiled output</td><td>The decompiler</td><td>Readable control flow and most names</td><td>Exact fidelity: optimised or obfuscated code can be reconstructed differently, or not at all</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-decompile"></div>
+
+  <div class="insight-box">
+    <strong>Security takeaway, in the deck's own three steps:</strong> if code is delivered to a user's device, assume that someone can inspect it. Mobile apps can be reverse engineered; compiled code is not secret; and you should never store sensitive secrets in the client app. Protect secrets on trusted servers &mdash; not inside the APK.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team hides an API key by splitting it across three string constants and reassembling it at runtime. What is the correct assessment?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Obfuscation raises the effort, not the guarantee. The key still ships inside the package, so anyone willing to read the decompiled code can recover it.">The key is safe, because decompilers cannot reconstruct strings built at runtime</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. If code is delivered to the device, assume it can be inspected. Any secret that ships in the APK is recoverable, so the fix is architectural: keep the secret on a trusted server." data-bad="">The key is still recoverable, so the secret belongs on a trusted server instead of in the client</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The signature proves who built the package and that it was not modified. It does not hide anything inside it from the person who installed it.">The key is safe as long as the APK signature verifies on install</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-components" class="section" data-track="components">
+  <h2 class="section-title">The Four App Components</h2>
+  <p class="section-lead">Every Android app is assembled from four kinds of component, each with a different job. The lecture concentrates on activities, because a screen is where user intent and attacker intent meet.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Component</th><th>Job</th><th>Deck example</th><th>What is at risk if it is reachable</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Activities</strong></td><td>Screens the user interacts with</td><td>Login, home, settings</td><td>A screen that performs a sensitive action on open, without checking who opened it</td></tr>
+        <tr><td><strong>Services</strong></td><td>Work in the background</td><td>Music playback</td><td>Unbounded background work: battery, data, and actions taken without a visible screen</td></tr>
+        <tr><td><strong>Broadcast receivers</strong></td><td>Respond to system events</td><td>Low-battery alert</td><td>A forged or replayed event triggering a response the developer assumed was system-originated</td></tr>
+        <tr><td><strong>Content providers</strong></td><td>Share data between apps</td><td>Contacts or calendar</td><td>Bulk data exposure: one misconfigured provider can leak a whole dataset, not one record</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Focus: activities.</strong> An activity combines a screen layout with the code that controls it. <code>activity_login.xml</code> says what the screen looks like; <code>Login.java</code> says what the screen does; <code>AndroidManifest.xml</code> tells Android which activities the app can start. In SafeCampus those are <code>MainActivity</code>, <code>Login</code> and <code>Profile</code>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>SafeCampus activity</th><th>Screen purpose</th><th>Why an analyst looks at it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>MainActivity</code></td><td>Launcher entry point</td><td>Establishes what Android starts first and how the rest of the app is reached</td></tr>
+        <tr><td><code>Login</code></td><td>Collects username and password</td><td>Where credentials are handled: check for storage, logging and transport mistakes</td></tr>
+        <tr><td><code>Profile</code></td><td>Shows account details</td><td>A sensitive screen: decide whether it requires an authenticated session before it will render</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about an activity is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A layout is only the appearance. The behaviour that decides whether data is safe lives in the activity code and the manifest declaration.">An activity is a screen layout, so its security depends on how the layout looks</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: activity = screen + controlling code, declared in the manifest so Android knows it can be started. Security depends on who can start it and what the code checks." data-bad="">An activity is a screen layout plus the code that controls it, declared in the manifest</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Activities render screens; they are not a data-sharing mechanism. Sharing data between apps is the job of a content provider.">An activity is the mechanism Android uses to share data between apps</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-intents" class="section" data-track="intents">
+  <h2 class="section-title">Intents: One Tap Can Leave Your App</h2>
+  <p class="section-lead">An intent is the message Android delivers to another screen or app. It is the request, not the destination &mdash; and that distinction is where the security questions start.</p>
+
+  <div class="def-box">
+    <div class="def-label">Mental model</div>
+    <p><strong>app &rarr; intent &rarr; destination.</strong> Tapping &ldquo;share photo&rdquo; in your app builds an intent with an action (<code>SHARE</code>) and data (<code>photo.jpg</code>). Android, not your app, finds a destination: the camera, photos, email, WhatsApp or Instagram.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Explicit intent</h3>
+      <p>One exact destination. Your code names the activity directly &mdash; for example, the login button starting <code>LoginActivity</code>. There is no ambiguity about who receives the message.</p>
+    </div>
+    <div class="col-card">
+      <h3>Implicit intent</h3>
+      <p>Your code describes the action, not the app. Android offers the choices &mdash; a chooser for Gmail, Photos or a share target. The receiver is decided by the system at runtime.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The deck's own question &mdash; &ldquo;which type is more dangerous?&rdquo; &mdash; has a precise answer:</strong> neither intent type is dangerous by itself. Security depends on <em>who can start the activity</em> and on whether the activity checks authentication. An activity with no lock is the real danger, whichever kind of intent reaches it.
+  </div>
+
+  <div class="diagram-flow">
+    <div class="flow-node">Unsafe path<br><small>other app &rarr; intent &rarr; sensitive activity</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">No auth check<br><small>screen renders and acts</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Access granted<br><small>to whoever asked</small></div>
+  </div>
+
+  <div class="diagram-flow">
+    <div class="flow-node">Protected path<br><small>any caller &rarr; intent</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Login / session check<br><small>is this user authorised?</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Activity<br><small>acts on behalf of that user</small></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; deciding whether an intent design is safe.</strong> Scenario: the SafeCampus app has a <code>Profile</code> activity that loads the signed-in student's record and a <code>ResetPassword</code> activity that takes the new password from the intent.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Ask who can start it.</strong> Read the manifest: is the component <code>exported</code>, and does it carry an intent filter that other apps can match? An explicit intent from inside the app is not the only route in.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Ask what the activity checks.</strong> <code>Profile</code> should confirm there is a valid session and that the session owns the record being requested. Rendering a screen is not the same as authorising the data behind it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Treat every extra as untrusted input.</strong> An intent can carry parameters that arrive from outside the app. A password supplied by an intent is attacker-controlled input, so it must never be accepted as proof of identity.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--red);">4</div>
+        <div class="step-body"><p><strong>State the verdict.</strong> <code>Profile</code> is safe only if it authenticates and authorises before rendering. <code>ResetPassword</code> is unsafe by construction: because possession of an intent is not proof of anything, the operation must require a logged-in session and an out-of-band confirmation.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--accent);">5</div>
+        <div class="step-body"><p><strong>Name the countermeasure that generalises.</strong> Export only what must be public; authenticate before acting; validate anything that crossed a boundary. The intent type never had to change.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-manifest" class="section" data-track="manifest">
+  <h2 class="section-title">The Manifest: Identity Card and Security Map</h2>
+  <p class="section-lead"><code>AndroidManifest.xml</code> tells Android what exists, what starts first, and what outsiders can reach. The deck's instruction is blunt: <strong>open the manifest before reading the Java code.</strong></p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question</th><th>Where the answer lives</th><th>What you are looking for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. What exists?</td><td><code>&lt;activity&gt;</code>, <code>&lt;service&gt;</code>, <code>&lt;receiver&gt;</code>, <code>&lt;provider&gt;</code></td><td>The full inventory of components the app can be made to run</td></tr>
+        <tr><td>2. What starts first?</td><td>The launcher activity</td><td>The entry point a user reaches, and the route everything else hangs from</td></tr>
+        <tr><td>3. What is requested?</td><td><code>&lt;uses-permission&gt;</code></td><td>Camera, location, storage, network and the rest of the capability list</td></tr>
+        <tr><td>4. What is exposed?</td><td><code>exported</code> and intent filters</td><td>Which components another app can start &mdash; the part of the app that is genuinely public</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="algo-card">
+    <h4>Decode an intent filter with three questions</h4>
+    <div class="algo-box">
+      <p><strong>1. What action?</strong> <code>&lt;action android:name="&hellip;" /&gt;</code> &mdash; MAIN, VIEW, SEND, DIAL and so on. The action says what the sender wants done.</p>
+      <p><strong>2. How is it used?</strong> <code>&lt;category android:name="&hellip;" /&gt;</code> &mdash; LAUNCHER, DEFAULT, BROWSABLE. The category says how the component should be treated.</p>
+      <p><strong>3. What data?</strong> <code>&lt;data &hellip; /&gt;</code> &mdash; a URL scheme, a file type, a phone number. The data says which inputs will match.</p>
+    </div>
+    <p class="algo-facts"><span class="fact-pill">MAIN = starting action</span> <span class="fact-pill">LAUNCHER = appears in the app launcher</span> <span class="fact-pill">exported="true" = public app entry point</span></p>
+  </div>
+
+  <div class="callout">
+    <strong>The rule that follows:</strong> look for MAIN + LAUNCHER first, then check whether the exported access is expected and safe. A public entry point is normal for a launcher activity and abnormal for a screen that moves money.
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-triage"></div>
+  <script type="application/json" id="ix-triage">
+  {
+    "title": "APK triage: the order the deck uses",
+    "subtitle": "Configuration first, then code. Each stage narrows what the next one has to explain.",
+    "nodes": [
+      { "label": "Open the manifest", "note": "Inventory components, find the launcher activity, list requested permissions." },
+      { "label": "Map exposure", "note": "For each component, decide whether exported access is expected. Anything public that should not be is the first finding." },
+      { "label": "Decode intent filters", "note": "For each filter, read action, category and data, then ask which inputs an outside caller controls." },
+      { "label": "Read the code behind exposed components", "note": "Decompile and follow the path from the entry point: what does it trust, what does it check, what does it act on?" },
+      { "label": "Check data at rest and in transit", "note": "Look for secrets in the package, unvalidated endpoints, and anything sensitive written to storage or logs." },
+      { "label": "Write the finding with its countermeasure", "note": "Each finding pairs one boundary with one control: export less, authenticate first, validate input, move the secret to a server." }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; triaging an exported activity.</strong> Scenario: a manifest excerpt exports a <code>TransferActivity</code> and declares a filter with <code>MAIN</code>, <code>LAUNCHER</code> and a custom <code>myapp://transfer</code> data scheme. The activity's code reads an <code>amount</code> and a <code>toAccount</code> value from the intent.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Sort the questions.</strong> What exists: an activity. What starts first: check whether this activity also holds the launcher action, or whether a different activity does. What is requested: read the permission list. What is exposed: an exported activity with a browsable data scheme.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Decode the filter.</strong> Action: <code>MAIN</code> is the starting action, but a custom <code>myapp://</code> scheme means any app &mdash; or any web page that can trigger the scheme &mdash; can reach it. Data: the scheme plus whatever the caller appends. That appended part is attacker-controlled.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Read the code path.</strong> The activity parses <code>amount</code> and <code>toAccount</code> and calls the transfer routine. Two things must be true before this is acceptable: the values must be validated against an expected form, and the caller must be an authenticated session permitted to move that money.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--red);">4</div>
+        <div class="step-body"><p><strong>The finding.</strong> A deep link that opens a transfer screen must not send money merely because the screen opened. If authentication, authorisation or confirmation is missing, the harmless-looking exported activity is a way to act as the user.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--accent);">5</div>
+        <div class="step-body"><p><strong>The countermeasures, in order of strength.</strong> Do not export a component that need not be public. If it must be public, require an authenticated and authorised session before the screen renders. Validate every parameter. And require explicit user confirmation for the sensitive action itself.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An activity is exported and carries an intent filter with action <code>MAIN</code> and category <code>LAUNCHER</code>. What is the most defensible reading?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. MAIN + LAUNCHER + exported is exactly the pattern of a public starting point — the component a user is meant to reach. That is expected, and it is still worth checking what the activity does on open." data-bad="">It is the app's public starting point: expected for a launcher activity, but still worth checking what it does on open</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Exported plus a launcher filter is the normal pattern for an app entry point, not evidence of a defect. The defect would be what the entry point is allowed to do unchecked.">It is automatically a vulnerability, because exported components can be started by any app</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The manifest does not carry that information. Read the permission list with &lt;uses-permission&gt;, and check exposure separately through exported and intent filters.">It tells you the activity requests no dangerous permissions</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-deeplinks" class="section" data-track="deeplinks">
+  <h2 class="section-title">Deep Links Are Untrusted Input</h2>
+  <p class="section-lead">A deep link is a URL that opens a specific screen inside an app; Android matches it using intent filters. The useful framing for security is not &ldquo;convenience feature&rdquo; but &ldquo;an input channel that anyone can write to&rdquo;.</p>
+
+  <div class="diagram-flow">
+    <div class="flow-node">1 tap coupon link<br><small>myapp://discount?code=&hellip;</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Android matches the intent filter<br><small>scheme + host + path</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">2 the matching screen opens<br><small>shopping app &rarr; discount screen</small></div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The rule the deck states plainly</div>
+    <p><strong>Treat every deep link as untrusted input.</strong> Parameters can be changed by anyone. A link may open a sensitive screen, but it must never bypass the security checks that screen depends on.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Check</th><th>Question to answer</th><th>What failing it looks like</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1. Validate</strong></td><td>Is the URL and the input in it what the app expects?</td><td>A parameter whose value the developer never imagined reaches business logic directly</td></tr>
+        <tr><td><strong>2. Authenticate</strong></td><td>Is the user logged in, and are they authorised for this action?</td><td>A sensitive screen renders for whoever followed the link</td></tr>
+        <tr><td><strong>3. Confirm</strong></td><td>For a sensitive action, has the user agreed to this specific action?</td><td>The screen opening <em>is</em> the action &mdash; a transfer happens because a link was tapped</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The sentence that covers the whole section:</strong> validate input + check session + confirm sensitive actions. Skipping any one of the three converts a feature that saves a tap into a way to act as the user &mdash; because attackers may manipulate the inputs, or simply trick a user into an action they did not intend.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A deep link opens a password-reset screen with the new password supplied as a URL parameter. Which missing check does this violate most directly?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Validation matters, but the deeper problem is that a URL parameter is being treated as proof of the user's identity and intent. Checking the format would not fix that.">Validation &mdash; the password string was not checked against an expected format</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The session and the confirmation are missing: whoever composes the link controls the password change, so possession of the link is being treated as authorisation. Parameters are not identity." data-bad="">Session and confirmation &mdash; the link is being treated as authorisation for a sensitive account action</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The scheme is only what matched the intent filter. Even a perfectly registered deep link is still attacker-writable input.">Registration &mdash; the app failed to register the link scheme with the platform</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-uiautomation" class="section" data-track="uiautomation">
+  <h2 class="section-title">The UI Tree and Mobile Agents</h2>
+  <p class="section-lead">A mobile agent is AI that observes and interacts with a mobile app automatically. It repeats one simple loop, and the loop is what makes it useful &mdash; and what makes it part of the attack surface.</p>
+
+  <div id="ix-agent"></div>
+
+  <div class="def-box">
+    <div class="def-label">UI tree</div>
+    <p>A machine-readable map of the screen's elements and their properties. Each element becomes structured data: <code>TEXT</code> (Gmail), <code>TYPE</code> (button or image), <code>CLICKABLE</code> (true or false), <code>BOUNDS</code> (screen location). The agent then knows what is visible, what is clickable, and where to act.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Loop stage</th><th>What the agent does</th><th>What it needs from the app</th><th>Security question</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Observe</strong></td><td>Reads the screen and its UI elements</td><td>An accessible UI tree with labelled elements</td><td>Does the exposed metadata reveal anything the screen did not intend to show?</td></tr>
+        <tr><td><strong>Decide</strong></td><td>Chooses the next action</td><td>Element roles and state that make the choice unambiguous</td><td>Can a label be crafted so the agent chooses the wrong action?</td></tr>
+        <tr><td><strong>Act</strong></td><td>Taps, types, swipes or opens</td><td>A target that is genuinely the element it appears to be</td><td>Is the action authorised for this user, at this moment?</td></tr>
+        <tr><td><strong>Repeat</strong></td><td>Observes the result and continues</td><td>A stable, honest screen state after each action</td><td>Can the loop be driven somewhere the user never agreed to go?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Security takeaway:</strong> automation can inspect and operate the UI at scale, and UI structure may expose sensitive labels or state. Treat UI metadata and automated actions as part of the app's attack surface &mdash; a screen that is safe for a human to look at is not automatically safe for a machine to enumerate.
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>What agents make easier to defend</h4>
+      <ul>
+        <li>Consistent labelling and accessibility metadata, because automation needs to find elements reliably</li>
+        <li>Explicit confirmation steps, because a machine can repeat an action far faster than a person</li>
+        <li>Server-side authorisation, because the agent can reach every screen the UI tree exposes</li>
+      </ul>
+    </div>
+    <div class="why-card con" style="background:var(--red-bg); border-color:rgba(220,38,38,0.3);">
+      <h4>What agents make easier to attack</h4>
+      <ul>
+        <li>Volume: an automated actor tries every reachable screen, not the two a user would find</li>
+        <li>Metadata leakage: labels and state can carry information the visible screen hides</li>
+        <li>Intent confusion: an action taken without a human behind it is hard to distinguish from one the user meant</li>
+      </ul>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; hardening an app for automated clients.</strong> Scenario: a university app exposes a UI tree with labelled buttons for <em>Enrol</em>, <em>Drop unit</em> and <em>Pay fees</em>. A student builds an agent that reads the tree and completes enrolment automatically.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Identify what the agent can actually reach.</strong> Everything the UI tree exposes. The tree is the attack surface: an element the agent can find is an element it can operate, whether or not a human would ever look for it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Separate reversible from irreversible actions.</strong> Enrolling and dropping a unit have deadlines and financial consequences; paying fees moves money. The design response differs per action, so classify before defending.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Move authorisation off the screen.</strong> A UI check is a usability aid, not a security control. The server must re-check the session, the student's eligibility and the deadline for every request, because a client &mdash; human or agent &mdash; can be scripted.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--red);">4</div>
+        <div class="step-body"><p><strong>Require explicit confirmation for the sensitive step only.</strong> Confirming everything trains people to confirm blindly. Confirming the fee payment, with the amount and the account restated, keeps the check meaningful.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--accent);">5</div>
+        <div class="step-body"><p><strong>Review the metadata you publish.</strong> Every label, content description and state in the UI tree is data. If a label exposes an internal status or an identifier, remove it from the tree rather than relying on nobody reading it.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the deck call UI metadata part of the app's attack surface?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Metadata does not change the app's permissions. The exposure is informational: it reveals structure, labels and state to anything that can read the tree.">Because exposing a UI tree grants the reader extra Android permissions</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The UI tree is machine-readable structure, so anything in it can be read and acted on at scale — and labels or state may reveal more than the visible screen does." data-bad="">Because the tree is machine-readable: anything in it can be read and acted on at scale, and it may reveal labels or state the screen hides</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Automation is the topic, not the remedy. The deck's point is that automated access widens what must be defended, not that it removes the risk.">Because automation makes the app's sandbox unnecessary</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 3 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Android is the gatekeeper</h4>
+        <p>Apps start isolated. Android decides what crosses each boundary through three controls: the sandbox, intents and permissions. Safe by default &mdash; until a control is missing or misconfigured.</p>
+        <div class="flip-hint">Architecture</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Classify by entry, not by damage</h4>
+        <p>Hardware (unsafe connection), runtime (unsafe execution), gray zone (legitimate access that creates harm). Each band has its own question and its own countermeasure.</p>
+        <div class="flip-hint">Threat model</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>An APK is readable</h4>
+        <p>Manifest, dex, resources, signing information. Decompile the dex to inspect logic &mdash; and assume that anyone can, which is why secrets belong on a trusted server.</p>
+        <div class="flip-hint">Analysis</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Intent type is not the risk</h4>
+        <p>Explicit or implicit, the question is who can start the component and whether it checks authentication. The manifest tells you who; the code tells you whether.</p>
+        <div class="flip-hint">Components</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Deep links are untrusted input</h4>
+        <p>Validate input, check the session, confirm sensitive actions. A link may open a sensitive screen; it must never bypass the checks that screen relies on.</p>
+        <div class="flip-hint">Input</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Agents widen the surface</h4>
+        <p>The UI tree turns a screen into structured data. Automation can inspect and act at scale, so UI metadata and automated actions are part of what must be defended.</p>
+        <div class="flip-hint">Automation</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Rapid fire: say the answer before you flip",
+    "subtitle": "Six questions the Week 3 material should let you answer without notes.",
+    "cards": [
+      { "front": "Why can a shipping Android phone never be fully open source?", "back": "AOSP is the open core, but a device adds proprietary drivers, vendor applications, and separately licensed services. Anything added above the core is code that must be reasoned about on its own.", "hint": "Platform" },
+      { "front": "What are the three bands of the mobile threat classification?", "back": "Hardware — physical access and connected devices. Runtime — bugs while software is executing. Gray zone — legitimate app access that creates harm.", "hint": "Threats" },
+      { "front": "Name the four parts of an APK an analyst inspects first.", "back": "AndroidManifest.xml for components, permissions and configuration; classes.dex for compiled code; res/ and assets/ for screens and packaged files; META-INF/ for signing and certificates.", "hint": "APK" },
+      { "front": "What does decompiling classes.dex give you, and what does it not give you?", "back": "Readable, source-like code for inspecting the app's logic. It does not recreate the exact original source — optimised or obfuscated code can be reconstructed differently or not at all.", "hint": "Decompilation" },
+      { "front": "Which intent type is more dangerous?", "back": "Neither. Security depends on who can start the target component and whether that component checks authentication. An activity with no lock is the danger, not the intent that reaches it.", "hint": "Intents" },
+      { "front": "State the deep-link security rule in three checks.", "back": "Validate the input, check that the user is logged in and authorised, and confirm explicitly before any sensitive action. A link may open a sensitive screen but must never bypass these checks.", "hint": "Deep links" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which pair correctly links a Week 3 concept to its security consequence?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Privilege is the variable that decides impact, which is why the layer a flaw sits in matters as much as the flaw itself." data-bad="">A privileged component sits higher in the stack, so compromising it has greater consequences</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Sandboxing is what separates apps. Its purpose is isolation, not to make reverse engineering impossible — decompilation is exactly why compiled code is not secret.">The app sandbox prevents reverse engineering, which is why dex code is secret</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A deep link is untrusted input regardless of its scheme. Validation, session checks and confirmation are required precisely because the link itself can never establish trust.">A deep link is safe when its scheme is registered with the platform</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page converts this week's vocabulary into the sandbox and permission model, an attack-surface formula, and the storage and secret-handling decisions you will be asked to justify. Then attempt the Quiz Hub and the Flashcards for Week 3.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you draw the three columns of the gatekeeper model, name the four APK parts, and state the three deep-link checks without looking?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Practice the analysis order</h3>
+      <p>Take any Android app you use and predict its manifest: what exists, what starts first, what is requested, what is exposed. The prediction is the exam skill.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

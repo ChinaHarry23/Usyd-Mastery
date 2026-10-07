@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3: Networking Traversal — COMP5618</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter3-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 study guide for COMP5618: routing between subnets and ACLs, the TCP three-way handshake and UDP, port scanning and firewall behaviour, NAT and tunnel interfaces, proxies and SSH port forwarding, secure network design, and the seven stages of a penetration test.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 3: Networking Traversal — COMP5618">
+<meta property="og:description" content="Week 3 study guide for COMP5618: routing between subnets and ACLs, the TCP three-way handshake and UDP, port scanning and firewall behaviour, NAT and tunnel interfaces, proxies and SSH port forwarding, secure network design, and the seven stages of a penetration test.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F6E1;</span>
+      <h2>Week 3</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-traversal" class="nav-link" data-section="traversal">Networks Aren't Flat</a></li>
+    <li><a href="#sec-transport" class="nav-link" data-section="transport">TCP, UDP &amp; IP</a></li>
+    <li><a href="#sec-scanning" class="nav-link" data-section="scanning">Port Scanning</a></li>
+    <li><a href="#sec-nat" class="nav-link" data-section="nat">NAT &amp; VPN Tunnels</a></li>
+    <li><a href="#sec-tunnels" class="nav-link" data-section="tunnels">Proxies &amp; SSH Forwards</a></li>
+    <li><a href="#sec-design" class="nav-link" data-section="design">Secure Design</a></li>
+    <li><a href="#sec-pentest" class="nav-link" data-section="pentest">Penetration Testing</a></li>
+    <li><a href="#sec-recon" class="nav-link" data-section="recon">Information Gathering</a></li>
+    <li><a href="#sec-exploit" class="nav-link" data-section="exploit">Exploit to Report</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter3-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter3-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 3 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5618 — Applied Cybersecurity</p>
+    <h1>Week 3: Networking Traversal</h1>
+    <p class="hero-subtitle">Moving up the stack: IP addressing and routing, TCP and UDP behaviour, NAT, port scanning, and how firewalls and ACLs shape what an attacker can actually reach.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F500;</span>
+        <span>Routes decide direction, not just reach</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F91D;</span>
+        <span>Three-way handshake &rarr; scan evidence</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F517;</span>
+        <span>Pivot with SSH, SOCKS and VPN</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6E1;</span>
+        <span>Segment, deny by default, monitor</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter3-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter3-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 3 lecture deck (<em>Networking Traversal</em>) and Tutorial 3 (pfSense routing, Snort and tcpdump between the developer and server networks)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-traversal" class="section" data-track="traversal">
+  <h2 class="section-title">Networks Aren't Flat: Routes Between Subnets</h2>
+  <p class="section-lead">Week 2 ended at the data-link layer, where everything in one broadcast domain can hear everything else. Week 3 starts where that stops being true: the moment a router sits between two subnets, reachability becomes a policy decision.</p>
+
+  <div class="concept-box">
+    <p><strong>The deck's opening claim:</strong> not all subnets are equal &mdash; a router's rules decide <em>who can talk to whom, and in which direction</em>. Reachability is not symmetric, and the asymmetry is deliberate.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>Firewalking</strong> is the technique used to discover how routes and <strong>Access Control Lists (ACLs)</strong> are configured on the routers between you and a target. It matters because the same host can be reachable from one subnet and invisible from another.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Route in the deck</th><th>What is permitted</th><th>What is deliberately not permitted</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Admin &rarr; everywhere</strong></td><td>The admin subnet may <em>initiate</em> connections to any other subnet</td><td>That does not automatically mean responses can traverse back &mdash; the reverse direction is its own rule</td></tr>
+        <tr><td><strong>Finance &rarr; Printer</strong></td><td>Finance may open new connections to the printer network</td><td>Nothing: replies from printer back to finance are allowed, but <em>only as replies</em>, never as new connections</td></tr>
+        <tr><td><strong>Printer &rarr; anything</strong></td><td>Nothing &mdash; connections cannot originate in the printer network at all</td><td>This prevents a rogue or compromised printer from initiating connections and scanning hosts in the finance network</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Read the direction, not the diagram.</strong> &ldquo;Finance can reach the printer&rdquo; and &ldquo;the printer can reach finance&rdquo; are two different rules. A stateful firewall can grant the first and still refuse the second, because the reply is matched against the connection it belongs to rather than treated as a new flow.
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-topology"></div>
+  <script type="application/json" id="ix-topology">
+  {
+    "title": "One router, three subnets, three different answers",
+    "subtitle": "Click each marker to see which rule applies there and what an attacker learns from it.",
+    "svg": "<svg viewBox=\"0 0 820 470\" role=\"img\" aria-label=\"Three subnets joined by a pfSense router whose ACLs permit, deny and answer-only paths are marked\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"ahg\" markerWidth=\"10\" markerHeight=\"10\" refX=\"8\" refY=\"5\" orient=\"auto\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#059669\"></path></marker><marker id=\"ahr\" markerWidth=\"10\" markerHeight=\"10\" refX=\"8\" refY=\"5\" orient=\"auto\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#dc2626\"></path></marker><marker id=\"ahd\" markerWidth=\"10\" markerHeight=\"10\" refX=\"8\" refY=\"5\" orient=\"auto\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#94a3b8\"></path></marker><marker id=\"ahb\" markerWidth=\"10\" markerHeight=\"10\" refX=\"8\" refY=\"5\" orient=\"auto\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#2563eb\"></path></marker></defs><rect x=\"0\" y=\"0\" width=\"820\" height=\"470\" fill=\"#fffafc\"></rect><rect x=\"322\" y=\"44\" width=\"176\" height=\"70\" rx=\"12\" fill=\"#f1f5f9\" stroke=\"#64748b\" stroke-width=\"1.6\"></rect><text x=\"410\" y=\"72\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#334155\">WAN / internet</text><text x=\"410\" y=\"93\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#64748b\">inbound: not permitted</text><rect x=\"26\" y=\"46\" width=\"200\" height=\"152\" rx=\"14\" fill=\"#e0f2fe\" fill-opacity=\"0.35\" stroke=\"#0284c7\" stroke-width=\"1.6\" stroke-dasharray=\"7 5\"></rect><text x=\"40\" y=\"68\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#0284c7\">ADMIN 10.10.1.0/24</text><rect x=\"44\" y=\"82\" width=\"76\" height=\"46\" rx=\"8\" fill=\"#ffffff\" stroke=\"#0284c7\" stroke-width=\"1.5\"></rect><text x=\"82\" y=\"101\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">ws-01</text><text x=\"82\" y=\"117\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">.11</text><rect x=\"132\" y=\"82\" width=\"76\" height=\"46\" rx=\"8\" fill=\"#ffffff\" stroke=\"#0284c7\" stroke-width=\"1.5\"></rect><text x=\"170\" y=\"101\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">ws-02</text><text x=\"170\" y=\"117\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">.12</text><rect x=\"44\" y=\"140\" width=\"164\" height=\"44\" rx=\"8\" fill=\"#ffffff\" stroke=\"#0284c7\" stroke-width=\"1.5\"></rect><text x=\"126\" y=\"159\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">admin-jump</text><text x=\"126\" y=\"175\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">10.10.1.50 : ssh</text><rect x=\"594\" y=\"46\" width=\"200\" height=\"152\" rx=\"14\" fill=\"#dcfce7\" fill-opacity=\"0.5\" stroke=\"#059669\" stroke-width=\"1.6\" stroke-dasharray=\"7 5\"></rect><text x=\"608\" y=\"68\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#059669\">FINANCE 10.10.2.0/24</text><rect x=\"612\" y=\"82\" width=\"76\" height=\"46\" rx=\"8\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.5\"></rect><text x=\"650\" y=\"101\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">erp-01</text><text x=\"650\" y=\"117\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">.20</text><rect x=\"700\" y=\"82\" width=\"76\" height=\"46\" rx=\"8\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.5\"></rect><text x=\"738\" y=\"101\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">db-02</text><text x=\"738\" y=\"117\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">:3306</text><rect x=\"612\" y=\"140\" width=\"164\" height=\"44\" rx=\"8\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.5\"></rect><text x=\"694\" y=\"159\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">files-01</text><text x=\"694\" y=\"175\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">10.10.2.30 : 445</text><rect x=\"594\" y=\"266\" width=\"200\" height=\"152\" rx=\"14\" fill=\"#fef3c7\" fill-opacity=\"0.55\" stroke=\"#b45309\" stroke-width=\"1.6\" stroke-dasharray=\"7 5\"></rect><text x=\"608\" y=\"288\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#b45309\">PRINTER 10.10.3.0/24</text><rect x=\"612\" y=\"302\" width=\"76\" height=\"46\" rx=\"8\" fill=\"#ffffff\" stroke=\"#b45309\" stroke-width=\"1.5\"></rect><text x=\"650\" y=\"321\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">prn-01</text><text x=\"650\" y=\"337\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">.11</text><rect x=\"700\" y=\"302\" width=\"76\" height=\"46\" rx=\"8\" fill=\"#ffffff\" stroke=\"#b45309\" stroke-width=\"1.5\"></rect><text x=\"738\" y=\"321\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">prn-02</text><text x=\"738\" y=\"337\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">.12</text><rect x=\"612\" y=\"360\" width=\"164\" height=\"44\" rx=\"8\" fill=\"#ffffff\" stroke=\"#b45309\" stroke-width=\"1.5\"></rect><text x=\"694\" y=\"379\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#334155\">prn-web</text><text x=\"694\" y=\"395\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#64748b\">10.10.3.50 : 80</text><rect x=\"322\" y=\"150\" width=\"176\" height=\"164\" rx=\"14\" fill=\"#ffffff\" stroke=\"#be123c\" stroke-width=\"2\"></rect><text x=\"410\" y=\"176\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#be123c\">pfSense router</text><rect x=\"338\" y=\"188\" width=\"46\" height=\"24\" rx=\"6\" fill=\"#f1f5f9\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"361\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#475569\">LAN</text><rect x=\"388\" y=\"188\" width=\"52\" height=\"24\" rx=\"6\" fill=\"#f1f5f9\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"414\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#475569\">OPT1</text><rect x=\"444\" y=\"188\" width=\"46\" height=\"24\" rx=\"6\" fill=\"#f1f5f9\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></rect><text x=\"467\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"9\" fill=\"#475569\">WAN</text><rect x=\"338\" y=\"224\" width=\"144\" height=\"32\" rx=\"8\" fill=\"#fff1f2\" stroke=\"#be123c\" stroke-width=\"1.5\"></rect><text x=\"410\" y=\"244\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#be123c\">ACL rules</text><rect x=\"338\" y=\"264\" width=\"144\" height=\"32\" rx=\"8\" fill=\"#f1f5f9\" stroke=\"#64748b\" stroke-width=\"1.5\"></rect><text x=\"410\" y=\"284\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#475569\">state table</text><path d=\"M226 116 L318 170\" fill=\"none\" stroke=\"#059669\" stroke-width=\"2.2\" marker-end=\"url(#ahg)\"></path><text x=\"232\" y=\"136\" font-family=\"ui-monospace, monospace\" font-size=\"9.5\" fill=\"#059669\">initiate</text><path d=\"M502 170 L590 116\" fill=\"none\" stroke=\"#059669\" stroke-width=\"2.2\" marker-end=\"url(#ahg)\"></path><text x=\"512\" y=\"136\" font-family=\"ui-monospace, monospace\" font-size=\"9.5\" fill=\"#059669\">initiate</text><path d=\"M694 200 L694 262\" fill=\"none\" stroke=\"#059669\" stroke-width=\"2.2\" marker-end=\"url(#ahg)\"></path><text x=\"704\" y=\"234\" font-family=\"ui-monospace, monospace\" font-size=\"9.5\" fill=\"#059669\">permitted</text><path d=\"M590 340 L506 272\" fill=\"none\" stroke=\"#dc2626\" stroke-width=\"2.2\" stroke-dasharray=\"6 4\" marker-end=\"url(#ahr)\"></path><circle cx=\"548\" cy=\"306\" r=\"13\" fill=\"#fef2f2\" stroke=\"#dc2626\" stroke-width=\"2\"></circle><text x=\"548\" y=\"311\" text-anchor=\"middle\" font-size=\"13\" fill=\"#dc2626\">&#10005;</text><text x=\"556\" y=\"330\" font-family=\"ui-monospace, monospace\" font-size=\"9.5\" fill=\"#dc2626\">cannot originate</text><path d=\"M318 268 L230 212\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"2\" stroke-dasharray=\"6 4\" marker-end=\"url(#ahd)\"></path><text x=\"236\" y=\"252\" font-family=\"ui-monospace, monospace\" font-size=\"9.5\" fill=\"#64748b\">replies only</text><path d=\"M410 118 L410 146\" fill=\"none\" stroke=\"#2563eb\" stroke-width=\"2\" stroke-dasharray=\"6 4\" marker-end=\"url(#ahb)\"></path><text x=\"418\" y=\"140\" font-family=\"ui-monospace, monospace\" font-size=\"9.5\" fill=\"#2563eb\">deny in</text></svg>",
+    "points": [
+      { "x": 50.0, "y": 15.5, "label": "WAN / internet interface", "detail": "The untrusted side. The rule set here is the one an external penetration test meets first: deny inbound by default, permit only the published services." },
+      { "x": 16.0, "y": 25.0, "label": "Admin subnet 10.10.1.0/24", "detail": "Permitted by the router to initiate connections to the other subnets. Note the deck's warning: initiation does not guarantee that responses can traverse back — that is a separate rule." },
+      { "x": 33.0, "y": 31.5, "label": "Admin → router path", "detail": "An outbound rule on the LAN interface. Permissive egress from a management network is exactly what makes a compromised admin workstation such a valuable pivot." },
+      { "x": 50.0, "y": 52.0, "label": "ACL rules", "detail": "The access control list decides, for each packet, whether it is passed or dropped. Rules are evaluated in order and the first match wins, so a broad permit placed above a specific deny silently defeats it." },
+      { "x": 50.0, "y": 60.5, "label": "State table", "detail": "Stateful inspection remembers the connection, which is how replies from the printer back to finance are allowed while new connections from the printer are refused." },
+      { "x": 84.5, "y": 26.0, "label": "Finance subnet 10.10.2.0/24", "detail": "May initiate to the printer network. Contains the assets worth protecting — a database on 3306 and a file share on 445 — so it is also the segment an attacker pivots towards." },
+      { "x": 66.5, "y": 65.0, "label": "Blocked reverse path", "detail": "The printer network cannot originate connections. This is the deck's defensive point: a rogue or compromised printer cannot scan the finance hosts, so the blast radius of that device stays small." },
+      { "x": 84.5, "y": 72.5, "label": "Printer subnet 10.10.3.0/24", "detail": "An internet-of-things style segment: appliances with weak patch cycles, deliberately given no outbound reach. Segmentation is doing the work that endpoint hardening cannot." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A router permits the finance subnet to reach the printer subnet and permits printer &rarr; finance traffic only as replies. What does this configuration achieve?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Replies still flow, so the two networks are not isolated — the point is who may start a conversation, not whether one can happen.">The printer network is completely isolated from finance</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Replies are matched to the existing connection, so a rogue or compromised printer cannot initiate connections and scan the finance hosts — the blast radius of that device stays contained." data-bad="">A compromised printer cannot originate connections into finance, so it cannot scan those hosts</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Firewalking is the technique used to discover ACLs like this one; it is not what the ACL itself achieves.">It prevents attackers from using firewalking against the router</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-transport" class="section" data-track="transport">
+  <h2 class="section-title">IP Addressing, TCP and UDP</h2>
+  <p class="section-lead">Traversal happens inside packets. Before the offensive technique makes sense, be precise about what a TCP connection is, because almost every scan result is an inference drawn from how a handshake ended.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>An IPv4 address is split into a <strong>network part</strong> and a <strong>host part</strong> by its prefix length (for example <code>10.0.3.5/24</code>). Hosts inside one prefix reach each other at layer 2; hosts in different prefixes need a <strong>router</strong>, and the router's rules &mdash; not the address &mdash; decide whether the traffic is allowed through.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>TCP</th><th>UDP</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Connection</strong></td><td>Connection-oriented: state is established by a handshake and torn down explicitly</td><td>Connectionless: each datagram stands alone</td></tr>
+        <tr><td><strong>Header</strong></td><td>20 bytes minimum, plus options (MSS, window scaling, SACK)</td><td>8 bytes: ports, length, checksum</td></tr>
+        <tr><td><strong>Reliability</strong></td><td>Sequence numbers, cumulative acknowledgements, retransmission, flow and congestion control</td><td>None: loss is silent unless the application adds its own logic</td></tr>
+        <tr><td><strong>Scan evidence</strong></td><td>A reply proves a listener; a RST proves the host is up and the port is closed; silence means filtered</td><td>No reply is ambiguous &mdash; open and filtered look identical from outside</td></tr>
+        <tr><td><strong>Typical use here</strong></td><td>SSH, HTTP, MySQL, and therefore every tunnel in this week's material</td><td>DNS, DHCP, SNMP, streaming &mdash; and the UDP forwarding that SOCKS5 can carry</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-handshake"></div>
+
+  <div class="insight-box">
+    <strong>Why the handshake is an offensive topic.</strong> Every frame above produces a different <em>observable</em>. SYN, ACK means open; RST means closed but alive; nothing at all means something in the path dropped it. A port scan is not magic &mdash; it is a table of inferences from those three outcomes.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A scanner sends a SYN to a host and receives nothing back, even after the timeout. Which conclusion is defensible?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A closed port answers with RST. Silence is not how a stack reports &ldquo;nothing listening&rdquo;.">The port is closed, because no service replied</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An open port answers with SYN, ACK. Silence proves nothing is listening only if you already know nothing is filtering — which is the thing you are trying to establish.">The port is open but the service is slow to respond</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A dropped packet produces no evidence, so the honest state is open|filtered: either a listener is there or a rule swallowed the probe, and from outside you cannot tell them apart." data-bad="">The port is filtered or open &mdash; a drop is indistinguishable from a listener that never answers</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-scanning" class="section" data-track="scanning">
+  <h2 class="section-title">Port Scanning and What a Firewall Reveals</h2>
+  <p class="section-lead">The deck puts a full-range scan (<code>nmap -p1-65535</code>) at the top of <em>active</em> information gathering: it should be detected by the target, and it is suspicious by definition. Scanning is therefore a trade between how much you learn and how loudly you learn it.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Technique</th><th>What is sent</th><th>What comes back</th><th>Noise and privilege</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>TCP connect</strong></td><td>A full handshake per port</td><td>Real connection, so the service logs an ordinary client</td><td>No special privilege; slowest; the application sees you</td></tr>
+        <tr><td><strong>TCP SYN (&ldquo;half-open&rdquo;)</strong></td><td>SYN only; the handshake is never completed</td><td>SYN, ACK = open; RST = closed; silence = filtered</td><td>Needs raw sockets; the application is never notified, but the stack and any IDS still see it</td></tr>
+        <tr><td><strong>UDP</strong></td><td>A datagram per port, sometimes service-specific</td><td>ICMP port-unreachable = closed; anything else, or nothing, is inconclusive</td><td>Slow and unreliable; useful for DNS, DHCP and SNMP</td></tr>
+        <tr><td><strong>FIN / NULL / Xmas</strong></td><td>Flag combinations a normal stack would never open with</td><td>RST = closed (RFC-compliant stacks); silence = open or filtered</td><td>Historical bypass of simple stateless filters; modern stacks and firewalls see through it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What the scanner can report</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>open</strong> &mdash; a listener answered</li>
+        <li><strong>closed</strong> &mdash; the host answered, the port did not</li>
+        <li><strong>filtered</strong> &mdash; a rule dropped the probe</li>
+        <li><strong>unfiltered</strong> &mdash; reachable, but open/closed was not determined</li>
+        <li><strong>open|filtered</strong> &mdash; honest ambiguity, mostly on UDP and silent drops</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What the defender sees</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Many SYNs to sequential ports from one source, in a very short window</li>
+        <li>SYNs that are never completed &mdash; connections with no follow-up data</li>
+        <li>IDS alerts on the interface inside the segment, which is exactly what Snort is installed to do in Tutorial 3</li>
+        <li>Egress from a host that has no business talking to that segment at all</li>
+      </ul>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; planning a scan in the Tutorial 3 topology.</strong> Kali sits in the developer network (<code>192.168.56.0/24</code>) and DVWA sits in the server network behind pfSense. Work out what to scan, in what order, and what the lab will show you.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Fix the map before the scan.</strong> pfSense is the DHCP server for the server network with a pool such as <code>.100</code>&ndash;<code>.200</code>, and the tutorial's screenshot shows DVWA receiving <code>10.0.3.5</code>. So the target range is the server prefix, and your own host is in <code>192.168.56.0/24</code>. Because the two prefixes differ, every packet to DVWA goes <em>through</em> the router &mdash; which is the whole point of the exercise.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Host discovery first, ports second.</strong> Find which addresses answer before spending time on 65,535 ports each. This is also where the tutorial's Snort rule is instructive: the custom rule <code>alert ip any any -&gt; any any</code> with the message &ldquo;ICMP packet detected!&rdquo; exists precisely to make a ping visible in the Alerts page.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Then the full-range scan.</strong> The deck's example of active information gathering is <code>nmap -p1-65535</code>: all ports on the discovered host, which is slow but leaves nothing to inference. A targeted scan of the handful of ports DVWA actually needs would be quieter &mdash; and would tell you less.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Read the result as a firewall map.</strong> If a port answers with SYN, ACK, the rule set passed you and something is listening. If it answers with RST, the ACL passed you and the host refused. If nothing comes back, you have learned that a rule dropped you &mdash; which is information about the router, not about the host.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Confirm from the other side.</strong> The tutorial has you run <code>tcpdump</code> on DVWA and watch the Snort Alerts page at the same time. That comparison is the lesson: the same packets are &ldquo;just traffic&rdquo; on the wire and an alert in the IDS, and blocking ICMP in the firewall rule set makes both views go quiet at once.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You scan a host behind a firewall and every port reports <em>filtered</em>. What have you actually established?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The opposite: filtered means the probe was dropped, so you learned nothing about the services themselves.">That the host is running no services on those ports</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Filtered is a statement about the path, not the host: a rule dropped your probes, so you have mapped the firewall rather than the target." data-bad="">That a filtering device is dropping your probes, so you have mapped policy rather than services</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Filtering is a deliberate rule, not a performance problem. A timing change will not turn a drop into a reply.">That the scan was too fast for the host to keep up with</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-nat" class="section" data-track="nat">
+  <h2 class="section-title">NAT, VPN and Where a Tunnel Terminates</h2>
+  <p class="section-lead">The tutorial builds exactly this situation: two VirtualBox NAT networks with DHCP switched off, pfSense providing addresses, and the host needing an explicit route before it can reach the server subnet. NAT and tunnels are the two mechanisms that make that layout work.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definitions</div>
+    <p><strong>NAT</strong> rewrites the source address and port of outbound packets to a shared public address and keeps a translation entry so replies can be mapped back. Outbound traffic creates the state; <em>inbound</em> traffic has no entry to match, which is why an unsolicited connection from outside simply fails.</p>
+    <p style="margin-top:0.6rem;"><strong>A VPN</strong> securely tunnels network traffic across another network. The deck's framing: it lets you &ldquo;plug into&rdquo; a remote network as if you were physically plugged in, and you end up with an additional virtual interface that is a direct tunnel to the far side.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Interface</th><th>Layer</th><th>Unit carried</th><th>Consequence in practice</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>TUN</strong></td><td>Layer 3 network tunnel</td><td>Packets</td><td>The deck's recommendation: almost all protocols already run on top of IP, so a TUN interface is enough for nearly everything.</td></tr>
+        <tr><td><strong>TAP</strong></td><td>Layer 2 network tap</td><td>Frames</td><td>Behaves like plugging into a local switch: you join the remote broadcast domain, receive ARP requests and other chatter, and burn bandwidth on traffic you did not ask for.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-natpath"></div>
+  <script type="application/json" id="ix-natpath">
+  {
+    "title": "One packet leaving a private subnet",
+    "subtitle": "Step through what happens to the packet between the application and the target service — and where the translation entry is created.",
+    "nodes": [
+      { "label": "Application", "note": "Opens a socket to a private address on the far side of the router: for example the MySQL host in the server network on 3306." },
+      { "label": "Local routing", "note": "The prefix differs from your own, so the packet is handed to the default gateway rather than resolved with ARP on the local segment." },
+      { "label": "NAT translation", "note": "Source address and port are rewritten and a translation entry is stored. The reply will only find its way back while that entry exists." },
+      { "label": "ACL / firewall rules", "note": "The rule set on the egress interface decides whether the flow is permitted at all. This is the decision that a port scan is really probing." },
+      { "label": "Tunnel interface", "note": "If a VPN or SSH tunnel is in use, the packet is encapsulated here — TUN for packets, TAP for frames — and the outer header is what the network in between actually sees." },
+      { "label": "Remote gateway", "note": "Decapsulates, then routes on the inner header towards the target. The target sees a connection from the tunnel address, not from you." },
+      { "label": "Target service", "note": "Accepts or refuses. Whether it logs your real origin depends entirely on how much of the path was translated." }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>NAT is not a security control.</strong> It blocks unsolicited inbound connections as a side effect of having no translation entry, but it does nothing about outbound traffic &mdash; which is exactly why a tunnel that starts outbound (SSH, SOCKS, a VPN client) crosses it without difficulty.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the Week 3 deck recommend a TUN interface over TAP for most tunnelling work?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="TUN is a layer 3 interface, so it carries fewer lower-layer artefacts than TAP — not more.">TUN carries more protocol detail than TAP, so fewer things break</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. TUN carries packets, and almost every protocol already runs over IP; TAP carries frames, which puts you in the remote broadcast domain and floods you with chatter such as ARP requests." data-bad="">TUN carries packets at layer 3, which is enough for almost every protocol, while TAP makes you part of the remote broadcast domain and wastes bandwidth</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Both are tunnelling interfaces and neither is authenticated by the interface type itself — authentication belongs to the VPN protocol (or to SSH, for a port forward).">TUN authenticates the tunnel while TAP does not</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tunnels" class="section" data-track="tunnels">
+  <h2 class="section-title">Proxies and SSH Port Forwarding</h2>
+  <p class="section-lead">The deck's pivoting premise: the first computer compromised is usually a workstation, not the domain controller, and it is often segregated from the valuable machines. To move anyway, attackers pivot &mdash; and SSH, proxies and VPNs are the standard ways to do it.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definitions</div>
+    <p>A <strong>proxy server</strong> acts as an intermediary for requests. Proxies are usually considered to live at layer 5 of the OSI model, the session layer, though the deck notes this is not always the case. A <strong>web proxy</strong> (for example <strong>Squid</strong> on Linux) handles HTTP(S) and can add authentication and caching; the university's network is the deck's example, where firewall rules block outbound port 80 unless the traffic goes via the proxy.</p>
+    <p style="margin-top:0.6rem;">A <strong>SOCKS proxy</strong> is different: it provides a generic intermediary for <em>any</em> TCP connection, and SOCKS5 can also add authentication and forward UDP. Install one on a compromised host and your traffic leaves as if it originated there.</p>
+  </div>
+
+  <div id="ix-pivot"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Forward</th><th>Who connects to whom</th><th>The deck's example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Local (<code>-L</code>)</strong><br>&ldquo;bring a remote service to me&rdquo;</td><td>A TCP port on your localhost is forwarded <em>through</em> the SSH server to a remote TCP service.</td><td><code>ssh -L 33306:mysql-server:3306 dev@web-server</code> &mdash; the developer network can SSH to the web server on 22 but cannot reach the MySQL host on 3306, so 33306 locally becomes the MySQL port.</td></tr>
+        <tr><td><strong>Reverse (<code>-R</code>)</strong><br>&ldquo;send the remote server to my service&rdquo;</td><td>A TCP port on the remote SSH server allows a connection <em>back</em> to a local TCP service.</td><td><code>ssh -R 22222:web-server:22 dev@home</code> &mdash; no port has to be opened on the company's public address, because the connection is started outbound from inside.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <pre><code># local forward: a port on MY machine reaches a service the SSH server can see
+ssh -L 33306:mysql-server:3306 dev@web-server
+
+# reverse forward: a port on the REMOTE machine reaches a service I can see
+ssh -R 22222:web-server:22 dev@home
+
+# the same idea, one hop further: reach a bastion, then tunnel again from there
+ssh -J dev@web-server dev@mysql-server   # ProxyJump (administrative use, in scope only)</code></pre>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why SSH forwards are so common</h3>
+      <p>The deck is explicit: due to its simplicity and ease of set-up, SSH port forwarding is very handy and used frequently. It needs only one permitted outbound port &mdash; the 22 the ACL already allows &mdash; and it multiplexes arbitrary TCP traffic inside a session that looks entirely ordinary.</p>
+    </div>
+    <div class="col-card">
+      <h3>What defenders can still see</h3>
+      <p>The inner protocol is opaque, but the session is not: one long-lived SSH connection to a jump host, followed by traffic volumes and destinations that do not match that host's role, is the pattern worth alerting on. Log the jump host, the account and the duration.</p>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-tools"></div>
+  <script type="application/json" id="ix-tools">
+  {
+    "title": "Match the tool to what it is actually for",
+    "subtitle": "Click a tool or technique on the left, then the job it does on the right.",
+    "pairs": [
+      ["nmap -p1-65535", "Actively map every TCP port on a host — the deck's example of active information gathering"],
+      ["Snort", "Inspect packets crossing the router's interfaces and alert when they match a rule set"],
+      ["tcpdump -i enp0s3", "Capture the raw packets that arrived on one interface, so the wire record can be compared with the IDS alerts"],
+      ["pfSense firewall rule", "Decide which interfaces may pass traffic to this firewall or across to another subnet"],
+      ["ssh -L 33306:mysql-server:3306 dev@web-server", "Local port forward: bring a service the SSH server can reach to a port on your own machine"],
+      ["ssh -R 22222:web-server:22 dev@home", "Reverse port forward: let a port on the remote server reach a service next to the SSH client"],
+      ["SOCKS5 proxy", "Generic TCP intermediary that also forwards UDP and can require authentication"],
+      ["Squid", "Web proxy for HTTP(S) with authentication and caching, sitting at the session layer"]
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; reaching a service the ACL will not route.</strong> From the developer network you can SSH to <code>web-server</code> (port 22) but a connection to <code>mysql-server:3306</code> is dropped by the router. Explain the tunnel you would set up, field by field, and what each side observes.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the permitted hop.</strong> The only thing the ACL allows is SSH from the developer network to <code>web-server</code>. That host is the pivot, and the tunnel must fit inside that one permitted flow.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Write the forward and read every field.</strong> <code>ssh -L 33306:mysql-server:3306 dev@web-server</code>. The first number is the <em>local listening port</em> on your machine; <code>mysql-server:3306</code> is the destination <em>as resolved and dialled by the SSH server</em>; <code>dev@web-server</code> is the permitted hop that does the dialling.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Explain why the ACL never sees MySQL.</strong> Your client connects to <code>127.0.0.1:33306</code>. The MySQL protocol travels inside the encrypted SSH session, so on the wire between the developer network and the server network there is only SSH traffic to port 22 &mdash; a flow that was already permitted.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the limits.</strong> The forward lives only as long as the SSH session, it reaches only what the SSH server itself can reach, and it needs a valid account on the pivot. Kill the session and the local port closes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say what the defender would see.</strong> One long-lived SSH session from a developer workstation to the web server, and a MySQL connection to the database whose source address is the web server &mdash; not the workstation. The log on the database is accurate about the pivot and silent about you.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Scope reminder.</strong> Every technique on this page is a legitimate administrative mechanism. In this unit it is exercised only against the VMs you built yourself in the tutorial &mdash; tunnelling or scanning a system you do not have written authorisation for is the line the Week 1 material draws, and the Week 3 pre-engagement stage exists to make that authorisation explicit.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You need a service that sits <em>behind</em> a jump host to appear on your own laptop's loopback interface. Which forward, and why?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. A local forward maps a port on the SSH client to a destination the SSH server can reach, so the service looks local to you while the server does the connecting." data-bad="">Local forward: a local port is mapped through the SSH server to the remote service</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the reverse direction: it exposes a service next to you on the remote side, which is the opposite of what is needed here.">Reverse forward: a remote port is mapped back to your local service</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A web proxy handles HTTP(S) only. It cannot carry an arbitrary TCP service such as a database protocol.">Web proxy: it caches the responses so the service appears locally</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-design" class="section" data-track="design">
+  <h2 class="section-title">Principles of Secure Network Design</h2>
+  <p class="section-lead">The second half of the deck flips to defence. These six principles are the design answer to everything the first half demonstrated: if traversal is easy, the network was designed to make it easy.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definitions from the deck</div>
+    <p><strong>Defense in depth</strong> (&ldquo;the castle approach&rdquo;) deploys multiple layers of security controls throughout the environment so there is redundancy in case of an incident. It takes the weight off any single control by having multiple <em>independent</em> controls at different layers.</p>
+    <p style="margin-top:0.6rem;"><strong>Network segregation</strong> splits a network into sub-networks to reduce the attack surface and group systems by security need. <strong>Least privilege</strong> comes from the military need-to-know idea: an entity should only have the access needed to do its job and nothing beyond, with everything else denied by default.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Principle</th><th>What it does</th><th>How it limits traversal</th><th>Where you meet it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Defense in depth</strong></td><td>Independent controls at different layers, so one failure is not a breach</td><td>Even a permitted hop does not hand over the whole network; each segment re-checks</td><td>The pfSense router plus the Snort rules on the server interface</td></tr>
+        <tr><td><strong>Network segregation</strong></td><td>Splits the network by security need &mdash; the deck's power-plant example keeps the control system network away from the IT network</td><td>A flat network is why pivoting works; segments give the pivot somewhere to stop</td><td>Developer (LAN) and server (OPT1) networks on separate adapters; achieved with firewalls, VLANs or SDN</td></tr>
+        <tr><td><strong>Least privilege</strong></td><td>Grant only what the job needs; deny the rest by default</td><td>A compromised service account cannot reach beyond its own function</td><td>&ldquo;A web server must not run as a root user&rdquo;</td></tr>
+        <tr><td><strong>Soft targets and choke points</strong></td><td>Find the bottlenecks and single points of failure, then monitor and harden them</td><td>Choke points are where traffic must pass, so they are where inspection is cheapest</td><td>A firewall in front of an internet-facing site; a load balancer that reroutes under DDoS</td></tr>
+        <tr><td><strong>Zero trust</strong></td><td>Strict identity verification and access control for every person and device, wherever they sit relative to the perimeter</td><td>Removes the &ldquo;inside means trusted&rdquo; assumption that makes one breach catastrophic</td><td>IAM and MFA; ACLs and segmentation applied internally as well as at the edge</td></tr>
+        <tr><td><strong>Continuous monitoring</strong></td><td>Security as an ongoing process: hunt for unauthorised devices, watch for suspicious activity, verify that deployments behave as intended</td><td>Detects the pivot that got through the rules &mdash; the only control that helps once prevention fails</td><td>Snort alerts and tcpdump captures during the tutorial; NOC/SOC continuous improvement</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-mitigations"></div>
+  <script type="application/json" id="ix-mitigations">
+  {
+    "title": "Attack technique → design control that blunts it",
+    "subtitle": "Flip each card: the front is what an attacker does, the back is the design decision that makes it harder.",
+    "cards": [
+      { "front": "Full-range port scan of a server subnet", "back": "Keep the segment behind a filtering router and run an IDS on the interface that faces it, so the scan produces alerts rather than just results.", "hint": "Detection" },
+      { "front": "Pivoting through a compromised workstation", "back": "Segmentation plus least privilege: the workstation's rules cannot reach the valuable subnets directly, so the pivot has nothing to pivot into.", "hint": "Segmentation" },
+      { "front": "Carrying traffic out inside an SSH session", "back": "Egress control and inspection at the choke point, and alert on long-lived sessions to hosts whose role does not justify them.", "hint": "Choke point" },
+      { "front": "Rogue printer or camera scanning the finance hosts", "back": "An ACL that prevents the device network from originating any connection, with replies tracked by state rather than by a blanket permit.", "hint": "Direction of initiation" },
+      { "front": "Reusing one credential across two layers of control", "back": "Independence: defense in depth only multiplies if the controls fail separately. One shared secret collapses two layers into one.", "hint": "Depth must be independent" },
+      { "front": "Reading OSINT for org charts and network ranges", "back": "Passive gathering cannot be prevented. Assume it happened, and design as though the attacker already knows the layout you are trying to hide.", "hint": "Zero trust" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A team adds a second firewall, but both firewalls are administered with the same credential and the same rules. Which principle have they actually improved?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Defense in depth requires independent controls. Two identical boxes sharing one credential and one rule set fail together, so the redundancy is an illusion.">Defense in depth, because there are now two layers of control</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: the layers are not independent, so the depth claim fails — one credential compromise removes both. What they have genuinely added is a monitoring or choke-point opportunity, not redundancy." data-bad="">Neither redundancy nor depth has improved; the duplication added cost without adding an independent control</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Zero trust is about verifying identity and access per request regardless of location. Duplicating one rule set does not implement that.">Zero trust, because traffic now crosses two enforcement points</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-pentest" class="section" data-track="pentest">
+  <h2 class="section-title">Penetration Testing: Scope and Stages</h2>
+  <p class="section-lead">The deck's second half is the professional frame around the techniques: penetration testing simulates real attacks to assess the risk associated with potential security breaches. It goes further than a vulnerability assessment, which discovers vulnerabilities that <em>could</em> be used &mdash; a pentest also exploits them, where possible, to assess what an attacker might actually gain.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Scope type</th><th>What the tester does</th><th>What it tests</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>External</strong></td><td>Simulates an attack via the internet</td><td>The perimeter: exposed services, filtering and the rules that govern them</td></tr>
+        <tr><td><strong>Internal</strong></td><td>Acts as an insider, or as an attacker who has already breached the perimeter</td><td>Segmentation and least privilege &mdash; whether one foothold becomes many</td></tr>
+        <tr><td><strong>Social engineering</strong></td><td>Client-side attacks to gain access to the internal network</td><td>People and process, which no firewall rule can address</td></tr>
+        <tr><td><strong>Wireless / physical</strong></td><td>Tests wireless security or physical access controls</td><td>The layer before the network: can someone simply get in?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-stages"></div>
+  <script type="application/json" id="ix-stages">
+  {
+    "title": "Order the seven stages of a penetration test",
+    "subtitle": "The deck notes the process may change with scope and is not the only definition. Click the stages into the order the material gives.",
+    "steps": [
+      "Pre-engagement: understand the client, set the terms, protect both sides",
+      "Information gathering: build the picture from passive, semi-passive and active sources",
+      "Threat modelling: think like an attacker and plan the routes in from what was gathered",
+      "Vulnerability analysis: discover the weaknesses and judge how exploitable they are",
+      "Exploitation: use the weaknesses where they are in scope, and gain access",
+      "Post-exploitation: explore the system, escalate privileges and move laterally",
+      "Reporting: findings, impact and recommendations, delivered to the client"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>Key output</th><th>What goes wrong if it is skipped</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1. Pre-engagement</strong></td><td>Signed scope, testing window, contact details, contract and NDA</td><td>Unlimited liability: the deck's bottom line is that no scanning, exploiting or reporting starts until scope, contract and NDA are signed</td></tr>
+        <tr><td><strong>2. Information gathering</strong></td><td>A map of hosts, services, names and relationships</td><td>Fewer attack vectors &mdash; the more information gathered here, the more vectors are available later</td></tr>
+        <tr><td><strong>3. Threat modelling</strong></td><td>A plan of attack grounded in the business, not in a tool list</td><td>Time spent on targets that do not matter to the client's actual risk</td></tr>
+        <tr><td><strong>4. Vulnerability analysis</strong></td><td>A ranked list of weaknesses with evidence</td><td>Blind exploitation: failed exploits can crash services, set off intrusion-detection alerts and ruin the engagement</td></tr>
+        <tr><td><strong>5. Exploitation</strong></td><td>Proof of access, and evidence of what it was worth</td><td>Findings that remain theoretical: the client is told a risk exists but never sees its consequence</td></tr>
+        <tr><td><strong>6. Post-exploitation</strong></td><td>Privilege level reached, systems reached, data reachable</td><td>The real impact is understated &mdash; one workstation looks harmless until you can show what it can reach</td></tr>
+        <tr><td><strong>7. Reporting</strong></td><td>Summary, methodology, findings, recommendations, conclusion</td><td>The work has no business value: nothing is fixed, and nothing is defensible if the client is later breached</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Pre-engagement in the deck's own words.</strong> Understand the client (learn why they need the test, what exposures worry them, which fragile devices need care), set the terms (scope, testing window, contact information, payment, contract) and protect both sides (NDA, a &ldquo;get-out-of-jail-free&rdquo; card, signed authorisation kept on hand).
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">During an engagement, a tester finds an unpatched service on a host that was <em>not</em> included in the agreed scope. What is the correct action?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Scope is a legal boundary, not a suggestion. Testing it without authorisation converts an engagement into unauthorised access, however good the intention.">Exploit it quietly to measure impact, then report it as a bonus finding</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: document the observation and raise it with the client contact, then continue only if the scope is formally extended. This is exactly what pre-engagement exists to make possible." data-bad="">Record the observation, stop testing that host, and raise it with the client contact before going further</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Remaining silent protects nobody: the client cannot fix what they do not know about, and the next tester will find it too.">Say nothing, because out-of-scope systems are the client's own responsibility</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recon" class="section" data-track="recon">
+  <h2 class="section-title">Information Gathering and Threat Modelling</h2>
+  <p class="section-lead">The deck describes intelligence gathering as reconnaissance against a target to gather as much information as possible for use during the vulnerability assessment and exploitation phases. The trade-off is always the same: more information, more vectors &mdash; and more chance of being noticed.</p>
+
+  <div class="def-box">
+    <div class="def-label">The three levels from the deck</div>
+    <p><strong>Level 1</strong> is mainly a click-button process: the information can be obtained almost entirely by automated tools. <strong>Level 2</strong> adds some manual analysis and a good understanding of the business &mdash; physical location, business relationships, org chart. <strong>Level 3</strong> adds a great deal of manual analysis plus cultivating relationships on social networks and a deep understanding of business relationships.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Mode</th><th>Definition</th><th>Typical activity</th><th>Detectable?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Passive</strong></td><td>Gathering that is never detected by the target; only archived or stored information is used</td><td>Reading caches, archives, public registries and published documents</td><td>No &mdash; the target never sees a packet</td></tr>
+        <tr><td><strong>Semi-passive</strong></td><td>Methods that look like normal internet traffic and behaviour</td><td>Querying only the published name servers, with no in-depth reverse lookups and no brute-force DNS requests</td><td>In principle, but it blends into ordinary traffic</td></tr>
+        <tr><td><strong>Active</strong></td><td>Activity that <em>should</em> be detected as suspicious or malicious</td><td>Mapping infrastructure (the deck's example: a full port scan <code>nmap -p1-65535</code>), enumerating and vulnerability-scanning open services, searching for unpublished directories, files and servers</td><td>Yes &mdash; by design, this is the noisy phase</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-reconrace"></div>
+  <script type="application/json" id="ix-reconrace">
+  {
+    "title": "How visible is each gathering mode?",
+    "subtitle": "Illustrative 0–5 visibility scores built from the definitions on this page. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Passive (archived data only)", "value": 1, "display": "never detected" },
+      { "name": "Semi-passive (published name servers only)", "value": 3, "display": "looks like normal traffic" },
+      { "name": "Active (full port scan, service enumeration)", "value": 5, "display": "should be detected" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Threat modelling is the bridge.</strong> Here you think like attackers and develop plans of attack from the information gathered. The deck's example: if the client develops proprietary software, an attacker could devastate the organisation by reaching the internal development systems where the source is written and tested, then selling the trade secrets to a competitor. The route matters less than what sits at the end of it.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What a defender can do about each mode</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Passive:</strong> nothing directly &mdash; assume it happened and reduce what is published</li>
+        <li><strong>Semi-passive:</strong> keep records accurate and minimal; split authoritative DNS from internal naming</li>
+        <li><strong>Active:</strong> this is where IDS rules, alerting and continuous monitoring earn their place</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What the tester owes the client</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Stay inside the agreed scope and testing window</li>
+        <li>Keep a record of when the noisy phases ran, so alerts can be correlated afterwards</li>
+        <li>Report what was learned passively as well &mdash; it is often the finding the client can act on cheapest</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="sec-exploit" class="section" data-track="exploit">
+  <h2 class="section-title">From Vulnerability Analysis to the Report</h2>
+  <p class="section-lead">The last four stages are where the engagement becomes evidence. Vulnerability analysis decides how successful an exploit strategy might be; exploitation proves it; post-exploitation measures what it was worth; reporting turns the whole thing into something the client can act on.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>What happens</th><th>The risk of doing it carelessly</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Vulnerability analysis</strong></td><td>Actively discover vulnerabilities to judge how successful the exploit strategies might be. Vulnerability scanners use vulnerability databases and a series of active checks to make a best guess about what is present.</td><td>Failed exploits can crash services, set off intrusion-detection alerts and otherwise ruin your chances of successful exploitation.</td></tr>
+        <tr><td><strong>Exploitation</strong></td><td>Use techniques, tools and exploits &mdash; pre-built frameworks, custom-developed code, or manual methods &mdash; chosen to suit the specific vulnerability, the target environment and the goals of the test. The aim is unauthorised access: bypassing authentication, executing code remotely, or leveraging a weakness to take control.</td><td>Loud, unstable, and destructive if the wrong technique is used on a fragile service. This is why scope and the pre-agreed fragile-device list exist.</td></tr>
+        <tr><td><strong>Post-exploitation</strong></td><td>Further exploration, activity and analysis <em>inside</em> the compromised environment: investigate the system, map its architecture, identify additional vulnerabilities, and gather information on the system and its users.</td><td>Stopping at the first shell overstates safety: the point is what that foothold can reach next.</td></tr>
+        <tr><td><strong>Reporting</strong></td><td>The findings, observations and recommendations are compiled into a comprehensive report that documents the engagement and communicates results to the client or stakeholders: identified vulnerabilities, their potential impact, and recommendations for mitigating the risks.</td><td>A report without impact and remediation is a list, not an assessment. The deck's structure is Summary, Methodology, Findings, Recommendation, Conclusion.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Post-exploitation, part 1 &mdash; explore the system</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Investigate the system in more depth</li>
+        <li>Map out its architecture</li>
+        <li>Identify additional vulnerabilities</li>
+        <li>Gather information on the system and its users</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Post-exploitation, part 2 &mdash; escalate and move</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Escalate privileges for higher-level access</li>
+        <li>Pivot to other systems on the network</li>
+        <li>Compromise additional hosts</li>
+        <li>Expand the scope of control across the environment</li>
+      </ul>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; writing up one foothold as impact.</strong> In a lab engagement you obtain a normal user shell on a workstation in the finance subnet of the topology earlier on this page. The workstation can reach the printer network but not the database. Turn that into a post-exploitation plan and a reportable finding. Keep every step inside the authorised scope.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Explore before you move.</strong> Identify the interfaces, the routes and the reachable prefixes. The interesting output is not the shell prompt &mdash; it is the list of networks this host can talk to that your own host cannot.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Establish the direction of the rules.</strong> The finance workstation may open connections to the printer network, and the printer network cannot originate anything. That single sentence tells you which way traffic can be tunnelled and which way it cannot.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Choose the pivot that fits the permitted flow.</strong> If SSH outbound is allowed, a local forward reaches a service the pivot can see; if only HTTP is allowed, a generic TCP intermediary on the pivot is the alternative. Choose by what the ACL permits, not by what is most convenient.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Escalate only as far as the finding requires.</strong> Post-exploitation escalates privileges for higher-level access, but the report needs the <em>minimum</em> proof of impact. Escalating further than necessary increases the risk of crashing a service and adds nothing to the recommendation.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Write the finding so it maps to a control.</strong> &ldquo;A workstation in the finance subnet reaches the printer segment, and a local forward through it exposes the printer web interface to the developer network.&rdquo; The recommendation writes itself: restrict outbound initiation from the finance segment, keep the printer segment non-initiating, and alert on long-lived sessions to management interfaces. Impact, then remediation &mdash; in that order.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Everything here is lab-scoped.</strong> The techniques on this page are described so you can recognise and defend against them. Nothing in this unit authorises testing a system you do not own or have written permission to test.
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 3 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Reachability is directional</h4>
+        <p>A router's ACLs decide who may initiate and who may only reply. Firewalking is how you discover those rules; segmentation is how a defender sets them.</p>
+        <div class="flip-hint">Core idea</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>The handshake is the evidence</h4>
+        <p>SYN, ACK means open; RST means closed but alive; silence means a rule dropped you. Every port state is an inference from those three outcomes.</p>
+        <div class="flip-hint">Scanning</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Tunnels follow the permitted flow</h4>
+        <p>VPN (TUN vs TAP), web proxies at the session layer, SOCKS for arbitrary TCP, and SSH <code>-L</code> / <code>-R</code> forwards all fit inside a connection the rules already allow.</p>
+        <div class="flip-hint">Pivoting</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Seven stages, one deliverable</h4>
+        <p>Pre-engagement, information gathering, threat modelling, vulnerability analysis, exploitation, post-exploitation, reporting &mdash; ending in Summary, Methodology, Findings, Recommendation, Conclusion.</p>
+        <div class="flip-hint">Process</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week into subnet arithmetic, handshake sequence numbers, the scan-cost model and ACL semantics, then a lab diagnosis checklist. After that, the Quiz Hub and the Flashcards for Week 3.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you state the three handshake segments with their sequence numbers, explain what a filtered port does and does not prove, and say why a TUN interface is usually preferred to a TAP?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Have pfSense running with LAN and OPT1 assigned, a DHCP lease on the DVWA host, and Snort loaded with the custom ICMP rule on the server interface &mdash; then watch one ping appear in both the Alerts page and tcpdump at the same time.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

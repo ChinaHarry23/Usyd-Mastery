@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 6: Gestural Interaction</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter6-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 foundations for COMP5047: exact definitions, a decision table for gesture taxonomy, notation for the recognition pipeline, the criteria for choosing a motion-capture system, drift in inertial sensing, and worked answers on elicitation and gesture-set auditing.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 6: Gestural Interaction">
+<meta property="og:description" content="Week 6 foundations for COMP5047: exact definitions, a decision table for gesture taxonomy, notation for the recognition pipeline, the criteria for choosing a motion-capture system, drift in inertial sensing, and worked answers on elicitation and gesture-set auditing.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter6-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 6 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomy decision table</a></li>
+    <li><a href="#sec-m-notation" class="toc-link">Notation for the gesture path</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-sensing" class="toc-link">Choosing a mocap system</a></li>
+    <li><a href="#sec-m-drift" class="toc-link">Drift in inertial sensing</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-audit" class="toc-link">Elicitation &amp; gesture-set audit</a></li>
+  </ul>
+  <a href="chapter6-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5047 &mdash; Week 6 supplement</p>
+  <h1>Foundations: the vocabulary and models behind gestural interaction</h1>
+  <p class="hero-desc">Week 6 is a design-and-systems week rather than a mathematics week, so this page does the equivalent job: it pins down the definitions the lecture relies on, turns the six-way gesture taxonomy into a decision table, gives a compact notation for the path from sensor samples to executed command, sets out the criteria for choosing a motion-capture system, and ends with worked answers on gesture elicitation and gesture-set auditing.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the lecture deck</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Checklists for design and exam answers</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Gestural interaction</div>
+    <p>Input in which the system infers intent from the movement, configuration or contact pattern of the hand and body rather than from the actuation of a dedicated control. Two families: <strong>surface gestures</strong> on a touch-sensitive plane, and <strong>mid-air gestures</strong> in the space around the device.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Direct input</div>
+    <p>Input performed on the display itself, so the finger <em>is</em> the pointer and the object is touched where it appears. It removes the acquisition step and imports every property of the hand: a large ambiguous contact region, self-occlusion, resting contacts, and no hover state.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Extrinsic vs intrinsic sensing</div>
+    <p><strong>Extrinsic:</strong> the body is tracked by sensors placed in the environment &mdash; structured light, time-of-flight, passive or active IR markers, RGB cameras with pose estimation. <strong>Intrinsic:</strong> the body is tracked through sensors directly attached to it &mdash; accelerometer, gyroscope, magnetometer. The first is limited by tracking volume and occlusion, the second by drift.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Microgesture</div>
+    <p>A gesture small enough that it is only practical to sense it at the source, on the body. Microgestures are the reason intrinsic inertial sensing appears in this week's deck at all.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Guessability (elicitation) study</div>
+    <p>A method for discovering intuitive gestures: participants are shown the <em>effect</em> of a command and asked to invent the gesture that would trigger it. The proposals are pooled and scored for agreement, producing a gesture set ranked by how likely users are to guess each member.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Gestural interaction</td><td>Intent inferred from movement, configuration or contact &mdash; not from a control</td><td>&ldquo;Any input that uses a touchscreen&rdquo;</td></tr>
+        <tr><td>Deictic</td><td>Pointing that establishes identity or spatial location</td><td>Confusing it with a semaphoric command gesture</td></tr>
+        <tr><td>Manipulative</td><td>A tight relationship between hand movement and the entity controlled</td><td>Calling any drag a manipulation without the tight mapping</td></tr>
+        <tr><td>Semaphoric</td><td>A stylized dictionary of static or dynamic gestures</td><td>&ldquo;A gesture that means something&rdquo; &mdash; every gesture type means something</td></tr>
+        <tr><td>Motion correlation</td><td>Selecting an object <em>by matching its motion</em></td><td>Describing it as pointing at a moving object</td></tr>
+        <tr><td>Calm/attention note</td><td>Gesture changes the attention a system demands, in both directions</td><td>Assuming less physical contact always means less attention</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is a deictic gesture?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A stylized dictionary of gestures is the definition of the semaphoric type. Deictic gestures are not drawn from a dictionary — they indicate.">A stylized gesture taken from a fixed dictionary of hand shapes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: pointing to establish the identity or spatial location of an object within the context of the application domain — the output is a target, not a label." data-bad="">Pointing that establishes the identity or spatial location of an object in the application domain</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Continuous control of an entity with a tight movement mapping is the manipulative type. Pointing is discrete and its output is a target.">Continuous control of an entity by mirroring the hand's movement</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomy decision table</h2>
+  <p class="section-lead">Exam questions in this unit usually hand you a gesture and ask what kind it is. The decision hinges on one question: what must the recogniser output?</p>
+
+  <div class="theorem-box">
+    <h3>The single discriminating question</h3>
+    <p>For any gesture, ask what the machine has to produce:</p>
+    \[ \text{output} \in \{\ \text{a target},\ \text{a continuous parameter},\ \text{a label}\ \} \]
+    <p style="margin-top:0.6rem;">A target means <strong>deictic</strong>. A continuous parameter that tracks the hand means <strong>manipulative</strong>. A label drawn from a fixed set means <strong>semaphoric</strong>. If the label is not drawn from a set but inferred by matching movement, it is <strong>motion correlation</strong>. If the movement carries meaning only alongside speech, it is <strong>gesticulation</strong>; if it is structured by a grammar, it is <strong>sign language</strong>.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-taxonomy"></div>
+  <script type="application/json" id="ix-m-taxonomy">
+  {
+    "title": "Match the taxonomy question to the gesture type",
+    "subtitle": "Each left-hand item is a diagnostic question; each right-hand item is the type it identifies.",
+    "pairs": [
+      ["What must the recogniser output?", "The single discriminating question for placing any gesture in the taxonomy"],
+      ["Does it identify an object or a place?", "Deictic — the output is a target, and pointing techniques differ in how they derive it"],
+      ["Does the hand map tightly onto the thing being changed?", "Manipulative — the output is a continuous parameter"],
+      ["Is the pattern drawn from a fixed dictionary?", "Semaphoric — static or dynamic, and the source of stroke alphabets such as Graffiti and $N-protractor"],
+      ["Is the target identified by imitating its movement?", "Motion correlation — selection by matching motion rather than by pointing"],
+      ["Is the meaning carried alongside speech?", "Gesticulation — short, repetitive, rhythmic, and tied to prosody"],
+      ["Is the movement structured by a grammar?", "Sign language — signs combine into grammatical structures"]
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Type</th><th>Recogniser output</th><th>Sensing it suits</th><th>Signature failure</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Deictic</td><td>A target (identity and location)</td><td>Extrinsic; orientation-rich IMU</td><td>A ray is not a coordinate: the intended target is under-determined</td></tr>
+        <tr><td>Manipulative</td><td>A continuous parameter</td><td>Surface touch; close-range tracking</td><td>Degrees of freedom mismatch between hand and parameter</td></tr>
+        <tr><td>Semaphoric</td><td>A label from a dictionary</td><td>Either; templating works well</td><td>Users cannot guess the dictionary; one gesture, many meanings</td></tr>
+        <tr><td>Motion correlation</td><td>Which moving target is being matched</td><td>Extrinsic; continuous signals</td><td>Needs a moving, distinguishable target; slower than pointing</td></tr>
+        <tr><td>Gesticulation</td><td>Meaning co-produced with speech</td><td>Extrinsic, wide field</td><td>No dictionary exists to classify against</td></tr>
+        <tr><td>Sign language</td><td>Signs plus grammatical structure</td><td>Extrinsic, high detail</td><td>Treating a language as a gesture set</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose. The symbols below are a <em>revision aid</em> introduced here so that you can write about the week's relationships compactly; they are not lecture notation and should not be quoted as such.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(s_t\)</div><div class="sym-cell">sample at time \(t\)</div><div class="sym-cell">One frame or reading: touch blobs, joint positions, or IMU rates</div>
+    <div class="sym-cell">\(W\)</div><div class="sym-cell">gesture window</div><div class="sym-cell">The contiguous run of samples the segmenter believes is one gesture</div>
+    <div class="sym-cell">\(\phi(W)\)</div><div class="sym-cell">feature vector</div><div class="sym-cell">The description the classifier compares: joint angles, velocity profile, contact geometry</div>
+    <div class="sym-cell">\(g\)</div><div class="sym-cell">gesture label</div><div class="sym-cell">One member of the gesture set \(G = \{g_1, \dots, g_n\}\)</div>
+    <div class="sym-cell">\(c \in [0,1]\)</div><div class="sym-cell">confidence</div><div class="sym-cell">How strongly the classifier prefers its choice; the input to the reject decision</div>
+    <div class="sym-cell">\(\tau\)</div><div class="sym-cell">acceptance threshold</div><div class="sym-cell">Below \(\tau\) the system abstains, asks, or does nothing at all</div>
+    <div class="sym-cell">\(a_t\)</div><div class="sym-cell">acceleration</div><div class="sym-cell">What an accelerometer measures directly</div>
+    <div class="sym-cell">\(v_t,\ p_t\)</div><div class="sym-cell">velocity, position</div><div class="sym-cell">Obtained by integrating \(a_t\) once and twice — the source of drift</div>
+    <div class="sym-cell">\(\varepsilon(t)\)</div><div class="sym-cell">drift error</div><div class="sym-cell">Growing error from integrated bias; fastest in position, slowest in acceleration</div>
+    <div class="sym-cell">\(A\)</div><div class="sym-cell">agreement score</div><div class="sym-cell">Elicitation measure: how concentrated participants' proposals are for one command</div>
+    <div class="sym-cell">\(E_a\)</div><div class="sym-cell">attention demanded</div><div class="sym-cell">Inherited from Week 1: the attentional cost of the interaction</div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">Notation for the gesture path</h2>
+  <p class="section-lead">Four relationships are worth being able to write from memory: how a gesture window is formed, what the classifier must decide, why errors only accumulate, and what a sensing choice costs.</p>
+
+  <div class="theorem-box">
+    <h3>1. A gesture is a window, not a sample</h3>
+    <p>Sampling produces a stream \(s_1, s_2, \dots\); segmentation selects a contiguous window:</p>
+    \[ W = \langle\, s_i, \dots, s_j \,\rangle, \qquad \phi(W) \in \mathbb{R}^d \]
+    <p style="margin-top:0.6rem;">Practical consequence: nothing downstream can recover information the window does not contain. If \(W\) includes half of the previous gesture, the feature vector describes a movement the user never made.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Recognition is a decision with an abstain option</h3>
+    <p>Given the feature vector \(\phi(W)\) and a gesture set \(G\), the recogniser returns a label and a confidence, and the system decides whether to act:</p>
+    \[ \hat{g} = \arg\max_{g \in G}\ P(g \mid \phi(W)), \qquad \text{act} \iff P(\hat{g} \mid \phi(W)) \ge \tau \]
+    <p style="margin-top:0.6rem;">With \(\tau = 0\) the system always acts, which is exactly the behaviour that makes gesture interfaces feel haunted: every unintended movement is mapped onto the nearest label. Raising \(\tau\) trades missed gestures for false activations, and the acceptable balance depends on what the action costs &mdash; muting a television is not the same as unlocking a door.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Errors accumulate along the pipeline</h3>
+    <p>Let the stages be segmentation, features, classification and feedback. Each stage accepts the previous stage's output as if it were ground truth, so the end-to-end error is bounded below by the earliest stage's error:</p>
+    \[ P(\text{wrong action}) \;\ge\; P(\text{bad window}) \]
+    <p style="margin-top:0.6rem;">A better classifier cannot repair a bad window, and feedback arrives after the action has already been chosen. Debug gesture systems left to right.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Accuracy and precision are different failures</h3>
+    <p>For a tracking system, with \(x\) the true value and \(\hat{x}\) the estimate:</p>
+    \[ \text{accuracy} \;=\; \bigl|\,\mathbb{E}[\hat{x}] - x\,\bigr|, \qquad \text{precision} \;=\; \operatorname{Var}(\hat{x}) \]
+    <p style="margin-top:0.6rem;">The deck draws all four quadrants. An <em>accurate but imprecise</em> system jitters around the right answer; a <em>precise but inaccurate</em> system is confidently wrong and is the more dangerous of the two, because repeated readings agree with each other and therefore look trustworthy.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Where gesture sits in the Week 1 model.</strong> Gesture changes two things at once: it moves where the input comes from (from a control to the body) and it changes \(E_a\), the attention the system demands. Touching an object you can see usually lowers \(E_a\); an invisible mid-air gesture set usually raises it, because the user must remember what to do and watch for confirmation.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A tracker reports the same position for a stationary hand, but that position is consistently 4&nbsp;cm to the left of the truth. Which description is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Imprecision is variance — readings disagreeing with each other. Here the readings agree perfectly; they are all wrong by the same amount.">Precise but inaccurate</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Low variance with a constant offset is precisely what 'precise but inaccurate' means, and it is the dangerous quadrant: the readings agree with each other, so they look trustworthy." data-bad="">Accurate but imprecise</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Both would mean a large offset and a large spread. Neither is present: the spread is zero and the offset is constant.">Neither accurate nor precise</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-sensing">
+  <h2 class="section-title">Choosing a motion-capture system</h2>
+  <p class="section-lead">The deck asks &ldquo;how to choose a mocap system?&rdquo; and then lists the axes. This is the most examinable list on the page: each axis is a trade, and the right answer is always &ldquo;it depends which axis the interaction actually needs&rdquo;.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Axis from the deck</th><th>What it asks</th><th>Extrinsic</th><th>Intrinsic</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Amount of information</strong></td><td>Which of presence, 2D position, 3D position, orientation, body configuration, hand configuration, facial expressions and microgestures does the interaction need?</td><td>High for body configuration and facial expression; limited for microgestures</td><td>High for orientation and microgestures; poor at absolute position</td></tr>
+        <tr><td><strong>Calibration</strong></td><td>How much setup before the first usable reading?</td><td>Camera extrinsics, capture volume, per-session setup</td><td>Per-sensor alignment, but no room setup</td></tr>
+        <tr><td><strong>Tracking volume</strong></td><td>How large is the space where the body is actually observable?</td><td>Bounded by the cameras' field of view</td><td>Unbounded &mdash; the sensors travel with the person</td></tr>
+        <tr><td><strong>Occlusion / space requirements</strong></td><td>Can the body hide itself, and how much room does the rig need?</td><td>Self-occlusion is the standard failure</td><td>No optical occlusion at all</td></tr>
+        <tr><td><strong>Cost</strong></td><td>Sensors, compute, installation, and the cost of the space itself</td><td>Rig cost scales with volume and camera count</td><td>Cost scales with the number of worn units</td></tr>
+        <tr><td><strong>Accuracy &times; precision</strong></td><td>Is the estimate right, and is it stable?</td><td>Accurate within the volume; precise at close range</td><td>Precise over short windows; drifts over long ones</td></tr>
+        <tr><td><strong>Drift</strong></td><td>Does error grow without bound over time?</td><td>No drift &mdash; absolute reference</td><td>Drift in position, then velocity, then acceleration</td></tr>
+        <tr><td><strong>Interference</strong></td><td>What in the environment degrades the signal?</td><td>Lighting, sunlight, occlusion, other sensors</td><td>Electromagnetic fields (and, for magnetometers, nearby metal)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-mocap-race"></div>
+
+  <div class="callout">
+    <strong>How to answer &ldquo;which system would you choose?&rdquo;</strong> Name the information the interaction needs first (that is the axis that cannot be traded away), then show which of the remaining axes you are willing to spend. &ldquo;Intrinsic, because the gesture is a wrist microgesture and the person walks around; I accept drift and re-zero on a known posture&rdquo; is a complete answer. &ldquo;Intrinsic, because it is more modern&rdquo; is not.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A rehabilitation game must measure the angle of a patient's elbow continuously for twenty minutes in a clinic room. Which factor most favours an extrinsic system here?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Twenty continuous minutes is exactly the regime where integrated inertial estimates drift; an extrinsic system has an absolute reference and does not accumulate error over time." data-bad="">The measurement is continuous over a long session, so unbounded drift in an integrated estimate is the deciding risk</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Tracking volume favours intrinsic sensing — an extrinsic rig is confined to its capture volume. Here the patient stays in one room, so volume is not the deciding factor.">The patient moves around, so the tracking volume must be large</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Cost favours whichever system is already available; it is not the factor that makes extrinsic tracking necessary for a long continuous measurement.">Extrinsic cameras are always cheaper than worn sensors</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked comparison &mdash; three concrete systems, scored on the deck's axes.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>A gallery installation where visitors wave at a projected artwork.</strong> Information needed: presence and coarse 2D position of a hand &mdash; nothing more. Extrinsic depth camera. Tracking volume is the only real constraint, and visitors can be guided into it by the projection itself. Accuracy and precision requirements are low; drift is irrelevant because every visitor starts fresh.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>A wearable that detects a double-tap of the index finger against the thumb.</strong> Information needed: microgesture &mdash; millimetre motion at the hand. Intrinsic IMU on the wrist. Occlusion is irrelevant, tracking volume is the whole world, and the short window means drift has no time to accumulate. The cost is encumbrance: something must be worn.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>A clinical gait lab measuring whole-body configuration for an hour.</strong> Information needed: full body configuration, continuously, with a stable reference. Extrinsic optical mocap with markers. Drift would invalidate the measurement, occlusion is controlled by rigging enough cameras, and the space requirement is accepted because the room is purpose-built.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--purple);">4</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;The choice follows from the amount of information the interaction needs, and every other axis is a cost accepted to obtain it: extrinsic tracking buys absolute reference and a bounded volume; intrinsic tracking buys mobility and microgesture resolution at the price of drift and encumbrance.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-drift">
+  <h2 class="section-title">Drift: why acceleration survives and position does not</h2>
+  <p class="section-lead">The deck lists drift next to the sensing family diagram and shows it three times &mdash; once for position, once for velocity, once for acceleration. That ordering is the whole idea.</p>
+
+  <div class="theorem-box">
+    <h3>Integrating a biased signal grows the error</h3>
+    <p>An accelerometer reports \(a_t = a^{\ast}_t + b + \eta_t\), where \(a^{\ast}\) is true acceleration, \(b\) a small constant bias and \(\eta\) noise. Velocity and position follow by integration:</p>
+    \[ v_t = \int_0^t a\,\mathrm{d}t, \qquad p_t = \iint a\,\mathrm{d}t^2 \]
+    <p style="margin-top:0.6rem;">A constant bias therefore produces an error that grows <em>linearly</em> in velocity and <em>quadratically</em> in position:</p>
+    \[ \varepsilon_v(t) \approx b\,t, \qquad \varepsilon_p(t) \approx \tfrac{1}{2}\,b\,t^2 \]
+    <p style="margin-top:0.6rem;">This is why the deck's drift diagram names all three quantities in that order. Acceleration is measured directly and carries only the bias; velocity carries its integral; position carries the double integral and diverges fastest.</p>
+  </div>
+
+  <div id="ix-drift"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What drift means for a gesture</h3>
+      <p>A short gesture is safe: over a 500&nbsp;ms flick the accumulated error is negligible, which is why wrist-worn microgesture detection works at all. A long interaction is not: an hour of integration turns a millimetre-scale bias into metres of position error, so intrinsic sensing must be re-referenced against something absolute.</p>
+    </div>
+    <div class="col-card">
+      <h3>What the designer actually does</h3>
+      <p>Three standard responses: use intrinsic sensing only for the quantities it is good at (orientation, rate, relative motion); re-zero against a known posture or a landmark at the start of each gesture; or fuse with an extrinsic reference that never drifts, accepting the camera back into the system.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Quantity</th><th>How it is obtained</th><th>Error growth</th><th>Practical lifetime</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Acceleration / angular rate</td><td>Measured directly by the accelerometer and gyroscope</td><td>Constant (bias only)</td><td>Indefinitely usable</td></tr>
+        <tr><td>Orientation</td><td>Integrated from the gyroscope, corrected by the magnetometer</td><td>Slow linear drift</td><td>Minutes, if re-referenced</td></tr>
+        <tr><td>Velocity</td><td>Integrated once from acceleration</td><td>Linear in \(t\)</td><td>Seconds</td></tr>
+        <tr><td>Position</td><td>Integrated twice from acceleration</td><td>Quadratic in \(t\)</td><td>A single gesture window</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An IMU has a constant accelerometer bias. Which statement about the resulting drift is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="All three quantities are affected. The bias enters at acceleration and is then integrated, so velocity and position inherit it — position inherits it twice.">Only the acceleration reading is affected, since velocity and position are computed from it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The bias integrates once into velocity and twice into position, so position diverges quadratically while acceleration stays at a constant offset — the ordering the deck's drift diagram shows." data-bad="">All three drift, with position growing fastest and acceleration slowest</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing about a constant bias is random; it produces a deterministic, monotonically growing error, which is why re-referencing works.">The error is random, so no amount of re-referencing can help</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-audit">
+  <h2 class="section-title">Elicitation and gesture-set audit</h2>
+  <p class="section-lead">Two procedures from the week are worth being able to write out in order: how a guessability study is run, and how a proposed gesture set is audited before it ships.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-elicit"></div>
+  <script type="application/json" id="ix-m-elicit">
+  {
+    "title": "Order a guessability (elicitation) study",
+    "subtitle": "Click the steps in the order the method requires.",
+    "steps": [
+      "Fix the list of commands and describe each one by its effect, not by a gesture",
+      "Recruit participants who represent the eventual users",
+      "Show each effect and ask the participant to perform the gesture they would try first",
+      "Record every proposal and let the participant demonstrate it a second time",
+      "Pool the proposals and compute an agreement score for each command",
+      "Keep the highest-agreement gesture per command and flag the low-agreement ones",
+      "Give the flagged commands a visible control rather than a guessable gesture"
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Describe the effect, not the gesture</h3>
+      <p>If you show the gesture, you have measured imitation. The method's whole value comes from asking people to produce the mapping themselves.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Count agreement, not votes</h3>
+      <p>One command with eleven different proposals from twenty people is a different design problem from one command with fifteen identical proposals.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Audit against the sensor</h3>
+      <p>A gesture can win on agreement and still be undetectable. Check each winner against the tracking volume, the occlusion pattern and the resolution of the chosen sensor.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Audit against the body</h3>
+      <p>Finally ask the two questions the deck raises: can this be performed fifty times in a row without gorilla arms, and would the user be willing to do it in front of strangers?</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why this page's procedure ends with a control, not a gesture.</strong> Low agreement is not a reason to try harder; it is evidence that the command has no intuitive gesture. The honest design response is a visible affordance &mdash; which is exactly the deck's conclusion that intuitions exist only for &ldquo;a couple of the most commonplace manipulations&rdquo;.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In a guessability study, why must participants be shown the effect rather than a candidate gesture?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Showing the effect is not about speed. It is about not contaminating the participant's own mapping with the designer's.">Because describing the effect is faster than demonstrating a gesture</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The method measures which gesture users spontaneously produce for an effect; showing a gesture would measure imitation, and the agreement scores would describe the designer's choice rather than the users'." data-bad="">Because showing a gesture would measure imitation, so the agreement scores would describe the experimenter's choice rather than the users'</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Participants are not asked to evaluate anything. The study collects proposals, and evaluation happens later against the sensor and the body.">Because participants are not qualified to evaluate a gesture's usability</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; auditing a five-command gesture set for a kitchen display.</strong> The commands are: next step, previous step, start timer, add ingredient to list, and scale recipe. Cooks have wet or full hands, so the display is controlled from a distance with no touching.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Classify each command before designing anything.</strong> Next/previous step are <em>semaphoric</em> (a dictionary of discrete labels). Start timer is semaphoric too, but its feedback must be immediate because the cook cannot look. Add ingredient is <em>deictic</em> if a list is on screen &mdash; the gesture has to indicate which item. Scale recipe is <em>manipulative</em>: a continuous quantity is being set, so a drag-like mapping fits better than a discrete symbol.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Run elicitation per class, not per command.</strong> Semaphoric commands are elicitable, so participants invent gestures for them. The deictic command needs pointing techniques compared (<em>image-plane</em> versus <em>fixed-point</em>) rather than gesture invention. The manipulative command needs a continuous mapping, and its question is the degrees-of-freedom match, not agreement.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Audit the winners against the sensing.</strong> The display is controlled from a distance, so sensing is extrinsic and therefore limited by tracking volume and occlusion. A gesture that travels outside the capture volume, or that is performed while the other hand crosses in front of the body, is undetectable no matter how intuitive it is.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Audit against the body.</strong> Cooks repeat actions for an hour. Any gesture requiring a raised arm will produce gorilla arms before the meal is finished, so the set must be performable low and close to the torso &mdash; or with wrist movement only. This single constraint usually eliminates the most &ldquo;intuitive&rdquo; wave-based winners.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--purple);">5</div>
+        <div class="step-body"><p><strong>Audit the feedback.</strong> A cook is looking at food, not at the display. Every command needs a non-visual confirmation &mdash; a sound, a change in the timer's audible tick &mdash; because the deck's feedback challenge is at its hardest when the user cannot afford to look. Commands whose feedback cannot be made perceptible without sight should keep a visible control instead.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--purple);">6</div>
+        <div class="step-body"><p><strong>The takeaway sentence.</strong> &ldquo;Elicitation supplies the gesture set; classification tells you what each command needs; and the audit against sensor, body and feedback is what turns an intuitive set into a usable one. Any command that fails the audit gets a control, not a gesture.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5047ChapterUI) return;
+    try {
+      window.initCOMP5047ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5047 chapter 6] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  function mountWidgets() {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    if (window.mountChapter6MathWidgets) {
+      window.mountChapter6MathWidgets();
+    }
+  }
+  initChrome();
+  mountWidgets();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    mountWidgets();
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

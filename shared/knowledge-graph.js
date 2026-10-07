@@ -10,6 +10,8 @@
  *   chapterNames   – { 1:"Ch1 …", … }
  *   chapterNamesZh – { 1:"第1章…", … }  (optional, falls back to chapterNames)
  *   nodes          – [{ id, ch, diff, label, def, href, label_zh?, def_zh? }, …]
+ *                    (a 6-element tuple [id, ch, diff, label, def, href] is also
+ *                     accepted and normalised below)
  *   edges          – [[srcId, tgtId, strength], …]
  *
  * Optional:
@@ -25,6 +27,22 @@ var CFG = window.KG_CONFIG;
 if (!CFG) { console.error("KG_CONFIG not defined"); return; }
 
 /* ── config unpacking ── */
+
+/*
+ * Node shape normalisation.
+ *
+ * The engine works with objects, but graph data files have historically been
+ * written either as objects or as 6-element tuples
+ * ([id, ch, diff, label, def, href]). Both forms ship in this repo, and an
+ * un-normalised tuple array silently collapses into one undefined chapter
+ * group with NaN radii and no edges, so accept both rather than trusting every
+ * data file to pick the same shape.
+ */
+CFG.nodes = (CFG.nodes || []).map(function (n) {
+  if (!Array.isArray(n)) return n;
+  return { id: n[0], ch: n[1], diff: n[2], label: n[3], def: n[4], href: n[5] };
+});
+
 var CHCOL      = CFG.chapterColors;
 var CHNAME     = CFG.chapterNames;
 var CHNAME_ZH  = CFG.chapterNamesZh || CHNAME;

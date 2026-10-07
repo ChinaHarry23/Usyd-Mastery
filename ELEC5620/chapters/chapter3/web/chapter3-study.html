@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3: Requirement Modelling — ELEC5620</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter3-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 study guide for ELEC5620: requirements engineering, the ad hoc, feature-oriented and use case approaches, feature diagrams, actors and system boundaries, include, extend and generalization, scenario walkthroughs and requirements traceability.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 3: Requirement Modelling — ELEC5620">
+<meta property="og:description" content="Week 3 study guide for ELEC5620: the three requirement modelling approaches, feature diagrams, use case notation, include, extend and generalization, scenario walkthroughs and requirements traceability.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F4D0;</span>
+      <h2>Week 3</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-re" class="nav-link" data-section="re">Requirements Engineering</a></li>
+    <li><a href="#sec-approaches" class="nav-link" data-section="approaches">Three Approaches</a></li>
+    <li><a href="#sec-feature" class="nav-link" data-section="feature">Feature Modelling</a></li>
+    <li><a href="#sec-ucframework" class="nav-link" data-section="ucframework">Use Case Framework</a></li>
+    <li><a href="#sec-ucstructure" class="nav-link" data-section="ucstructure">Anatomy of a Use Case</a></li>
+    <li><a href="#sec-relationships" class="nav-link" data-section="relationships">Include, Extend, Generalize</a></li>
+    <li><a href="#sec-scenarios" class="nav-link" data-section="scenarios">Scenarios</a></li>
+    <li><a href="#sec-ucdiagram" class="nav-link" data-section="ucdiagram">The Use Case Diagram</a></li>
+    <li><a href="#sec-traceability" class="nav-link" data-section="traceability">Traceability &amp; Evolution</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter3-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter3-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 3 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">ELEC5620 — Model-Based Software Engineering</p>
+    <h1>Week 3: Requirement Modelling</h1>
+    <p class="hero-subtitle">Capturing what the system must do: actors, use cases, include and extend relationships, non-functional requirements and scenario walkthroughs.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9D1;</span>
+        <span>Actors have goals</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2B55;</span>
+        <span>Use cases realise them</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F517;</span>
+        <span>include, extend, generalize</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9ED;</span>
+        <span>Traceable to design and test</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter3-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter3-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 3 lecture deck (Yuan, <em>Requirements Modelling</em>), Tutorial 3 and Lab Note 3</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-re" class="section" data-track="re">
+  <h2 class="section-title">Requirements Engineering: Discovering the Purpose</h2>
+  <p class="section-lead">The lecture opens with a claim that reframes everything else in the unit: software success is the degree to which the software meets the purpose for which it was intended &mdash; so requirement modelling is the process of discovering that purpose.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definitions from the deck</div>
+    <p><strong>Software success</strong> &mdash; the degree to which the software meets the purpose for which it was intended. <strong>Requirement modelling / engineering</strong> &mdash; the process of discovering that purpose: identifying stakeholders and their needs, and documenting them in a form that is amenable to analysis, communication and implementation.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Scott W. Ambler, quoted in the deck:</strong> &ldquo;It is the role of project stakeholders to provide requirements, it is the role of developers to understand and implement them.&rdquo; The lecture pairs this with human-centred design, which &ldquo;puts the people we are designing for at the heart of the process&rdquo;.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Two inherent difficulties</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Stakeholder goals may not be explicit, and may be difficult to articulate.</li>
+        <li>Satisfaction of those goals may be constrained by factors outside the stakeholders' control.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Henry Ford, quoted in the deck</h3>
+      <p>&ldquo;If I had asked people what they wanted, they would have said faster horses.&rdquo; Elicitation records what stakeholders say; modelling is what lets you examine it, communicate it and agree on it. The deck cites Nuseibeh and Easterbrook for that framing.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Benefit of good requirements</th><th>What it looks like in a project</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Clear expectations</td><td>Better reception by customers, because what will be delivered is legible before it is built</td></tr>
+        <tr><td>Elimination of needless development</td><td>Features nobody asked for are cancelled before they are coded</td></tr>
+        <tr><td>Reduced project risk</td><td>Conflicts and omissions surface while they are still cheap to fix</td></tr>
+        <tr><td>Actual faults caught earlier</td><td>The defect is found in a model, not in an integration test</td></tr>
+        <tr><td>Faster development</td><td>Less rework and less guessing about intent</td></tr>
+        <tr><td>Improved maintenance</td><td>The reason a behaviour exists is recorded, not folklore</td></tr>
+        <tr><td>Simpler formulation of testing strategies</td><td>Each requirement names what would demonstrate it</td></tr>
+        <tr><td>Robust design</td><td>Non-functional constraints are known before the architecture is fixed</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-re"></div>
+
+  <div class="callout">
+    <strong>The iron triangle:</strong> time, effort (quality) and money. The deck introduces it with the benefits list because requirements work is the cheapest place to move a project's outcome &mdash; a defect removed during elicitation never consumes any of the three.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which list is the deck's list of <em>issues with requirement statements</em>?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Those are benefits of doing requirements well, not the defects that make requirement statements unreliable.">Clear expectations, reduced risk, faster development, improved maintenance</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck lists ambiguity, incompleteness, conflict, difference in priority, and the perceived urgency of stakeholders to realise their requirement." data-bad="">Ambiguity, incompleteness, conflict, difference in priority, and perceived stakeholder urgency</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Those are the five requirements-engineering activities — eliciting, modelling, communicating, agreeing, evolving — not the issues that make statements defective.">Eliciting, modelling, communicating, agreeing, evolving</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-approaches" class="section" data-track="approaches">
+  <h2 class="section-title">Three Approaches to Specifying Requirements</h2>
+  <p class="section-lead">The lecture compares three ways of writing requirements down. They are not rivals: the deck's conclusion is that a pragmatic combination of all three is usually the best approach.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Approach</th><th>What the system is</th><th>View</th><th>Where it hurts</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>&ldquo;Ad hoc&rdquo; analysis</strong></td><td>A mixture of different kinds of requirement &mdash; what, how, how well</td><td>Informal prose and sketches</td><td>Unsystematic and error prone: omissions, conflicts, inconsistencies, ambiguities</td></tr>
+        <tr><td><strong>Feature analysis</strong></td><td>A collection of desired properties (features)</td><td>Capability-based</td><td>Static: no clear indication of how features are used or realised, so conflicts are hard to detect</td></tr>
+        <tr><td><strong>Use case analysis</strong></td><td>A set of functional capabilities that realise desired stakeholder goals</td><td>Operational</td><td>Abstract by design: it needs interaction modelling before it becomes a design</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Only one of the three is usually chosen deliberately. The deck is explicit that the ad hoc approach is &ldquo;usually the most common starting point&rdquo; &mdash; which is exactly why the other two are worth learning. Feature analysis gives you a structured inventory of capability; use case analysis gives you the operational story of who achieves what, and when.</p>
+
+  <div data-ix="race" data-ix-src="#ix-race-approaches"></div>
+  <script type="application/json" id="ix-race-approaches">
+  {
+    "title": "How much structure each approach gives you",
+    "subtitle": "Illustrative 0–5 ratings built from the definitions on this page. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Ad hoc — structure for later analysis", "value": 1, "display": "low" },
+      { "name": "Ad hoc — speed of first capture", "value": 5, "display": "immediate" },
+      { "name": "Feature — support for variability and product families", "value": 5, "display": "its purpose" },
+      { "name": "Feature — indication of how features are used", "value": 1, "display": "none" },
+      { "name": "Use case — operational view of actor goals", "value": 5, "display": "its purpose" },
+      { "name": "Use case — coverage of non-functional constraints", "value": 2, "display": "incidental" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A team writes requirements as a long prose document that mixes desired behaviour, an implementation decision and a response-time target. Which approach are they using, and what is the main risk?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. That is the deck's description of ad hoc analysis — a mixture of what, how and how well, unsystematic and error prone, and hard to trace." data-bad="">Ad hoc analysis, and the risk is omissions, conflicts and ambiguities that are hard to detect later</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Feature analysis would have separated the system into named, user-visible capabilities. Mixing kinds of requirement inside prose is the ad hoc signature.">Feature analysis, and the risk is that the feature model will not support a product family</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Use case analysis would have named actors, goals and scenarios. There are none here — this is informal text.">Use case analysis, and the risk is that no actor has been identified</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-feature" class="section" data-track="feature">
+  <h2 class="section-title">Feature-Oriented Modelling</h2>
+  <p class="section-lead">Feature modelling is the capability-based approach: it lists what the product can do, and how those capabilities may be combined, before anyone asks how they work.</p>
+
+  <div class="def-box">
+    <div class="def-label">Feature</div>
+    <p>A <strong>prominent and user-visible aspect, quality or characteristic of a software system</strong>; a property of a domain concept that is relevant to some domain stakeholder and is used to discriminate between concept instances (Czarnecki &amp; Eisenecker, quoted in the deck).</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Feature-Oriented Domain Analysis (FODA)</h3>
+      <p>Originated by the Software Engineering Institute in 1990 for analysing domains, their concepts and their relationships. The deck notes the similarity to class modelling &mdash; but more general. Requirements analysis is treated as a kind of domain analysis: the domain of the system under construction.</p>
+    </div>
+    <div class="col-card">
+      <h3>Feature model, feature diagram</h3>
+      <p>A feature model is a <strong>compact representation of all the products of a software product line (SPL)</strong> in terms of features. Feature diagrams are its visual representation, used throughout product-line development and often as input to generate documentation, schema definitions or code snippets.</p>
+    </div>
+  </div>
+
+  <div id="ix-feature-diagram"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Parent&ndash;child relationship</th><th>Notation</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Mandatory</strong></td><td>Filled circle at the parent end of the edge</td><td>The child feature must be selected.</td></tr>
+        <tr><td><strong>Optional</strong></td><td>Hollow circle at the parent end of the edge</td><td>The child feature can be selected or not selected.</td></tr>
+        <tr><td><strong>Or</strong></td><td>Filled arc across the sibling edges</td><td>At least one of the sub-features must be selected.</td></tr>
+        <tr><td><strong>Alternative (xor)</strong></td><td>Hollow arc across the sibling edges</td><td>Exactly one of the sub-features must be selected.</td></tr>
+        <tr><td><strong>Cross-tree constraint</strong></td><td>Dashed arrow labelled with the condition</td><td>A dependency between features in different branches, e.g. <em>credit card &rarr; high security</em>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>The e-shop example from the tutorial.</strong> The root feature <em>E-Shop</em> identifies the product line. The system implements catalogues, payment modules, security policies and optional search tools. It must implement a high-standard <em>or</em> standard security policy (choose exactly one); it supports bank transfer, credit card <em>or</em> both payment modules; and a cross-tree constraint forces any system that includes credit-card payment to implement the high-security policy.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why architects care:</strong> the deck's summary notes that feature modelling is particularly useful as a starting point for requirements work and for cases involving significant variability &mdash; that is, product families &mdash; which makes it &ldquo;of major importance to system architects&rdquo;. Its limit is that it is static: it never shows a sequence of interactions.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In a feature diagram, three sibling sub-features are grouped under a <em>hollow</em> arc. What has the modeller asserted?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the or-group, drawn with a filled arc. A hollow arc is the stronger constraint.">At least one of the three must be selected</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A hollow arc marks an alternative (xor) group: exactly one of the sub-features must be selected in any valid product." data-bad="">Exactly one of the three must be selected, and the others must not be</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Mandatory and optional are edge decorations on a single child — a filled or hollow circle at the parent end — not a group arc.">All three are optional, so any subset may be selected</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-ucframework" class="section" data-track="ucframework">
+  <h2 class="section-title">The Use Case Framework: Actors, Goals, Boundary</h2>
+  <p class="section-lead">The lecture's definition is deliberately small: a use case is <em>an interaction with a system for the purpose of achieving a clearly defined goal</em> &mdash; something which is of value to the actor.</p>
+
+  <div class="def-box">
+    <div class="def-label">Two terms the exam will ask for</div>
+    <p><strong>Actor</strong> &mdash; an entity (person or system) which interacts with a system to achieve one or more goals. <strong>Use case</strong> &mdash; a collection of possible interactions between actors and a system relating to one or more goals.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What a use case gives you</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Context for the requirements</li>
+        <li>A basis for agreement between stakeholders and developers</li>
+        <li>A collection of possible scenarios, not one fixed path</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Where it sits</h3>
+      <p>The deck's key phrase: a use case &ldquo;occurs on the boundary between the informal (i.e., what users want) and formal (i.e., what engineers implement)&rdquo;. That is why the diagram is the easy part and the specification is the hard part.</p>
+    </div>
+  </div>
+
+  <div id="ix-uc-build"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Element</th><th>Notation</th><th>Naming rule from the tutorial</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Actor</td><td>Stick figure, outside the boundary</td><td>Named by a noun; plays a role in the business</td></tr>
+        <tr><td>Use case</td><td>Ellipse (or circle) inside the boundary</td><td>Named verb + noun (or noun phrase) &mdash; &ldquo;Do Something&rdquo;</td></tr>
+        <tr><td>Association / communication link</td><td>Solid line joining actor to use case</td><td>Shows participation; the actor and use case communicate using messages</td></tr>
+        <tr><td>System boundary</td><td>Rectangle around the use cases</td><td>Defined by the requirements document; represents the scope of the system</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Actors are roles, not people.</strong> The tutorial's example: a professor can be an instructor in one system and a researcher in another &mdash; two roles, two systems. An actor also may be a person, an organisation, or an outside system that interacts with your application; what makes it an actor is that it is an external object that produces or consumes data.
+  </div>
+
+  <div class="callout">
+    <strong>Two structural rules worth memorising:</strong> every actor must be linked to at least one use case, while some use cases may not be linked to any actor; and a use case may be extended. The second rule is what makes the next two sections necessary.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A payroll system automatically reports superannuation contributions to the tax office's reporting service. Should the tax office service appear on the use case diagram, and as what?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The tutorial is explicit that an actor can be a person, an organisation, or an outside system that interacts with your application — what matters is that it is an external object that produces or consumes data." data-bad="">Yes — as a second actor, because an outside system that interacts with yours is an actor</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A use case is named verb + noun and lives inside the system boundary. The reporting service is external: it consumes data from the system.">Yes — as a use case named &ldquo;Report contributions&rdquo; inside the boundary</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It belongs on the diagram. The tutorial's actor definition explicitly includes outside systems, and the boundary only encloses what you are building.">No — the diagram only shows human users of the system</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-ucstructure" class="section" data-track="ucstructure">
+  <h2 class="section-title">Anatomy of a Use Case: Header and Scenarios</h2>
+  <p class="section-lead">The UML ellipse is a shorthand. The deliverable is the specification behind it, and the lecture follows a slightly modified version of Alistair Cockburn's pragmatic template.</p>
+
+  <div data-ix="matcher" data-ix-src="#ix-uc-header"></div>
+  <script type="application/json" id="ix-uc-header">
+  {
+    "title": "Match each use case header field to what it records",
+    "subtitle": "Click a field on the left, then the description on the right.",
+    "pairs": [
+      ["Name", "A clear, descriptive title for the use case"],
+      ["Goal", "The objective the use case aims to achieve — the value to the actor"],
+      ["Level", "The scope or detail level of the use case, such as user-goal or system level"],
+      ["Precondition", "Conditions that must be true before the use case starts"],
+      ["Success condition", "The state of the system after the use case completes successfully"],
+      ["Failure condition", "What holds when the goal was not achieved"],
+      ["Trigger", "The event that initiates the use case"]
+    ]
+  }
+  </script>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">The deck's header example: Withdraw Cash from ATM</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Name</th><th>Goal</th><th>Level</th><th>Precondition</th><th>Success condition</th><th>Failure condition</th><th>Trigger</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Withdraw cash from ATM</td>
+          <td>Obtain cash</td>
+          <td>System</td>
+          <td>User has ATM-readable card</td>
+          <td>Cash dispensed to user</td>
+          <td>Cash not dispensed despite valid request</td>
+          <td>Insertion of card in ATM</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>One header per use case, followed by a collection of scenarios corresponding to successful runs through it. The deck gives this single success scenario:</p>
+
+  <div class="code-block">
+1. User logs into ATM
+2. User selects withdrawal service
+3. User specifies amount
+4. ATM dispenses specified amount
+5. User logs out
+  </div>
+
+  <div class="theorem-box">
+    <h3>Cockburn's five structural commitments</h3>
+    <ul style="padding-left:1.1rem; line-height:1.8;">
+      <li>Use cases are motivated by &mdash; and defined around &mdash; <strong>actor goals</strong>.</li>
+      <li>Use cases <strong>start with an action by an actor</strong>: the trigger.</li>
+      <li>Use cases <strong>always terminate with a clear result</strong>: the goal has or has not been achieved.</li>
+      <li>There are <strong>success scenarios</strong> (usually one &ldquo;main&rdquo; success scenario) and <strong>failure scenarios</strong> &mdash; complications.</li>
+      <li>In general, <strong>each step in a scenario can succeed or fail</strong>.</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <strong>How failures are named and where they attach:</strong> the condition that led to a step heads the corresponding failure scenario, and failure scenarios branch off from the point of failure. A failure scenario is therefore indexed by the step it interrupts &mdash; <em>5.a</em>, <em>7.c</em> &mdash; not numbered as a separate flow.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A use case specification says the failure scenario is &ldquo;4.a {ATM has insufficient cash on hand}&rdquo;, containing &ldquo;1. Notify user, 2. Log out user&rdquo;. What does the <em>4.a</em> tell you?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The condition that led to a step heads the failure scenario, and the scenario branches off from the point of failure — here, after step 4 of the main success scenario." data-bad="">It is the extension scenario for the condition that can interrupt step 4 of the main success scenario</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The main success scenario is numbered 1, 2, 3, 4, 5. An extension stops the main flow and runs instead; it is not an optional extra step inside the numbered sequence.">It is an optional fourth step that runs only when the ATM has cash</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A use case at a lower level is attached with «include», not by step numbering. Step numbering inside one use case never denotes another use case.">It is a nested use case named &ldquo;4.a&rdquo;</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-relationships" class="section" data-track="relationships">
+  <h2 class="section-title">Include, Extend and Generalization</h2>
+  <p class="section-lead">Three relationships between use cases carry most of the marks in this week's questions, and they are routinely confused. Each one answers a different question.</p>
+
+  <div id="ix-rel-stepper"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Relationship</th><th>Question it answers</th><th>Line &amp; arrowhead</th><th>Effect on the base use case</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>&laquo;include&raquo;</strong></td>
+          <td>Which lower-level use case does a step of this scenario actually represent?</td>
+          <td>Dashed arrow <em>pointing to the included (child) use case</em></td>
+          <td>The base use case relies on the child's functionality: the main use case includes actions from it</td>
+        </tr>
+        <tr>
+          <td><strong>&laquo;extend&raquo;</strong></td>
+          <td>What optional behaviour may be woven in at a defined point?</td>
+          <td>Dashed arrow <em>pointing to the base use case</em></td>
+          <td>An optional step is added &ldquo;without affecting the specification of the original use case&rdquo;</td>
+        </tr>
+        <tr>
+          <td><strong>Generalization</strong></td>
+          <td>Which use case is a specialisation of which?</td>
+          <td>Solid line with a <em>hollow triangle</em> pointing at the parent</td>
+          <td>The child is an enhancement of the parent and inherits its behaviour</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The arrowhead is the exam trap.</strong> For extend, the arrow leaves the extending use case and its tip points at the <em>base</em> use case: in the deck's ATM example the arrow runs from <em>Update Branch Balance</em> to <em>Withdraw Cash</em>, stereotyped &laquo;extend&raquo; and labelled with the condition <em>[service successful]</em> and the extension point <em>X1</em>. For include it is the other way round: the arrow leaves <em>Withdraw Cash</em> and points at <em>Login</em>. When in doubt, ask which use case <em>needs</em> the other.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Extension points</h3>
+      <p>Extending requires the notion of <strong>extension points</strong> in the use case &mdash; points where an extension can be woven in. The base use case advertises them (the deck's <em>Withdraw Cash</em> lists <em>extension points: X1</em>) and the extending use case names the point and its condition.</p>
+    </div>
+    <div class="col-card">
+      <h3>Why nesting earns its keep</h3>
+      <p>A step in a scenario may represent a sub-use case at a lower level, with its own sub-goals and actors. <em>Login</em> is the canonical example: <em>{ATM card inserted}</em>, then <em>1. Ask user PIN, 2. User enters PIN, 3. Validate PIN</em>. Pulling it out means every use case that needs a login does not restate it.</p>
+    </div>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>The deck's own summary of where this leads:</strong> use cases are &ldquo;useful as a front end to the design phase&rdquo; and &ldquo;typically complemented by UML interaction modeling (e.g., sequence diagrams)&rdquo; &mdash; with the warning that the two are <em>not the same</em>: use cases are more abstract.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; choosing the right relationship.</strong> Three proposals for the secure-access system of the tutorial's ad hoc diagram. Decide the relationship for each, and say why.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>&ldquo;Every access attempt must end by writing an entry into the door log.&rdquo;</strong> The logging step is not optional and it is not an enhancement &mdash; the scenario cannot complete without it. Model the log write as a lower-level use case, <em>Record Access Attempt</em>, reached by <strong>&laquo;include&raquo;</strong> from <em>Enter Secure Room</em>. The arrow points at <em>Record Access Attempt</em>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>&ldquo;When a person in the secure area presses the panic button, the system sends a message to the police instead of sounding the alarm.&rdquo;</strong> The main success scenario is unaffected; this is behaviour woven in at a defined point. Model <em>Summon Police</em> as an <strong>&laquo;extend&raquo;</strong> of <em>Occupy Secure Room</em>, with condition <em>[panic button pressed]</em> and an extension point advertised on the base use case. The arrow points at <em>Occupy Secure Room</em>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>&ldquo;A contractor may open the door with a one-time code as well as with a fingerprint.&rdquo;</strong> The one-time-code path is a specialisation of the same goal, not an optional add-on and not a sub-step. Model <em>Enter Secure Room by One-Time Code</em> as a <strong>generalization</strong> of <em>Enter Secure Room</em>, with the hollow triangle pointing at the parent.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The one-line test.</strong> If the base cannot complete its goal without it, it is <em>include</em>. If the base is complete and correct without it, and it is triggered by a condition at a defined point, it is <em>extend</em>. If it replaces the base while achieving the same goal, it is <em>generalization</em>.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In a diagram, a dashed arrow runs <em>from</em> <em>Update Branch Balance</em> <em>to</em> <em>Withdraw Cash</em>, stereotyped &laquo;extend&raquo;. What does this assert?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Reversed. For include the arrow leaves the base use case and points at the included child, as Withdraw Cash points at Login.">Withdraw Cash includes Update Branch Balance, so withdrawing always updates the balance</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The extending use case points at the base: Update Branch Balance is woven into Withdraw Cash at extension point X1, only when the condition holds." data-bad="">Update Branch Balance may be woven into Withdraw Cash at extension point X1 when its condition holds</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A hollow triangle on a solid line is generalization. A dashed arrow with a stereotype is not.">Update Branch Balance generalizes Withdraw Cash</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-scenarios" class="section" data-track="scenarios">
+  <h2 class="section-title">Scenario Walkthroughs and Extension Scenarios</h2>
+  <p class="section-lead">A use case is a collection of possible scenarios. Walking one through step by step is how you find the failure conditions you would otherwise ship.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Success and failure scenarios</h3>
+      <p>The flow starts from the precondition. Step 1 runs; if it succeeds, step 2 runs; if a failure condition holds at step 2, control branches to <em>STEP F2.1</em>, which itself ends in the goal being achieved or not. The deck's diagram ends in exactly three ways: <strong>SUCCESS</strong>, <strong>FAILURE</strong>, or <strong>SUCCESS after recovery</strong>.</p>
+    </div>
+    <div class="col-card">
+      <h3>Extension scenarios</h3>
+      <p>An extension scenario is <strong>initiated when a failure condition holds for a step in the scenario under consideration</strong>. In the deck's ATM example, <em>{Insufficient cash on hand}</em> branches from step 4: <em>1. Notify user, 2. Log out user</em>.</p>
+    </div>
+  </div>
+
+  <div id="ix-atm-scenario"></div>
+
+  <div class="callout">
+    <strong>Keeping it simple and agile (the deck's own advice):</strong> a use case should be easy for stakeholders to understand so that they can reason about it; avoid implementation detail and keep it informal, because not all stakeholders are technical experts. An easy-to-read textual form beats a precise one nobody reads.
+  </div>
+
+  <div class="insight-box">
+    <strong>Worked walkthrough &mdash; the deck's AI health agent.</strong> The lecture's running example is a patient consulting an AI health agent: the actor is the <em>Patient</em>, the level is <em>user-goal</em>, the main success scenario runs from the patient initiating the conversation to the agent providing treatment advice or booking an appointment, and three extension scenarios are given: <em>5.a {unclear or incomplete description}</em> (ask for clarification until sufficient information is gathered), <em>7.c {symptoms are critical/emergency}</em> (call emergency services immediately instead of booking), and <em>8.a {Patient does not understand advice}</em> (rephrase and offer educational resources). Step 9 is a nested use case in its own right: <em>AI Agent books an appointment with a doctor</em>, with its own three steps.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does the deck insist that in general <em>each step</em> in a scenario can succeed or fail?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. It is the reason failure scenarios are headed by the condition that led to a step and branch off from the point of failure — that is how coverage is achieved systematically rather than by guesswork." data-bad="">Because every step is a potential branch point, so enumerating conditions step by step gives the failure scenarios a systematic structure</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Failure scenarios are not the main scenario. The deck is explicit that the main success scenario usually stands alone while failures branch off it.">Because failure scenarios must be nested inside the main success scenario as extra numbered steps</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would be a low-level, implementation-shaped use case — exactly what the deck's agility advice warns against.">Because each step must then be decomposed into its own use case in the diagram</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-ucdiagram" class="section" data-track="ucdiagram">
+  <h2 class="section-title">The Use Case Diagram as a Blueprint</h2>
+  <p class="section-lead">The tutorial's framing: a use case diagram is a <em>graphical description of how a user might interact with a system</em> &mdash; a high-level blueprint that shows the use cases and the different types of users, and a successful one describes the activities and variants used to reach the goal.</p>
+
+  <div data-ix="hotspot" data-ix-src="#ix-ucdiagram-hotspot"></div>
+  <script type="application/json" id="ix-ucdiagram-hotspot">
+  {
+    "title": "Every notational element of a use case diagram",
+    "subtitle": "Click each numbered marker to see what the element means and how it is named.",
+    "svg": "<svg viewBox=\"0 0 820 460\" role=\"img\" aria-label=\"Use case diagram of the secure access system with an actor, a secondary actor, include, extend and generalization relationships, and a system boundary\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"ucdOpen\" viewBox=\"0 0 12 12\" refX=\"11\" refY=\"6\" markerWidth=\"12\" markerHeight=\"12\" orient=\"auto\"><path d=\"M1 1 L11 6 L1 11\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"1.8\"/></marker><marker id=\"ucdHollow\" viewBox=\"0 0 14 14\" refX=\"7\" refY=\"7\" markerWidth=\"16\" markerHeight=\"16\" orient=\"auto\"><path d=\"M1 1 L13 7 L1 13 Z\" fill=\"#f6f6fe\" stroke=\"#0e7490\" stroke-width=\"1.6\"/></marker></defs><rect x=\"0\" y=\"0\" width=\"820\" height=\"460\" fill=\"#fbfbff\"></rect><rect x=\"238\" y=\"72\" width=\"344\" height=\"266\" rx=\"12\" fill=\"rgba(99,102,241,0.045)\" stroke=\"#4f46e5\" stroke-width=\"2\"></rect><text x=\"254\" y=\"96\" font-size=\"12\" font-family=\"system-ui, sans-serif\" fill=\"#4f46e5\">Secure Access System</text><ellipse cx=\"340\" cy=\"288\" rx=\"90\" ry=\"34\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"1.6\"></ellipse><text x=\"340\" y=\"293\" font-size=\"12\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#0e7490\">Login</text><ellipse cx=\"490\" cy=\"288\" rx=\"78\" ry=\"34\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.6\" stroke-dasharray=\"5 4\"></ellipse><text x=\"490\" y=\"285\" font-size=\"12\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#565d75\">Update Branch</text><text x=\"490\" y=\"300\" font-size=\"12\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#565d75\">Balance</text><ellipse cx=\"490\" cy=\"166\" rx=\"84\" ry=\"34\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"1.6\"></ellipse><text x=\"490\" y=\"171\" font-size=\"12\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#0e7490\">Withdraw Cash</text><ellipse cx=\"290\" cy=\"166\" rx=\"76\" ry=\"34\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"1.6\"></ellipse><text x=\"290\" y=\"171\" font-size=\"12\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#0e7490\">Enter PIN</text><line x1=\"340\" y1=\"254\" x2=\"306\" y2=\"200\" stroke=\"#0e7490\" stroke-width=\"1.6\" stroke-dasharray=\"6 4\" marker-end=\"url(#ucdOpen)\"></line><text x=\"272\" y=\"240\" font-size=\"11\" font-family=\"system-ui, sans-serif\" fill=\"#4f46e5\">&#171;include&#187;</text><line x1=\"490\" y1=\"254\" x2=\"490\" y2=\"202\" stroke=\"#0e7490\" stroke-width=\"1.6\" stroke-dasharray=\"6 4\" marker-end=\"url(#ucdOpen)\"></line><text x=\"500\" y=\"232\" font-size=\"11\" font-family=\"system-ui, sans-serif\" fill=\"#4f46e5\">&#171;extend&#187;</text><circle cx=\"124\" cy=\"132\" r=\"11\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"2\"></circle><path d=\"M124 143 L124 176\" stroke=\"#4f46e5\" stroke-width=\"2\"></path><path d=\"M124 176 L106 214\" stroke=\"#4f46e5\" stroke-width=\"2\"></path><path d=\"M124 176 L142 214\" stroke=\"#4f46e5\" stroke-width=\"2\"></path><path d=\"M108 154 L140 154\" stroke=\"#4f46e5\" stroke-width=\"2\"></path><text x=\"124\" y=\"240\" font-size=\"12\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#4f46e5\">Authorised User</text><line x1=\"142\" y1=\"166\" x2=\"262\" y2=\"166\" stroke=\"#94a3b8\" stroke-width=\"1.8\"></line><circle cx=\"668\" cy=\"146\" r=\"9\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"2\"></circle><path d=\"M668 155 L668 182\" stroke=\"#a855f7\" stroke-width=\"2\"></path><path d=\"M668 182 L652 214\" stroke=\"#a855f7\" stroke-width=\"2\"></path><path d=\"M668 182 L684 214\" stroke=\"#a855f7\" stroke-width=\"2\"></path><path d=\"M654 164 L682 164\" stroke=\"#a855f7\" stroke-width=\"2\"></path><text x=\"668\" y=\"240\" font-size=\"12\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#a855f7\">Police Station</text><line x1=\"558\" y1=\"182\" x2=\"650\" y2=\"166\" stroke=\"#94a3b8\" stroke-width=\"1.8\"></line><line x1=\"380\" y1=\"344\" x2=\"270\" y2=\"378\" stroke=\"#94a3b8\" stroke-width=\"1.8\"></line><line x1=\"452\" y1=\"344\" x2=\"560\" y2=\"378\" stroke=\"#94a3b8\" stroke-width=\"1.8\"></line><line x1=\"562\" y1=\"378\" x2=\"272\" y2=\"378\" stroke=\"#0e7490\" stroke-width=\"1.8\" marker-end=\"url(#ucdHollow)\"></line><text x=\"490\" y=\"420\" font-size=\"11\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#0e7490\">Enter Secure Room using Fingerprint</text><text x=\"180\" y=\"402\" font-size=\"11\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" fill=\"#565d75\">Enter Secure Room</text></svg>",
+    "points": [
+      { "x": 15.1, "y": 36.1, "label": "Actor — Authorised User", "detail": "An entity (person or system) that interacts with the system to achieve one or more goals. Named by a noun; a user can play different roles, and a professor can be an instructor in one system and a researcher in another." },
+      { "x": 41.5, "y": 62.6, "label": "Use case — Login", "detail": "A collection of possible interactions between actors and a system relating to one or more goals. Represented by an ellipse, named verb + noun, and it gives context to the requirements and facilitates agreement." },
+      { "x": 31.0, "y": 22.0, "label": "System boundary", "detail": "A rectangle representing the scope of the system, typically defined by the requirements document. In a large system each module can form its own boundary — personnel, payroll, accounting — while the overall boundary spans them all." },
+      { "x": 17.3, "y": 36.1, "label": "Association / communication link", "detail": "The participation of an actor in a use case is shown by a solid link. It indicates that the actor and the use case communicate with one another using messages." },
+      { "x": 34.1, "y": 50.0, "label": "«include»", "detail": "The step represented is a sub-use case at a lower level, with its own sub-goals and actors. The dashed arrow points to the included child — here Withdraw Cash points at Enter PIN." },
+      { "x": 57.3, "y": 48.9, "label": "«extend»", "detail": "An optional step woven in at an extension point, added without affecting the specification of the original use case. The arrowhead points at the base use case, and the extension carries a condition such as [service successful]." },
+      { "x": 83.5, "y": 41.0, "label": "Secondary actor — Police Station", "detail": "An actor need not be human. The tutorial allows a person, an organisation, or an outside system that interacts with your application; what makes it an actor is that it is an external object that produces or consumes data." },
+      { "x": 50.9, "y": 82.2, "label": "Generalization", "detail": "A parent–child relationship between use cases drawn as a solid line with a hollow triangle at the parent end. The child is an enhancement of the parent and is connected at the base of the arrow." }
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What the diagram is good at</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Providing a higher-level view of a system</li>
+        <li>Showing the use cases and the different types of user a system has</li>
+        <li>Being a high-level blueprint: it should describe the activities and variants used to reach the goal</li>
+        <li>Being read by non-technical stakeholders, which is why the UML rendering is only a shorthand</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What it cannot do</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Specify anything: the important and hard part is specifying the use case itself</li>
+        <li>Show ordering within a scenario &mdash; that needs interaction modelling such as a sequence diagram</li>
+        <li>Replace the textual template; the ellipse carries a name, not the goal, precondition, trigger or failure conditions</li>
+        <li>Show non-functional constraints, which have no notational home on the diagram</li>
+      </ul>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Tutorial exercise &mdash; the ad hoc diagram, drawn properly.</strong> The tutorial's ad hoc example is the secure access room: a room in which only authorised people are allowed to linger, with a fingerprint scanner, a fingerprint database, a door, a panic button, a horn, a motion detector, a window, and a police station. Turn its informal specification into use case structure.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Fix the boundary.</strong> The system under consideration is the access control software. The fingerprint database is an external system it consults; the police station is a second actor; the door, horn, scanner and motion detector are devices the system drives, not actors. Anything that only produces or consumes data across the boundary stays outside it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Name the actors by role.</strong> <em>Authorised User</em> (the person who opens the door and scans a finger), <em>Last Person Leaving</em> (who pushes the Enable button), and <em>Police Station</em> (which receives the telephone message). One person can play more than one of these roles &mdash; that is the point of naming roles rather than people.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Write use cases as verb + noun.</strong> <em>Enter Secure Room</em>, <em>Enable System</em>, <em>Occupancy Violation Detected</em>, <em>Summon Police</em>, <em>Identify by Fingerprint</em>. Each is a collection of possible interactions relating to a goal; the goal of <em>Enter Secure Room</em> is to be inside without triggering the alarm.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Attach the relationships.</strong> <em>Enter Secure Room</em> «include»s <em>Identify by Fingerprint</em>, because the main scenario cannot complete without a valid scan inside 30 seconds. <em>Summon Police</em> «extend»s <em>Occupancy Violation Detected</em> and also «extend»s <em>Occupy Secure Room</em> at the panic-button extension point, since it is optional behaviour triggered by a condition. If a visitor entry mode is added later, it is a <em>generalization</em> of <em>Enter Secure Room</em>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Recover the numbers the prose hid.</strong> The informal specification already contains hard constraints: 30 seconds after the door opens, 45 seconds to leave after enabling, and an 8-digit alarm id registered with the police at installation. These are requirements, not decoration &mdash; put them in the use case header's preconditions and success/failure conditions so they can be tested.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Say what the diagram still does not give you.</strong> Ordering. &ldquo;Scan within 30 seconds <em>after</em> opening the door&rdquo; is a temporal constraint that a use case diagram cannot express. That is exactly why the deck says use case design is complemented by UML interaction modelling, and why the two are not the same thing.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-traceability" class="section" data-track="traceability">
+  <h2 class="section-title">Traceability, Evolution and Agentic Requirements</h2>
+  <p class="section-lead">The deck's closing argument is that requirement modelling is a small but crucial step in requirements engineering, because it is what enables automated support for traceability between requirements and other development artefacts.</p>
+
+  <div id="ix-trace"></div>
+
+  <div class="insight-box">
+    <strong>Why the informal specification is not sufficient (the deck's six reasons).</strong> Informal prose makes it difficult to: identify potential conflicts and inconsistencies between requirements; determine interdependencies between individual requirements; ensure all requirements are covered; understand precisely what needs to be implemented; trace requirements to implementation and vice versa; and provide a basis for comprehensive testing. The deck adds a practical requirement of its own: you also need requirements in electronic form, for easier manipulation, searching, linking and tracing.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Requirements engineering activity</th><th>What it produces</th><th>Where modelling helps</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Eliciting requirements</td><td>Answers to: what problems need to be solved, where is the system boundary, who are the stakeholders and what are their goals</td><td>A use case model makes the boundary and the actors explicit and argues back at the elicitation</td></tr>
+        <tr><td>Modelling and analysing requirements</td><td>Models that can be checked for conflict, omission and dependency</td><td>Feature diagrams expose combination rules; scenarios expose branch coverage</td></tr>
+        <tr><td>Communicating requirements</td><td>Something every stakeholder can read and reason about</td><td>An ellipse-and-actor diagram plus a short textual scenario</td></tr>
+        <tr><td>Agreeing requirements</td><td>A shared, signed-off understanding</td><td>Extension points and failure conditions are the places disagreement hides</td></tr>
+        <tr><td>Evolving requirements</td><td>Change that does not break what was already agreed</td><td>«extend» adds behaviour without touching the original specification</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Functional vs non-functional, and why the split is not clean</div>
+    <p>A <strong>functional requirement</strong> describes what a software system should do and relates to its functionalities. A <strong>non-functional requirement</strong> places constraints on how the system will do so &mdash; performance characteristics such as accessibility, reliability, latency or accuracy. The deck's caution: for very many systems these are not separable concerns. &ldquo;Compute the optimal route for a data packet&rdquo; and &ldquo;compute the optimal route for a data packet <em>in 4 &micro;sec</em>&rdquo; can be two very different systems.</p>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Requirements for agentic software</h3>
+  <p>The deck's contemporary example is an AI-native healthcare agency: a clinical director who owns judgement, safety and approvals; an intake agent that collects symptoms and context; an evidence agent that retrieves approved clinical guidance; a care agent that drafts next steps and prepares referrals; and an operations agent that updates records, scheduling and follow-up queues. Its running goal is to triage patient enquiries and coordinate care <em>without removing clinician accountability</em>. Two consequences follow for requirement modelling.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Functional and non-functional, restated for agents</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Functional:</strong> the agent shall check reported symptoms for emergency warning signs; generate content based on natural language; converse with a human.</li>
+        <li><strong>Non-functional:</strong> low latency; a high-accuracy model for NLP and computer vision; a user-friendly computer&ndash;human interface.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What a use case model must emphasise</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Bounded autonomy and observable outcomes</strong>, not a fixed sequence of interactions</li>
+        <li><strong>Actor goal</strong> stated as a business outcome: &ldquo;deliver an evidence-backed weekly brief&rdquo;, not &ldquo;run the research agent&rdquo;</li>
+        <li><strong>Authority:</strong> what the agent may read, write, send, purchase or change &mdash; capability separated from permission</li>
+        <li><strong>Success conditions</strong> defined as observable evidence, not as an exact reasoning path</li>
+        <li><strong>Failure and uncertainty</strong> modelled as normal branches: missing data, conflicting evidence, unavailable tools, low-confidence results</li>
+        <li><strong>Human checkpoints</strong> showing when the agent must ask, obtain approval, hand off or stop</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The deck's worked agentic use case:</strong> <em>Assess and coordinate patient care</em>. Goal &mdash; safe next step prepared without delay; level &mdash; user goal; primary actor &mdash; patient; preconditions &mdash; identity and consent confirmed, approved guidance and scheduling tools available; success postcondition &mdash; clinician-approved guidance sent and record updated; failure postcondition &mdash; no advice sent, clinician alerted with reason. In its main success scenario the agent <strong>prepares the patient response but does not send it</strong> until the clinician has reviewed and approved &mdash; the checkpoint is written into the scenario, not left to policy.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which of these is a <em>non-functional</em> requirement for the AI health agent?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a functional requirement: it describes something the system should do.">The agent shall check reported symptoms for emergency warning signs</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Non-functional requirements place constraints on how the system does its work — the deck's agentic list names low latency, high model accuracy and a user-friendly CHI." data-bad="">The agent shall respond to a patient enquiry with low latency</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is also functional — it is a capability. The distinction is what the system does versus how well it must do it.">The agent shall converse with the patient and generate content in natural language</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 3 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Success is meeting the intended purpose</h4>
+        <p>Requirement modelling is the process of discovering that purpose: identify stakeholders and their needs, and document them in a form amenable to analysis, communication and implementation.</p>
+        <div class="flip-hint">The premise</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Three approaches, combined in practice</h4>
+        <p>Ad hoc is informal and error prone but the usual starting point; feature analysis is capability-based and static; use case analysis is operational. A pragmatic combination of all three is often best.</p>
+        <div class="flip-hint">Method</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Actor &rarr; goal &rarr; use case</h4>
+        <p>An actor is an entity that interacts with the system to achieve goals; a use case is a collection of possible interactions relating to one or more of them; the diagram is only the shorthand.</p>
+        <div class="flip-hint">Core framework</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>include, extend, generalize</h4>
+        <p>include points at the required child, extend points at the base and is woven in at an extension point under a condition, generalization points a hollow triangle at the parent.</p>
+        <div class="flip-hint">Notation trap</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you write the header of one use case from memory &mdash; name, goal, level, precondition, success condition, failure condition, trigger &mdash; and then give its main success scenario plus two extension scenarios?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the lab</h3>
+      <p>Laboratory 3 applies all three approaches to your project topic in sequence: an ad hoc pass for flexible definition, a feature-oriented pass to refine requirements into concrete features, then a use case pass to check the features meet user expectations.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page collects the notation reference card, the statement-grammar used to make a requirement testable, and the quality-characteristic taxonomy behind non-functional requirements. Then attempt the Quiz Hub and the Flashcards for Week 3.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

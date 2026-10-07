@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 7: Haptic Interaction — COMP5047</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter7-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 7 study guide for COMP5047: the somatosensory receptors behind touch, haptic vocabulary, perception thresholds and adaptation, vibrotactile and thermal feedback, grounded force feedback, haptic retargeting, and the motor circuits that drive a haptic device.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 7: Haptic Interaction — COMP5047">
+<meta property="og:description" content="Week 7 study guide for COMP5047: the somatosensory receptors behind touch, haptic vocabulary, perception thresholds and adaptation, vibrotactile and thermal feedback, grounded force feedback, haptic retargeting, and the motor circuits that drive a haptic device.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x270B;</span>
+      <h2>Week 7</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-touch" class="nav-link" data-section="touch">What We Feel</a></li>
+    <li><a href="#sec-vocab" class="nav-link" data-section="vocab">Haptic Vocabulary</a></li>
+    <li><a href="#sec-limits" class="nav-link" data-section="limits">Limits of Touch</a></li>
+    <li><a href="#sec-vibro" class="nav-link" data-section="vibro">Vibrotactile &amp; Thermal</a></li>
+    <li><a href="#sec-force" class="nav-link" data-section="force">Force Feedback</a></li>
+    <li><a href="#sec-approaches" class="nav-link" data-section="approaches">Two Design Camps</a></li>
+    <li><a href="#sec-vr" class="nav-link" data-section="vr">Haptics in VR</a></li>
+    <li><a href="#sec-motors" class="nav-link" data-section="motors">Motors &amp; Drivers</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter7-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter7-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 7 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5047 — Pervasive Computing</p>
+    <h1>Week 7: Haptic Interaction</h1>
+    <p class="hero-subtitle">Haptic perception, vibrotactile and force feedback, actuator families, driving motors safely, and haptic design for everyday interfaces.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x270B;</span>
+        <span>Touch is four senses, not one</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4F3;</span>
+        <span>Vibration: what we want vs what we can set</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9F2;</span>
+        <span>Motors need their own supply</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F3AF;</span>
+        <span>Accuracy vs naturalness</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter7-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter7-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 7 lecture deck (Velloso, <em>Haptic Interaction</em>)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-touch" class="section" data-track="touch">
+  <h2 class="section-title">What Do We Feel Through Touch?</h2>
+  <p class="section-lead">Haptic interaction means interactive experiences involving the sense of touch. Before designing feedback you have to know which sensors you are actually addressing, because &ldquo;touch&rdquo; is not a single channel.</p>
+
+  <div class="concept-box">
+    <p><strong>The lecture's opening definition:</strong> <em>haptic interaction is interactive experiences involving the sense of touch</em>. Everything in this week &mdash; vibration motors, force feedback, thermals, retargeting &mdash; is a way of writing information onto the human somatosensory system.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Receptor class</th><th>What it transduces</th><th>What it lets you design</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Thermoreceptors</strong></td><td>Changes in skin temperature</td><td>Warm/cold cues: material identity, presence of a person, warning of heat</td></tr>
+        <tr><td><strong>Mechanoreceptors</strong></td><td>Pressure, vibration, slip, stretch</td><td>The whole vibrotactile vocabulary, plus the feeling of grip and slippage</td></tr>
+        <tr><td><strong>Nociceptors</strong></td><td>Pain &mdash; mechanical, thermal, chemical</td><td>Almost nothing directly; they define the safety envelope you must not cross</td></tr>
+        <tr><td><strong>Proprioceptors</strong></td><td>Muscle length and tension, limb positions</td><td>Force feedback, resistance, weight, and where your own hand is</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-receptors"></div>
+
+  <div class="insight-box">
+    <strong>Why the split matters for design:</strong> a vibration motor writes to mechanoreceptors only. If the information you want to convey is &ldquo;this object is heavy&rdquo; or &ldquo;this surface is hot&rdquo;, no amount of vibration amplitude will carry it faithfully &mdash; you have chosen the wrong receptor class. This is exactly the gap the lecture sets up with the list of questions a hand asks an object.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The questions a hand asks</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>What does it weigh?</li>
+        <li>Is it rough or smooth?</li>
+        <li>Is it solid or squidgy?</li>
+        <li>Is it cold or hot?</li>
+      </ul>
+      <p>Each question is answered by a different combination of receptors, which is why a single actuator rarely feels convincing.</p>
+    </div>
+    <div class="col-card">
+      <h3>Three properties of any touch channel</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Acuity</strong> &mdash; spatial resolution: how close can two stimuli be and still be told apart?</li>
+        <li><strong>Sensitivity</strong> &mdash; detection threshold: how weak can a stimulus be and still be felt?</li>
+        <li><strong>Adaptation</strong> &mdash; how the response changes over time under a constant stimulus</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> never describe a haptic device without naming the receptor class it targets. &ldquo;A vibration motor on the wristband&rdquo; is a description; &ldquo;a vibration motor driving cutaneous mechanoreceptors, which is why it can signal urgency but not weight&rdquo; is an answer.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A controller resists your finger as you press into a virtual sponge. Which receptor class is doing the work of telling you the sponge is firm?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Thermoreceptors report skin temperature change. Nothing here is thermal.">Thermoreceptors</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nociceptors report pain. A firm sponge is not a pain signal, and designing through nociceptors is a safety failure, not a feature.">Nociceptors</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Resistance to your own movement is information about muscle tension and limb position — the kinaesthetic / proprioceptive channel, which is what force feedback addresses." data-bad="">Proprioceptors, because resistance is felt through muscle tension and limb position</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-vocab" class="section" data-track="vocab">
+  <h2 class="section-title">Some Definitions</h2>
+  <p class="section-lead">The deck opens with a block of definitions because the words are used loosely in industry and precisely in HCI. Learn them as a set &mdash; the distinctions are what exam questions test.</p>
+
+  <div data-ix="matcher" data-ix-src="#ix-vocab-match"></div>
+  <script type="application/json" id="ix-vocab-match">
+  {
+    "title": "Match the term to its definition",
+    "subtitle": "Click a term on the left, then its definition on the right. These are the deck's own definitions.",
+    "pairs": [
+      ["Haptic feedback", "Relating to the sense of touch"],
+      ["Vestibular", "Pertaining to the perception of head position, acceleration and deceleration"],
+      ["Kinaesthetic", "Relating to the feeling of motion and sensations originating in muscles, tendons and joints"],
+      ["Cutaneous", "Pertaining to the skin itself or the skin as a sense organ — includes pressure, temperature, pain"],
+      ["Force feedback", "Relating to the mechanical production of information sensed by the human kinaesthetic system"],
+      ["Tactile", "Pertaining to the cutaneous sense, but specifically about pressure rather than temperature or pain"],
+      ["Proprioceptive", "Relating to sensory information about the state of the body, including cutaneous, kinaesthetic and vestibular sensations"],
+      ["Vibrotactile", "Vibration delivered to the skin — the actuator budget of most consumer devices"]
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">How the four nest inside each other</div>
+    <p><strong>Cutaneous</strong> is the skin as a sense organ (pressure, temperature, pain). <strong>Tactile</strong> narrows cutaneous to pressure alone. <strong>Kinaesthetic</strong> moves the source inward to muscles, tendons and joints. <strong>Vestibular</strong> moves it to the inner ear, to head position and acceleration. <strong>Proprioceptive</strong> is the umbrella: everything about the state of the body, including all of the above. <strong>Force feedback</strong> is the engineering counterpart &mdash; mechanically produced information aimed at the kinaesthetic system.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Source of the sensation</th><th>Typical device</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vibrotactile</td><td>Skin surface, mechanoreceptors</td><td>ERM or LRA motor in a phone, watch or controller</td></tr>
+        <tr><td>Thermal</td><td>Skin surface, thermoreceptors</td><td>Peltier element, fan, heating pad</td></tr>
+        <tr><td>Cutaneous / tactile</td><td>Skin surface, pressure and slip</td><td>Textured surface, pneumatic bladder, pin array</td></tr>
+        <tr><td>Kinaesthetic / force</td><td>Muscles, tendons, joints</td><td>Grounded force-feedback arm, exoskeleton, electrical muscle stimulation</td></tr>
+        <tr><td>Vestibular</td><td>Inner ear, head motion</td><td>Motion platform, Galvanic vestibular stimulation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A researcher says a device produces &ldquo;haptic feedback&rdquo;, then clarifies that it produces &ldquo;force feedback&rdquo;. What has been narrowed?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Haptic covers anything relating to the sense of touch; force feedback specifically means information produced mechanically for the kinaesthetic system — muscles, tendons and joints rather than the skin surface." data-bad="">From the whole sense of touch to mechanical information sensed by the kinaesthetic system</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Vibration amplitudes are not the distinction. Force feedback is defined by which sensory system receives the information, not by how strong the signal is.">From weak vibration to strong vibration, measured in amplitude</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Both terms are used in research and in this unit. The difference is the target sensory system, not whether the work is published.">From research-grade hardware to commercially shipping hardware</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-limits" class="section" data-track="limits">
+  <h2 class="section-title">Acuity, Sensitivity and Adaptation</h2>
+  <p class="section-lead">Every haptic design decision is bounded by what a person can actually detect. The deck names three properties of the touch channel &mdash; and the research literature measures them with a standard method.</p>
+
+  <div id="ix-limits"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Acuity &mdash; spatial resolution</h3>
+      <p>How far apart two points must be before they are felt as two. This sets the pixel pitch of any tactile display: pins closer together than the local acuity are wasted hardware, and pins further apart produce gaps the user reads as texture.</p>
+    </div>
+    <div class="col-card">
+      <h3>Sensitivity &mdash; detection threshold</h3>
+      <p>The weakest stimulus that is reliably felt. Below threshold, a motor spends current producing nothing. Threshold also depends on where on the body you stimulate and on what the person is doing at the time.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Adaptation</div>
+    <p><strong>Adaptation</strong> is how the response changes over time under a constant stimulus. A steady vibration fades from notice; the same vibration restarted a moment later is felt again. Practical consequence: haptic signals must <em>change</em> to keep being perceived, which is why the deck lists duration and rhythm alongside frequency and amplitude.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Measuring a threshold: the 2AFC method from the lecture</h3>
+    <p>In the retargeting experiments the deck describes, participants were asked after each trial: <em>&ldquo;was there an offset? Yes / No.&rdquo;</em> That is a <strong>two-alternative forced choice</strong> task. Repeating it across offset magnitudes gives the probability of perceiving the offset as a function of its size.</p>
+    <ul style="padding-left:1.1rem; line-height:1.7; margin-top:0.5rem;">
+      <li>At small offsets the probability sits near 0.5 &mdash; a guess, because the two alternatives are indistinguishable.</li>
+      <li>The curve rises with the size of the manipulation.</li>
+      <li>The <strong>50% point is the detection threshold</strong>; the 75% point is the conventional criterion for &ldquo;clearly perceived&rdquo;.</li>
+    </ul>
+    <p style="margin-top:0.6rem;">Everything below threshold is design space: manipulation the user cannot report, which is precisely what makes haptic retargeting work.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Read the deck's graph carefully.</strong> The main condition and the no-offset control share the same axes &mdash; probability of perceiving the offset from 0 to 1 on the vertical, angular offset on the horizontal, sampled at 0, 6, 12, 18, 24 and 30 degrees. The control condition stays flat at the guessing rate; the main condition climbs. That difference <em>is</em> the result.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; choosing a manipulation size for a retargeting prototype.</strong> You have a passive prop that sits 10&nbsp;cm to the right of where the virtual object appears, and you must decide whether the illusion will survive.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Convert the offset into the unit the psychophysics is measured in.</strong> The deck's curve is plotted against <em>angular</em> offset in degrees, not centimetres, because the same displacement subtends a larger angle when the hand is closer to the body. A 10&nbsp;cm shift at arm's length is a different manipulation from a 10&nbsp;cm shift close to the shoulder.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Locate that angle on the curve.</strong> If it falls where the detection probability is still near the guessing rate, most users will not report an offset and the illusion holds. If it lands near the top of the curve, nearly everyone reports it and the illusion fails.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Do not design at the 50% point.</strong> Half of your users noticing is a coin flip, not a working prototype. The 75% point is the conventional &ldquo;clearly perceived&rdquo; criterion, so stay meaningfully below it &mdash; and say so, rather than quoting a single number with no margin.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the assumptions.</strong> The curve was measured for a particular movement direction (the deck's wording is that this is the graph of the default case), a particular speed, and a particular posture. Change any of them and you need your own curve. The deck's own follow-up questions &mdash; how far apart can these objects be, how large can this offset be, what is the space of interaction now &mdash; are exactly the questions a designer must answer empirically.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In a 2AFC experiment, participants report perceiving an offset on 50% of trials at a 14&deg; rotation. What is the correct reading?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="50% correct in a two-alternative task is the performance of someone who cannot tell the difference at all. Reading it as perfect sensitivity inverts the logic of the method.">The user detects the offset perfectly at 14&deg;, so 14&deg; is the limit</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. In a two-alternative forced choice the guessing rate is 0.5, so the point where the probability reaches 0.5 is the detection threshold — the boundary between guessing and genuinely perceiving." data-bad="">14&deg; is the detection threshold: the point where performance leaves the guessing rate</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Half of the trials is not a safety margin; it is the boundary. Designing here means half your users notice the manipulation.">14&deg; is a safe design margin, because half of the users still fail to notice</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-vibro" class="section" data-track="vibro">
+  <h2 class="section-title">Vibrotactile and Thermal Feedback</h2>
+  <p class="section-lead">Vibration is the channel almost every consumer device uses. The deck's framing is blunt: there is a large gap between the experiences users want and the parameters we can actually set.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Vibration &mdash; what users want</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>&ldquo;Oh, this message is urgent!&rdquo; &mdash; urgency and priority</li>
+        <li>&ldquo;Ouch! Someone shot me!&rdquo; &mdash; events inside a virtual world</li>
+        <li>&ldquo;Look, mate: I am touching snow!&rdquo; &mdash; material and texture</li>
+        <li>&ldquo;Cool, this is what riding a motorcycle feels like&rdquo; &mdash; motion and vibration of a vehicle</li>
+      </ul>
+      <p>Notice that only the first is a notification. The other three are attempts to describe the world through the skin.</p>
+    </div>
+    <div class="col-card">
+      <h3>Vibration &mdash; what we have got</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Frequency</strong></li>
+        <li><strong>Duration</strong></li>
+        <li><strong>Amplitude</strong></li>
+        <li><strong>Waveform</strong></li>
+        <li><strong>Rhythm</strong></li>
+        <li><strong>ADSR</strong> &mdash; attack, decay, sustain, release</li>
+      </ul>
+      <p>Six knobs. The design work is choosing trajectories through that six-dimensional space, not adding more motors.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">ADSR as a haptic design tool</div>
+    <p><strong>Attack</strong> is how fast the vibration reaches full strength, <strong>decay</strong> how it falls to the sustained level, <strong>sustain</strong> the level it holds, and <strong>release</strong> how it fades out. Because of adaptation, a signal that never changes is a signal that stops being felt: the envelope is what keeps the user perceiving it. A sharp attack with a short release reads as a tap; a slow attack with a long sustain reads as pressure or a rumble.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Thermal feedback: a real channel, still early</h3>
+    <p>Three ways to move heat into or out of skin appear in the deck: a <strong>fan</strong> (convective cooling), a <strong>Peltier element</strong> (solid-state heating and cooling, reversible by reversing the current) and <strong>heating pads</strong> (resistive heating only). The lecture's own assessment is that it is still early days for our understanding of how to design thermal feedback for VR. The live design question is not whether we can change skin temperature but <em>how you design so that people feel they are touching virtual objects</em>.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-vibro"></div>
+  <script type="application/json" id="ix-race-vibro">
+  {
+    "title": "What each haptic channel can carry",
+    "subtitle": "Illustrative 0–5 expressiveness scores for a single actuator of each kind, built from the deck's own comparisons. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Vibrotactile — urgency and events", "value": 5, "display": "excellent" },
+      { "name": "Vibrotactile — material and texture", "value": 2, "display": "approximated" },
+      { "name": "Vibrotactile — weight and force", "value": 1, "display": "not carried" },
+      { "name": "Thermal — material identity", "value": 3, "display": "promising" },
+      { "name": "Grounded force — weight and compliance", "value": 5, "display": "excellent" },
+      { "name": "Grounded force — portability", "value": 1, "display": "tethered" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Language the markers reward:</strong> describe what a channel is <em>for</em> in terms of the information it carries. Vibration is a superb channel for discrete, urgent, non-spatial events; it is a poor channel for continuous properties such as weight or temperature. Thermal feedback is the reverse in some respects &mdash; slow, low bandwidth, but semantically rich, because temperature is how we identify materials.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A game wants the player to feel &ldquo;the sword is heavy&rdquo;. A wristband with an ERM vibration motor is fitted. What is the fundamental limitation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="You can make vibration stronger, but strength is not weight. A stronger buzz is still read as a stronger buzz.">The motor is not powerful enough; a bigger ERM would solve it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Weight is a kinaesthetic property — it is felt as muscle tension and limb position, not as pressure on the skin. Vibration addresses cutaneous mechanoreceptors only, so the channel cannot carry the property regardless of amplitude." data-bad="">Weight is sensed by the kinaesthetic system, and vibration only stimulates cutaneous mechanoreceptors</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Bandwidth affects how finely you can shape a signal, not which physical property the signal can represent. The mismatch here is receptor class, not data rate.">The sampling rate of the motor driver is too low to encode weight</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-force" class="section" data-track="force">
+  <h2 class="section-title">Force Feedback: Grounded, Ultrasound and Electrical</h2>
+  <p class="section-lead">Once the information you want to convey is mechanical &mdash; resistance, weight, compliance, contact &mdash; vibration is no longer the right tool. The deck walks through the families of devices that produce actual forces.</p>
+
+  <div data-ix="timeline" data-ix-src="#ix-approaches-timeline"></div>
+  <script type="application/json" id="ix-approaches-timeline">
+  {
+    "title": "How the field tried to let people touch virtual objects",
+    "subtitle": "Each approach answers part of the question — and each one pays for it somewhere else.",
+    "events": [
+      { "label": "Vibrotactile", "title": "Vibration as the default answer", "detail": "Frequency, duration, amplitude, waveform, rhythm and ADSR are easy to drive and easy to ship, but the deck contrasts the rich experiences users ask for with the six parameters we actually have." },
+      { "label": "Thermal", "title": "Fan, Peltier element, heating pads", "detail": "Temperature is a genuine material cue, and Peltier elements can both heat and cool. The deck's verdict is that design understanding for VR is still in its early days." },
+      { "label": "Grounded", "title": "Grounded force feedback", "detail": "A mechanical linkage applies real forces to the hand. It is accurate and convincing, but the device must be anchored to the world, which is why the lecture pairs it with the problem of moving objects or the user instead." },
+      { "label": "Ultrasound", "title": "Mid-air force without contact", "detail": "Phased arrays of ultrasound emitters focus pressure at a point in space, so a virtual object can push back with nothing to hold. The trade-off is a small workspace and forces strong enough only for light tactile sensations." },
+      { "label": "EMS", "title": "Electrical muscle stimulation", "detail": "Electrodes on the skin make the user's own muscles contract, so the device is wearable and the force is generated by the body itself. The cost is loss of control: the system is moving you, not resisting you." },
+      { "label": "Passive props", "title": "Substitutional reality", "detail": "A class of mixed-reality environments in which a substitution process adapts a virtual environment to the physical world: each physical element is replaced by a virtual counterpart so the virtual environment can use real physical properties to create convincing bodily experiences." },
+      { "label": "The catch", "title": "Why passive props alone fail", "detail": "You need a physical prop wherever each virtual object is, which massively reduces the opportunities for design. Two answers appear in the deck: move the objects around, or move the user's hand." },
+      { "label": "Haptic retargeting", "title": "Move the hand, not the prop", "detail": "Dynamic repurposing of passive haptics: one physical prop is reused for several virtual objects by redirecting the user's hand towards it while they reach (Azmandian et al., CHI '16)." },
+      { "label": "Beyond retargeting", "title": "The deck's own caution", "detail": "It is rare for a new interaction technique to receive this much attention, and the lecture asks openly whether this is the holy grail of VR haptics — then notes the limitations: targeting requires constant focused visual attention, and you have to move relatively slowly." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Approach</th><th>Where the force comes from</th><th>What it costs you</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vibrotactile</td><td>A motor shaking the skin</td><td>Cannot carry weight, compliance or temperature</td></tr>
+        <tr><td>Grounded force feedback</td><td>A linkage anchored to the real world</td><td>Tethered, expensive, limited workspace</td></tr>
+        <tr><td>Ultrasound</td><td>Focused acoustic pressure in mid-air</td><td>Small workspace, weak forces, no grasp</td></tr>
+        <tr><td>Electrical muscle stimulation</td><td>The user's own muscles, driven by electrodes</td><td>You lose control: the system moves you rather than yielding to you</td></tr>
+        <tr><td>Passive haptics / substitutional reality</td><td>Real objects, substituted for virtual ones</td><td>One prop per virtual object unless you retarget</td></tr>
+        <tr><td>Haptic retargeting</td><td>A single prop, plus a redirection of the hand</td><td>Needs visual attention and slow, scripted movement</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The design question the deck keeps circling:</strong> <em>how do you design to let people touch virtual objects?</em> Grounded devices answer it accurately and expensively; passive props answer it cheaply and rigidly; retargeting answers it cleverly and only under scripted conditions. Being able to state the trade-off is worth more than being able to name the devices.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A VR demo gives the user a single physical cup. In one virtual scene it is a mug, in another a torch, in another a sword hilt. Which technique makes this work?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Substitutional reality requires a physical counterpart for each virtual element, which is exactly the limitation being worked around here.">Substitutional reality with one prop per object</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Haptic retargeting dynamically repurposes one passive prop for several virtual objects by redirecting the hand as it reaches — the technique the deck credits to Azmandian et al., CHI '16." data-bad="">Haptic retargeting: the reach is redirected so one prop serves several virtual objects</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Electrical muscle stimulation produces force by contracting the user's muscles. It does not make a single physical prop stand in for several virtual ones.">Electrical muscle stimulation</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-approaches" class="section" data-track="approaches">
+  <h2 class="section-title">Two Design Camps: Accuracy and Naturalness</h2>
+  <p class="section-lead">The deck splits haptic research into two crowds that routinely talk past each other. Naming the split, and what each side optimises, is one of the most markable ideas in the lecture.</p>
+
+  <div class="why-grid">
+    <div class="why-card pro" style="background:var(--blue-bg); border-color:rgba(37,99,235,0.3);">
+      <h4>The accuracy crowd</h4>
+      <p>Builds specialist controllers that optimise the experience of a specific property of a virtual object &mdash; how heavy it is, whether it is rough or smooth, solid or squidgy, cold or hot. The CLAW controller (Choi et al., CHI '18) is the deck's example for grasping, touching and triggering; dynamic bar charts (Taher et al., CHI '15) simulate forces within the hand.</p>
+    </div>
+    <div class="why-card con" style="background:var(--green-bg); border-color:rgba(52,211,153,0.3);">
+      <h4>The naturalness crowd</h4>
+      <p>Seeks to make interactions as &ldquo;everyday-lifelike&rdquo; as possible, using whatever the body and the room already provide. This is the camp that reaches for substitutional reality, passive props and retargeting rather than for more actuators.</p>
+    </div>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-camps"></div>
+  <script type="application/json" id="ix-race-camps">
+  {
+    "title": "Accuracy-first vs naturalness-first controllers",
+    "subtitle": "Illustrative 0–5 emphasis scores built from the deck's framing of the two camps. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Fidelity of a specific object property", "value": 5, "display": "the design goal" },
+      { "name": "Generality across objects and tasks", "value": 2, "display": "hard to build" },
+      { "name": "Everyday-lifelike interaction", "value": 2, "display": "secondary" },
+      { "name": "Use of existing physical props", "value": 2, "display": "rarely" },
+      { "name": "Robustness and manufacturability", "value": 3, "display": "borrowed from commercial design" }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-natural"></div>
+  <script type="application/json" id="ix-race-natural">
+  {
+    "title": "What the naturalness camp optimises instead",
+    "subtitle": "Same five dimensions, same 0–5 scale. The shift is in what counts as success.",
+    "max": 5,
+    "rows": [
+      { "name": "Fidelity of a specific object property", "value": 3, "display": "only what the prop gives" },
+      { "name": "Generality across objects and tasks", "value": 4, "display": "one prop, many objects" },
+      { "name": "Everyday-lifelike interaction", "value": 5, "display": "the design goal" },
+      { "name": "Use of existing physical props", "value": 5, "display": "the whole method" },
+      { "name": "Robustness and manufacturability", "value": 2, "display": "prototype stage" }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Commercial controllers</th><th>The gap</th><th>Research controllers</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>What they have</strong></td><td>Tracking, joystick, buttons, trigger, grip button, vibration motor. Lightweight, handheld, compact, robust</td><td rowspan="2" style="vertical-align:middle;">The deck's diagram puts a question mark here and asks how to fill it</td><td>Ideas and lessons about simulating forces and object properties with high fidelity</td></tr>
+        <tr><td><strong>What they lack</strong></td><td>Resolution: the vibration motor is the only haptic channel and it is coarse</td><td>Robustness and generalizability: each device is a specialist build</td></tr>
+        <tr><td><strong>What to take</strong></td><td colspan="2">Take the constraints &mdash; robustness and generalizability &mdash; from commercial design, and the ideas and lessons from research. The deck's answer to &ldquo;could you do it?&rdquo; is yes.</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The deck's own aesthetics:</strong> a haptic demo that reproduces one object beautifully is a result, and a controller that works for everything but convinces nobody is also a result. The interesting engineering is the space between them, and the lecture's framing of that space is the reason motors come next: the general-purpose answer has to be built out of actuators.
+  </div>
+</section>
+
+<section id="sec-vr" class="section" data-track="vr">
+  <h2 class="section-title">Haptics in VR: Substitution and Retargeting</h2>
+  <p class="section-lead">Virtual reality makes the problem sharp. There is nothing to touch, so either you bring physical objects into the virtual scene, or you make the user's body believe something that is not there.</p>
+
+  <div data-ix="hotspot" data-ix-src="#ix-retarget-map"></div>
+  <script type="application/json" id="ix-retarget-map">
+  {
+    "title": "One prop, several virtual objects: the retargeting diagram",
+    "subtitle": "Click each marker to see which physical or virtual element it is and what the technique does with it.",
+    "svg": "<svg viewBox=\"0 0 800 440\" role=\"img\" aria-label=\"Plan view of a haptic retargeting setup: a physical prop on a table, a virtual cup drawn offset from it, and a user's real and visually displayed hand at the prop\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"440\" fill=\"#fbfdfe\"></rect><path d=\"M52 80 L748 80\" stroke=\"#0e7490\" stroke-width=\"1.6\" opacity=\"0.28\" stroke-dasharray=\"6 6\"></path><path d=\"M52 392 L748 392\" stroke=\"#0e7490\" stroke-width=\"1.6\" opacity=\"0.28\" stroke-dasharray=\"6 6\"></path><rect x=\"52\" y=\"368\" width=\"696\" height=\"24\" rx=\"6\" fill=\"#0891b2\" opacity=\"0.07\"></rect><path d=\"M300 424 L500 424\" stroke=\"#0e7490\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.55\"></path><path d=\"M300 420 L300 428 M500 420 L500 428\" stroke=\"#0e7490\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.55\"></path><text x=\"400\" y=\"418\" font-family=\"monospace\" font-size=\"12\" fill=\"#565d75\" text-anchor=\"middle\">10 cm</text><ellipse cx=\"420\" cy=\"356\" rx=\"330\" ry=\"42\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2\" stroke-dasharray=\"8 8\" opacity=\"0.4\"></ellipse><text x=\"120\" y=\"316\" font-family=\"monospace\" font-size=\"12\" fill=\"#0e7490\" opacity=\"0.75\">PHYSICAL TABLE</text><path d=\"M470 250 L452 300 L438 330\" stroke=\"#0e7490\" stroke-width=\"2.4\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.6\"></path><ellipse cx=\"430\" cy=\"336\" rx=\"62\" ry=\"20\" fill=\"#0e7490\" opacity=\"0.12\" stroke=\"#0e7490\" stroke-width=\"1.8\"></ellipse><rect x=\"396\" y=\"286\" width=\"68\" height=\"56\" rx=\"9\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2.4\"></rect><path d=\"M470 274 C508 274 512 296 500 308\" stroke=\"#0e7490\" stroke-width=\"2.4\" fill=\"none\" stroke-linecap=\"round\"></path><text x=\"430\" y=\"272\" font-family=\"monospace\" font-size=\"12\" fill=\"#0e7490\" text-anchor=\"middle\">PROP</text><circle cx=\"560\" cy=\"298\" r=\"44\" fill=\"#7c3aed\" opacity=\"0.08\" stroke=\"#7c3aed\" stroke-width=\"2\" stroke-dasharray=\"7 6\"></circle><path d=\"M538 294 L582 294 L575 336 L545 336 Z\" fill=\"#e8eefc\" stroke=\"#2563eb\" stroke-width=\"2.2\"></path><path d=\"M582 302 C606 306 606 326 586 330\" stroke=\"#2563eb\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\"></path><text x=\"560\" y=\"366\" font-family=\"monospace\" font-size=\"12\" fill=\"#2563eb\" text-anchor=\"middle\">VIRTUAL CUP</text><path d=\"M536 342 C512 350 484 350 452 342\" stroke=\"#7c3aed\" stroke-width=\"2.2\" fill=\"none\" stroke-dasharray=\"6 5\" stroke-linecap=\"round\"></path><path d=\"M462 336 L446 342 L462 350\" stroke=\"#7c3aed\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path><text x=\"494\" y=\"334\" font-family=\"monospace\" font-size=\"12\" fill=\"#7c3aed\" text-anchor=\"middle\">OFFSET</text><circle cx=\"470\" cy=\"120\" r=\"18\" fill=\"#fbfdfe\" stroke=\"#0e7490\" stroke-width=\"2.2\"></circle><path d=\"M470 138 Q448 200 456 262 M470 138 Q500 196 486 258\" stroke=\"#0e7490\" stroke-width=\"2.4\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.7\"></path><path d=\"M452 252 Q470 240 488 252\" stroke=\"#0e7490\" stroke-width=\"2.4\" fill=\"none\" stroke-linecap=\"round\"></path><ellipse cx=\"470\" cy=\"268\" rx=\"30\" ry=\"13\" fill=\"#0891b2\" opacity=\"0.2\" stroke=\"#0e7490\" stroke-width=\"2\"></ellipse><text x=\"470\" y=\"94\" font-family=\"monospace\" font-size=\"12\" fill=\"#565d75\" text-anchor=\"middle\">YOU</text><circle cx=\"676\" cy=\"84\" r=\"22\" fill=\"#7c3aed\" opacity=\"0.12\" stroke=\"#7c3aed\" stroke-width=\"2\"></circle><circle cx=\"676\" cy=\"84\" r=\"11\" fill=\"#7c3aed\" opacity=\"0.24\"></circle><path d=\"M698 84 L726 84 M676 106 L676 132 M654 84 L638 84\" stroke=\"#7c3aed\" stroke-width=\"1.8\" opacity=\"0.45\" stroke-linecap=\"round\"></path><text x=\"676\" y=\"152\" font-family=\"monospace\" font-size=\"12\" fill=\"#7c3aed\" text-anchor=\"middle\">HMD VIEW</text><path d=\"M670 168 C606 216 566 248 534 276\" stroke=\"#7c3aed\" stroke-width=\"2\" fill=\"none\" stroke-dasharray=\"7 6\" stroke-linecap=\"round\" opacity=\"0.6\"></path></svg>",
+    "points": [
+      { "x": 53.7, "y": 71.4, "label": "The physical prop", "detail": "A real object on a real table. Its weight, temperature and surface are genuine, which is why passive haptics feels convincing for free — the hardware is a mug, not a mechanism." },
+      { "x": 70.0, "y": 71.6, "label": "The virtual object", "detail": "Where the headset draws the object. It is deliberately offset from the physical prop: in this trial the user is told they are reaching for a full cup, and the real prop is somewhere else on the table." },
+      { "x": 58.7, "y": 60.9, "label": "The displayed hand", "detail": "The hand the user sees. Because vision dominates in VR, this is where they believe their hand is, even though the real hand is somewhere else." },
+      { "x": 58.7, "y": 27.3, "label": "The real hand", "detail": "The hand that actually moves. Haptic retargeting applies a small rotation or translation as the reach proceeds, so the physical hand lands on the prop while the virtual hand lands on the virtual object." },
+      { "x": 70.0, "y": 76.4, "label": "The offset being tested", "detail": "The manipulation the experiment varies, measured in degrees of angular offset. The 2AFC procedure asks the participant after each trial whether an offset was present, and the resulting curve says how large the offset can grow before it is noticed." }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Substitutional reality (the deck's definition)</div>
+    <p>A class of mixed-reality environments in which a <strong>substitution process</strong> adapts a virtual environment to the physical world. By substituting each physical element with a virtual counterpart, the virtual environment is able to leverage physical properties to create convincing bodily experiences. The problem: you need a physical prop wherever each virtual object is, which massively reduces the opportunities for design.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Alternative 1 &mdash; move the objects</h3>
+      <p>Keep the props few and move them to wherever the current virtual scene needs them. The deck presents this as the first way out of the one-prop-per-object trap.</p>
+    </div>
+    <div class="col-card">
+      <h3>Alternative 2 &mdash; move the user's hand</h3>
+      <p>Leave the prop alone and redirect the reach. This is haptic retargeting, and the deck spends most of this section on it because it needs no moving parts at all.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The limitations belong in your answer.</strong> The deck's own caveats: targeting requires constant, focused visual attention, and you need to move relatively slowly. It also asks whether retargeting is <em>the holy grail of VR haptics</em> and answers honestly &mdash; it is one technique among many, notable because it is rare for a new interaction technique to receive this much attention, and the open questions (how far apart can these objects be, how large can this offset be, what is the space of interaction now, what are the limits) are still research questions.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does haptic retargeting require the user to move slowly and to look at their hand?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The illusion depends on the visual hand being believed over the proprioceptive hand; fast movement and diverted attention give the body more evidence about where the real hand is, and the discrepancy becomes noticeable." data-bad="">The illusion relies on vision overriding proprioception, and fast or unattended movement exposes the discrepancy</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Motion tracking accuracy is an engineering detail, not the reason the technique constrains the user. The constraint comes from perception, not from the tracker.">The tracking system cannot sample fast enough to follow a quick reach</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The physical prop is static — that is the appeal of the technique. Nothing needs to move in the real world for retargeting to work.">The physical prop must be moved into place before the reach completes</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; designing a haptic retargeting trial.</strong> You have two virtual objects 25&deg; apart on a virtual table and exactly one physical prop.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Choose which object keeps the prop.</strong> Put the prop where the user will reach most often, and retarget the others towards it. Retargeting costs visual attention, so spend it on the occasional object, not the frequent one.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Check the offset against the detection curve.</strong> 25&deg; is far enough that the deck's own curve is climbing steeply, so expect many participants to report the manipulation. Either reduce the separation of the virtual objects, or accept that the illusion will fail for part of the population &mdash; and say which.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Measure it the way the lecture did.</strong> Run a 2AFC task: after each trial ask &ldquo;was there an offset? Yes / No&rdquo;, with a no-offset control condition. Without the control you cannot separate genuine perception from a response bias towards saying yes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Report the limitations with the result.</strong> Constant focused visual attention and slow movement are part of the technique, not artefacts of your prototype. A retargeting demo that hides its constraints will not survive a reviewer or an examiner.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-motors" class="section" data-track="motors">
+  <h2 class="section-title">Motors, Drivers and Safety</h2>
+  <p class="section-lead">The lecture's answer to &ldquo;how do we build something general purpose?&rdquo; is actuators. This section is the engineering half of the week: which motor to choose, and how to drive it without destroying your microcontroller.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Motor</th><th>Control you get</th><th>Use it when</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Servo motor</strong></td><td>Precise control over position, speed and torque, typically over about 180&deg;</td><td>Robotics, CNC machines and automation &mdash; anywhere the angle matters. Motor + potentiometer + control circuit in one package; three wires (red Vcc, brown ground, orange control)</td></tr>
+        <tr><td><strong>Stepper motor</strong></td><td>Open-loop control with precise movement in small steps, full rotation, 200 steps per rotation</td><td>3D printers, CNC machines, cameras. Controlled with a motor driver: send a pulse and it rotates exactly one step</td></tr>
+        <tr><td><strong>DC motor</strong></td><td>Rotates 360&deg;, but you cannot precisely control its angle</td><td>Precise positioning is not crucial: fans, conveyors, and &mdash; with an eccentric mass &mdash; vibration</td></tr>
+        <tr><td><strong>Vibration motor</strong></td><td>On/off vibration, shaped through PWM and the ADSR envelope</td><td>The output channel of nearly every haptic consumer device</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-motor-map"></div>
+
+  <div data-ix="sequence" data-ix-src="#ix-drive-sequence"></div>
+  <script type="application/json" id="ix-drive-sequence">
+  {
+    "title": "Rebuild the DC motor drive circuit",
+    "subtitle": "Order the steps the lecture takes when it explains why each extra component is needed.",
+    "steps": [
+      "Start with a motor and its own battery supply — it works, but nothing controls it",
+      "Add the microcontroller and a transistor, so a small gate voltage switches the motor current",
+      "Keep the motor's higher voltage on its own rail, because the microcontroller output is too low to drive it directly",
+      "Add a flyback diode across the motor, because current flows back when it powers down and would burn the MOSFET",
+      "Connect the battery ground and the microcontroller ground together — common ground, never common VCC"
+    ]
+  }
+  </script>
+
+  <div class="algo-block">
+    <h4>Why a motor cannot be wired straight to a pin</h4>
+    <pre class="code-block">// The lecture's two challenges for a DC motor
+// 1. It typically requires more current than a microcontroller can provide
+//      -> needs an external power supply, controlled by a transistor
+// 2. You need to control the current that flows back as it powers down
+//      -> needs a diode or a motor controller chip
+
+// Stepper motor: open loop, 200 steps per rotation
+sendPulse();          // -> rotate exactly one step
+
+// Servo: angle command, not a pulse count
+servo.write(angle);   // 0..180 typical range</pre>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The transistor and the flyback diode</h3>
+    <p>A <strong>transistor</strong> functions like an electronically controlled switch. Its <strong>gate</strong> is like a water tap: apply voltage to turn the current on or off. Its <strong>source</strong> is the source of electrons, typically connected to ground, and its <strong>drain</strong> is where the electrons go, typically connected to the higher potential. NMOS transistors turn on with a positive gate voltage and are used to pull the output down to ground; PMOS transistors turn on with a negative gate voltage and pull the output up to the supply voltage.</p>
+    <p style="margin-top:0.6rem;">A <strong>flyback diode</strong> safely dissipates the back electromotive force when the motor is powered down. The transistor works like a switch controlled by the microcontroller, allowing current from the battery to flow; the diode protects that switch from the current the motor pushes back.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Rule of thumb from the deck:</strong> if a load draws more than a trivial amount of current, switches on and off frequently, or is inductive (like a motor), it is safest to give it its own supply and use the microcontroller only to control it &mdash; via the transistor &mdash; rather than power it directly. Vibration motors are a case in point: they can easily draw 100&nbsp;mA, so a transistor plus an external supply is good practice.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You wire a 9&nbsp;V battery to a DC motor and connect the battery's positive terminal to your microcontroller's 5&nbsp;V pin &ldquo;to share power&rdquo;. What does the lecture's wiring rule say about this?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Connect the GND of the battery and the microcontroller, and do NOT connect their VCC. Sharing a ground gives the two circuits a common reference; sharing a supply pushes the motor's current and back-EMF through the microcontroller." data-bad="">It is wrong: grounds are shared, never VCC — the motor needs its own supply with only the ground in common</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The two rails are deliberately kept apart. The common reference you need for the control signal is ground, not the positive rail.">It is correct: both circuits need the same positive rail or the transistor will not switch</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A flyback diode protects against back-EMF when the motor powers down. It does not license running the motor's current through the microcontroller's supply pin.">It is fine as long as a flyback diode is installed across the motor</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; choosing a motor for a haptic prototype.</strong> You are building a wearable that signals the direction of a detected object: left, right or ahead.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Ask what the information is.</strong> Direction is a three-way categorical signal delivered to the skin. It is not a continuous property like weight or temperature.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Pick the channel, then the motor.</strong> Three discrete, urgent events map onto the vibrotactile channel, so the answer is vibration motors positioned so that each one is spatially distinguishable. A servo or stepper would be solving position control you do not need.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Check the current budget.</strong> Each ERM or LRA can easily draw 100&nbsp;mA, which is more than a microcontroller pin should supply and more than a small board's regulator may tolerate for three of them at once. Give the motors an external supply, switch them with transistors, and tie the grounds together.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Protect the switch.</strong> Motors are inductive: when a channel switches off, the collapsing field pushes current back. Fit a flyback diode across each motor, and remember the deck's rule &mdash; a load that is inductive, draws real current, or switches often gets its own supply.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Design the signal, not just the wiring.</strong> Use frequency, duration, amplitude, waveform, rhythm and ADSR to make left, right and ahead distinguishable without being annoying. Because of adaptation, give each cue an envelope with a clear attack and release rather than a steady buzz.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 7 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Haptics is much wider than vibration</h4>
+        <p>It includes technology to simulate touch, mechanical forces, friction, temperature and much more &mdash; and it also includes the passive haptics of the environment you are already in.</p>
+        <div class="flip-hint">Scope of the field</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Know which receptor you are writing to</h4>
+        <p>Thermo-, mechano-, noci- and proprioceptors. Vibration addresses mechanoreceptors; weight and resistance address the kinaesthetic system.</p>
+        <div class="flip-hint">Perception</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Six knobs and one envelope</h4>
+        <p>Frequency, duration, amplitude, waveform, rhythm and ADSR. Adaptation means a signal that never changes stops being felt.</p>
+        <div class="flip-hint">Vibrotactile design</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Motors get their own supply</h4>
+        <p>Transistor as a switch, flyback diode for the back-EMF, common ground and never common VCC &mdash; and 200 steps per rotation for a stepper.</p>
+        <div class="flip-hint">Driving hardware</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Say the answer before you flip",
+    "subtitle": "The definitions, numbers and rules from this week, in recall order.",
+    "cards": [
+      { "front": "Haptic interaction", "back": "Interactive experiences involving the sense of touch.", "hint": "Definition" },
+      { "front": "Kinaesthetic", "back": "Relating to the feeling of motion and sensations originating in muscles, tendons and joints — the channel force feedback targets.", "hint": "Definition" },
+      { "front": "Tactile", "back": "Pertaining to the cutaneous sense, but specifically about pressure rather than temperature or pain.", "hint": "Definition" },
+      { "front": "Vestibular", "back": "Pertaining to the perception of head position, acceleration and deceleration.", "hint": "Definition" },
+      { "front": "Acuity vs sensitivity", "back": "Acuity is spatial resolution; sensitivity is the detection threshold. Adaptation is how the response changes over time.", "hint": "Three properties" },
+      { "front": "The six parameters of vibration", "back": "Frequency, duration, amplitude, waveform, rhythm, and ADSR (attack, decay, sustain, release).", "hint": "Vibrotactile" },
+      { "front": "2AFC", "back": "Two-alternative forced choice — in the retargeting study, asking “was there an offset? Yes / No” after each trial. The guessing rate is 0.5, so the 50% point is the detection threshold.", "hint": "Method" },
+      { "front": "Substitutional reality", "back": "A class of mixed-reality environments in which a substitution process adapts a virtual environment to the physical world, replacing each physical element with a virtual counterpart so that real physical properties create convincing bodily experiences.", "hint": "VR haptics" },
+      { "front": "Haptic retargeting", "back": "Dynamic repurposing of passive haptics: one physical prop serves several virtual objects because the user's hand is redirected as they reach (Azmandian et al., CHI '16).", "hint": "VR haptics" },
+      { "front": "Why a motor needs a transistor", "back": "It typically requires more current than a microcontroller can provide, so it gets an external supply that the microcontroller controls through a transistor acting as an electronically controlled switch.", "hint": "Hardware" },
+      { "front": "Why a motor needs a flyback diode", "back": "Current flows back when the motor powers down; the diode safely dissipates that back electromotive force instead of letting it burn the MOSFET.", "hint": "Hardware" },
+      { "front": "Steps per rotation", "back": "200 — a stepper motor is open-loop, rotates a full turn, and moves exactly one step per pulse sent to its driver.", "hint": "Numbers" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week into the definitions, the perception notation, the motor selection table and the power-chain algebra you will be asked to reproduce. Then attempt the Quiz Hub and the Flashcards for Week 7.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the four receptor classes, list the six vibration parameters, and explain why a DC motor needs both a transistor and a diode?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Bring one interaction in your own life where a vibration cue was either perfect or completely wrong, and say which receptor class or which parameter explains the outcome.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

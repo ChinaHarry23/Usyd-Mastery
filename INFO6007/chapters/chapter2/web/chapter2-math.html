@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 2: Project Management Methodologies</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter2-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 foundations for INFO6007: exact definitions of the methodologies, WBS numbering and the critical path with a full forward and backward pass, earned value with PV/EV/AC, CPI and SPI forecasting, a weighted methodology scorecard, expected monetary value, Little's Law for Kanban, and the arithmetic behind the Week 2 trade-off tutorial.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 2: Project Management Methodologies">
+<meta property="og:description" content="Week 2 foundations for INFO6007: definitions, WBS and critical path arithmetic, earned value with PV/EV/AC, a weighted methodology scorecard, and the tutorial's triple-constraint numbers.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter2-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 2 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+  </ul>
+  <div class="toc-group">Schedule arithmetic</div>
+  <ul>
+    <li><a href="#sec-m-wbs" class="toc-link">WBS and the critical path</a></li>
+  </ul>
+  <div class="toc-group">Cost and value</div>
+  <ul>
+    <li><a href="#sec-m-evm" class="toc-link">Earned value: PV, EV, AC</a></li>
+  </ul>
+  <div class="toc-group">Deciding</div>
+  <ul>
+    <li><a href="#sec-m-selection" class="toc-link">Weighted choice, EMV, flow</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">The tutorial's arithmetic</a></li>
+  </ul>
+  <a href="chapter2-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO6007 &mdash; Week 2 supplement</p>
+  <h1>Foundations: the vocabulary and the arithmetic behind a methodology choice</h1>
+  <p class="hero-desc">Week 2 is a process week, but every process decision in it can be costed. This page pins down the definitions the lecture relies on, then does the arithmetic that Weeks 3 and 4 will build on: WBS decomposition and the critical path for the tutorial's twelve-week app, earned value with PV, EV and AC, a weighted scorecard for choosing a methodology, expected monetary value for a release strategy, Little's Law for a Kanban board, and the numbers behind all three triple-constraint changes.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the lecture deck</span>
+    <span>Worked examples use the tutorial's UniConnect baseline</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Formulas continue into Weeks 3 and 4</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these as one sentence with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Project lifecycle</div>
+    <p>The structured sequence of phases a project goes through from start to finish: <strong>defining</strong>, <strong>planning</strong>, <strong>executing</strong>, <strong>monitoring &amp; controlling</strong> and <strong>closing</strong>. It gives a road map for managing work, reducing risk and ensuring success.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Project management methodology</div>
+    <p>A structured approach or system of practices used to plan, execute and manage projects efficiently &mdash; a repeatable framework for delivering work successfully from start to finish.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Waterfall</div>
+    <p>A linear, sequential methodology in which each phase must be completed before the next begins. Requirements are collected up front and no change is expected once that phase ends, which makes it strong on milestones and documentation and weak on late change.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Agile and Scrum</div>
+    <p><strong>Agile</strong> is a flexible, iterative approach that breaks a project into small increments (sprints or iterations) &mdash; a mindset rather than a management technique. <strong>Scrum</strong> is an agile framework that delivers work in time-boxed sprints of typically one to four weeks, with empirical process control, team collaboration and continuous feedback.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Kanban and DevOps</div>
+    <p><strong>Kanban</strong> is a visual workflow management method focused on continuous delivery, limiting work in progress and workflow transparency. <strong>DevOps</strong> is a set of practices integrating development and operations to shorten the development lifecycle, increase deployment frequency and deliver high-quality software continuously.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Requirement gathering, charter, stakeholder</div>
+    <p><strong>Requirement gathering</strong> is identifying, collecting and documenting stakeholders' needs and expectations for a new or updated system. A <strong>project charter</strong> is the formal document that authorises the project and grants the project manager authority over organisational resources. A <strong>stakeholder</strong> is anyone who impacts or is impacted by the project, positively or negatively.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Project lifecycle</td><td>Five phases, in order, with the output each one produces</td><td>Treating the lifecycle as a methodology, or vice versa</td></tr>
+        <tr><td>Methodology</td><td>Repeatable framework for planning, executing and managing</td><td>&ldquo;A set of tools&rdquo; &mdash; a toolchain is not a framework</td></tr>
+        <tr><td>Waterfall</td><td>Sequential phases, requirements fixed up front</td><td>Calling any documented process &ldquo;waterfall&rdquo;</td></tr>
+        <tr><td>Agile</td><td>Iterative increments and a mindset of responding to change</td><td>&ldquo;Agile means no planning and no documentation&rdquo;</td></tr>
+        <tr><td>Scrum</td><td>Time-boxed sprints plus the three roles, four events and three artefacts</td><td>Confusing a daily stand-up with a status meeting for the manager</td></tr>
+        <tr><td>Kanban</td><td>Visualised workflow, WIP limits, cycle time, continuous flow</td><td>&ldquo;A board&rdquo; with no limit and no measured cycle time</td></tr>
+        <tr><td>DevOps</td><td>Integration of development and operations: CI/CD, automation, IaC</td><td>Reducing it to a tool such as a pipeline runner</td></tr>
+        <tr><td>Project charter</td><td>Authorises the project and grants authority over resources</td><td>Treating it as the project plan, which comes later</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-formulas"></div>
+  <script type="application/json" id="ix-m-formulas">
+  {
+    "title": "Self-test: the relationships you should be able to write from memory",
+    "subtitle": "Say the relationship out loud before you flip the card.",
+    "titleZh": "自测：应当能凭记忆写出的关系式",
+    "subtitleZh": "先出声说出关系式，再翻卡核对。",
+    "cards": [
+      { "front": "Lifecycle", "back": "Defining → planning → executing → monitoring & controlling → closing. The methodology changes the cadence, not the phases.", "hint": "Process", "frontZh": "生命周期", "backZh": "定义 → 规划 → 执行 → 监控 → 收尾。方法论改变的是节奏，而不是阶段。", "hintZh": "过程" },
+      { "front": "Waterfall's condition", "back": "Stable, well-understood requirements plus milestone approvals and documentation as a deliverable.", "hint": "When to choose it", "frontZh": "瀑布的适用条件", "backZh": "需求稳定且已被充分理解，同时需要里程碑审批，并把文档本身作为交付物。", "hintZh": "选择时机" },
+      { "front": "Scrum's parts", "back": "Three roles (Product Owner, Scrum Master, team), four events (planning, daily stand-up, review, retrospective), three artefacts (product backlog, sprint backlog, increment).", "hint": "Framework", "frontZh": "Scrum 的构成", "backZh": "三个角色（产品负责人、Scrum Master、团队）、四个事件（规划、每日站会、评审、回顾）、三个工件（产品待办列表、冲刺待办列表、增量）。", "hintZh": "框架" },
+      { "front": "Kanban's four elements", "back": "Board, cards or user stories, WIP limits, cycle time — with continuous delivery and transparency as the goal.", "hint": "Flow", "frontZh": "Kanban 的四个要素", "backZh": "看板、卡片/用户故事、WIP 上限、周期时间——目标是持续交付与透明化。", "hintZh": "流动" },
+      { "front": "Little's Law", "back": "WIP = TH × CT, so CT = WIP / TH: at a stable throughput, less work in progress means a shorter cycle time.", "hint": "Flow arithmetic", "frontZh": "利特尔法则", "backZh": "WIP = TH × CT，故 CT = WIP / TH：吞吐稳定时，在制品越少，周期时间越短。", "hintZh": "流动算术" },
+      { "front": "Critical path", "back": "The longest path through the network. Its length is the project duration and every activity on it has zero total float.", "hint": "Schedule", "frontZh": "关键路径", "backZh": "网络中最长的路径。其长度即项目工期，且路径上每个活动的总浮动为零。", "hintZh": "进度" },
+      { "front": "Earned value indices", "back": "CPI = EV / AC and SPI = EV / PV. Below 1 means over budget or behind schedule respectively — cost and schedule are different questions.", "hint": "Cost and schedule", "frontZh": "挣值指数", "backZh": "CPI = EV / AC，SPI = EV / PV。小于 1 分别表示超支或进度落后——成本与进度是两个不同的问题。", "hintZh": "成本与进度" },
+      { "front": "Expected monetary value", "back": "EMV = Σ pᵢ × Iᵢ. It prices a risk or a decision option so two strategies can be compared on one number.", "hint": "Risk", "frontZh": "期望货币值", "backZh": "EMV = Σ pᵢ × Iᵢ。它把风险或决策选项折算成一个数字，使两种策略可以比较。", "hintZh": "风险" }
+    ]
+  }
+  </script>
+</section>
+
+<section class="section" id="sec-m-wbs">
+  <h2 class="section-title">WBS and the critical path</h2>
+  <p class="section-lead">A methodology decides how often you re-plan; it does not remove the need to decompose scope and sequence it. Weeks 3 and 4 assume you can already do both, so here is the arithmetic on the tutorial's own twelve-week project.</p>
+
+  <div class="def-box">
+    <div class="def-label">Decomposition arithmetic</div>
+    <p>A <strong>work breakdown structure</strong> decomposes scope into deliverables and then into <strong>work packages</strong> small enough to estimate and assign. Two rules do the work: the <strong>100% rule</strong> (the children of a node together account for exactly all of the parent's scope &mdash; no gaps, no overlaps), and unique numbering, so every element has exactly one parent.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Counting work packages</h3>
+    <p>If level \(\ell\) branches into \(b_\ell\) children, the number of leaves after \(L\) levels is</p>
+    \[ W \;=\; \prod_{\ell=1}^{L} b_\ell \qquad\text{and, if the branching factor is uniform,}\qquad W = b^{L}. \]
+    <p>Three branches over two levels gives \(3^2 = 9\) work packages; four branches over three levels gives \(4^3 = 64\), which is a decomposition nobody will maintain. The practical test is not the count but the size of the leaf: a work package should be estimable, assignable to one accountable person, and short enough to report on inside one reporting period.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Code</th><th>Work package</th><th>Duration (weeks)</th><th>Predecessors</th><th>Cost</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1.0</strong></td><td>UniConnect release (the whole project)</td><td>12</td><td>&mdash;</td><td>$180,000</td></tr>
+        <tr><td>1.1</td><td>Inception and requirements</td><td>1</td><td>&mdash;</td><td>$12,000</td></tr>
+        <tr><td>1.2</td><td>Solution design and architecture</td><td>2</td><td>1.1</td><td>$24,000</td></tr>
+        <tr><td>1.3.1</td><td>Timetable and notifications build</td><td>3</td><td>1.2</td><td>$36,000</td></tr>
+        <tr><td>1.3.2</td><td>Campus map feature</td><td>2</td><td>1.2</td><td>$24,000</td></tr>
+        <tr><td>1.3.3</td><td>Assessment reminders feature</td><td>2</td><td>1.3.2</td><td>$24,000</td></tr>
+        <tr><td>1.4.1</td><td>Security, accessibility and integration testing</td><td>4</td><td>1.3.1, 1.3.3</td><td>$48,000</td></tr>
+        <tr><td>1.4.2</td><td>UAT, pilot and release</td><td>1</td><td>1.4.1</td><td>$12,000</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Where the costs come from.</strong> The baseline budget is $180,000 and the work packages total 15 activity-weeks of effort, so one activity-week costs \(180{,}000 / 15 = \$12{,}000\). Parallel paths mean the <em>calendar</em> duration is 12 weeks while the <em>effort</em> is 15 activity-weeks &mdash; two different numbers that a schedule and a budget must not confuse.
+  </div>
+
+  <div class="theorem-box">
+    <h3>Forward pass, backward pass, float</h3>
+    <p>With \(d_i\) the duration of activity \(i\), \(P(i)\) its predecessors and \(S(i)\) its successors:</p>
+    \[ EF_i = ES_i + d_i, \qquad ES_j = \max_{i \in P(j)} EF_i \]
+    \[ LS_i = LF_i - d_i, \qquad LF_i = \min_{j \in S(i)} LS_j \]
+    \[ TF_i = LS_i - ES_i = LF_i - EF_i, \qquad FF_i = \min_{j \in S(i)} ES_j - EF_i \]
+    \[ T \;=\; \max_i EF_i \;=\; \text{the length of the longest path} \]
+    <p><strong>Total float</strong> \(TF\) is how long an activity can slip without moving the project end date; <strong>free float</strong> \(FF\) is how long it can slip without moving any successor. Critical activities have \(TF = 0\).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Activity</th><th>\(d\)</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>TF</th><th>Critical?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1.1 Inception</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td><strong>0</strong></td><td>Yes</td></tr>
+        <tr><td>1.2 Design</td><td>2</td><td>1</td><td>3</td><td>1</td><td>3</td><td><strong>0</strong></td><td>Yes</td></tr>
+        <tr><td>1.3.1 Timetable build</td><td>3</td><td>3</td><td>6</td><td>4</td><td>7</td><td>1</td><td>No</td></tr>
+        <tr><td>1.3.2 Campus map</td><td>2</td><td>3</td><td>5</td><td>3</td><td>5</td><td><strong>0</strong></td><td>Yes</td></tr>
+        <tr><td>1.3.3 Reminders</td><td>2</td><td>5</td><td>7</td><td>5</td><td>7</td><td><strong>0</strong></td><td>Yes</td></tr>
+        <tr><td>1.4.1 Testing</td><td>4</td><td>7</td><td>11</td><td>7</td><td>11</td><td><strong>0</strong></td><td>Yes</td></tr>
+        <tr><td>1.4.2 UAT and release</td><td>1</td><td>11</td><td>12</td><td>11</td><td>12</td><td><strong>0</strong></td><td>Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Read the table.</strong> The project duration is \(T = \max_i EF_i = 12\) weeks, exactly the tutorial's deadline. The critical path is 1.1 &rarr; 1.2 &rarr; 1.3.2 &rarr; 1.3.3 &rarr; 1.4.1 &rarr; 1.4.2. The timetable build (1.3.1) has \(TF = 1\) and \(FF = ES_{1.4.1} - EF_{1.3.1} = 7 - 6 = 1\): it can finish a week late without delaying the release, but only because testing starts after the reminders feature. That single week of float is the project's entire scheduling cushion.
+  </div>
+
+  <div id="ix-critical-path"></div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-cp-procedure"></div>
+  <script type="application/json" id="ix-m-cp-procedure">
+  {
+    "title": "Order the scheduling procedure",
+    "subtitle": "Rebuild the order in which a schedule baseline is actually produced.",
+    "steps": [
+      "Decompose scope into work packages with unique WBS codes",
+      "Sequence the work packages and record the dependencies",
+      "Estimate a duration for each work package",
+      "Forward pass: compute ES and EF for every activity",
+      "Backward pass: compute LF and LS from the project end date",
+      "Compute total and free float and identify the critical path",
+      "Set the schedule baseline and control changes against it"
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Activity 1.3.1 has \(ES = 3\), \(d = 3\) and \(LF = 7\). What is its total float?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="4 is the late start (LS = LF − d = 7 − 3 = 4). The question asks for the float, which is the difference between the late and early dates.">4 weeks</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. EF = ES + d = 6, so TF = LF − EF = 7 − 6 = 1 week, equivalently LS − ES = 4 − 3 = 1. One week of slip is available without moving the project end date." data-bad="">1 week</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Ten is EF + LS, which has no meaning in the network. Recompute from the two float identities: TF = LS − ES = LF − EF.">10 weeks</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; the full pass, then the compression the tutorial asks for.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Forward pass.</strong> \(ES_{1.1} = 0\), so \(EF_{1.1} = 0 + 1 = 1\). Design starts when inception ends: \(ES_{1.2} = 1\), \(EF_{1.2} = 3\). The two build packages both start at 3: \(EF_{1.3.1} = 6\), \(EF_{1.3.2} = 5\). Reminders follow the map: \(ES_{1.3.3} = 5\), \(EF_{1.3.3} = 7\). Testing waits for <em>both</em> predecessors: \(ES_{1.4.1} = \max(6, 7) = 7\), \(EF_{1.4.1} = 11\). Release: \(ES_{1.4.2} = 11\), \(EF_{1.4.2} = 12\). Project duration \(T = 12\) weeks.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Backward pass.</strong> Set \(LF_{1.4.2} = 12\), so \(LS_{1.4.2} = 11\). Then \(LF_{1.4.1} = 11\) and \(LS_{1.4.1} = 7\). Testing's predecessors inherit \(LF = 7\): \(LS_{1.3.1} = 7 - 3 = 4\) and \(LS_{1.3.3} = 7 - 2 = 5\). Reminders' predecessor: \(LF_{1.3.2} = 5\), \(LS_{1.3.2} = 3\). Design feeds both build packages, so \(LF_{1.2} = \min(4, 3) = 3\) and \(LS_{1.2} = 1\). Finally \(LF_{1.1} = 1\), \(LS_{1.1} = 0\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Float.</strong> \(TF_{1.3.1} = 4 - 3 = 1\). Everything else has \(TF = 0\), so the critical path is 1.1 &rarr; 1.2 &rarr; 1.3.2 &rarr; 1.3.3 &rarr; 1.4.1 &rarr; 1.4.2 with length \(1 + 2 + 2 + 2 + 4 + 1 = 12\). Check the alternative route: \(1 + 2 + 3 + 4 + 1 = 11\), which is exactly the one week of float on 1.3.1.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Compress to eight weeks (tutorial Change B).</strong> Only critical activities shorten a project, so start there &mdash; and watch the float move. Deferring the reminders package (1.3.3) removes the 12-week path 1.1 &rarr; 1.2 &rarr; 1.3.2 &rarr; 1.3.3 &rarr; 1.4.1 &rarr; 1.4.2, but the timetable build immediately becomes critical at \(1 + 2 + 3 + 4 + 1 = 11\) weeks. One week gained, not two: the float on 1.3.1 has been consumed. A second test stream halves testing from 4 to 2 weeks, and the longest remaining path becomes \(1 + 2 + 3 + 2 + 1 = 9\). The last week needs the timetable build crashed from 3 weeks to 2 with an extra contractor: \(1 + 2 + 2 + 2 + 1 = 8\). <em>The arithmetic of the trade:</em> \(12 - 1_{\text{defer 1.3.3}} - 2_{\text{parallel test}} - 1_{\text{crash 1.3.1}} = 8\) weeks, and the deferred package releases \(\$24{,}000\) of the budget with it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Why the answer is not &ldquo;work faster&rdquo;.</strong> Removing four weeks from twelve means removing a third of the calendar. Reducing durations without changing the network is crashing: it costs money (the second test stream) or quality (less testing). Reducing scope changes the network, which is free at the schedule level and honest at the scope level &mdash; provided the sponsor agrees to the later release.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-evm">
+  <h2 class="section-title">Earned value: measuring a methodology by its numbers</h2>
+  <p class="section-lead">Waterfall, Scrum, Kanban and DevOps differ in rhythm, not in accountability. Whatever the cadence, the same three measurements answer &ldquo;are we getting what we paid for?&rdquo;.</p>
+
+  <div class="def-box">
+    <div class="def-label">The three measurements</div>
+    <p><strong>Planned value (PV)</strong> is the budgeted cost of the work scheduled by a date. <strong>Earned value (EV)</strong> is the budgeted cost of the work actually completed by that date. <strong>Actual cost (AC)</strong> is what was really spent. <strong>BAC</strong> is the total approved budget. Note that EV counts budget, not effort and not invoices: it is the value of finished work.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Variances and indices</h3>
+    \[ CV = EV - AC \qquad SV = EV - PV \]
+    \[ CPI = \frac{EV}{AC} \qquad SPI = \frac{EV}{PV} \]
+    <p>Positive is good for both variances. For the indices, exactly 1.00 is on plan; below 1 is over budget (CPI) or behind schedule (SPI). Note the units: \(CV\) and \(SV\) are dollars, \(CPI\) and \(SPI\) are ratios.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Forecasting the finish</h3>
+    \[ EAC = \frac{BAC}{CPI} \qquad ETC = EAC - AC \qquad VAC = BAC - EAC \qquad TCPI = \frac{BAC - EV}{BAC - AC} \]
+    <p>\(EAC\) is the forecast final cost if the efficiency achieved so far continues; \(ETC\) is what is still expected to be spent; \(VAC\) is the forecast over- or under-run; and <strong>TCPI</strong> is the cost efficiency the <em>remaining</em> work must achieve to land exactly on BAC. A TCPI above about 1.10 is usually a signal to re-baseline or descope rather than to demand heroics.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Measure</th><th>Value at week 6</th><th>Working</th><th>Reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>BAC</td><td>$180,000</td><td>the approved budget</td><td>The ceiling the sponsor set</td></tr>
+        <tr><td>PV</td><td>$90,000</td><td>\(15{,}000 \times 6\) weeks</td><td>Half the schedule has elapsed</td></tr>
+        <tr><td>EV</td><td>$81,000</td><td>value of work actually finished</td><td>45% of the budget has been earned</td></tr>
+        <tr><td>AC</td><td>$99,000</td><td>invoices and hours to date</td><td>55% of the budget has been spent</td></tr>
+        <tr><td>CV</td><td>&minus;$18,000</td><td>\(81{,}000 - 99{,}000\)</td><td>Over budget</td></tr>
+        <tr><td>SV</td><td>&minus;$9,000</td><td>\(81{,}000 - 90{,}000\)</td><td>Behind schedule</td></tr>
+        <tr><td>CPI</td><td>0.82</td><td>\(81{,}000 / 99{,}000 = 0.818\)</td><td>Each dollar of value cost about $1.22</td></tr>
+        <tr><td>SPI</td><td>0.90</td><td>\(81{,}000 / 90{,}000\)</td><td>Running at 90% of the planned rate</td></tr>
+        <tr><td>EAC</td><td>$220,000</td><td>\(180{,}000 / 0.818\)</td><td>Forecast final cost, $40,000 over BAC</td></tr>
+        <tr><td>ETC</td><td>$121,000</td><td>\(220{,}000 - 99{,}000\)</td><td>Still to be spent, against $81,000 of value left</td></tr>
+        <tr><td>VAC</td><td>&minus;$40,000</td><td>\(180{,}000 - 220{,}000\)</td><td>The over-run if nothing changes</td></tr>
+        <tr><td>TCPI</td><td>1.22</td><td>\((180{,}000 - 81{,}000) / (180{,}000 - 99{,}000) = 99{,}000 / 81{,}000\)</td><td>Remaining work must be 22% more efficient than planned</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-evm-curves"></div>
+
+  <div class="callout">
+    <strong>What the numbers actually say.</strong> CPI 0.82 and SPI 0.90 together describe a project that is both over budget and behind schedule, with a TCPI of 1.22 that no team reliably achieves. The defensible responses are to re-baseline with the sponsor, to descope by roughly $40,000, or to release contingency &mdash; not to recover the over-run by cutting the security, accessibility and reliability testing that the tutorial names as the quality expectation.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">At week 6 the project shows CPI = 0.82 and SPI = 0.90. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. CPI below 1 means each dollar of earned value cost more than a dollar (1 / 0.82 ≈ $1.22), and SPI below 1 means less work has been earned than planned — two separate problems, one for cost and one for schedule." data-bad="">The project is over budget and behind schedule: $1 of earned value is costing about $1.22</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That reverses the indices. CPI is the cost index; below 1 means over budget, not behind schedule. SPI is the schedule index.">CPI below 1 means the project is behind schedule</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="SPI compares earned value with planned value, not with the total budget. An SPI of 0.90 means work is being earned at 90% of the planned rate, whatever percentage of the project is complete.">SPI of 0.90 means 90% of the project is complete</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; from the numbers to a decision.</strong> Same project, week 6: BAC $180,000, EV $81,000, AC $99,000, CPI 0.818, SPI 0.90.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Forecast the finish.</strong> \(EAC = BAC / CPI = 180{,}000 / 0.818 = \$220{,}000\). The forecast over-run is \(VAC = 180{,}000 - 220{,}000 = -\$40{,}000\). At $12,000 per activity-week, that is \(40{,}000 / 12{,}000 = 3.3\) activity-weeks of work that the budget cannot pay for.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Test the &ldquo;work harder&rdquo; option.</strong> \(TCPI = (BAC - EV)/(BAC - AC) = 99{,}000 / 81{,}000 = 1.22\). The remaining work would have to be delivered at 122% of the planned cost efficiency. Since the team has managed 82% so far, this is not a plan; it is a wish.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Price the descope.</strong> Removing the assessment reminders package (2 activity-weeks, $24,000) plus one activity-week from the campus map package ($12,000) removes $36,000 of the $40,000 gap, leaving roughly $4,000 to be absorbed by contingency. That is what &ldquo;descope by $40,000&rdquo; looks like in WBS terms.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Protect the quality constraint.</strong> The testing package is $48,000, the largest single line in the WBS, and it is what makes the app secure, accessible and reliable &mdash; the tutorial's stated quality expectation. Cutting it converts a cost over-run into a risk of an unsuccessful launch, which is not a trade the project manager is entitled to make alone. Take the options to the sponsor with the arithmetic attached.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-selection">
+  <h2 class="section-title">Choosing a method: weights, expected value and flow</h2>
+  <p class="section-lead">Three pieces of arithmetic turn &ldquo;which methodology?&rdquo; from an opinion into a defensible recommendation: a weighted scorecard, an expected monetary value, and Little's Law.</p>
+
+  <div class="theorem-box">
+    <h3>1. A weighted scorecard</h3>
+    <p>Score each methodology \(m\) on each criterion \(k\) from 1 to 5, weight the criteria so that \(\sum_k w_k = 1\), and compare:</p>
+    \[ S_m \;=\; \sum_{k=1}^{K} w_k\, s_{k,m}, \qquad 0 \le w_k \le 1, \qquad \sum_{k=1}^{K} w_k = 1, \qquad 1 \le s_{k,m} \le 5 \]
+    <p>Because the weights sum to 1, \(S_m\) stays on the 1&ndash;5 scale and can be read directly: 5.00 is perfect on every criterion.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Criterion</th><th>Weight \(w_k\)</th><th>Waterfall</th><th>Scrum</th><th>Kanban</th><th>Hybrid</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Requirement stability (low stability favours agile)</td><td>0.20</td><td>2</td><td>5</td><td>5</td><td>4</td></tr>
+        <tr><td>Documented evidence and governance gates</td><td>0.15</td><td>5</td><td>3</td><td>2</td><td>5</td></tr>
+        <tr><td>Speed to a usable first release</td><td>0.25</td><td>2</td><td>4</td><td>3</td><td>4</td></tr>
+        <tr><td>Tolerance of change mid-flight</td><td>0.25</td><td>1</td><td>5</td><td>5</td><td>5</td></tr>
+        <tr><td>Predictable cost and schedule reporting</td><td>0.15</td><td>5</td><td>3</td><td>2</td><td>5</td></tr>
+        <tr><td><strong>Weighted total \(S_m\)</strong></td><td><strong>1.00</strong></td><td><strong>2.65</strong></td><td><strong>4.15</strong></td><td><strong>3.60</strong></td><td><strong>4.55</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Hybrid:</strong> \(0.20(4) + 0.15(5) + 0.25(4) + 0.25(5) + 0.15(5) = 0.80 + 0.75 + 1.00 + 1.25 + 0.75 = 4.55\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>Scrum:</strong> \(0.20(5) + 0.15(3) + 0.25(4) + 0.25(5) + 0.15(3) = 1.00 + 0.45 + 1.00 + 1.25 + 0.45 = 4.15\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>Kanban:</strong> \(0.20(5) + 0.15(2) + 0.25(3) + 0.25(5) + 0.15(2) = 1.00 + 0.30 + 0.75 + 1.25 + 0.30 = 3.60\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>Waterfall:</strong> \(0.20(2) + 0.15(5) + 0.25(2) + 0.25(1) + 0.15(5) = 0.40 + 0.75 + 0.50 + 0.25 + 0.75 = 2.65\).</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">5</div>
+      <div class="step-body"><p><strong>Sensitivity &mdash; the part most answers miss.</strong> Weights are judgements, so test them. Move weight to stability and evidence (stability 0.30, evidence 0.25, speed 0.20, change 0.10, reporting 0.15) and the totals become Waterfall 3.10, Scrum 4.00, Kanban 3.40, Hybrid 4.50. The ranking survives, the gap narrows sharply, and Waterfall gains the most &mdash; which is exactly the argument a sponsor who distrusts agile would make.</p></div>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Expected monetary value</h3>
+    <p>Price a risk, or a decision that changes it, with</p>
+    \[ EMV \;=\; \sum_i p_i\, I_i \]
+    <p>Compare two release strategies for the same app. A single <strong>big-bang release</strong> carries a 20% chance of a failed launch costing $120,000, so \(EMV = 0.20 \times (-\$120{,}000) = -\$24{,}000\). A <strong>staged release</strong> cuts the failure probability to 10% and the blast radius to $60,000, so \(EMV = 0.10 \times (-\$60{,}000) = -\$6{,}000\), but it adds $12,000 of integration overhead. Staged total: \(-\$6{,}000 - \$12{,}000 = -\$18{,}000\).</p>
+    <p><strong>Break-even:</strong> staging wins while its overhead is below the expected-loss reduction, \(\$24{,}000 - \$6{,}000 = \$18{,}000\). Above that, the cheaper risk is to release once.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Little's Law for a Kanban board</h3>
+    <p>For a stable system, work in progress, throughput and cycle time are locked together:</p>
+    \[ WIP \;=\; TH \times CT \qquad\Longleftrightarrow\qquad CT \;=\; \frac{WIP}{TH} \]
+    <p>The support team from the lecture completes \(TH = 10\) tickets per day. With 30 items in progress, \(CT = 30 / 10 = 3\) days. Cutting the WIP limit to 20 gives \(CT = 20 / 10 = 2\) days &mdash; <em>provided throughput holds</em>. If pulling less work also drops throughput to 8 per day, \(CT = 20 / 8 = 2.5\) days, and the gain is much smaller. The limit is a hypothesis about the bottleneck, not a magic number.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A support team has 30 items in progress and completes 10 items per day. A WIP limit of 20 is introduced and throughput holds at 10 per day. What happens to the average cycle time?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="1.5 days comes from 30 / 20, which divides work by a limit. Little's Law divides work in progress by throughput, so the new cycle time is 20 / 10.">It falls from 3 days to 1.5 days</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. CT = WIP / TH: 30 / 10 = 3 days before, 20 / 10 = 2 days after. The gain is real but it depends on throughput holding — if throughput also falls, the cycle time improves far less." data-bad="">It falls from 3 days to 2 days</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That inverts the relationship. CT = WIP / TH, so 30 items at 10 per day take 3 days, not about a third of a day.">It falls from 3 days to about 0.33 days</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">The tutorial's arithmetic: what each change really costs</h2>
+  <p class="section-lead">The Week 2 tutorial gives one baseline and three changes. Put numbers on the baseline once, and each change becomes a calculation rather than a debate.</p>
+
+  <div class="def-box">
+    <div class="def-label">The baseline (UniConnect, outsourced to a local software company)</div>
+    <p><strong>Scope:</strong> personal timetable, assessment reminders, campus map, emergency notifications (four features). <strong>Time:</strong> 12 weeks, ready before next semester. <strong>Cost:</strong> maximum budget $180,000. <strong>High-level quality expectation:</strong> the app must be secure, accessible and reliable.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Three baseline rates worth having at your fingertips</h3>
+    \[ \text{cost per week} = \frac{180{,}000}{12} = \$15{,}000 \qquad \text{cost per feature} = \frac{180{,}000}{4} = \$45{,}000 \]
+    \[ \text{schedule per feature} = \frac{12}{4} = 3\ \text{weeks} \]
+    <p>Every change below is a movement in one of these three rates, and every response is an argument about which of the others absorbs it.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Change</th><th>The arithmetic</th><th>Pressure created</th><th>Example response</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A &mdash; scope increases</strong><br>add live chat and room booking</td>
+          <td>\(6\) features in \(12\) weeks: \(12/6 = 2\) weeks per feature, a \(33\%\) cut from the baseline's 3</td>
+          <td>More analysis, design, development, integration and testing; time and/or cost must rise, or other work must be removed</td>
+          <td>Keep the four original features in the 12-week release; move live chat and room booking to a later release</td>
+        </tr>
+        <tr>
+          <td><strong>B &mdash; time reduced</strong><br>12 weeks &rarr; 8 weeks</td>
+          <td>\(8/12 = 2/3\) of the schedule; at constant productivity, \(4 \times \tfrac{2}{3} = 2.67\) features &mdash; so 2 or 3, not 4</td>
+          <td>More cost (extra people) and/or less scope; four weeks is approximately one third of the plan</td>
+          <td>Deliver a smaller first release: personal timetable and emergency notifications now, reminders and map later</td>
+        </tr>
+        <tr>
+          <td><strong>C &mdash; cost reduced</strong><br>$180,000 &rarr; $135,000</td>
+          <td>\(45{,}000 / 180{,}000 = 25\%\); the cut of $45,000 is exactly one feature's average cost, and \(45{,}000 / 15{,}000 = 3\) weeks of the original run rate</td>
+          <td>Fewer staff hours and specialist services; keeping the whole scope would need more time, which the fixed deadline forbids</td>
+          <td>Ask the sponsor and users to prioritise: keep timetable and notifications, defer the map and reminders, and protect security, accessibility and testing</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The pattern.</strong> Each change pressures the constraints it did not move. Scope grew, so time and cost felt it; time shrank, so cost and scope felt it; cost shrank, so time and scope felt it. Quality &mdash; secure, accessible, reliable &mdash; is the constraint nobody in the scenario has volunteered to reduce, which is precisely why a project manager who says nothing about it will lose it by default.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked example &mdash; Change C, costed three ways.</strong> The budget falls from $180,000 to $135,000 and the deadline stays at 12 weeks.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>What the cut buys.</strong> The original run rate was \(\$180{,}000 / 12 = \$15{,}000\) per week. The new budget funds \(135{,}000 / 15{,}000 = 9\) weeks at that rate. Either the burn rate falls to \(135{,}000 / 12 = \$11{,}250\) per week (75% of the original team and services) or the work has to fit into nine weeks of the original capacity.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Option 1 &mdash; descope by 25%.</strong> \(\$135{,}000 / \$45{,}000 = 3\) features' worth of money for 4 features of scope. Deliver three. Retaining the timetable and emergency notifications protects the features with the clearest safety and equity case; deferring the map and reminders is the shippable compromise.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Option 2 &mdash; keep four features at 75% of the effort each.</strong> Every work package loses a quarter of its effort, including testing: \(0.75 \times \$48{,}000 = \$36{,}000\) for security, accessibility and integration testing. The arithmetic balances and the quality expectation does not: the stated requirement was that the app be secure, accessible and reliable, and testing is the only work package that produces the evidence for it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Option 3 &mdash; re-baseline honestly.</strong> Keep the four features and ask the sponsor for \(EAC - BAC = \$45{,}000\) more, or a later release date. Stating the number with its evidence is better project management than absorbing it silently: the tutorial's own summary is that a reduced budget means less scope, more time, or a revised baseline &mdash; never all four constraints unchanged.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the marks.</strong> &ldquo;A 25% budget reduction with a fixed deadline and a fixed quality expectation cannot be absorbed by the same scope. The arithmetic gives three consistent responses &mdash; descope by roughly one quarter, extend the date, or increase the budget &mdash; and the project manager's job is to put those three options to the sponsor rather than choose the invisible fourth, which is to let quality absorb the cut.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>The four numbers to memorise</h3>
+      <p>\(15{,}000\) per week, \(45{,}000\) per feature, 3 weeks per feature, and \(2/3\) of the schedule when 12 weeks becomes 8.</p>
+    </div>
+    <div class="glance-card">
+      <h3>The three formulas to carry into Week 3 and 4</h3>
+      <p>\(TF = LS - ES\) for the schedule, \(CPI = EV/AC\) and \(SPI = EV/PV\) for control, and \(EAC = BAC/CPI\) for the forecast.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

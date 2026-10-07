@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3: Digital Input and Output (Arduino Part 1) — COMP5047</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter3-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 study guide for COMP5047: digital signals and logic levels, the Arduino platform and GPIO pins, Ohm's law and current limiting, breadboard circuits, buttons with pull-up resistors, and switch debouncing.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 3: Digital Input and Output (Arduino Part 1) — COMP5047">
+<meta property="og:description" content="Week 3 study guide for COMP5047: digital signals and logic levels, the Arduino platform and GPIO pins, Ohm's law and current limiting, breadboard circuits, buttons with pull-up resistors, and switch debouncing.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F50C;</span>
+      <h2>Week 3</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-digital" class="nav-link" data-section="digital">Digital Signals</a></li>
+    <li><a href="#sec-arduino" class="nav-link" data-section="arduino">The Arduino Platform</a></li>
+    <li><a href="#sec-pins" class="nav-link" data-section="pins">GPIO &amp; the I/O API</a></li>
+    <li><a href="#sec-circuit" class="nav-link" data-section="circuit">Voltage, Current, Ohm's Law</a></li>
+    <li><a href="#sec-led" class="nav-link" data-section="led">Driving an LED</a></li>
+    <li><a href="#sec-breadboard" class="nav-link" data-section="breadboard">Breadboard Circuits</a></li>
+    <li><a href="#sec-input" class="nav-link" data-section="input">Buttons &amp; Pull-ups</a></li>
+    <li><a href="#sec-debounce" class="nav-link" data-section="debounce">Debouncing</a></li>
+    <li><a href="#sec-code" class="nav-link" data-section="code">Writing the Sketch</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter3-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter3-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 3 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5047 — Pervasive Computing</p>
+    <h1>Week 3: Digital Input and Output (Arduino Part 1)</h1>
+    <p class="hero-subtitle">Digital signals, GPIO pins, buttons and LEDs, pull-up and pull-down resistors, debouncing, and building the first breadboard circuits.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50C;</span>
+        <span>Two states: HIGH and LOW</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4CC;</span>
+        <span>GPIO pins set by <code>pinMode()</code></span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4A1;</span>
+        <span>LED + current-limiting resistor</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F518;</span>
+        <span>Pull-ups and debouncing</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter3-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter3-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 3 lecture deck (Velloso, <em>Introduction to Physical Computing &mdash; Digital Input and Output, Arduino Part 1</em>)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-digital" class="section" data-track="digital">
+  <h2 class="section-title">Digital Signals: Everything Reduces to Two States</h2>
+  <p class="section-lead">The whole week rests on one decision: treat a voltage as a <em>number</em> or as a <em>state</em>. Digital I/O takes the second option and never looks back.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>A <strong>digital signal</strong> is a voltage that the hardware interprets as one of exactly two discrete states. On a 5&nbsp;V board the pin is either <strong>HIGH</strong> (close to the supply voltage) or <strong>LOW</strong> (close to ground). A digital pin therefore carries one <em>bit</em> of information at a time, not a measurement.</p>
+  </div>
+
+  <div id="ix-signal"></div>
+
+  <p>Note what the animation does <em>not</em> claim. The physical voltage is still continuous &mdash; electrons do not move in steps. What makes the signal digital is the <strong>threshold band</strong> the receiver applies: anything comfortably above the upper threshold is read as HIGH, anything comfortably below the lower threshold is read as LOW, and the region between them is deliberately treated as undefined.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Level</th><th>What the pin is doing</th><th>Typical value on a 5&nbsp;V ATmega328P board</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Output HIGH</strong></td><td>The pin actively sources current towards the supply rail</td><td>&ge;&nbsp;4.2&nbsp;V (5&nbsp;V nominal)</td></tr>
+        <tr><td><strong>Input HIGH</strong></td><td>The receiver reads a logic 1</td><td>&ge;&nbsp;3.0&nbsp;V (&asymp;&nbsp;0.6&nbsp;&times;&nbsp;V<sub>CC</sub>)</td></tr>
+        <tr><td><strong>Input LOW</strong></td><td>The receiver reads a logic 0</td><td>&le;&nbsp;1.5&nbsp;V (&asymp;&nbsp;0.3&nbsp;&times;&nbsp;V<sub>CC</sub>)</td></tr>
+        <tr><td><strong>Output LOW</strong></td><td>The pin actively sinks current towards ground</td><td>&le;&nbsp;0.9&nbsp;V (0&nbsp;V nominal)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Datasheet note:</strong> the deck's reminder that <em>every electronic part has a datasheet</em> is exactly why the numbers above exist. The gap between 1.5&nbsp;V and 3.0&nbsp;V is the <strong>noise margin</strong>. A small amount of electrical noise on a wire cannot flip a digital reading unless it is larger than that gap &mdash; which is why digital signalling is used for anything that has to travel across a breadboard full of jumper wires.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A digital input pin on a 5&nbsp;V board is measured at 2.4&nbsp;V. What does the firmware see?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="2.4 V is above the 1.5 V LOW threshold, so it is definitely not read as LOW.">A solid LOW</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would be true for an analogue input. A digital input applies thresholds and returns a state, never a number in volts.">The value 2.4, because digital reads return volts</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. 2.4 V sits inside the undefined band between the LOW (&le; 1.5 V) and HIGH (&ge; 3.0 V) thresholds, so the result is not guaranteed — a classic floating-input symptom that a pull-up or pull-down resistor fixes." data-bad="">An undefined level: the reading is not guaranteed either way</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-arduino" class="section" data-track="arduino">
+  <h2 class="section-title">The Arduino Platform</h2>
+  <p class="section-lead">Before the electricity, the tool. Week 3 introduces the board that the rest of the unit builds on.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>Arduino</strong> is an open-source electronics platform &mdash; hardware and software together &mdash; for the fast prototyping of interactive physical computing systems. It is aimed at people <em>without</em> an electronics background, and it comes in many form factors that are mostly compatible with each other.</p>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-uno-board"></div>
+  <script type="application/json" id="ix-uno-board">
+  {
+    "title": "Anatomy of an Arduino Uno",
+    "subtitle": "Click a marker to see what each part of the board is for. This is the reference board for the unit.",
+    "svg": "<svg viewBox=\"0 0 800 500\" role=\"img\" aria-label=\"Simplified diagram of an Arduino Uno board showing the USB connector, power jack, headers, microcontroller and status LED\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"500\" fill=\"#fbfdfe\"></rect><rect x=\"58\" y=\"58\" width=\"684\" height=\"384\" rx=\"18\" fill=\"#0e9aa7\" stroke=\"#0b7285\" stroke-width=\"2\"></rect><circle cx=\"88\" cy=\"88\" r=\"9\" fill=\"#fbfdfe\" stroke=\"#0b7285\" stroke-width=\"2\"></circle><circle cx=\"712\" cy=\"88\" r=\"9\" fill=\"#fbfdfe\" stroke=\"#0b7285\" stroke-width=\"2\"></circle><circle cx=\"88\" cy=\"412\" r=\"9\" fill=\"#fbfdfe\" stroke=\"#0b7285\" stroke-width=\"2\"></circle><circle cx=\"712\" cy=\"412\" r=\"9\" fill=\"#fbfdfe\" stroke=\"#0b7285\" stroke-width=\"2\"></circle><rect x=\"58\" y=\"108\" width=\"74\" height=\"112\" rx=\"4\" fill=\"#cbd5e1\" stroke=\"#64748b\" stroke-width=\"2\"></rect><text x=\"95\" y=\"170\" font-family=\"monospace\" font-size=\"13\" fill=\"#334155\" text-anchor=\"middle\">USB</text><rect x=\"58\" y=\"268\" width=\"84\" height=\"92\" rx=\"6\" fill=\"#1f2937\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"100\" y=\"320\" font-family=\"monospace\" font-size=\"12\" fill=\"#e2e8f0\" text-anchor=\"middle\">9-12V</text><rect x=\"148\" y=\"100\" width=\"62\" height=\"38\" rx=\"6\" fill=\"#e5e7eb\" stroke=\"#64748b\" stroke-width=\"2\"></rect><text x=\"179\" y=\"124\" font-family=\"monospace\" font-size=\"11\" fill=\"#334155\" text-anchor=\"middle\">RESET</text><rect x=\"248\" y=\"58\" width=\"432\" height=\"36\" rx=\"4\" fill=\"#1f2937\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"464\" y=\"82\" font-family=\"monospace\" font-size=\"12\" fill=\"#e2e8f0\" text-anchor=\"middle\">DIGITAL 0-13</text><rect x=\"248\" y=\"406\" width=\"252\" height=\"36\" rx=\"4\" fill=\"#1f2937\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"374\" y=\"430\" font-family=\"monospace\" font-size=\"12\" fill=\"#e2e8f0\" text-anchor=\"middle\">ANALOG IN A0-A5</text><rect x=\"168\" y=\"406\" width=\"72\" height=\"36\" rx=\"4\" fill=\"#1f2937\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"204\" y=\"430\" font-family=\"monospace\" font-size=\"11\" fill=\"#e2e8f0\" text-anchor=\"middle\">POWER</text><rect x=\"420\" y=\"196\" width=\"184\" height=\"88\" rx=\"8\" fill=\"#1f2937\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"512\" y=\"234\" font-family=\"monospace\" font-size=\"13\" fill=\"#e2e8f0\" text-anchor=\"middle\">ATmega328P</text><text x=\"512\" y=\"256\" font-family=\"monospace\" font-size=\"11\" fill=\"#94a3b8\" text-anchor=\"middle\">16 MHz / 5 V</text><rect x=\"336\" y=\"210\" width=\"44\" height=\"60\" rx=\"4\" fill=\"#cbd5e1\" stroke=\"#64748b\" stroke-width=\"2\"></rect><text x=\"358\" y=\"246\" font-family=\"monospace\" font-size=\"10\" fill=\"#334155\" text-anchor=\"middle\">16MHz</text><rect x=\"612\" y=\"140\" width=\"22\" height=\"18\" rx=\"3\" fill=\"#f59e0b\" stroke=\"#b45309\" stroke-width=\"2\"></rect><text x=\"623\" y=\"132\" font-family=\"monospace\" font-size=\"12\" fill=\"#b45309\" text-anchor=\"middle\">L</text><rect x=\"178\" y=\"330\" width=\"58\" height=\"46\" rx=\"4\" fill=\"#1f2937\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"207\" y=\"358\" font-family=\"monospace\" font-size=\"10\" fill=\"#e2e8f0\" text-anchor=\"middle\">REG</text><circle cx=\"292\" cy=\"356\" r=\"24\" fill=\"#1f2937\" stroke=\"#0f172a\" stroke-width=\"2\"></circle><text x=\"292\" y=\"361\" font-family=\"monospace\" font-size=\"10\" fill=\"#e2e8f0\" text-anchor=\"middle\">100uF</text></svg>",
+    "points": [
+      { "x": 11.9, "y": 33.0, "label": "USB-B connector", "detail": "Two jobs at once: it powers the board from the computer and it carries the compiled sketch from the IDE to the microcontroller." },
+      { "x": 22.4, "y": 23.8, "label": "Reset button", "detail": "Restarts the program: the board jumps back to the beginning, runs setup() again, and then re-enters loop(). Useful when the sketch is stuck in a waiting state." },
+      { "x": 58.0, "y": 15.2, "label": "Digital header, pins 0-13", "detail": "The general-purpose pins. Fourteen of them on the Uno; six (3, 5, 6, 9, 10, 11) can also produce a PWM output, which is how Week 4 fakes an analogue voltage." },
+      { "x": 77.8, "y": 29.8, "label": "The 'L' LED on pin 13", "detail": "An LED already wired to digital pin 13 through a resistor on the board. It is the output device for your very first sketch, and it costs no components." },
+      { "x": 64.0, "y": 48.0, "label": "ATmega328P microcontroller", "detail": "The computer. It holds the program in flash, runs setup() once and loop() forever, and reads or drives every pin you configure. Everything on the board exists to support this chip." },
+      { "x": 12.5, "y": 62.8, "label": "Barrel jack, 7-12 V", "detail": "An external supply for when USB cannot provide enough current. It feeds the on-board regulator, which produces the 5 V the logic uses." },
+      { "x": 25.5, "y": 84.6, "label": "Power header: 5V, GND, VIN", "detail": "Where the breadboard's power rails come from. The 5V pin is the supply rail for your circuits; GND is the 0 V reference every voltage is measured against." },
+      { "x": 46.8, "y": 84.6, "label": "Analogue input header, A0-A5", "detail": "Six ADC channels for Week 4. They can also be used as ordinary digital pins 14-19, which is why the header is not a separate world." }
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Two boards, one platform</h3>
+  <p>The deck compares the Uno with the ESP32 boards you will meet later in the unit. The comparison is worth memorising as a table, because it explains why the same sketch can behave differently on two &ldquo;Arduino-compatible&rdquo; boards.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>Arduino Uno</th><th>ESP32 (FireBeetle 2 ESP32-E)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Status</strong></td><td>The original standard</td><td>Independent, but compatible with the Arduino environment</td></tr>
+        <tr><td><strong>Logic voltage</strong></td><td>5&nbsp;V</td><td>3.3&nbsp;V</td></tr>
+        <tr><td><strong>Wireless</strong></td><td>None built in</td><td>Built-in WiFi and Bluetooth</td></tr>
+        <tr><td><strong>Clock</strong></td><td>16&nbsp;MHz</td><td>240&nbsp;MHz</td></tr>
+        <tr><td><strong>Simulator support</strong></td><td>Included in Tinkercad</td><td>Not included in Tinkercad</td></tr>
+        <tr><td><strong>Digital I/O</strong></td><td>14 pins (0&ndash;13), 6 PWM-capable</td><td>18 digital I/O</td></tr>
+        <tr><td><strong>Analogue inputs</strong></td><td>6 channels (A0&ndash;A5)</td><td>11 analogue in</td></tr>
+        <tr><td><strong>Buses</strong></td><td>SPI, I<sup>2</sup>C on dedicated pins</td><td>SPI, I<sup>2</sup>C</td></tr>
+        <tr><td><strong>Power input</strong></td><td>USB-B, or 7&ndash;12&nbsp;V barrel jack</td><td>USB-C, or battery connector (3.5&ndash;4.2&nbsp;V)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Before the tutorial:</strong> the deck asks you to work through <em>tinkercad.com/circuits</em> and <em>wokwi.com</em> first. Both simulate a board and a breadboard in the browser, so you can debug the logic of a circuit before you can lose a component. Any circuit on this page can be rebuilt in either one.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">setup() runs once, loop() runs forever</h3>
+  <p>An Arduino sketch has no <code>main()</code>. The framework supplies one, and it looks like this in the deck's slides:</p>
+
+  <div class="code-block">
+setup();
+while (true) {
+    loop();
+}
+  </div>
+
+  <p>Everything you write lives inside those two functions, and the division of labour is strict: <strong>setup()</strong> configures the board and runs exactly once after every reset; <strong>loop()</strong> is called again and again for as long as the board has power.</p>
+
+  <div data-ix="pipeline" data-ix-src="#ix-sketch-life"></div>
+  <script type="application/json" id="ix-sketch-life">
+  {
+    "title": "The lifecycle of a sketch",
+    "subtitle": "From power-on to an endless loop — and the reset that starts it over.",
+    "nodes": [
+      { "label": "Power on or reset", "note": "USB is plugged in, or the reset button is pressed." },
+      { "label": "Bootloader runs briefly", "note": "A small program checks whether a new sketch is arriving over USB." },
+      { "label": "setup() runs once", "note": "Serial port, pin modes, initial states. Configuration only — no waiting around." },
+      { "label": "loop() runs", "note": "Read the inputs, decide, drive the outputs. This is the program." },
+      { "label": "loop() returns", "note": "The framework calls it again immediately; millis() keeps counting in the background." },
+      { "label": "Reset restarts the cycle", "note": "State held in variables is lost; pin modes are forgotten and must be set again." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">You put <code>pinMode(LED_PIN, OUTPUT);</code> inside <code>loop()</code> instead of <code>setup()</code>. What is the practical consequence?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It compiles and it runs — the compiler does not care which function the call is in, and the pin does get configured.">The sketch will not compile</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The pin still works, but the configuration is rewritten on every pass of loop() — thousands of times a second. Configuration belongs in setup(); loop() is for behaviour." data-bad="">It still works, but the pin is reconfigured on every pass of the loop, which is wasted work</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The board does not refuse to run; setup() and loop() are both ordinary functions as far as the compiler is concerned.">The board will refuse to run the sketch because setup() must contain it</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-pins" class="section" data-track="pins">
+  <h2 class="section-title">GPIO Pins and the Digital I/O API</h2>
+  <p class="section-lead">A microcontroller pin is not a fixed-purpose component like a resistor. Software decides what it does, which is exactly what &ldquo;general purpose&rdquo; means.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>GPIO</strong> &mdash; general-purpose input/output &mdash; describes a pin whose direction and behaviour are chosen by the program rather than fixed by the circuit. Before a GPIO pin will behave predictably you must tell it which direction it faces, using <code>pinMode()</code>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th><code>pinMode()</code> mode</th><th>What the pin becomes</th><th>When you use it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>OUTPUT</code></td><td>A driver: <code>digitalWrite()</code> connects the pin to 5&nbsp;V or to 0&nbsp;V</td><td>Anything you want to switch: LEDs, buzzers, relays, motor drivers</td></tr>
+        <tr><td><code>INPUT</code></td><td>A high-impedance sensor of voltage</td><td>Reading a signal that something else already drives &mdash; another board, a sensor with a digital output</td></tr>
+        <tr><td><code>INPUT_PULLUP</code></td><td>An input with a resistor to 5&nbsp;V switched on inside the chip, so the idle state is HIGH</td><td>Every plain push button. It removes the need for an external resistor and stops the pin from floating</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The deck's four-quadrant slide is the map of the whole I/O API. Learn the quadrant, and you know which function to reach for before you know its arguments.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>Digital</th><th>Analogue</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Input</strong></td><td><code>digitalRead(pin)</code> &rarr; returns <code>HIGH</code> or <code>LOW</code></td><td><code>analogRead(pin)</code> &rarr; returns a number on the ADC's scale <span class="badge badge-blue">Week 4</span></td></tr>
+        <tr><td><strong>Output</strong></td><td><code>digitalWrite(pin, value)</code> &rarr; drives the pin to <code>HIGH</code> or <code>LOW</code></td><td><code>analogWrite(pin, value)</code> &rarr; actually PWM on a digital pin <span class="badge badge-blue">Week 4</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+const int LED_PIN    = 13;   // the on-board LED
+const int BUTTON_PIN = 2;    // our switch
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);         // we will drive this pin
+  pinMode(BUTTON_PIN, INPUT_PULLUP); // we will read this pin, idle HIGH
+}
+
+void loop() {
+  int reading = digitalRead(BUTTON_PIN); // HIGH or LOW, nothing in between
+  digitalWrite(LED_PIN, reading == LOW ? HIGH : LOW);
+}
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-pin-api"></div>
+  <script type="application/json" id="ix-pin-api">
+  {
+    "title": "Pin modes and the I/O calls",
+    "subtitle": "Say the answer out loud before you flip each card.",
+    "cards": [
+      { "front": "pinMode(pin, mode)", "back": "Configures the direction of a GPIO pin. Always in setup(). The three modes you need this week are OUTPUT, INPUT and INPUT_PULLUP.", "hint": "Configuration" },
+      { "front": "digitalWrite(pin, value)", "back": "Drives an OUTPUT pin to HIGH (near the supply voltage) or LOW (near ground). It sets a state; it does not measure anything.", "hint": "Digital output" },
+      { "front": "digitalRead(pin)", "back": "Reads the state of an INPUT pin and returns HIGH or LOW. There is no in-between value — that is the whole point of a digital input.", "hint": "Digital input" },
+      { "front": "HIGH and LOW", "back": "The two logic levels. On a 5 V board HIGH is nominally 5 V and LOW is nominally 0 V; the receiver applies threshold bands rather than exact voltages.", "hint": "Logic levels" },
+      { "front": "INPUT_PULLUP", "back": "Enables the internal pull-up resistor so an unconnected input reads HIGH. It inverts the button logic: pressed becomes LOW, not HIGH.", "hint": "Wiring a button" },
+      { "front": "A floating input", "back": "An INPUT pin with nothing connected to it. Its voltage drifts inside the undefined band, so digitalRead() returns unpredictable values.", "hint": "The classic bug" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Two facts about pins that are easy to lose marks on.</strong> First, a GPIO pin is a <em>logic</em> device, not a power supply: it can source or sink a small current (tens of milliamps at most) and nothing more. Second, the pin number in your code is the number printed on the header, not the physical position of the socket &mdash; pin 13 is the same pin whether the board is an Uno or a clone.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A sketch does <code>pinMode(7, INPUT);</code> and nothing is wired to pin 7. What does <code>digitalRead(7)</code> return?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. An unconnected INPUT pin is floating: it behaves like a small antenna and drifts inside the undefined band, so the result is unpredictable and can change from moment to moment." data-bad="">Unpredictable values that drift over time</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is what INPUT_PULLUP gives you. Plain INPUT has no resistor holding the pin at any level.">Always LOW, because nothing is driving it high</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A digital read never returns a voltage or an in-between number — and an unconnected pin would not give a stable value anyway.">Exactly 2.5, the midpoint of the supply</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-circuit" class="section" data-track="circuit">
+  <h2 class="section-title">Voltage, Current and Ohm's Law</h2>
+  <p class="section-lead">Current only flows in a closed loop, and the loop has three quantities you can name. This is the physics the rest of the unit assumes.</p>
+
+  <div class="def-box">
+    <div class="def-label">The three quantities</div>
+    <p><strong>Voltage</strong> (<em>V</em>, volts) is the electrical potential difference that pushes charge around the circuit &mdash; the deck's pump analogy. <strong>Current</strong> (<em>I</em>, amperes) is the rate at which charge actually flows. <strong>Resistance</strong> (<em>R</em>, ohms) is how strongly a component opposes that flow.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Ohm's law</h3>
+    <p>\[ V = R \times I \qquad\Longleftrightarrow\qquad I = \frac{V}{R} \qquad\Longleftrightarrow\qquad R = \frac{V}{I} \]</p>
+    <p style="margin-top:0.6rem; color:var(--text-muted);">The law is a relationship, not a recipe: fix any two of the three quantities and the third is determined. Every calculation in this chapter is one rearrangement of it.</p>
+  </div>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Schematic of an LED in series with a resistor, driven from an Arduino digital pin, with a current-limiting resistor and a ground return" xmlns="http://www.w3.org/2000/svg">
+      <rect x="26" y="96" width="132" height="86" rx="10" class="node-box"></rect>
+      <text x="92" y="128" font-family="monospace" font-size="13" text-anchor="middle" fill="var(--text)">Arduino</text>
+      <text x="92" y="150" font-family="monospace" font-size="13" text-anchor="middle" fill="var(--accent)">D9</text>
+      <text x="92" y="170" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-muted)">digitalWrite</text>
+      <line x1="158" y1="139" x2="238" y2="139" class="arrow-line" stroke-width="2"></line>
+      <polyline points="238,139 250,119 270,159 290,119 310,159 330,139 342,139" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"></polyline>
+      <text x="290" y="98" font-family="monospace" font-size="12" text-anchor="middle" fill="var(--accent)">R = 220 &#937;</text>
+      <text x="290" y="184" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-muted)">limits the current</text>
+      <line x1="342" y1="139" x2="430" y2="139" class="arrow-line" stroke-width="2"></line>
+      <polygon points="430,113 430,165 476,139" fill="rgba(245,158,11,0.25)" stroke="var(--yellow)" stroke-width="2.4" stroke-linejoin="round"></polygon>
+      <line x1="476" y1="113" x2="476" y2="165" stroke="var(--yellow)" stroke-width="2.8"></line>
+      <text x="453" y="98" font-family="monospace" font-size="12" text-anchor="middle" fill="var(--yellow)">LED</text>
+      <text x="453" y="190" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-muted)">drops V&#8202;f &#8776; 2.0 V</text>
+      <line x1="476" y1="139" x2="600" y2="139" class="arrow-line" stroke-width="2"></line>
+      <line x1="600" y1="139" x2="600" y2="232" class="arrow-line" stroke-width="2"></line>
+      <line x1="574" y1="232" x2="626" y2="232" stroke="var(--text-muted)" stroke-width="2.4"></line>
+      <line x1="582" y1="244" x2="618" y2="244" stroke="var(--text-muted)" stroke-width="2.4"></line>
+      <line x1="590" y1="256" x2="610" y2="256" stroke="var(--text-muted)" stroke-width="2.4"></line>
+      <text x="648" y="240" font-family="monospace" font-size="12" text-anchor="middle" fill="var(--text-muted)">GND</text>
+      <line x1="26" y1="139" x2="26" y2="272" class="arrow-line" stroke-width="2" stroke-dasharray="5 5"></line>
+      <line x1="26" y1="272" x2="600" y2="272" class="arrow-line" stroke-width="2" stroke-dasharray="5 5"></line>
+      <text x="300" y="292" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-dim)">the return path — the loop must be closed</text>
+      <polygon points="380,131 404,139 380,147" fill="var(--green)"></polygon>
+      <text x="392" y="120" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--green)">I</text>
+    </svg>
+    <p class="arch-caption">A series circuit: the pin sources current, the resistor limits it, the LED converts some of it into light, and the current returns to ground. There is exactly one path, so the same current flows through every part.</p>
+  </div>
+
+  <p>Two principles from the deck govern everything you will wire this semester:</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>1. Current takes every available path</h3>
+      <p>When the circuit branches, current flows through <em>every</em> branch, and it divides between them in <strong>inverse proportion to their resistance</strong>. The lower-resistance branch carries the larger share. A path with almost no resistance carries almost all of it.</p>
+    </div>
+    <div class="col-card">
+      <h3>2. All the energy must be used</h3>
+      <p>The supply voltage is shared out across the components in the loop. Each component &ldquo;drops&rdquo; a portion of it, and the drops must add back up to the supply. If a component cannot drop its share, no current flows at all.</p>
+    </div>
+  </div>
+
+  <div id="ix-ohm"></div>
+
+  <div class="callout">
+    <strong>Short circuit.</strong> Substitute <em>R</em>&nbsp;&asymp;&nbsp;0 into Ohm's law and the current is unbounded: <em>I</em>&nbsp;=&nbsp;1.5&nbsp;V&nbsp;/&nbsp;0&nbsp;&Omega;&nbsp;&rarr;&nbsp;&infin;. In a real circuit the current is limited only by the internal resistance of the battery and the wires, which is enough to melt tracks, destroy components and start fires. This is why a wire straight from 5&nbsp;V to GND is never acceptable, and why the button wiring later in this chapter needs a resistor in the loop.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A 9&nbsp;V supply is connected across a 470&nbsp;&Omega; resistor. What current flows?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That multiplies instead of dividing. Ohm's law rearranges to I = V / R, so the current must be smaller than the voltage.">470 &times; 9 = 4230 A</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: I = V / R = 9 / 470 = 0.0191 A, which is 19.1 mA. Note the unit conversion — the answer is in amperes, and milliamps are 1000 times smaller." data-bad="">about 19 mA</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is 9 / 4700, i.e. the answer for a 4.7 kΩ resistor. Check the magnitude of R before dividing.">about 1.9 mA</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-led" class="section" data-track="led">
+  <h2 class="section-title">Driving an LED Without Destroying It</h2>
+  <p class="section-lead">An LED is the simplest actuator in the kit and the easiest to kill. Two numbers from its datasheet decide the whole circuit.</p>
+
+  <div class="def-box">
+    <div class="def-label">Key LED facts</div>
+    <p>An LED is a <strong>diode</strong>: current flows through it in one direction only, from the anode (the longer leg) to the cathode (the shorter leg, and the flat side of the package). It has a <strong>forward voltage drop</strong> <em>V<sub>f</sub></em> &mdash; about 1.8&ndash;2.2&nbsp;V for a red LED, closer to 3.0&nbsp;V for blue and white &mdash; and it has no meaningful internal resistance, so it cannot limit its own current.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why a resistor is mandatory.</strong> The LED fixes the voltage across itself at <em>V<sub>f</sub></em>. The rest of the supply voltage must appear across something, and if there is nothing else in the loop, the current is limited only by the wiring &mdash; effectively a short circuit through a diode. The series resistor is that &ldquo;something else&rdquo;.
+  </div>
+
+  <div class="theorem-box">
+    <h3>Sizing the series resistor</h3>
+    <p>The supply is shared: <em>V<sub>supply</sub></em>&nbsp;=&nbsp;<em>V<sub>R</sub></em>&nbsp;+&nbsp;<em>V<sub>f</sub></em>, so the resistor must drop <em>V<sub>R</sub></em>&nbsp;=&nbsp;<em>V<sub>supply</sub></em>&nbsp;&minus;&nbsp;<em>V<sub>f</sub></em>. Choose the current you want, then apply Ohm's law:</p>
+    <p>\[ R = \frac{V_{supply} - V_f}{I} \]</p>
+  </div>
+
+  <p>The deck works this through with real numbers. Take a 3&nbsp;V supply and a red LED that drops 2&ndash;2.4&nbsp;V. The resistor sees <em>V<sub>R</sub></em>&nbsp;=&nbsp;0.8&nbsp;V, and with <em>R</em>&nbsp;=&nbsp;220&nbsp;&Omega; the current is <em>I</em>&nbsp;=&nbsp;0.8&nbsp;/&nbsp;220&nbsp;=&nbsp;<strong>3.6&nbsp;mA</strong> &mdash; a sensible, visible current. Now try the same LED on a 1.5&nbsp;V cell: the supply never reaches the LED's forward voltage, so <strong>no current flows and the LED stays dark</strong>. Voltage, not current, decides whether the diode conducts at all.</p>
+
+  <div data-ix="race" data-ix-src="#ix-resistor-race"></div>
+  <script type="application/json" id="ix-resistor-race">
+  {
+    "title": "Current through the LED for different series resistors",
+    "subtitle": "5 V supply, LED forward voltage 2.0 V, so the resistor always drops 3.0 V. Values are I = 3.0 / R, rounded.",
+    "max": 30,
+    "rows": [
+      { "name": "1000 Ω (1 kΩ)", "value": 3.0, "display": "3.0 mA — visible but dim" },
+      { "name": "470 Ω", "value": 6.4, "display": "6.4 mA — comfortable" },
+      { "name": "330 Ω", "value": 9.1, "display": "9.1 mA — bright, the usual choice" },
+      { "name": "220 Ω", "value": 13.6, "display": "13.6 mA — near the pin's comfort limit" },
+      { "name": "100 Ω", "value": 30.0, "display": "30 mA — more than a pin should supply" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>&ldquo;What if we take out the resistor?&rdquo;</strong> The deck asks this about a 1.5&nbsp;V cell and a 220&nbsp;&Omega; resistor, and the answer is the same at every voltage: with <em>R</em> out of the loop, the only limit on the current is the internal resistance of the source and the wires. The LED's forward current rating (commonly 20&nbsp;mA continuous) is exceeded immediately, and the part fails &mdash; often with a visible pop.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; moving the same LED to a 3.3&nbsp;V board.</strong> You have a red LED with <em>V<sub>f</sub></em>&nbsp;=&nbsp;2.0&nbsp;V and you want 8&nbsp;mA through it on an ESP32 running at 3.3&nbsp;V.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Find the voltage the resistor must drop.</strong> <em>V<sub>R</sub></em>&nbsp;=&nbsp;<em>V<sub>supply</sub></em>&nbsp;&minus;&nbsp;<em>V<sub>f</sub></em>&nbsp;=&nbsp;3.3&nbsp;&minus;&nbsp;2.0&nbsp;=&nbsp;<strong>1.3&nbsp;V</strong>. Everything else in the loop already has its share accounted for.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Apply Ohm's law.</strong> <em>R</em>&nbsp;=&nbsp;<em>V<sub>R</sub></em>&nbsp;/&nbsp;<em>I</em>&nbsp;=&nbsp;1.3&nbsp;/&nbsp;0.008&nbsp;=&nbsp;162.5&nbsp;&Omega;. Watch the units: 8&nbsp;mA is 0.008&nbsp;A, not 8.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Round to a real resistor.</strong> Standard values near 162.5&nbsp;&Omega; are 150&nbsp;&Omega; and 180&nbsp;&Omega;. Pick the <em>larger</em> one, 180&nbsp;&Omega;, because rounding down increases the current. Check it: <em>I</em>&nbsp;=&nbsp;1.3&nbsp;/&nbsp;180&nbsp;=&nbsp;<strong>7.2&nbsp;mA</strong> &mdash; slightly dimmer than requested, and safely inside the LED's rating.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Sanity-check the other end.</strong> With no resistor, <em>I</em> is limited only by the source; with a 100&nbsp;&Omega; resistor, <em>I</em>&nbsp;=&nbsp;13&nbsp;mA, which is still fine for the LED but is a large ask of a 3.3&nbsp;V logic pin. The resistor protects the pin as much as the LED.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You replace a 330&nbsp;&Omega; series resistor with a 100&nbsp;&Omega; one on the same 5&nbsp;V circuit. What happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Brightness is set by current, and current is set by resistance. Reducing the resistance from 330 Ω to 100 Ω roughly triples the current, so the LED gets brighter.">Nothing observable changes, because the LED sets its own current</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The resistor's share of the voltage is unchanged at 3.0 V, so I = 3.0/100 = 30 mA — about three times the 330 Ω case, brighter, and beyond what a GPIO pin should be asked to source continuously." data-bad="">The LED gets brighter and the pin is now sourcing about 30 mA, which is too much for continuous operation</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Less resistance means more current, not less. The voltage across the resistor does not change, so Ohm's law gives a larger I.">The LED gets dimmer because the resistor drops more voltage</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-breadboard" class="section" data-track="breadboard">
+  <h2 class="section-title">Breadboards and the First Circuit</h2>
+  <p class="section-lead">A breadboard is not a random grid of holes. It is a wiring pattern that has been moulded into plastic, and knowing the pattern is the difference between a working circuit and twenty minutes of confusion.</p>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 760 330" role="img" aria-label="Diagram of a breadboard showing the two power rails along the edges and columns of five internally connected holes separated by a central channel" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="10" width="740" height="310" rx="14" fill="var(--bg-card)" stroke="var(--border)" stroke-width="2"></rect>
+      <rect x="30" y="34" width="700" height="26" rx="4" fill="rgba(220,38,38,0.10)" stroke="rgba(220,38,38,0.45)" stroke-width="1.4"></rect>
+      <text x="46" y="52" font-family="monospace" font-size="12" fill="var(--red)">+ rail (5V)</text>
+      <rect x="30" y="270" width="700" height="26" rx="4" fill="rgba(37,99,235,0.10)" stroke="rgba(37,99,235,0.45)" stroke-width="1.4"></rect>
+      <text x="46" y="288" font-family="monospace" font-size="12" fill="var(--blue)">&#8722; rail (GND)</text>
+      <line x1="10" y1="165" x2="750" y2="165" stroke="var(--border)" stroke-width="2" stroke-dasharray="6 5"></line>
+      <text x="380" y="182" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-dim)">centre channel — the two halves are NOT connected</text>
+      <g fill="var(--text-muted)">
+        <circle cx="70" cy="100" r="4"></circle><circle cx="70" cy="118" r="4"></circle><circle cx="70" cy="136" r="4"></circle><circle cx="70" cy="154" r="4"></circle><circle cx="70" cy="172" r="4"></circle>
+        <circle cx="130" cy="100" r="4"></circle><circle cx="130" cy="118" r="4"></circle><circle cx="130" cy="136" r="4"></circle><circle cx="130" cy="154" r="4"></circle><circle cx="130" cy="172" r="4"></circle>
+        <circle cx="190" cy="100" r="4"></circle><circle cx="190" cy="118" r="4"></circle><circle cx="190" cy="136" r="4"></circle><circle cx="190" cy="154" r="4"></circle><circle cx="190" cy="172" r="4"></circle>
+        <circle cx="250" cy="100" r="4"></circle><circle cx="250" cy="118" r="4"></circle><circle cx="250" cy="136" r="4"></circle><circle cx="250" cy="154" r="4"></circle><circle cx="250" cy="172" r="4"></circle>
+        <circle cx="70" cy="212" r="4"></circle><circle cx="70" cy="230" r="4"></circle><circle cx="70" cy="248" r="4"></circle>
+        <circle cx="130" cy="212" r="4"></circle><circle cx="130" cy="230" r="4"></circle><circle cx="130" cy="248" r="4"></circle>
+        <circle cx="190" cy="212" r="4"></circle><circle cx="190" cy="230" r="4"></circle><circle cx="190" cy="248" r="4"></circle>
+        <circle cx="250" cy="212" r="4"></circle><circle cx="250" cy="230" r="4"></circle><circle cx="250" cy="248" r="4"></circle>
+      </g>
+      <rect x="56" y="86" width="28" height="100" rx="6" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"></rect>
+      <text x="105" y="78" font-family="monospace" font-size="11" fill="var(--accent)">one column = five connected holes</text>
+      <g fill="var(--text-muted)">
+        <circle cx="430" cy="100" r="4"></circle><circle cx="430" cy="118" r="4"></circle><circle cx="490" cy="100" r="4"></circle><circle cx="490" cy="118" r="4"></circle><circle cx="550" cy="100" r="4"></circle><circle cx="550" cy="118" r="4"></circle>
+        <circle cx="430" cy="212" r="4"></circle><circle cx="430" cy="230" r="4"></circle><circle cx="490" cy="212" r="4"></circle><circle cx="490" cy="230" r="4"></circle><circle cx="550" cy="212" r="4"></circle><circle cx="550" cy="230" r="4"></circle>
+      </g>
+      <rect x="472" y="140" width="120" height="52" rx="8" fill="rgba(245,158,11,0.18)" stroke="var(--yellow)" stroke-width="2"></rect>
+      <text x="532" y="162" font-family="monospace" font-size="12" text-anchor="middle" fill="var(--yellow)">component legs</text>
+      <text x="532" y="180" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-muted)">straddle the channel</text>
+      <text x="380" y="322" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-dim)">Rails run the length of the board; columns run across it and stop at the channel.</text>
+    </svg>
+    <p class="arch-caption">The deck's note &mdash; &ldquo;internally connected in this direction&rdquo; &mdash; refers to the columns. Five holes in a column are one electrical node; the two power rails are two more nodes that run the whole length of the board.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Board</th><th>How it connects</th><th>Role in prototyping</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Breadboard</strong></td><td>Spring clips, no soldering</td><td>The default for trying a circuit. Reusable, and the only one that survives being wrong.</td></tr>
+        <tr><td><strong>Perfboard</strong></td><td>Component legs soldered to individual plated holes</td><td>A semi-permanent version of the same layout once the circuit works</td></tr>
+        <tr><td><strong>Stripboard</strong></td><td>Soldered to long parallel copper strips that you cut to break</td><td>Compact, and closer to a real product than perfboard</td></tr>
+        <tr><td><strong>PCB</strong></td><td>Custom copper traces, etched or ordered</td><td>The finished article. No flexibility left, which is why you only commit after the breadboard works.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-breadboard"></div>
+
+  <div class="insight-box">
+    <strong>Placing a series component.</strong> A resistor whose legs go into A10 and A15 sits across two different columns, so its two ends are in two different nodes &mdash; which is exactly what a series part needs. Put both legs in the same column (A10 and C10) and you have shorted the component out instead: the current simply bypasses it.
+  </div>
+</section>
+
+<section id="sec-input" class="section" data-track="input">
+  <h2 class="section-title">Reading a Button: Switches, Floating Pins and Pull-ups</h2>
+  <p class="section-lead">A switch is the simplest sensor there is &mdash; and the one that produces the most confusing bugs, because an open switch is not a logic level at all.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Switch family from the deck</th><th>How it behaves</th><th>Typical use</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Slide / toggle / rocker</strong></td><td>Maintains its position; stays on or off after you let go</td><td>Power and mode selection</td></tr>
+        <tr><td><strong>Push button (momentary)</strong></td><td>Closes the circuit only while held</td><td>The default input for a prototype</td></tr>
+        <tr><td><strong>Tilt switch</strong></td><td>A ball bridges two contacts when the part is oriented a certain way</td><td>Orientation sensing, simple motion triggers</td></tr>
+        <tr><td><strong>Reed switch</strong></td><td>Contacts close in the presence of a magnetic field</td><td>Door and lid detection, non-contact triggering</td></tr>
+        <tr><td><strong>Multi-way switch</strong></td><td>Selects one of several paths</td><td>Mode dials with more than two positions</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The problem with a bare switch.</strong> As the deck puts it, <em>our switch can only open or close a circuit</em>. When the button is not pressed, nothing at all is connected to the input pin &mdash; the pin is floating and will read whatever electrical noise the room happens to be carrying. And if you wire the switch straight from the pin to 5&nbsp;V with no resistor, then pressing it drives the pin to 5&nbsp;V but the moment any other path to ground exists you have created a short circuit.
+  </div>
+
+  <p>The fix is a <strong>resistor that holds the pin at a known level whenever the switch is open</strong>. There are two ways to place it, and they give opposite logic.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Pull-down: idle LOW</h3>
+      <p>A resistor (typically 10&nbsp;k&Omega;) from the pin to <strong>GND</strong>, plus a switch from the pin to <strong>5&nbsp;V</strong>. With the switch open the resistor holds the pin at 0&nbsp;V, so <code>digitalRead()</code> returns LOW. Pressing the button overrides it and the pin goes HIGH.</p>
+      <p style="color:var(--text-muted); font-size:0.88rem;">Reading: pressed&nbsp;=&nbsp;HIGH. Nothing is inverted, and the resistor is harmless because it only carries current while the button is held.</p>
+    </div>
+    <div class="col-card">
+      <h3>Pull-up: idle HIGH</h3>
+      <p>A resistor from the pin to <strong>5&nbsp;V</strong>, plus a switch from the pin to <strong>GND</strong>. With the switch open the pin sits at 5&nbsp;V, so the reading is HIGH. Pressing the button drags the pin down to 0&nbsp;V.</p>
+      <p style="color:var(--text-muted); font-size:0.88rem;">Reading: pressed&nbsp;=&nbsp;LOW. This is <em>active-low</em>, and it is why the deck says &ldquo;we must invert the behaviour&rdquo;.</p>
+    </div>
+  </div>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 720 260" role="img" aria-label="Two schematics side by side: a pull-down resistor with a switch to 5 volts, and a pull-up resistor with a switch to ground" xmlns="http://www.w3.org/2000/svg">
+      <text x="180" y="26" font-family="monospace" font-size="13" text-anchor="middle" fill="var(--accent)">PULL-DOWN</text>
+      <line x1="60" y1="60" x2="300" y2="60" stroke="var(--text-muted)" stroke-width="2"></line>
+      <text x="316" y="64" font-family="monospace" font-size="12" fill="var(--red)">5V</text>
+      <line x1="180" y1="60" x2="180" y2="104" class="arrow-line" stroke-width="2"></line>
+      <line x1="156" y1="104" x2="204" y2="122" stroke="var(--accent)" stroke-width="2.6"></line>
+      <circle cx="156" cy="104" r="3.5" fill="var(--accent)"></circle>
+      <circle cx="204" cy="122" r="3.5" fill="var(--accent)"></circle>
+      <line x1="180" y1="122" x2="180" y2="160" class="arrow-line" stroke-width="2"></line>
+      <circle cx="180" cy="172" r="10" fill="none" stroke="var(--accent-strong)" stroke-width="2.4"></circle>
+      <text x="240" y="176" font-family="monospace" font-size="11" fill="var(--text-muted)">R = 10 k&#937;</text>
+      <line x1="180" y1="184" x2="180" y2="220" class="arrow-line" stroke-width="2"></line>
+      <line x1="154" y1="220" x2="206" y2="220" stroke="var(--text-muted)" stroke-width="2.6"></line>
+      <line x1="162" y1="232" x2="198" y2="232" stroke="var(--text-muted)" stroke-width="2.6"></line>
+      <text x="240" y="224" font-family="monospace" font-size="12" fill="var(--blue)">GND</text>
+      <line x1="180" y1="145" x2="248" y2="145" class="arrow-line" stroke-width="2" stroke-dasharray="4 4"></line>
+      <text x="256" y="149" font-family="monospace" font-size="12" fill="var(--accent)">pin 2</text>
+      <text x="180" y="256" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-dim)">open = LOW &#183; pressed = HIGH</text>
+
+      <text x="540" y="26" font-family="monospace" font-size="13" text-anchor="middle" fill="var(--accent)">PULL-UP (or INPUT_PULLUP)</text>
+      <line x1="420" y1="60" x2="660" y2="60" stroke="var(--text-muted)" stroke-width="2"></line>
+      <text x="676" y="64" font-family="monospace" font-size="12" fill="var(--red)">5V</text>
+      <line x1="540" y1="60" x2="540" y2="96" class="arrow-line" stroke-width="2"></line>
+      <circle cx="540" cy="108" r="10" fill="none" stroke="var(--accent-strong)" stroke-width="2.4"></circle>
+      <text x="600" y="112" font-family="monospace" font-size="11" fill="var(--text-muted)">R = 10 k&#937;</text>
+      <line x1="540" y1="120" x2="540" y2="146" class="arrow-line" stroke-width="2"></line>
+      <line x1="516" y1="146" x2="564" y2="164" stroke="var(--accent)" stroke-width="2.6"></line>
+      <circle cx="516" cy="146" r="3.5" fill="var(--accent)"></circle>
+      <circle cx="564" cy="164" r="3.5" fill="var(--accent)"></circle>
+      <line x1="540" y1="164" x2="540" y2="220" class="arrow-line" stroke-width="2"></line>
+      <line x1="514" y1="220" x2="566" y2="220" stroke="var(--text-muted)" stroke-width="2.6"></line>
+      <line x1="522" y1="232" x2="558" y2="232" stroke="var(--text-muted)" stroke-width="2.6"></line>
+      <text x="600" y="224" font-family="monospace" font-size="12" fill="var(--blue)">GND</text>
+      <line x1="540" y1="134" x2="472" y2="134" class="arrow-line" stroke-width="2" stroke-dasharray="4 4"></line>
+      <text x="410" y="138" font-family="monospace" font-size="12" fill="var(--accent)">pin 2</text>
+      <text x="540" y="256" font-family="monospace" font-size="11" text-anchor="middle" fill="var(--text-dim)">open = HIGH &#183; pressed = LOW</text>
+    </svg>
+    <p class="arch-caption">Both circuits solve the floating-pin problem; they differ only in which rail the resistor pulls towards. The pull-up version is the one the Arduino can build internally with <code>INPUT_PULLUP</code>.</p>
+  </div>
+
+  <div class="code-block">
+void setup() {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);  // internal pull-up: idle HIGH
+}
+
+void loop() {
+  // Active-low: the pin is dragged to GND when the button is pressed,
+  // so LOW means "pressed" and the logic has to be inverted.
+  bool pressed = (digitalRead(BUTTON_PIN) == LOW);
+  digitalWrite(LED_PIN, pressed ? HIGH : LOW);
+}
+  </div>
+
+  <div class="callout">
+    <strong>Why the internal pull-up is preferred in this unit.</strong> The deck notes that <em>Arduino has built-in pull-up resistors</em>. Enabling one costs a line of code and no components, and it keeps the button's other leg on GND rather than on 5&nbsp;V &mdash; which means a stray short to ground through a mistaken jumper is far less dangerous than a stray short from 5&nbsp;V. The price is the inverted logic, which every sketch must then handle explicitly.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; diagnosing a button that &ldquo;presses itself&rdquo;.</strong> A student reports that the LED flickers constantly and sometimes toggles when nobody is near the board. The sketch reads pin 2 with <code>pinMode(2, INPUT)</code> and the button is wired between pin 2 and 5&nbsp;V.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the symptom precisely.</strong> Random readings from a digital input almost always mean the pin is never held at a defined level. This is the floating-input case, not a broken button.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Trace the two states.</strong> Button pressed: the pin is connected to 5&nbsp;V and reads HIGH, but nothing limits the current, so any accidental path to ground is a short. Button released: the pin is connected to <em>nothing</em> and floats.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Choose the fix.</strong> Re-wire the button between pin 2 and GND and change the sketch to <code>pinMode(2, INPUT_PULLUP)</code>. Now the released state is actively held at 5&nbsp;V through the internal resistor, and the pressed state is 0&nbsp;V.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Handle the inversion.</strong> Because the wiring is active-low, the condition becomes <code>digitalRead(2) == LOW</code>. Writing <code>== HIGH</code> out of habit is the single most common follow-up bug; the LED then lights when the button is <em>not</em> pressed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Verify with evidence, not with the LED.</strong> Print the raw reading with <code>Serial.println(digitalRead(2))</code> and watch it: a correct wiring shows a clean 1 with the button released and a clean 0 while it is held. Flickering numbers at the moment of the press are bounce, and that is the next section.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A button is wired between pin 4 and GND, and <code>pinMode(4, INPUT_PULLUP)</code> has been called. Which condition means &ldquo;the button is being held down&rdquo;?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the released state. The pull-up holds the pin at HIGH while the switch is open, so HIGH means nobody is touching it."><code>digitalRead(4) == HIGH</code></div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. With a pull-up the idle level is HIGH, and pressing the button connects the pin to ground, so the reading goes LOW — active-low logic that the sketch must invert." data-bad=""><code>digitalRead(4) == LOW</code></div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="digitalRead never returns a voltage, and with a pull-up the two states are clean HIGH and LOW rather than anything in between.">The reading is somewhere between HIGH and LOW</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-debounce" class="section" data-track="debounce">
+  <h2 class="section-title">Switch Debouncing</h2>
+  <p class="section-lead">One press is not one transition. It is a burst of them, and the firmware has to decide which of those transitions are real.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>Contact bounce</strong> is the rapid, unwanted opening and closing of a mechanical switch's contacts in the first milliseconds after it is operated. <strong>Debouncing</strong> is any technique &mdash; electrical or in software &mdash; that makes the firmware see a single clean transition per press.</p>
+  </div>
+
+  <p>Bounce is mechanical, not electrical, and it is not a fault: the metal surfaces are springy, so they rebound against each other before settling. A small tactile button typically settles within about 1&ndash;5&nbsp;ms, but a program that samples the pin thousands of times per second will catch every rebound and can count one press as five.</p>
+
+  <div data-ix="timeline" data-ix-src="#ix-bounce-timeline"></div>
+  <script type="application/json" id="ix-bounce-timeline">
+  {
+    "title": "One press, from contact to decision",
+    "subtitle": "What the pin and the firmware each do over the few milliseconds after a button is pressed.",
+    "events": [
+      { "label": "t = 0 ms", "title": "The contact closes", "detail": "The plunger meets the contact surface. The pin does not drop straight to LOW; the metal rebounds several times before it settles." },
+      { "label": "0-1 ms", "title": "The first bounces", "detail": "The pin swings between HIGH and LOW. A loop() that runs in microseconds samples several transitions and cannot tell them from separate presses." },
+      { "label": "1-5 ms", "title": "Bouncing continues", "detail": "Amplitude decreases as the contacts lose energy. This is the window the debounce logic has to ignore — long enough to cover the physical settling, short enough that a human press is never swallowed." },
+      { "label": "~5 ms", "title": "The contact settles", "detail": "The pin is now stably LOW and stays there while the button is held. This is the level the program actually wants to act on." },
+      { "label": "every loop", "title": "The firmware samples", "detail": "Each pass of loop() calls digitalRead(). Without a debounce step, one physical press produces a stream of readings and the counter runs away." },
+      { "label": "+5 ms stable", "title": "The change is accepted", "detail": "Once the reading has held its new value for the debounce window, the firmware accepts it and the LED toggles exactly once. Real presses are never lost, because no human press is shorter than the window." },
+      { "label": "on release", "title": "The same happens in reverse", "detail": "Releasing a button bounces too, so the debounce logic has to work on both edges, not just on the press." }
+    ]
+  }
+  </script>
+
+  <div id="ix-debounce"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Hardware debouncing</h3>
+      <p>An RC filter &mdash; a resistor and capacitor across the switch &mdash; smooths the voltage so the fast bounces never reach the pin, and a Schmitt-trigger input converts the now-slowly-changing voltage back into a clean edge. Costs two components, and works even for circuits with no software.</p>
+    </div>
+    <div class="col-card">
+      <h3>Software debouncing</h3>
+      <p>Read the pin, notice that it changed, then wait until the reading has been <em>stable</em> for a fixed window before believing it. Implemented either with a blocking <code>delay()</code> or, better, non-blocking with <code>millis()</code> so the rest of the program keeps running.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The trade-off to state in an exam answer.</strong> The debounce window is bounded from both sides. Too short and bounce leaks through as extra events; too long and a genuine second press that arrives quickly is swallowed. A window of roughly 5&ndash;50&nbsp;ms is the usual compromise, because human presses last far longer than that while bounce does not.
+  </div>
+
+  <div class="code-block">
+const int BUTTON_PIN = 2;
+const int LED_PIN    = 13;
+const unsigned long DEBOUNCE_MS = 5;   // ignore changes faster than this
+
+bool ledState      = false;
+bool lastReading   = HIGH;
+bool stableReading = HIGH;
+unsigned long lastChange = 0;
+
+void setup() {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
+}
+
+void loop() {
+  bool reading = digitalRead(BUTTON_PIN);
+
+  if (reading != lastReading) {          // the pin moved: restart the window
+    lastChange = millis();
+    lastReading = reading;
+  }
+
+  if (millis() - lastChange >= DEBOUNCE_MS && reading != stableReading) {
+    stableReading = reading;             // the change survived the window
+    if (stableReading == LOW) {          // falling edge = press (active-low)
+      ledState = !ledState;
+      digitalWrite(LED_PIN, ledState);
+    }
+  }
+}
+  </div>
+
+  <p>Compare this with the tempting shortcut: <code>if (digitalRead(BUTTON_PIN) == LOW) { delay(200); toggle(); }</code>. It does suppress the bounce, but it also stops the whole program for 200&nbsp;ms, during which no other input is read and no other output is updated. The <code>millis()</code> version keeps <code>loop()</code> turning and simply refuses to believe a reading that has not held still.</p>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; counting the consequences of a missing debounce.</strong> A sketch increments a counter on every LOW reading of an active-low button, and <code>loop()</code> takes 50&nbsp;&micro;s per pass. Bounce lasts 2&nbsp;ms and produces, on average, one readable transition every 100&nbsp;&micro;s.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>How many samples fit in the bounce window?</strong> 2&nbsp;ms &divide; 50&nbsp;&micro;s&nbsp;=&nbsp;40 passes of <code>loop()</code>. The firmware is sampling the pin 20&nbsp;000 times per second, which is far faster than the mechanical event it is watching.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>How many of those look like presses?</strong> With a transition every ~100&nbsp;&micro;s, roughly 2&nbsp;ms &divide; 100&nbsp;&micro;s&nbsp;&asymp;&nbsp;20 LOW readings. A naive counter therefore adds about 20 for a single press &mdash; or worse, an unpredictable number, because bounce is not periodic.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>What the debounce window changes.</strong> Requiring 5&nbsp;ms of stability means the 2&nbsp;ms burst is discarded entirely. The accepted transition happens 5&nbsp;ms after the contacts settle, adding a fixed, predictable latency of a few milliseconds.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Why the latency is acceptable.</strong> Perceptual thresholds for direct manipulation are in the tens of milliseconds, so 5&nbsp;ms is imperceptible. The debounce window buys correctness at a cost the user cannot detect &mdash; the standard trade in physical interface design.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A student &ldquo;fixes&rdquo; button bounce with <code>if (digitalRead(BTN) == LOW) { delay(200); count++; }</code>. What is wrong with it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It does suppress the bounce. The delay is long enough that the contacts have settled before the next read — the problem is what else it stops.">It does not debounce at all, so the count still runs away</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. delay() blocks: for 200 ms the program reads no other input, updates no other output and cannot react to anything — and holding the button still adds another count every 200 ms." data-bad="">It works, but delay() blocks the whole program for 200 ms and the counter still increments repeatedly while the button is held</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="200 ms is a common debounce delay and is not too short — if anything it is generous. The defect is blocking behaviour and repeated counting, not the window length.">The delay is too short for the bounce to have finished</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-code" class="section" data-track="code">
+  <h2 class="section-title">Writing the Sketch: From Blink to a Debounced Button</h2>
+  <p class="section-lead">Three sketches build on each other. Read them in order and each one adds exactly one idea.</p>
+
+  <div class="algo-card">
+    <h3>Sketch 1 &mdash; Blink: digital output on its own</h3>
+    <div class="code-block">
+const int LED_PIN = 13;          // the on-board LED
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);      // configure once
+}
+
+void loop() {
+  digitalWrite(LED_PIN, HIGH);   // pin driven to 5 V
+  delay(500);                    // milliseconds
+  digitalWrite(LED_PIN, LOW);    // pin driven to 0 V
+  delay(500);
+}
+    </div>
+    <div class="algo-facts">
+      <span class="fact-pill blue">One output pin</span>
+      <span class="fact-pill green">pinMode in setup()</span>
+      <span class="fact-pill red">delay() blocks</span>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>Sketch 2 &mdash; Button and LED: digital input driving digital output</h3>
+    <div class="code-block">
+const int LED_PIN    = 13;
+const int BUTTON_PIN = 2;
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);   // idle HIGH, pressed LOW
+}
+
+void loop() {
+  bool pressed = (digitalRead(BUTTON_PIN) == LOW);  // invert: active-low
+  digitalWrite(LED_PIN, pressed ? HIGH : LOW);
+}
+    </div>
+    <div class="algo-facts">
+      <span class="fact-pill blue">One input pin</span>
+      <span class="fact-pill green">Internal pull-up, no resistor</span>
+      <span class="fact-pill red">Still bounces</span>
+    </div>
+  </div>
+
+  <div class="algo-card">
+    <h3>Sketch 3 &mdash; Latching button: input, state and debouncing</h3>
+    <div class="code-block">
+bool ledState = false;                 // state that persists between loops
+
+void loop() {
+  bool reading = digitalRead(BUTTON_PIN);
+
+  if (reading != lastReading) {        // pin moved — restart the settle window
+    lastChange = millis();
+    lastReading = reading;
+  }
+
+  if (millis() - lastChange >= DEBOUNCE_MS && reading != stableReading) {
+    stableReading = reading;
+    if (stableReading == LOW) {        // accept only the press edge
+      ledState = !ledState;            // toggle the stored state
+      digitalWrite(LED_PIN, ledState);
+    }
+  }
+}
+    </div>
+    <div class="algo-facts">
+      <span class="fact-pill blue">State in a variable</span>
+      <span class="fact-pill green">Non-blocking timing</span>
+      <span class="fact-pill red">Edge, not level</span>
+    </div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-build-order"></div>
+  <script type="application/json" id="ix-build-order">
+  {
+    "title": "Order the build-and-test procedure",
+    "subtitle": "Click the steps in the order that gets a button circuit working with the fewest surprises.",
+    "steps": [
+      "Read the LED datasheet: forward voltage and rated current",
+      "Choose the series resistor with R = (V_supply - V_f) / I",
+      "Place the LED and resistor on the breadboard, respecting LED polarity",
+      "Wire the LED branch to a digital pin and to the ground rail",
+      "Wire the button between an input pin and GND, and enable INPUT_PULLUP",
+      "Upload the sketch and verify the raw readings in the Serial Monitor",
+      "Add a debounce window and confirm that one press toggles the LED once"
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Debugging order matters.</strong> Electrical problems and logic problems produce the same symptom &mdash; an LED that will not light &mdash; so always settle the electricity first. Measure the pin with <code>digitalWrite(pin, HIGH)</code> in a sketch that does nothing else; if the LED lights, the fault is in your logic, and no amount of re-reading the <code>if</code> statement will find a reversed LED.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A debounced button sketch toggles the LED twice for a single press. Which change is most likely to fix it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A shorter delay would let more bounce through, not less. Removing blocking delays entirely is the usual direction of travel.">Replace <code>delay(500)</code> with <code>delay(50)</code> in the loop</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Acting on the level rather than the edge — or on both edges — makes one press produce two events: one on the way down and one on the way up. Toggling only on the press (the falling) edge fixes it." data-bad="">Toggle only on the press edge instead of on any change of level</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The pull-up is what makes the idle level defined. Removing it reintroduces the floating-input problem on top of the double-toggle.">Change <code>INPUT_PULLUP</code> back to <code>INPUT</code></div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 3 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Digital means two states</h4>
+        <p>A pin is HIGH or LOW, never &ldquo;about 2.4&nbsp;V&rdquo;. Threshold bands and the noise margin between them are what make a breadboard full of wires reliable.</p>
+        <div class="flip-hint">Signals</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>pinMode() before anything else</h4>
+        <p>OUTPUT, INPUT or INPUT_PULLUP. A GPIO pin has no default purpose; the program assigns it one, and it does so in <code>setup()</code>.</p>
+        <div class="flip-hint">GPIO</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Ohm's law sizes every resistor</h4>
+        <p><em>V</em>&nbsp;=&nbsp;<em>R</em>&nbsp;&times;&nbsp;<em>I</em>. For an LED: <em>R</em>&nbsp;=&nbsp;(<em>V<sub>supply</sub></em>&nbsp;&minus;&nbsp;<em>V<sub>f</sub></em>)&nbsp;/&nbsp;<em>I</em>. No resistor means no current limit, which means a dead LED.</p>
+        <div class="flip-hint">Current limiting</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Every switch needs a defined idle state</h4>
+        <p>A pull-up or pull-down resistor stops the input floating. The internal pull-up inverts the logic: pressed becomes LOW, and the sketch must say so.</p>
+        <div class="flip-hint">Buttons</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>One press, many transitions</h4>
+        <p>Contacts bounce for a few milliseconds. Accept a reading only after it has been stable for a window &mdash; and use <code>millis()</code>, not <code>delay()</code>, so the rest of the program keeps running.</p>
+        <div class="flip-hint">Debouncing</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-components"></div>
+  <script type="application/json" id="ix-components">
+  {
+    "title": "Match the component to what it does",
+    "subtitle": "Click a component on the left, then its role on the right.",
+    "pairs": [
+      ["LED", "Emits light when forward-biased, and must always have a series resistor"],
+      ["Resistor", "Limits current; the voltage across it is V = I x R"],
+      ["Breadboard", "Solderless board whose columns of five holes are internally connected"],
+      ["Push button", "Momentary switch that closes a circuit only while it is held"],
+      ["Datasheet", "The document that gives a part's ratings, pinout and forward voltage"],
+      ["Microcontroller", "Runs setup() once and loop() forever, driving and reading every pin"],
+      ["Pull-up resistor", "Holds an input at HIGH when the switch is open, so the pin never floats"],
+      ["Jumper wire", "Connects two points on the board, or a pin to a power rail"]
+    ]
+  }
+  </script>
+
+  <div data-ix="deck" data-ix-src="#ix-recall"></div>
+  <script type="application/json" id="ix-recall">
+  {
+    "title": "Retrieval practice: the whole week in six cards",
+    "subtitle": "Answer before you flip. If a card takes more than ten seconds, it goes back on the revision list.",
+    "cards": [
+      { "front": "Why does a digital input never read 2.4 V?", "back": "Because a digital receiver applies thresholds. Below about 0.3 x VCC is LOW, above about 0.6 x VCC is HIGH, and anything between is undefined — which is exactly what a floating pin produces.", "hint": "Logic levels" },
+      { "front": "What are the two rules of current in a circuit?", "back": "Current flows through every available path and divides in inverse proportion to resistance; and all the electrical energy in the circuit must be used, so the voltage drops across the components sum to the supply.", "hint": "Circuit principles" },
+      { "front": "A red LED drops 2.0 V and you want 10 mA from a 5 V pin. What resistor?", "back": "R = (5 - 2.0) / 0.010 = 300 ohms. Round up to the next standard value, 330 ohms, which gives 9.1 mA — dimmer by about 10 percent and safely inside every rating.", "hint": "Calculation" },
+      { "front": "Why does the deck say the button logic must be inverted with INPUT_PULLUP?", "back": "The pull-up holds the pin at HIGH while the switch is open, so pressing the button connects the pin to GND and the reading becomes LOW. Pressed therefore means LOW, not HIGH.", "hint": "Active-low" },
+      { "front": "Distinguish bounce from debouncing.", "back": "Bounce is the physical rebounding of the contacts for a few milliseconds after a press; debouncing is the electrical or software technique that makes the firmware see one clean transition per press.", "hint": "Definitions" },
+      { "front": "Why is millis() preferred over delay() for debouncing?", "back": "delay() stops the entire program, so no other input is read and no other output updated while it waits. millis() lets loop() keep turning and simply ignores a reading that has not been stable for long enough.", "hint": "Non-blocking timing" }
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you state the four-quadrant I/O API from memory, size a series resistor for a given LED, and explain why a bare switch produces random readings?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Before the tutorial</h3>
+      <p>Work through the Tinkercad Circuits and Wokwi exercises from the deck, and bring a USB-C cable if your board needs one. Simulating the circuit first is faster than debugging it on the bench.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's arithmetic into formulas, symbol notation and timing budgets, then attempt the Quiz Hub and the Flashcards for Week 3. Week 4 extends the same pin model to the analogue world.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

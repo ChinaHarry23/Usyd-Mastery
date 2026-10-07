@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 1: Security Fundamentals and Tooling</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 1 foundations for COMP5618: exact definitions of the CIA triad, a taxonomy of adversaries, assets and controls, the five tests of authorised testing, and a verification checklist for the Kali and Ubuntu lab.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 1: Security Fundamentals and Tooling">
+<meta property="og:description" content="Week 1 foundations for COMP5618: exact definitions of the CIA triad, a taxonomy of adversaries, assets and controls, the five tests of authorised testing, and a verification checklist for the Kali and Ubuntu lab.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter1-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128737;</span>
+    <h2>Week 1 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomy &amp; notation</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-authorisation" class="toc-link">Authorisation and consequence</a></li>
+    <li><a href="#sec-m-lab" class="toc-link">Lab verification checklist</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-drill" class="toc-link">Tutorial drill review</a></li>
+  </ul>
+  <a href="chapter1-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5618 &mdash; Week 1 supplement</p>
+  <h1>Foundations: the vocabulary and the tests behind Week 1</h1>
+  <p class="hero-desc">Week 1 is conceptual rather than mathematical, so this page does the equivalent job. It pins down the definitions the three decks rely on, builds a taxonomy of adversaries, assets and controls, states the tests that decide whether an engagement is authorised, and finishes with the checklist that proves your lab is actually isolated before you point a tool at it.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 1 decks</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Authorisation and isolation checklists for exam answers</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Adversary</div>
+    <p>Anyone who uses network technologies to gain <strong>unauthorised access</strong> to a system. The definition is deliberately not a list of people: it is defined by the absence of authorisation, which is why the same action can be testing or an offence depending only on the paperwork behind it.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">CIA triad</div>
+    <p><strong>Confidentiality</strong> &mdash; information is readable only by those authorised to read it. <strong>Integrity</strong> &mdash; information and systems are changed only in authorised ways. <strong>Availability</strong> &mdash; systems and data are usable by authorised users when they need them.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Consent</div>
+    <p>Written authorisation &mdash; a signed scope or rules of engagement &mdash; obtained <em>before</em> any testing begins, covering exactly which systems, IP addresses and time windows are in scope. Verbal permission is not enough.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Transparency</div>
+    <p>Being upfront about the tools, techniques and methodology you intend to use, and disclosing findings honestly even when they are embarrassing for the client. No hidden backdoors and no undisclosed data collection.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Informing impact</div>
+    <p>Explaining the likely side effects before testing &mdash; service disruption, account lockouts &mdash; agreeing an emergency contact and a stop condition, and reporting real-world consequences afterwards.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Script kiddie (skid)</div>
+    <p>Someone who uses existing tools and scripts to penetrate a system, often without understanding how they work. It is the state the unit is designed to move you out of: in this course you are marked on explaining what a tool did, not on running it.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Adversary</td><td>Use of network technologies <em>and</em> the absence of authorisation</td><td>&ldquo;A hacker&rdquo;, with no reference to authorisation</td></tr>
+        <tr><td>Confidentiality</td><td>Read access limited to those authorised</td><td>Confusing it with encryption (encryption is one means, not the property)</td></tr>
+        <tr><td>Integrity</td><td>Change only in authorised ways</td><td>Describing any breach at all as an integrity breach</td></tr>
+        <tr><td>Availability</td><td>Usable by authorised users when needed</td><td>Treating downtime caused by your own scan as a separate category of incident</td></tr>
+        <tr><td>Consent</td><td>Written, before testing, naming systems, IPs and windows</td><td>Accepting a verbal &ldquo;go ahead&rdquo; or a general bug-bounty channel as scope</td></tr>
+        <tr><td>Transparency</td><td>Disclosure of method <em>and</em> of findings</td><td>Reporting only the findings that make you look good</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is an adversary?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is a stereotype rather than a definition, and the deck warns specifically against generalising groups of people instead of focusing on particular threats.">A skilled attacker who breaks into systems for personal gain</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck defines adversaries as those who use network technologies to gain unauthorised access to a system — a definition built on authorisation, not on motive or skill." data-bad="">Anyone who uses network technologies to gain unauthorised access to a system</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Insiders are one category in the deck's list, alongside state-sponsored attackers and hacktivists. Naming one category is not a definition.">An employee who misuses the access their job gives them</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomy &amp; notation</h2>
+  <p class="section-lead">Exam questions in this unit usually ask you to place something: an adversary, a finding, or a control. These are the three axes the Week 1 material gives you.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis one &mdash; the adversary</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Adversary</th><th>Access they already hold</th><th>Dominant property at risk</th><th>Control that actually helps</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>State-sponsored</td><td>None, initially</td><td>Confidentiality, then availability</td><td>Detection, logging and response rather than prevention alone</td></tr>
+        <tr><td>Hackers / hacktivists</td><td>None, initially</td><td>Availability, then reputation</td><td>Resilience and a rehearsed outage response</td></tr>
+        <tr><td>Insider &mdash; inadvertent</td><td>Legitimate, and often broad</td><td>Confidentiality</td><td>Least privilege, and limits on bulk export</td></tr>
+        <tr><td>Insider &mdash; malicious</td><td>Legitimate, and often broad</td><td>Integrity, then confidentiality</td><td>Audit trails and separation of duties</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis two &mdash; the finding, mapped onto the triad</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>The attacker's verb</th><th>Example from the Week 1 material</th><th>What a markable report says</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Confidentiality</strong></td><td>Read, copy, exfiltrate</td><td>Reading or copying private data &mdash; e-mail addresses, internal e-mail, credit cards</td><td>Which data, how much of it, and who was entitled to see it instead</td></tr>
+        <tr><td><strong>Integrity</strong></td><td>Modify, delete, substitute</td><td>Modifying or deleting data during a test</td><td>What changed, whether it can be reverted, and how you know the extent</td></tr>
+        <tr><td><strong>Availability</strong></td><td>Flood, exhaust, disable</td><td>Flooding a service until response times climb</td><td>The window of degradation, and who noticed before you did</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis three &mdash; the control</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Controls that act before</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li>Authentication and least privilege</li>
+        <li>Network segmentation, such as the host-only adapter in your lab</li>
+        <li>Encryption at rest &mdash; including swap</li>
+        <li>Secure defaults, so the safe path is the easy path</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Controls that act after</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li>Audit trails, and knowing where they should be implemented</li>
+        <li>Monitoring of load and request volume</li>
+        <li>An emergency contact and an agreed stop condition</li>
+        <li>Disclosure: telling affected people what happened</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The Week 1 decks are written in prose. The symbols below are a <em>revision aid</em> introduced here so the relationships can be written compactly. They are not lecture notation, and they should not be cited as if they were.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Read as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(C\)</div><div class="sym-cell">Confidentiality</div><div class="sym-cell">Read access limited to those authorised</div>
+    <div class="sym-cell">\(I\)</div><div class="sym-cell">Integrity</div><div class="sym-cell">Change only in authorised ways</div>
+    <div class="sym-cell">\(A\)</div><div class="sym-cell">Availability</div><div class="sym-cell">Usable by authorised users when needed</div>
+    <div class="sym-cell">\(\mathrm{CIA} = \{C, I, A\}\)</div><div class="sym-cell">the set of properties</div><div class="sym-cell">Every finding names the member it breaks; every control names the member it protects</div>
+    <div class="sym-cell">\(S\)</div><div class="sym-cell">Scope</div><div class="sym-cell">The systems, IP addresses and time windows named in writing</div>
+    <div class="sym-cell">\(P\)</div><div class="sym-cell">Permission</div><div class="sym-cell">Authorisation that is written, prior and specific</div>
+    <div class="sym-cell">\(x \in S\)</div><div class="sym-cell">x is in scope</div><div class="sym-cell">The only targets you may touch, however they appeared in your results</div>
+    <div class="sym-cell">\(x \notin S\)</div><div class="sym-cell">x is out of scope</div><div class="sym-cell">Record it, exclude it, and raise it with the client</div>
+    <div class="sym-cell">\(U\)</div><div class="sym-cell">Unauthorised access</div><div class="sym-cell">The act that defines an adversary, whether or not damage follows</div>
+    <div class="sym-cell">\(R\)</div><div class="sym-cell">Reconnaissance</div><div class="sym-cell">Activity the deck warns can itself be treated as an offence</div>
+    <div class="sym-cell">\(N\)</div><div class="sym-cell">Noise</div><div class="sym-cell">Request volume and load the client can observe; it is what gets you shut down</div>
+    <div class="sym-cell">\(E\)</div><div class="sym-cell">Evidence</div><div class="sym-cell">The minimum capture that proves the finding without reading private data</div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-authorisation">
+  <h2 class="section-title">Authorisation and consequence</h2>
+  <p class="section-lead">Three relationships carry the legal half of Week 1. Learn them as tests you can apply to a scenario, not as statements to recite.</p>
+
+  <div class="theorem-box">
+    <h3>1. Authorisation is a conjunction, not a checkbox</h3>
+    <p>An engagement is authorised when <em>all</em> of the following hold. Any one of them failing makes the activity unauthorised:</p>
+    \[ P \;=\; \text{written} \;\wedge\; \text{prior} \;\wedge\; \text{specific} \;\wedge\; \text{current} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Written rules out the verbal go-ahead. Prior rules out permission granted after the fact. Specific rules out &ldquo;anything you can reach&rdquo;: the scope names systems, IP addresses and time windows. Current rules out a scope that expired, or a target that changed owner since it was signed.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. An action is testing or an offence; the action does not decide which</h3>
+    <p>Let \(x\) be the system acted on and \(S\) the signed scope. The same technique changes category depending only on membership:</p>
+    \[ x \in S \;\Rightarrow\; \text{authorised testing} \qquad\qquad x \notin S \;\Rightarrow\; U \]
+    <p style="margin-top:0.6rem;">This is why the definition of an adversary mentions authorisation rather than intent, and why the deck says the difference between legal and illegal hacking is permission. It also explains why a host that merely <em>appeared</em> in your scan output is not a target: it was never in \(S\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Legality and ethics are two different gates</h3>
+    <p>Permission is necessary but not sufficient. The deck's standard is:</p>
+    \[ \text{ethical test} \;=\; P \;\wedge\; T \;\wedge\; M \]
+    <p style="margin-top:0.6rem;">where \(T\) is transparency &mdash; disclosing method and findings, including the embarrassing ones &mdash; and \(M\) is informing impact &mdash; side effects explained beforehand, an emergency contact and a stop condition agreed. Permission without transparency is not ethical testing, even when it is perfectly legal.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Noise is what ends the engagement early</h3>
+    <p>The client observes request volume and load. Once response times climb, the tool is no longer testing the target, it is degrading it &mdash; which turns a confidentiality or integrity exercise into an availability incident you caused:</p>
+    \[ N \uparrow \;\Rightarrow\; A \downarrow \;\Rightarrow\; \text{permissions revoked, legal action possible} \]
+    <p style="margin-top:0.6rem;">The mitigations are timing options that keep the request rate low, a scope that permits the technique, and a stop condition you act on the moment the agreed signal appears.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Consequences scale with publicity, not with cleverness</h3>
+    <p>The deck's list of consequences &mdash; confiscated computer, exclusion from employment, ongoing scrutiny, harsh and public penalties &mdash; is not proportional to how difficult the attack was. It is proportional to how much of an example the court wishes to make. That is why &ldquo;it was easy&rdquo; and &ldquo;I only looked&rdquo; are not defences.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>The professional reading:</strong> the same knowledge that makes an offence possible makes a comfortable living possible. The deck's own conclusion is that the comparative benefit of cyber-crime is not worth the increased risk &mdash; so the interesting question is never whether you can get in, but whether you were authorised to, and whether you can explain what you found.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A scope is signed on Monday for a two-week window covering a named subnet. On day nine the client's employee verbally asks you to also check the new staging server, which has a different address. Which of the four conditions of authorisation has failed?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The window is still open and permission was granted before you acted, so prior and current both hold. The problem is what the permission covers.">Prior &mdash; because permission should have been arranged in advance</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Written and specific both fail: the scope names systems and addresses, and the staging server is not among them. Verbal additions do not extend a written scope — get the amendment in writing or leave it alone." data-bad="">Written and specific &mdash; the addition is verbal, and the staging server is not a named target</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Current still holds on day nine of a two-week window. Expiry is a real failure mode, but it is not the one in this scenario.">Current &mdash; the scope has expired by day nine</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-lab">
+  <h2 class="section-title">Lab verification checklist</h2>
+  <p class="section-lead">Isolation is the property that makes the whole unit lawful. Verify it in this order, and do not point a tool at anything until every step passes.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-verify"></div>
+  <script type="application/json" id="ix-m-verify">
+  {
+    "title": "Order the isolation check",
+    "subtitle": "Rebuild the order in which Tutorial 1 makes the lab safe.",
+    "steps": [
+      "Confirm the host-only network exists in the VirtualBox network manager",
+      "Add a second NIC to each guest and set it to host-only adapter",
+      "Boot both guests and read each address with ifconfig",
+      "Confirm both addresses sit inside the host-only range",
+      "Ping each guest from the other and confirm replies in both directions",
+      "Confirm the guests still have no route to the site network or the internet"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Check</th><th>What you are proving</th><th>What it looks like when it fails</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Host-only network exists</strong></td><td>There is a virtual segment that does not bridge to anything</td><td>No network in the manager, so the second NIC has nothing to attach to</td></tr>
+        <tr><td><strong>Second NIC per guest</strong></td><td>Each guest has an interface on that segment</td><td>Both guests still hold only their NAT address and cannot see each other</td></tr>
+        <tr><td><strong>Addresses inside the range</strong></td><td>Both guests are on the same virtual segment</td><td>One guest holds an address from your home or campus network</td></tr>
+        <tr><td><strong>Bidirectional ping</strong></td><td>The path works in both directions, so a capture will show both frames</td><td>One direction is blocked, and the scan that follows reports a host as down</td></tr>
+        <tr><td><strong>No route out</strong></td><td>Anything you do here cannot reach a third party</td><td>The guest can reach the internet, which means the segment is bridged</td></tr>
+        <tr><td><strong>Disk and swap encrypted</strong></td><td>Nothing you captured or wrote is readable at rest</td><td>The layout shows a bare partition rather than a LUKS container with LVM inside it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+$ ifconfig | grep -A1 "enp0s8"
+enp0s8: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500
+        inet 192.168.56.10  netmask 255.255.255.0  broadcast 192.168.56.255
+
+$ ping -c 2 192.168.56.20
+64 bytes from 192.168.56.20: icmp_seq=1 ttl=64 time=0.42 ms
+64 bytes from 192.168.56.20: icmp_seq=2 ttl=64 time=0.38 ms
+2 packets transmitted, 2 received, 0% packet loss
+
+$ ip route
+192.168.56.0/24 dev enp0s8 proto kernel scope link src 192.168.56.10
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Reading the output</div>
+    <p>Three things are being checked here. The address <code>192.168.56.10</code> is inside the host-only range, so the guest is on the isolated segment. The ping replies with <code>ttl=64</code> and sub-millisecond latency, so the peer is one hop away rather than somewhere across a network. The routing table shows a route for the host-only subnet and nothing that would carry that traffic off the segment.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Why this checklist is a legal control, not just an IT step:</strong> an isolated segment is what makes every later technique in the unit permissible. A guest that can reach the internet is a guest from which a mis-typed address reaches a third party, and the deck's position is unambiguous &mdash; using these tools against a system you do not have permission to test is unlawful, and reconnaissance counts.
+  </div>
+</section>
+
+<section class="section" id="sec-m-drill">
+  <h2 class="section-title">Tutorial drill review</h2>
+  <p class="section-lead">Tutorial 1 is submitted as a short screencast and is marked on your explanation. Use this list to check the recording before you upload it.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Show the addresses</h3>
+      <p>Both guests, on camera, with <code>ifconfig</code> output visible and both addresses inside the host-only range. Narrate which interface is the host-only one.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Show reachability</h3>
+      <p>A ping in each direction, and a capture running while it happens. Point at the request and the reply in the capture rather than at the terminal.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Show remote access</h3>
+      <p>An SSH login from Kali into the Ubuntu guest, and one file moved with <code>scp</code> and verified on arrival. Say why SSH is a network session while the VM console is not.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Explain the scans</h3>
+      <p>The assigned comparison is a TCP ACK scan against an Xmas scan, with packets captured on Kali. Explain what each probe sets, what a firewall sees, and why the two produce different answers from the same host.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What the tutorial says to install and enable</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li>VirtualBox on your own device, or a tested alternative on Apple silicon</li>
+        <li>The Kali 64-bit Live Boot image &mdash; not the prebuilt VirtualBox image</li>
+        <li>Ubuntu Desktop, or Ubuntu Server if host disk space is tight</li>
+        <li>An SSH server on the Ubuntu guest, verified as running</li>
+        <li>Password login enabled for SSH, and the Ubuntu firewall adjusted to allow it</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What the tutorial says to demonstrate</h3>
+      <ul style="padding-left:1.1rem; line-height:1.8;">
+        <li>The network setup, with both guests' addresses on screen</li>
+        <li>That the two guests can ping each other</li>
+        <li>That Kali can log in to Ubuntu over SSH</li>
+        <li>That a file copies from Kali to Ubuntu with <code>scp</code></li>
+        <li>The ACK versus Xmas difference, evidenced by a capture</li>
+      </ul>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Model answer &mdash; classify a scenario against the Week 1 tests.</strong> Scenario: a contractor runs a port scan against a client's web server from their own laptop, at 2&nbsp;a.m., because the client's IT manager said on a phone call that &ldquo;it's fine, go for it&rdquo;. No written scope exists.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Apply the authorisation conjunction.</strong> Written fails &mdash; the permission was verbal, and the deck is explicit that verbal permission is not enough. Prior holds, because the call happened before the scan. Specific fails &mdash; there is no scope naming systems, addresses or a time window. Current cannot be assessed, because there was never a document to expire.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Classify the action.</strong> With \(x \notin S\) and no valid \(P\), the scan falls on the offence side of the membership test. It does not matter that scanning is trivial, that nothing was exploited, or that the request came from inside the client. The deck extends this to reconnaissance activity specifically.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Name the property at risk.</strong> None has yet been broken, and that is the point worth making in an exam: an offence does not require a broken property. Availability becomes the live risk the moment the scan is aggressive enough to slow the service, which is precisely the &ldquo;don't be rude&rdquo; failure the deck describes.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the fix, as a change.</strong> Replace the phone call with a signed scope naming the hosts, the addresses, the permitted techniques and the window; add an emergency contact and a stop condition; and confirm the client still owns the target. Then the identical scan becomes authorised testing &mdash; the technique never changed, only the paperwork did.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Model answer &mdash; the ethics question, in the three obligations.</strong> Scenario: during an authorised test you find that a single unauthenticated request returns a colleague's full personnel record. You can get more records; the client asked you to be thorough.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Consent is satisfied but bounded.</strong> You are inside a signed scope, so the testing itself is authorised. Consent does not extend to reading data you do not need in order to prove the finding: the deck's rule is do not read or copy private data.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Take the minimum evidence.</strong> One request, one response, and a screenshot that establishes the class of data without reproducing an identifiable record. That is enough to prove \(E\) for the finding while keeping the confidentiality breach as small as the proof allows. Then stop.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Inform impact, then report.</strong> Tell the client immediately rather than at the end of the engagement: this is live exposure of personnel data, so the side effect is not hypothetical and the stop condition may need to be invoked. Reporting early is a transparency obligation, not an admission of failure.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>&ldquo;Be thorough&rdquo; is not an instruction to keep going.</strong> Thoroughness in this unit means explaining the finding precisely &mdash; the request, the authorisation check that is missing, the affected records, and the fix &mdash; not demonstrating how many records you could have read. The markable report names the property, the exposure and the remediation; it does not quote the data.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-terms"></div>
+  <script type="application/json" id="ix-m-terms">
+  {
+    "title": "Self-test: say the definition before you flip",
+    "subtitle": "Six terms from the Week 1 decks. If your sentence does not include the consequence, it is not yet the definition.",
+    "cards": [
+      { "front": "Adversary", "back": "Anyone who uses network technologies to gain unauthorised access to a system — defined by the absence of authorisation, not by motive or skill.", "hint": "Definition" },
+      { "front": "Consent", "back": "Written authorisation — a signed scope or rules of engagement — before any testing begins, covering exactly which systems, IPs and time windows are in scope.", "hint": "Obligation" },
+      { "front": "Transparency", "back": "Disclosing the tools, techniques and methodology you will use, and reporting findings honestly even when they embarrass the client. No hidden backdoors, no undisclosed data collection.", "hint": "Obligation" },
+      { "front": "Informing impact", "back": "Explaining likely side effects before testing — service disruption, account lockouts — agreeing an emergency contact and a stop condition, and reporting real consequences afterwards.", "hint": "Obligation" },
+      { "front": "Script kiddie", "back": "Someone who uses existing tools and scripts to penetrate a system without understanding how they work — the state this unit is designed to move you out of.", "hint": "Term to outgrow" },
+      { "front": "Confidentiality", "back": "Information is readable only by those authorised to read it. Broken by disclosure: reading private data, exfiltrating records, sniffing credentials from an unencrypted link.", "hint": "Triad" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Your lab guest can reach the internet as well as the other guest. Which statement about that situation is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Reachability is not the problem; the problem is that the segment is bridged or NATed, so an address outside your scope is reachable from it.">It is harmless, because you only type addresses that are in scope</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Internet reachability means the isolation test has failed: the segment is bridged or NATed, so a mis-typed address leaves your lab. Fix the adapter mode before running anything." data-bad="">Isolation has failed &mdash; the segment is bridged or NATed, and a mis-typed address would leave the lab, so fix the adapter before testing</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A capture on the guest shows traffic, but that is not the control the lab depends on. Isolation is a network configuration property, not a monitoring one.">It is acceptable provided you capture traffic on the host-only interface</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+</div>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6: Linux OS Introduction — COMP5618</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter6-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 study guide for COMP5618: the Linux security model — distributions, the filesystem hierarchy, users and permissions, setuid and setgid, kernel and sudoers and cron escalation paths, rootkit detection, and Linux/SSH hardening.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 6: Linux OS Introduction — COMP5618">
+<meta property="og:description" content="Week 6 study guide for COMP5618: the Linux security model — distributions, the filesystem hierarchy, users and permissions, setuid and setgid, kernel and sudoers and cron escalation paths, rootkit detection, and Linux/SSH hardening.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F427;</span>
+      <h2>Week 6</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-linux" class="nav-link" data-section="linux">What Linux Is</a></li>
+    <li><a href="#sec-filesystem" class="nav-link" data-section="filesystem">Filesystem &amp; Permissions</a></li>
+    <li><a href="#sec-users" class="nav-link" data-section="users">Users &amp; Service Accounts</a></li>
+    <li><a href="#sec-setuid" class="nav-link" data-section="setuid">Setuid &amp; Escalation</a></li>
+    <li><a href="#sec-kernel" class="nav-link" data-section="kernel">Kernel Vulnerabilities</a></li>
+    <li><a href="#sec-sudoers" class="nav-link" data-section="sudoers">The sudoers File</a></li>
+    <li><a href="#sec-cron" class="nav-link" data-section="cron">Cron Jobs</a></li>
+    <li><a href="#sec-detection" class="nav-link" data-section="detection">Detection &amp; Rootkits</a></li>
+    <li><a href="#sec-hardening" class="nav-link" data-section="hardening">Hardening &amp; SSH</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter6-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter6-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 6 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5618 — Applied Cybersecurity</p>
+    <h1>Week 6: Linux OS Introduction</h1>
+    <p class="hero-subtitle">The Linux security model: what a distribution actually bundles, how the filesystem and its permission bits decide what a process may touch, why programs run as dedicated service users, and the four classic privilege-escalation paths — setuid, kernel bugs, sudoers and cron.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F427;</span>
+        <span>Kernel 1991 &middot; UNIX-like</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F5C2;</span>
+        <span>One tree, rooted at <code>/</code></span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F510;</span>
+        <span>The <code>s</code> that means root</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6E1;</span>
+        <span>Least privilege &amp; hardening</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter6-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter6-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 6 lecture deck (<em>Linux OS Introduction</em>) and the Week 6 tutorial on SUID-to-root escalation in a lab VM</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-linux" class="section" data-track="linux">
+  <h2 class="section-title">What Linux Is</h2>
+  <p class="section-lead">Week 6 opens at the bottom of the stack. Before you can escalate privileges on a Linux host you need to know what the operating system is made of, because every escalation path in this week runs through one of those components.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>Linux</strong> is an open-source operating system based on UNIX, known for its powerful and versatile features. Its core component is the <strong>kernel</strong>, created by <strong>Linus Torvalds</strong> and released in <strong>1991</strong>. The kernel plus the surrounding userland gives a robust and stable platform for running applications and services.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>UNIX-like, not UNIX</h3>
+      <p>Linux is called a <strong>UNIX-like</strong> operating system because it shares design principles with the original UNIX of the 1970s: a hierarchical file system, multiuser support, and a command-line interface. UNIX is the original; Linux is the modern, actively developed descendant.</p>
+    </div>
+    <div class="col-card">
+      <h3>The three shared principles</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Hierarchical file system</strong> &mdash; files organised in a tree of nested directories.</li>
+        <li><strong>Multiuser support</strong> &mdash; multiple users access the system concurrently.</li>
+        <li><strong>Command-line interface</strong> &mdash; a shell for direct, scriptable control of the system.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why the lecture starts here.</strong> Every mechanism later in this week &mdash; permissions, setuid, sudoers, cron &mdash; is a feature of one of those three principles. The multiuser design is what makes <em>privilege</em> a meaningful concept at all: without separate identities there would be nothing to escalate from.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">A distribution is a bundle, not a kernel</h3>
+  <p>A <strong>Linux distribution</strong> is a collection of software bundled together to form a complete operating system. The lecture's five-part breakdown is worth memorising as a list, because each part is also an attack surface.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Component</th><th>What it does</th><th>Security relevance</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Kernel</strong></td><td>Schedules processes, enforces permissions, talks to hardware</td><td>Kernel bugs let an unprivileged local user reach root (see the CVE section below)</td></tr>
+        <tr><td><strong>Package manager</strong></td><td>Installs, updates and removes software</td><td>The patch pipeline: what you use to apply the fixes that close escalation bugs</td></tr>
+        <tr><td><strong>Window manager</strong></td><td>Draws and controls the graphical desktop</td><td>Extra daemons and services listening on the host</td></tr>
+        <tr><td><strong>Text editor</strong></td><td>Edits configuration files such as <code>/etc/sudoers</code></td><td>Editing sudoers by hand instead of with <code>visudo</code> is a classic way to break the host</td></tr>
+        <tr><td><strong>Web browser</strong></td><td>Client software most users spend their day in</td><td>A large, network-facing, frequently patched attack surface</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Popular examples named in the lecture:</strong> Ubuntu, Debian, Fedora, Arch and Kali. The distributions provide a ready-to-use environment with pre-installed software and utilities &mdash; which is exactly why the choice of distribution changes the default attack surface you inherit.</p>
+  </div>
+
+  <p>Linux is widely used across servers, embedded systems, mobile devices and desktop computers, and it powers a significant portion of the internet as the operating system behind web servers, cloud infrastructure and networking devices. Its stability, security and flexibility make it a popular choice for both personal and enterprise use &mdash; and, for the same reasons, a popular target and a popular attacker platform.</p>
+</section>
+
+<section id="sec-filesystem" class="section" data-track="filesystem">
+  <h2 class="section-title">The Filesystem Hierarchy and Permission Bits</h2>
+  <p class="section-lead">Everything in Linux is a path. The directory a file lives in tells you what it is for; the ten characters in front of it tell you who may do what with it.</p>
+
+  <div data-ix="hotspot" data-ix-src="#ix-fs-map"></div>
+  <script type="application/json" id="ix-fs-map">
+  {
+    "title": "The filesystem tree, and why each branch matters to an attacker",
+    "subtitle": "Click each marker to see what lives in that directory and which Week 6 technique touches it.",
+    "svg": "<svg viewBox='0 0 800 320' role='img' aria-label='Linux filesystem hierarchy drawn as a tree from the root directory down to security-relevant subdirectories' xmlns='http://www.w3.org/2000/svg'><rect x='0' y='0' width='800' height='320' fill='#fdf7f9'></rect><rect x='352' y='16' width='96' height='44' rx='10' fill='#ffffff' stroke='#e11d48' stroke-width='2.2'></rect><text x='400' y='45' text-anchor='middle' font-family='ui-monospace,monospace' font-size='19' font-weight='700' fill='#be123c'>/</text><text x='400' y='78' text-anchor='middle' font-family='ui-monospace,monospace' font-size='10.5' fill='#7b829a'>one tree, one root</text><path d='M400 60 L400 98' stroke='#e11d48' stroke-width='1.8' fill='none'></path><path d='M78 98 L722 98' stroke='#e11d48' stroke-width='1.8' fill='none'></path><path d='M78 98 L78 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><path d='M168 98 L168 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><path d='M258 98 L258 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><path d='M348 98 L348 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><path d='M438 98 L438 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><path d='M528 98 L528 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><path d='M618 98 L618 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><path d='M708 98 L708 124' stroke='#94a3b8' stroke-width='1.5' fill='none'></path><rect x='38' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#e11d48' stroke-width='1.6'></rect><text x='78' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>bin</text><rect x='128' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#e11d48' stroke-width='1.6'></rect><text x='168' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>etc</text><rect x='218' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#94a3b8' stroke-width='1.6'></rect><text x='258' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>home</text><rect x='308' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#94a3b8' stroke-width='1.6'></rect><text x='348' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>root</text><rect x='398' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#f59e0b' stroke-width='1.6'></rect><text x='438' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>tmp</text><rect x='488' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#94a3b8' stroke-width='1.6'></rect><text x='528' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>usr</text><rect x='578' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#059669' stroke-width='1.6'></rect><text x='618' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>var</text><rect x='668' y='124' width='80' height='44' rx='9' fill='#ffffff' stroke='#7c3aed' stroke-width='1.6'></rect><text x='708' y='152' text-anchor='middle' font-family='ui-monospace,monospace' font-size='13' fill='#141826'>proc</text><text x='78' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>ls, cp, ping</text><text x='78' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#be123c'>SUID lives</text><text x='168' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>passwd</text><text x='168' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#be123c'>sudoers, cron</text><text x='258' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>per-user</text><text x='258' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>directories</text><text x='348' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>mode 0700</text><text x='348' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>root only</text><text x='438' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>writable</text><text x='438' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#b45309'>+ sticky bit</text><text x='528' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>bin, lib</text><text x='528' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>share</text><text x='618' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>log, www</text><text x='618' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#047857'>spool</text><text x='708' y='190' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>PID dirs</text><text x='708' y='205' text-anchor='middle' font-family='ui-monospace,monospace' font-size='9.5' fill='#565d75'>kernel state</text><text x='400' y='252' text-anchor='middle' font-family='ui-monospace,monospace' font-size='10.5' fill='#7b829a'>Every process has a current working directory; every file has one absolute path.</text><text x='400' y='276' text-anchor='middle' font-family='ui-monospace,monospace' font-size='10.5' fill='#7b829a'>The tree decides where a file lives. Permissions decide what you may do with it.</text><text x='400' y='304' text-anchor='middle' font-family='ui-monospace,monospace' font-size='10' fill='#7b829a'>Abbreviated view — the real tree has many more branches.</text></svg>",
+    "points": [
+      { "x": 50.0, "y": 11.9, "label": "The root directory /", "detail": "One tree with a single root. Every path is absolute from here, and the root user can traverse all of it — which is why 'root' and 'the whole filesystem' mean the same thing." },
+      { "x": 13.0, "y": 40.9, "label": "/bin — binaries, and where SUID hides", "detail": "Executable programs. `ls -la /bin | grep ping` is the lecture's example and shows `-rwsr-xr-x 1 root root 44168 … ping` — the s in place of the owner's x is the setuid bit." },
+      { "x": 24.25, "y": 40.9, "label": "/etc — configuration and identity", "detail": "Account and policy configuration: /etc/passwd and /etc/shadow for identities, /etc/sudoers for delegated root commands, and the cron directories for scheduled tasks. Read access here is already valuable to an attacker." },
+      { "x": 35.5, "y": 40.9, "label": "/home — per-user data", "detail": "Each interactive user gets a directory such as /home/alice. Service accounts such as www-data or mysql usually have no home directory at all, or a minimal one — a deliberate least-privilege choice." },
+      { "x": 46.75, "y": 40.9, "label": "/root — the root account's home", "detail": "Normally mode 0700: readable and traversable by root only. A shell that can list /root is already a root shell; if you cannot read it, you are still confined to your own identity." },
+      { "x": 58.0, "y": 40.9, "label": "/tmp — writable scratch space", "detail": "Sticky, world-writable temporary storage. The Week 6 tutorial plants its escalation helper here precisely because an unprivileged service account can write to it. `find / -writable -type d 2>/dev/null` is how you enumerate such places." },
+      { "x": 69.25, "y": 40.9, "label": "/usr — the bulk of installed software", "detail": "/usr/bin, /usr/lib and /usr/share hold most of what the package manager installed. Modern distributions keep user binaries here rather than in /bin, so SUID discoveries usually come from /usr as well." },
+      { "x": 80.5, "y": 40.9, "label": "/var/log — the evidence trail", "detail": "syslog, application logs and web server logs live under /var. The detection slides list system logs, application logs and network logs as the first place to look, and /var/www often holds the vulnerable web application itself." },
+      { "x": 91.75, "y": 40.9, "label": "/proc — the kernel's own view", "detail": "A virtual filesystem exposing process state and kernel parameters. Privilege, effective UID and open file descriptors are all observable here — which is useful for both enumeration and forensic analysis." }
+    ]
+  }
+  </script>
+
+  <div id="ix-permbits"></div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Reading the ten characters</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Position</th><th>Symbol</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><code>-</code> / <code>d</code> / <code>l</code></td><td>File type: regular file, directory, symbolic link</td></tr>
+        <tr><td>2&ndash;4</td><td><code>rwx</code></td><td>What the <strong>owner</strong> may do: read, write, execute</td></tr>
+        <tr><td>5&ndash;7</td><td><code>r-x</code></td><td>What the <strong>group</strong> may do. A missing permission is shown as <code>-</code></td></tr>
+        <tr><td>8&ndash;10</td><td><code>r-x</code></td><td>What <strong>everyone else</strong> may do</td></tr>
+        <tr><td>owner's execute slot</td><td><code>s</code> instead of <code>x</code></td><td><strong>SUID</strong>: the file runs with the privileges of its owner</td></tr>
+        <tr><td>group's execute slot</td><td><code>s</code> instead of <code>x</code></td><td><strong>SGID</strong>: the file runs with the privileges of its group</td></tr>
+        <tr><td>others' execute slot</td><td><code>t</code> instead of <code>x</code></td><td><strong>Sticky bit</strong>: only a file's owner may delete it from the directory</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">ls -la /bin | grep ping<br>-rwsr-xr-x 1 root root 44168 May  8 2014 ping</div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; reading one <code>ls -l</code> line field by field.</strong> Take the lecture's line and decode every column before deciding whether it is a risk.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong><code>-rwsr-xr-x</code> &mdash; the mode.</strong> Leading <code>-</code>: a regular file, not a directory. Owner triad <code>rws</code>: root may read, write and execute it, and the <code>s</code> in place of the owner's <code>x</code> means the <strong>setuid bit is set</strong>. Group triad <code>r-x</code> and other triad <code>r-x</code>: everyone else may read and execute, but not write.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong><code>1</code> &mdash; the hard link count.</strong> One name points at this inode. Low link counts on system binaries are normal; a binary with many hard links in unexpected places deserves a second look.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong><code>root root</code> &mdash; owner and group.</strong> This is the decisive column. Because the owner is <strong>root</strong> and the setuid bit is set, executing the file gives the process root's <em>effective</em> identity. A setuid bit on a binary owned by an unprivileged user changes nothing that matters.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong><code>44168 May 8 2014</code> &mdash; size and timestamp.</strong> The date is a patch-latency signal: a system binary whose timestamp is years behind the rest of the system is either unpatched or replaced. The correct response is to compare it against the package manager's record, not to trust the file.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong><code>ping</code> &mdash; the verdict.</strong> A legitimate setuid binary: <code>ping</code> needs to send and receive raw network packets, a privileged operation, so it ships with the SUID bit set. It is not very useful for escalation because it does not let you execute arbitrary commands &mdash; which is exactly the distinction the tutorial draws when it says to look for SUID files that <em>can</em> run commands.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A file on a lab host shows <code>-rwsr-xr-x 1 root root</code>. What does the <code>s</code> actually change?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The file is still readable and executable by others either way. The s changes the identity the process runs as, not who may launch it.">It lets every user write to the file as well as execute it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The setuid bit makes the process run with the privileges of the file's owner — here root — instead of those of the user who executed it. That is why a setuid binary owned by root is a privilege boundary." data-bad="">It makes the program run with the privileges of the file's owner, which here is root</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The x is still present — it is displayed as s because setuid is set on an executable. A capital S would mean setuid is set on a file that nobody may execute.">It marks the file as a script rather than a compiled binary</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-users" class="section" data-track="users">
+  <h2 class="section-title">Users, Groups and Program-Specific Accounts</h2>
+  <p class="section-lead">Linux is multiuser by design, and the single most important defensive decision on the host is which account each program runs as.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>A <strong>program-specific user</strong> is a dedicated account created for one program during its installation or configuration. In Linux systems it is common practice for programs to run under a different user account rather than with root access, because this provides an additional layer of security by limiting the scope of damage in case of a compromise.</p>
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-node">Program compromised</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Confined to user privileges</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Rest of system protected</div>
+  </div>
+
+  <p>The lecture's chain is the whole argument in three boxes: an attacker gains a foothold, their access is limited to that account, and the damage does not spread. Web servers like <strong>nginx</strong> commonly run as the user <code>www-data</code>, and the MySQL database daemon <strong>mysqld</strong> runs as the user <code>mysql</code>. Linux systems also often include an account called <strong>nobody</strong>, designed to run services that require minimal privileges: it has limited access rights and is typically used for services that do not need special permissions.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Security benefits</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Running programs under dedicated accounts enhances the overall security posture.</li>
+        <li>It follows the <strong>principle of least privilege</strong>: programs hold only the privileges needed for their intended function.</li>
+        <li>A smaller privilege set means a smaller attack surface and a smaller blast radius.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Operational benefits</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Easier monitoring and management</strong> &mdash; administrators can track the activity and resource usage of each program separately.</li>
+        <li><strong>Improved control over file permissions</strong> &mdash; each program can be given access only to the files and directories it needs.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The Windows contrast from the deck:</strong> in Windows, programs typically run with the privileges of the user account executing them. By default users have more elevated privileges and many programs run under that user's account, so a compromise can be far more damaging &mdash; the attacker inherits everything the user could do.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-account-match"></div>
+  <script type="application/json" id="ix-account-match">
+  {
+    "title": "Match the account to what it is for",
+    "subtitle": "Click an account on the left, then the reason it exists on the right.",
+    "pairs": [
+      ["root (UID 0)", "The administrative identity: unrestricted access to every file and every process on the host"],
+      ["www-data", "The dedicated low-privilege account a web server such as nginx runs as"],
+      ["mysql", "The dedicated account the MySQL database daemon runs under"],
+      ["nobody", "An account with limited access rights, used for services that need no special permissions"],
+      ["Program-specific user", "Created during a program's installation so the program holds only the privileges it needs"],
+      ["An interactive user account", "A named person's identity, with a home directory under /home"],
+      ["Group", "A set of accounts that shares permissions, so access can be granted once instead of per user"]
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> the program-specific user is not an administrative convenience, it is a <em>containment</em> mechanism. It converts one catastrophic compromise (root) into one contained compromise (a single service account) &mdash; and it is precisely that containment that Week 6 then tries to break with privilege escalation.
+  </div>
+</section>
+
+<section id="sec-setuid" class="section" data-track="setuid">
+  <h2 class="section-title">Privilege Escalation, Part 1: The Setuid Bit</h2>
+  <p class="section-lead">A foothold is not a compromise. Escalation is the step that turns a confined process into administrative control, and the setuid bit is the first mechanism the lecture gives you.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definitions</div>
+    <p><strong>Privilege escalation</strong> is the process of gaining higher privileges or access rights than originally granted to a user or a running process. When an attacker gains access to a shell through a running program, the privileges of that shell are limited to the user under which the program is running &mdash; so to take the system, they must escalate.</p>
+    <p style="margin-top:0.6rem;">The <strong>setuid (SUID) permission</strong> on a file allows it to be executed with the privileges of the file owner, rather than the user executing it. It is identified by the letter <code>s</code> in the permission string.</p>
+  </div>
+
+  <p>Setuid exists for legitimate reasons. It enables certain applications to be run by all users as privileged users, providing access to restricted operations or resources. The lecture's example is <code>ping</code>, which needs to send and receive network packets &mdash; a privileged operation &mdash; and therefore ships with the SUID bit set by default.</p>
+
+  <div id="ix-privesc-chain"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Technique</th><th>What it uses</th><th>Why it works</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Setuid bit</strong></td><td>A program that executes with the privileges of its owner, typically a privileged user</td><td>The identity change comes from the file, not from a password</td></tr>
+        <tr><td><strong>Kernel vulnerabilities</strong></td><td>Security flaws or weaknesses in the kernel itself</td><td>The kernel enforces privilege, so a bug in it can be turned into privilege</td></tr>
+        <tr><td><strong>sudoers entries</strong></td><td>The permissions granted to users or groups to run commands with elevated privileges</td><td>A permitted command may itself be able to spawn a shell or write a root-owned file</td></tr>
+        <tr><td><strong>Cron jobs</strong></td><td>Scheduled tasks that run automatically at specified times</td><td>A task scheduled under root's crontab executes whatever its script contains &mdash; as root</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The three ways a setuid program becomes an escalation path:</strong> (1) the program can be made to execute arbitrary commands, as with tools that expose an interactive or shell-escape feature; (2) the program has an exploitable memory-safety or input-validation flaw, so controlling its input controls its behaviour; (3) the program loads or runs something the attacker can write to &mdash; a script, a library or a configuration file. The lecture's warning is that attackers can exploit vulnerabilities in setuid-enabled programs to execute arbitrary commands with elevated privileges.
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Why most kernels ignore SUID on scripts.</strong> Setting the setuid bit on a shell script (a file starting with <code>#!</code>) is ignored on most operating systems, because a script interpreter is a general-purpose program: honouring the bit would hand every user a trivially scriptable root shell. The Week 6 tutorial turns this into a design constraint &mdash; if the escalation helper must be setuid, it has to be a compiled binary that then invokes the interpreter.</p>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">The lecture's seven best practices for setuid usage</h3>
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Design and code</h4>
+      <ol style="padding-left:1.1rem; line-height:1.7;">
+        <li>Limit setuid-enabled programs &mdash; the fewer there are, the smaller the surface.</li>
+        <li>Implement strict input validation and access control.</li>
+        <li>Follow the principle of least privilege.</li>
+      </ol>
+    </div>
+    <div class="why-card con" style="background:var(--blue-bg); border-color:rgba(37,99,235,0.3);">
+      <h4>Operate and watch</h4>
+      <ol start="4" style="padding-left:1.1rem; line-height:1.7;">
+        <li>Regularly update and patch setuid-enabled programs.</li>
+        <li>Conduct periodic security audits and vulnerability assessments.</li>
+        <li>Monitor system logs.</li>
+        <li>Perform real-time monitoring.</li>
+      </ol>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Tutorial walkthrough &mdash; the lab escalation chain, described as a defender would log it.</strong> The Week 6 tutorial builds a SUID-to-root path inside your own Ubuntu VM using the DVWA host you configured earlier. The steps below are the <em>reasoning</em> at each stage; no exploit code is reproduced here.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>The foothold is a service account.</strong> The shell obtained through the web application's SQL injection runs as <code>www-data</code>. Running <code>whoami</code> in that shell confirms the ceiling: everything the attacker does now inherits that account's privileges, and reading <code>/etc/shadow</code> or <code>/root</code> is refused.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>The escalation file must be chosen or created.</strong> The first thing needed is a file owned by root with the SUID bit set &mdash; ideally one that can be leveraged to execute arbitrary commands, which is why the lecture notes that <code>ping</code> is not very useful here while some versions of <code>nmap</code>, with an interactive mode that allows commands to be executed, could be. In the tutorial you instead create your own helper.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Why it must be a compiled binary.</strong> Because most operating systems ignore the SUID flag on script files, the helper has to be a small compiled program whose only job is to drop to the file owner's identity and hand control to a shell script. That single design decision &mdash; <em>a binary that runs an interpreter</em> &mdash; is what converts a writable path into a root shell.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The file is placed where the service account can reach it.</strong> The helper sits in <code>/tmp</code>, is made executable, is owned by root with the service group as its group, and is given the SUID and SGID bits. Each of those four attributes is individually unremarkable; together they are the vulnerability.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The script provides the payload.</strong> The helper invokes a second file, also in <code>/tmp</code>, which connects a shell back to a netcat listener already waiting on the attacker-controlled host. Because the helper's effective UID is 0, that shell is a root shell &mdash; and the attacker never needed the root password.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Verification and consequence.</strong> Running <code>whoami</code> in the listening session returns <code>root</code>, and anything placed in the script now runs as root. That is full control of the machine.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--green);">7</div>
+        <div class="step-body"><p><strong>The defender's reading of the same chain.</strong> Five detection opportunities exist and each maps to a control: a SUID binary appearing in a world-writable directory (<code>find / -perm -4000 -type f</code>), a new root-owned executable outside the package manager's records (integrity checking with Tripwire or AIDE), the web server spawning a shell (application logs and process monitoring), an outbound connection from a server that should never dial out (network monitoring with Snort or Suricata), and a setuid binary that has no business existing (the <em>limit setuid-enabled programs</em> practice).</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You have a shell as <code>www-data</code> on a lab host. Why does a root-owned setuid binary in <code>/tmp</code> change your situation so dramatically?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Reading /tmp is not the issue — a SUID binary is not secret, it is executable. The change is the identity the process runs with.">Because it lets you read files in <code>/tmp</code> that are otherwise hidden</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The shell's privileges are capped by the www-data account, but a setuid binary owned by root executes with root's effective identity. That is a privilege boundary crossed without ever knowing the root password." data-bad="">Because executing it runs the process with root's effective identity instead of <code>www-data</code>'s</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The SUID bit does not authenticate anything. It is a per-file attribute that changes which identity the kernel assigns at exec time.">Because the SUID bit requires the root password to be supplied at run time</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-kernel" class="section" data-track="kernel">
+  <h2 class="section-title">Kernel Vulnerabilities as an Escalation Path</h2>
+  <p class="section-lead">The kernel decides who may do what. A bug in that decision is therefore a bug in the privilege model itself &mdash; and it needs no misconfiguration to exploit.</p>
+
+  <p>The Linux kernel, despite its complexity, has experienced vulnerabilities in the past that allowed regular users to escalate their privileges. When exploited, these vulnerabilities can lead to unauthorised actions and potential compromise of the system's security. It is important to stay informed about privilege-escalation vulnerabilities and mitigation techniques to protect Linux systems.</p>
+
+  <div class="def-box">
+    <div class="def-label">Resource</div>
+    <p><strong>CVE Details</strong> is a resource that provides information on publicly disclosed vulnerabilities, including those related to Linux kernel privilege escalation. Visiting the CVE Details page gives access to a comprehensive listing of known published vulnerabilities for the Linux kernel, and it serves as a valuable reference for understanding the historical landscape of privilege-escalation vulnerabilities.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Field</th><th>Value for the lecture's worked CVE</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>CVE ID</strong></td><td><code>CVE-2016-0728</code></td></tr>
+        <tr><td><strong>Year</strong></td><td>Discovered in 2016</td></tr>
+        <tr><td><strong>Subsystem</strong></td><td>The <em>keyring</em> facility of the Linux kernel</td></tr>
+        <tr><td><strong>Root cause</strong></td><td>The keyring facility failed to properly validate certain operations</td></tr>
+        <tr><td><strong>Who can trigger it</strong></td><td>An attacker with <em>local</em> access &mdash; a regular user on the host</td></tr>
+        <tr><td><strong>Impact</strong></td><td>Escalation from a regular user to root, gaining complete control of the system; potentially unauthorised access, data theft or malicious actions</td></tr>
+        <tr><td><strong>Mitigation</strong></td><td>Patched in the Linux kernel; users were advised to update to the latest patched version</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>What makes kernel bugs distinctive.</strong> A setuid flaw or a sudoers mistake is a <em>configuration</em> problem that a careful administrator can avoid. A kernel privilege-escalation bug is present on a perfectly configured host running an unpatched kernel, it requires only local access, and it grants root directly. The only controls that apply are keeping the kernel patched, monitoring for new vulnerabilities, and limiting who can get a local shell in the first place.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Triage questions for any claimed kernel escalation</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Vector:</strong> local or remote? The lecture's example is local only.</li>
+        <li><strong>Precondition:</strong> does it need a specific kernel version, feature or configuration?</li>
+        <li><strong>Impact:</strong> does it reach root, or only leak information?</li>
+        <li><strong>Fix:</strong> is there a patched version, and how far behind is this host?</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Why the fix is the only real control</h3>
+      <p>Applying security updates and regularly monitoring for new vulnerabilities are essential to protect against privilege-escalation attacks. On a virtual machine you can snapshot between steps &mdash; on a production host, the equivalent action is a tested patch window, not an improvised one.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-sudoers" class="section" data-track="sudoers">
+  <h2 class="section-title">Privilege Escalation, Part 2: The sudoers File</h2>
+  <p class="section-lead">Delegation is necessary and dangerous in the same way setuid is: it hands out pieces of root on purpose, and every piece is a potential escalation path.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>The <code>/etc/sudoers</code> file in Linux contains directives that define how and when users are permitted to run the <code>sudo</code> command. It provides a way to control and restrict user access to specific commands or command categories, and its directives can be used to grant or revoke sudo privileges for individual users or user groups.</p>
+  </div>
+
+  <div class="code-block">User1 ALL=(ALL) /usr/bin/reboot<br>User2 ALL=(ALL) /usr/bin/apt-get update</div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Field</th><th>Meaning</th><th>In the example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>User1</code></td><td>Who the rule applies to &mdash; a user or, better, a group</td><td>User1 is allowed to run the <code>reboot</code> command using sudo</td></tr>
+        <tr><td><code>ALL</code> (host)</td><td>Which hosts the rule applies to</td><td>Any host reading this file</td></tr>
+        <tr><td><code>(ALL)</code></td><td>The target identity the command may run as</td><td>Any user, including root</td></tr>
+        <tr><td><code>/usr/bin/reboot</code></td><td>The command, given as an absolute path</td><td>Only <code>reboot</code> &mdash; and nothing else, in principle</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Why the absolute path is not enough.</strong> A delegated command is only as narrow as that command's own capabilities. Some programs can spawn a shell, read or write arbitrary files, or load attacker-controlled configuration; granting any of those through sudoers is equivalent to granting root, even though the directive looks tightly scoped. When you audit a sudoers entry, the question is never &ldquo;which command?&rdquo; but &ldquo;what else can that command be made to do?&rdquo;
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Edit it with <code>visudo</code>, never by hand.</strong> It is important to exercise caution when editing the sudoers file to prevent granting excessive privileges. Improper configuration can inadvertently give users more access than intended, potentially compromising system security. The <code>visudo</code> command should be used because it performs syntax checks before saving any changes &mdash; a single malformed line can lock every administrator out of the host.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-sudoers-seq"></div>
+  <script type="application/json" id="ix-sudoers-seq">
+  {
+    "title": "Order the least-privilege review of a sudoers entry",
+    "subtitle": "Click the steps in the order a careful administrator would work through them.",
+    "steps": [
+      "Write down the task the user actually has to perform",
+      "Identify the single command that performs that task",
+      "Check whether the command can spawn a shell or write arbitrary files",
+      "Replace the individual user with a group that needs the same access",
+      "Test the new entry in a controlled setting before deploying it",
+      "Save the change with visudo so the syntax is validated",
+      "Enable logging and monitoring of sudo activity",
+      "Review the file again later and remove privileges that are no longer needed"
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">The lecture's five best practices</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Practice</th><th>What it means in practice</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Limit sudo access to only necessary commands</td><td>Grant users access only to the specific commands they require for their tasks</td></tr>
+        <tr><td>Regularly review and update the sudoers file</td><td>Keep the file up to date by removing unnecessary privileges and modifying access as needed</td></tr>
+        <tr><td>Use groups to manage privileges</td><td>Assign sudo access to user groups instead of individual users for easier management and control</td></tr>
+        <tr><td>Test configuration changes</td><td>Thoroughly test a new sudoers configuration in a controlled setting before deploying it to production</td></tr>
+        <tr><td>Implement logging and monitoring</td><td>Enable logging of sudo activities to track and identify suspicious or unauthorised command executions</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; reviewing a sudoers entry for over-granting.</strong> A colleague proposes: <code>deploy ALL=(ALL) /usr/bin/apt-get</code>, so the deployment account can install packages.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>State the task.</strong> The account has to install and upgrade packages from the distribution's repositories. Nothing in the task requires reading arbitrary files or running a shell.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Check the command's own power.</strong> The lecture's own example scopes the grant to <code>/usr/bin/apt-get update</code>. Granting all of <code>apt-get</code> is broader than it looks: package handling can execute maintainer scripts as root, so a crafted package turns the grant into arbitrary root code execution. <em>Verdict: over-granted.</em></p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Narrow to the smallest sufficient command.</strong> If the requirement is refreshing package metadata, the entry should name <code>apt-get update</code> exactly, matching the pattern of the lecture's <code>User2</code> line. If full installation is genuinely required, that is a decision to record and review, not to leave implicit.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Use a group, not a person.</strong> Replace <code>deploy</code> with a group such as <code>%deployers</code> so that the privilege follows the role and leaves with it when someone changes teams.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Test, save, log.</strong> Rehearse the entry in a throwaway VM, apply it with <code>visudo</code> so the syntax is validated before saving, and make sure sudo activity is logged so that the first use of the new grant leaves a trace.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;The entry is valid sudoers syntax but grants more than the task requires, because <code>apt-get</code> can execute package scripts as root; least privilege requires naming the narrowest command, delegating to a group, validating with <code>visudo</code>, and logging the result.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">What does the directive <code>User2 ALL=(ALL) /usr/bin/apt-get update</code> actually grant?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Full sudo would be the entry `User2 ALL=(ALL) ALL`. Naming one absolute path is the whole point of the directive.">Full sudo rights on every command, for User2 only</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The directive names one absolute command on any host, run as any target user. It is a narrow delegation — and its real risk depends on what that one command can be made to do." data-bad="">Only the command <code>/usr/bin/apt-get update</code>, which User2 may run as any user on any host</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The sudoers file is enforced by sudo itself. A user with no matching directive simply cannot use sudo, with or without a password.">Nothing, because a password is still required for every sudo command</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-cron" class="section" data-track="cron">
+  <h2 class="section-title">Cron Jobs and Scheduled Tasks</h2>
+  <p class="section-lead">Automation runs with privileges and without supervision. That combination is why cron is the fourth classic escalation path.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>Cron jobs</strong> are scheduled tasks on a Linux system that are executed automatically at specified times or intervals. Administrators commonly use them to run software regularly, such as cleanup or keep-alive scripts. These scripts are often scheduled to run under the <strong>root user's crontab</strong>, which allows them to have the necessary privileges to perform certain operations.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The legitimate example from the lecture</h3>
+      <p>An administrator sets up a cron job to run a script every night at 2:00 AM that performs system cleanup tasks, such as deleting temporary files and optimising disk space.</p>
+      <div class="code-block">0 2 * * * /usr/local/bin/cleanup.sh</div>
+    </div>
+    <div class="col-card">
+      <h3>Managing the root crontab</h3>
+      <p>The <code>sudo crontab -e</code> command is used to view and edit the list of tasks scheduled to run as the root user. Running it with sudo privileges lets administrators access and modify the root user's crontab, adjusting execution times or updating the commands to be executed.</p>
+      <div class="code-block">0 12 * * 0 /usr/local/bin/backup.sh</div>
+      <p style="font-size:0.9rem; color:var(--text-muted);">The lecture's second example: a backup script every Sunday at 12:00 PM.</p>
+    </div>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-cron-pipe"></div>
+  <script type="application/json" id="ix-cron-pipe">
+  {
+    "title": "How a scheduled task becomes an escalation path",
+    "subtitle": "Step through the chain the lecture describes: modifying a scheduled script in the root user's crontab.",
+    "nodes": [
+      { "label": "Foothold", "note": "The attacker gains unauthorised access to the system and can read and write some files as a low-privilege user." },
+      { "label": "Enumerate", "note": "They identify a cron job in the root user's crontab that runs a backup or cleanup script with root privileges." },
+      { "label": "Check writability", "note": "The script — or a file it reads, or a directory it writes into — turns out to be modifiable by that low-privilege account." },
+      { "label": "Modify", "note": "They modify the script to execute their chosen commands. Nothing has to be exploited: the schedule does the work." },
+      { "label": "Wait for the schedule", "note": "Cron runs the job at its appointed time. No interactive session is needed and nothing announces itself." },
+      { "label": "Runs as root", "note": "The modified content executes with root privileges, giving unauthorised access and manipulation of system files." },
+      { "label": "Persist", "note": "Repeating the trick on every run gives persistent control over the system with elevated privileges." }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Why this is worse than a one-off escalation.</strong> Modifying scheduled scripts in the root user's crontab can lead to unauthorized access, manipulation of system files, or even complete control over the system &mdash; and because the task repeats, the access <em>repeats too</em>. The lecture's example is an attacker who gains persistent control by making a root-owned backup script run their commands.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Risk</th><th>Why it exists</th><th>Defensive response</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Script writable by a non-root account</td><td>Cron executes the file's <em>current</em> contents as root</td><td>Root-owned, mode 0700, in a root-owned directory with no world-writable ancestors</td></tr>
+        <tr><td>Directory writable, script replaceable</td><td>Write access to the <em>directory</em> is enough to swap the file</td><td>Enumerate writable directories with <code>find / -writable -type d 2>/dev/null</code></td></tr>
+        <tr><td>Script reads attacker-controlled input</td><td>Cron runs the interpreter, which trusts the input file</td><td>Validate input inside the script; never source configuration from a writable path</td></tr>
+        <tr><td>Task unscheduled under a service account</td><td>A compromised service account inherits the schedule's privileges</td><td>Run maintenance tasks as the least-privileged account that can do the job</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A nightly root cron job executes <code>/opt/backup/run.sh</code>, and the directory <code>/opt/backup</code> is writable by the <code>www-data</code> account. What is the escalation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Whoever can modify the script — or replace it, since the directory itself is writable — gets their content executed as root at the next scheduled run, and again every night after that." data-bad="">A compromised <code>www-data</code> shell can change what executes as root, and the change repeats on every run</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Reading the script is not the problem. Cron does not care who has read the file; it cares who has changed it before the next run.">The <code>www-data</code> account can read the backup contents</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Cron does not need an interactive session, and it does not re-check who owns the directory at run time — the schedule simply executes the file.">Cron will refuse to run because the directory ownership is inconsistent</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-detection" class="section" data-track="detection">
+  <h2 class="section-title">Detection: Finding Escalation Vectors and Rootkits</h2>
+  <p class="section-lead">Privilege-escalation attacks can be challenging to detect, so the practical answer is to enumerate the host systematically &mdash; and then to look for the software that hides after it succeeds.</p>
+
+  <div class="def-box">
+    <div class="def-label">The lecture's tool</div>
+    <p><strong>unix-privesc-check</strong> is an automated script that identifies potential issues: it performs various checks on the Linux system and helps system administrators identify and address security weaknesses proactively. In the tutorial it is run as root with the <code>detailed</code> argument and the output is paged and searched for the string <code>WARNING</code>.</p>
+  </div>
+
+  <div class="code-block">sudo ./unix-privesc-check detailed | less<br><span style="color:#7b829a;"># then search the pager for WARNING with /WARNING</span></div>
+
+  <div class="def-box">
+    <div class="def-label">The lecture's cheat sheet</div>
+    <p><strong>g0tmi1k's blog post &ldquo;Basic Linux Privilege Escalation&rdquo;</strong> provides a comprehensive cheat sheet for detecting privilege-escalation vulnerabilities. It covers a wide range of areas, and it lets system administrators conduct thorough assessments of their own Linux systems and stay proactive in identifying escalation risks.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>What to check</th><th>The lecture's command</th><th>Why it matters</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SUID / SGID files</td><td><code>find / -perm -4000 -type f -exec ls -l {} \;</code></td><td>Searches for files with the setuid or setgid permissions, which can potentially lead to privilege escalation if misused</td></tr>
+        <tr><td>Writable directories</td><td><code>find / -writable -type d 2>/dev/null</code></td><td>Identifies directories with writable permissions, which can be exploited to plant malicious files or gain unauthorised access</td></tr>
+        <tr><td>World-writable files</td><td><code>find / -perm -2 -type f -exec ls -l {} \;</code></td><td>Finds files with world-writable permissions &mdash; a potential security risk if sensitive data or system files are accessible to unauthorised users</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Community knowledge is part of the method.</strong> The lecture also points at the SANS Institute forum discussion on privilege-escalation flaws in Linux. Sharing information about these flaws, learning from others' experiences, and engaging in discussion within the cybersecurity community improves overall awareness and preparedness against such threats.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Rootkits: escalation that hides</h3>
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>Rootkits</strong> are malicious software that grants unauthorised access to a Linux system while evading detection. They provide attackers with privileged control over the compromised system and remain hidden from traditional security measures. Two examples from the lecture: <strong>RootkitX</strong>, which uses kernel-level hooks and backdoor access, and the <strong>Adore Rootkit</strong>, which modifies system binaries and kernel modules, providing remote access and hiding its presence.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why detection is hard</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Kernel-level manipulation</strong> &mdash; the tool that would report the truth is itself compromised</li>
+        <li><strong>Stealth techniques</strong> &mdash; the rootkit hides its own files and processes</li>
+        <li><strong>Anti-antivirus techniques</strong> &mdash; it interferes with the tools looking for it</li>
+        <li><strong>Evolving techniques</strong> &mdash; signatures age out quickly</li>
+        <li><strong>Advanced Persistent Threats</strong> &mdash; patient adversaries who are not in a hurry</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Where you would look on the host</h3>
+      <p>The week's filesystem walkthrough pays off here: <code>/var/log</code> holds syslog and application logs, process state is visible under <code>/proc</code>, and the binaries a rootkit would replace live under <code>/bin</code>, <code>/usr/bin</code> and the kernel module tree. Comparing those against known-good copies is the point of integrity checking.</p>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-detect-match"></div>
+  <script type="application/json" id="ix-detect-match">
+  {
+    "title": "Match the detection tool to what it detects",
+    "subtitle": "All of these names come from the Week 6 detection slides. Click a tool, then its purpose.",
+    "pairs": [
+      ["rkhunter / chkrootkit", "Signature-based scanning for known rootkit indicators"],
+      ["Tripwire / AIDE", "Regular integrity checks on files that should never change"],
+      ["OSSEC / Samhain", "Behavioural detection through host-based system monitoring"],
+      ["syslog, application and network logs", "The raw evidence analysed for signs of escalation"],
+      ["Volatility / LiME", "Memory forensics on a running or captured system"],
+      ["Snort / Suricata", "Network intrusion detection systems"],
+      ["Bro / Argus", "Network flow analysis"],
+      ["XenServer / KVM-based tools", "Hypervisor-based detection that sits outside the guest"],
+      ["GRR / Volatility Framework", "Live forensics on a system that is still running"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The pattern to remember.</strong> The lecture's detection techniques fall into five families: <em>signature-based</em> (rkhunter, chkrootkit, plus integrity checks with Tripwire or AIDE), <em>behavioural</em> (OSSEC or Samhain, plus analysis of syslog, application logs and network logs), <em>memory forensics</em> (Volatility or LiME), <em>network traffic analysis</em> (Snort or Suricata as NIDS; Bro or Argus for flow analysis), and <em>advanced</em> techniques (XenServer or KVM-based hypervisor detection; live forensics with GRR or the Volatility Framework). If you can name the family as well as the tool, you can answer any question the exam asks about this slide.
+  </div>
+</section>
+
+<section id="sec-hardening" class="section" data-track="hardening">
+  <h2 class="section-title">Linux Hardening and SSH</h2>
+  <p class="section-lead">Since Linux distributions offer a diverse range of tools and features, there is no one-size-fits-all approach to protecting Linux systems &mdash; but a small number of measures raise the security bar considerably.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Measure</th><th>What the lecture recommends</th><th>Which escalation path it closes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Update and patch</strong></td><td>Keep the distribution, kernel and installed software up to date with the latest security patches</td><td>Kernel privilege-escalation CVEs such as CVE-2016-0728</td></tr>
+        <tr><td><strong>Implement strong user authentication</strong></td><td>Enforce strong password policies and consider implementing MFA</td><td>Credential guessing and stolen-password reuse</td></tr>
+        <tr><td><strong>Configure the firewall</strong></td><td>Enable and properly configure the built-in firewall, such as <code>iptables</code> or <code>firewalld</code></td><td>Reach from the network to services that never needed to be exposed</td></tr>
+        <tr><td><strong>Limit privileges</strong></td><td>Follow the principle of least privilege and grant users only the necessary privileges</td><td>Setuid misuse, over-broad sudoers entries and root-run cron scripts</td></tr>
+        <tr><td><strong>Secure remote access</strong></td><td>Use secure protocols such as SSH</td><td>Cleartext credential capture on the wire</td></tr>
+        <tr><td><strong>Implement IDS and monitoring</strong></td><td>Deploy intrusion detection systems (IDS) or intrusion prevention systems (IPS)</td><td>Late detection of the escalation itself</td></tr>
+        <tr><td><strong>Enable disk encryption</strong></td><td>Utilise full disk encryption, for example LUKS or BitLocker</td><td>Offline access to data when the host is powered down or stolen</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-default"></div>
+  <script type="application/json" id="ix-race-default">
+  {
+    "title": "Exposure of a default server install — illustrative",
+    "subtitle": "An illustrative 0–5 emphasis score built from the hardening measures on this page. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Unpatched kernel and packages", "value": 4, "display": "patch lag" },
+      { "name": "SSH exposed on the default port", "value": 4, "display": "port 22" },
+      { "name": "Password-only SSH authentication", "value": 4, "display": "brute-forceable" },
+      { "name": "Unnecessary setuid binaries", "value": 3, "display": "extra s bits" },
+      { "name": "Services reachable from the network", "value": 3, "display": "firewall off" }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-hardened"></div>
+  <script type="application/json" id="ix-race-hardened">
+  {
+    "title": "Exposure after the hardening checklist — illustrative",
+    "subtitle": "The same five dimensions, after the measures the lecture recommends. The point is which bars moved, not the exact heights.",
+    "max": 5,
+    "rows": [
+      { "name": "Unpatched kernel and packages", "value": 1, "display": "patched on a schedule" },
+      { "name": "SSH exposed on the default port", "value": 2, "display": "moved off 22" },
+      { "name": "Password-only SSH authentication", "value": 1, "display": "keys, no empty passwords" },
+      { "name": "Unnecessary setuid binaries", "value": 1, "display": "audited and limited" },
+      { "name": "Services reachable from the network", "value": 1, "display": "firewall configured" }
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">SSH hardening: what to change in <code>/etc/ssh/sshd_config</code></h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Recommendation</th><th>Directive</th><th>Risk it removes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Disable SSH access for the root user</td><td>Restrict access, and use <code>AllowUsers</code> to specify exactly who may connect</td><td>Unauthorised access to the most privileged account, and a direct target for guessing</td></tr>
+        <tr><td>Change the default SSH port</td><td><code>Port</code> &mdash; move away from <code>22</code></td><td>Automated scanning and brute-force attacks that target the default port</td></tr>
+        <tr><td>Disable empty passwords and use strong authentication</td><td><code>PermitEmptyPasswords no</code>, plus public key authentication or two-factor authentication</td><td>Accounts with no password at all, and password-only logins</td></tr>
+        <tr><td>Enable key-based authentication</td><td><code>AuthorizedKeysFile</code>, with a key pair generated per user</td><td>Credential theft and replay; keys are far harder to guess than passwords</td></tr>
+        <tr><td>Disable old protocol versions and weak ciphers</td><td><code>Protocol</code> and <code>Ciphers</code> &mdash; support only secure versions and strong algorithms</td><td>Downgrade attacks against SSHv1 and weak cipher suites</td></tr>
+        <tr><td>Implement connection timeouts</td><td><code>ClientAliveInterval</code> and <code>ClientAliveCountMax</code></td><td>Forgotten idle sessions left open for anyone to walk up to</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Note the shape of the list.</strong> Every SSH recommendation is a <em>reduction</em>: fewer accounts allowed, fewer ports answering, fewer authentication methods accepted, fewer protocol versions negotiated, fewer sessions left open. Hardening is subtractive work; the difficulty is knowing what can safely be removed.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A colleague says &ldquo;we changed the SSH port from 22 to 2222, so the SSH server is hardened now.&rdquo; What is the correct assessment?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Port obscurity is one of six recommendations in the lecture, and the weakest of them. It removes automated scanning traffic, not the ability to log in.">Correct &mdash; the server is hardened, because automated scanners only look at port 22</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The port change only mitigates automated scanning and brute-force traffic aimed at the default port. Root login, empty passwords, password-only auth, old protocols and idle sessions all remain until the other directives are set." data-bad="">Only partly &mdash; moving the port reduces automated scanning, but root login, empty passwords, password-only authentication, weak protocols and idle timeouts are all still open</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Changing the port does not strengthen the cryptography at all. Protocol versions and cipher suites are separate directives.">Correct, and it also upgrades the cipher suite by moving off the default port</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 6 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Linux is a bundle, and every part is surface</h4>
+        <p>UNIX-like by design: hierarchical filesystem, multiuser support, command-line interface. A distribution adds a package manager, window manager, editor and browser on top of the kernel.</p>
+        <div class="flip-hint">Foundations</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Identity is the security model</h4>
+        <p>Programs run as dedicated low-privilege accounts &mdash; <code>www-data</code>, <code>mysql</code>, <code>nobody</code> &mdash; so a compromise is contained instead of total. Least privilege is the through-line of the week.</p>
+        <div class="flip-hint">Containment</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Four escape routes from a confined shell</h4>
+        <p>Setuid binaries, kernel vulnerabilities, sudoers entries and cron jobs. Each one is a legitimate mechanism that hands out a piece of root &mdash; and therefore a privilege boundary to cross.</p>
+        <div class="flip-hint">Escalation</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Detection is enumerate, then compare</h4>
+        <p><code>find</code> for SUID files, writable directories and world-writable files; <code>unix-privesc-check</code> for a systematic audit; integrity checks, log analysis and memory forensics for the rootkit that hides afterwards.</p>
+        <div class="flip-hint">Detection</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recap-deck"></div>
+  <script type="application/json" id="ix-recap-deck">
+  {
+    "title": "Week 6 self-test: say the answer before you flip",
+    "subtitle": "Eight cards covering the definitions and mechanisms the exam is most likely to ask for.",
+    "cards": [
+      { "front": "Linux kernel", "back": "The core component of the operating system, created by Linus Torvalds and released in 1991.", "hint": "Origin" },
+      { "front": "Linux distribution", "back": "A collection of software bundled to form a complete operating system: kernel, package manager, window manager, text editor and web browser.", "hint": "Definition" },
+      { "front": "Program-specific user", "back": "A dedicated, low-privilege account for one program — www-data for nginx, mysql for mysqld, nobody for services needing no special permissions — so a compromise is confined to that account.", "hint": "Containment" },
+      { "front": "Setuid (SUID) bit", "back": "A per-file permission that makes the program execute with the privileges of the file's owner rather than the user executing it. Shown as s in place of the owner's x.", "hint": "Escalation" },
+      { "front": "Privilege escalation", "back": "Gaining higher privileges or access rights than originally granted to a user or a running process.", "hint": "Definition" },
+      { "front": "/etc/sudoers", "back": "Directives defining how and when users may run sudo, granting or revoking specific commands for users or groups. Always edited with visudo, which syntax-checks before saving.", "hint": "Delegation" },
+      { "front": "Cron job", "back": "A scheduled task executed automatically at specified times or intervals; often scheduled under root's crontab, which is why a writable scheduled script is an escalation path.", "hint": "Automation" },
+      { "front": "Rootkit", "back": "Malicious software granting unauthorised access while evading detection — through kernel-level hooks, modified system binaries and kernel modules. Detect it with signature, behavioural, memory, network and hypervisor-based techniques.", "hint": "Detection" }
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the four escalation techniques, explain what the <code>s</code> in a permission string changes, and say which hardening measure closes which path?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Bring a working Ubuntu VM with DVWA, a shell as <code>www-data</code>, and the <code>unix-privesc-check</code> report paged to its first <code>WARNING</code>. Be ready to explain the escalation you performed as a defender would log it.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's material into permission arithmetic, the escalation state model, crontab and sudoers notation and a hardening checklist. Then work the Quiz Hub and the Flashcards for Week 6.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

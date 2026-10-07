@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2: AI-Assisted Vulnerability Discovery — INFO5995</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter2-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 2 study guide for INFO5995: why AI is used for vulnerability discovery, how LLMs predict tokens and hallucinate, how reasoning models and tool-using agents change the workflow, prompt and context design, the failure modes of lazy, hallucinating and blind-spot models, and the human verification discipline every finding requires.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 2: AI-Assisted Vulnerability Discovery — INFO5995">
+<meta property="og:description" content="Week 2 study guide for INFO5995: why AI is used for vulnerability discovery, how LLMs predict tokens and hallucinate, how reasoning models and tool-using agents change the workflow, prompt and context design, the failure modes of lazy, hallucinating and blind-spot models, and the human verification discipline every finding requires.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F916;</span>
+      <h2>Week 2</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-why" class="nav-link" data-section="why">Why AI for Security</a></li>
+    <li><a href="#sec-llm" class="nav-link" data-section="llm">How an LLM Responds</a></li>
+    <li><a href="#sec-tokens" class="nav-link" data-section="tokens">Code Is Data Too</a></li>
+    <li><a href="#sec-reasoning" class="nav-link" data-section="reasoning">Reasoning Models</a></li>
+    <li><a href="#sec-agents" class="nav-link" data-section="agents">Terminal AI Agents</a></li>
+    <li><a href="#sec-prompt" class="nav-link" data-section="prompt">Prompt &amp; Context Design</a></li>
+    <li><a href="#sec-failures" class="nav-link" data-section="failures">Failure Modes</a></li>
+    <li><a href="#sec-verify" class="nav-link" data-section="verify">Human Verification</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter2-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter2-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 2 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">INFO5995 &mdash; Cybersecurity</p>
+    <h1>Week 2: AI-Assisted Vulnerability Discovery</h1>
+    <p class="hero-subtitle">Using static analysis, fuzzing and large language models to find vulnerabilities &mdash; and why a human still has to verify every finding.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F50D;</span>
+        <span>Modern software is too large to read line by line</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9E9;</span>
+        <span>Text &rarr; tokens &rarr; patterns &rarr; prediction</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6E0;</span>
+        <span>Agents call real tools: grep, static analysis, fuzzers</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2705;</span>
+        <span>Prediction is not proof &mdash; verify every finding</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter2-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter2-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 2 lecture deck (INFO5995, <em>AI-Assisted Vulnerability Discovery &amp; Mobile Security</em>)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-why" class="section" data-track="why">
+  <h2 class="section-title">Why AI Is on the Security Agenda</h2>
+  <p class="section-lead">The lecture opens with the constraint that forces the whole topic: <em>modern software is too large to inspect manually, line by line</em>.</p>
+
+  <div class="concept-box">
+    <p><strong>The opening claim of Week 2:</strong> the volume of code, dependencies and artefacts in a real system already exceeds what a human review team can read exhaustively &mdash; so the practical question is not &ldquo;can AI find bugs?&rdquo; but &ldquo;where in the workflow can a pattern-matching assistant add evidence, and where must a human take over?&rdquo;</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What the assistant is genuinely good at</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Reading text cheaply and at volume &mdash; source, diffs, logs, traces</li>
+        <li>Recognising shapes it has seen before in training data</li>
+        <li>Driving the text-based tools that already exist</li>
+        <li>Summarising an investigation so a human can audit the reasoning</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What it cannot supply</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Ground truth: it does not know whether its answer is true</li>
+        <li>Authorisation: it cannot decide what it is allowed to touch</li>
+        <li>Proof: a plausible finding is not a demonstrated one</li>
+        <li>Judgement about impact, scope and disclosure</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The framing to keep for the whole week:</strong> the goal is not to ask AI &ldquo;find the vulnerabilities&rdquo;. The goal is to <em>investigate with AI</em> &mdash; give it context, give it evidence, give it boundaries, and never trust a finding until you have verified it.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question</th><th>Wrong first question</th><th>Right first question</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Capability</td><td>&ldquo;Can the AI find a vulnerability here?&rdquo;</td><td>&ldquo;What evidence would prove one exists?&rdquo;</td></tr>
+        <tr><td>Authority</td><td>&ldquo;Can the AI do it?&rdquo;</td><td>&ldquo;Is the AI <em>authorised</em> to act?&rdquo;</td></tr>
+        <tr><td>Scope</td><td>&ldquo;Point it at the repository.&rdquo;</td><td>&ldquo;Which targets, which techniques, which limits?&rdquo;</td></tr>
+        <tr><td>Outcome</td><td>&ldquo;It produced a list of bugs.&rdquo;</td><td>&ldquo;What did we learn about the system?&rdquo;</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-llm" class="section" data-track="llm">
+  <h2 class="section-title">How an LLM Responds</h2>
+  <p class="section-lead">The lecture needs only enough about LLMs to reason about their role in security. That minimum is a picture: a prompt goes in, a response comes out, and the response is a prediction over patterns learned during training.</p>
+
+  <div data-ix="pipeline" data-ix-src="#ix-llm-loop"></div>
+  <script type="application/json" id="ix-llm-loop">
+  {
+    "title": "The minimal model of an LLM interaction",
+    "subtitle": "Every capability and every failure mode in this week comes out of these five stages.",
+    "nodes": [
+      { "label": "System prompt", "note": "Sets instructions, role and behavioural boundaries before the user interacts with the model." },
+      { "label": "User prompt", "note": "The request: a question, a file, a diff, a hypothesis to test." },
+      { "label": "Tokenise &amp; predict", "note": "Text becomes tokens; the model predicts the most likely continuation from learned patterns." },
+      { "label": "Response", "note": "Fluent output that is not automatically true — the model does not check its own answer against reality." },
+      { "label": "Conversation context", "note": "Earlier prompts and responses are fed back in, so each new response can be shaped by what came before." }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Key takeaway 1 &mdash; LLMs predict patterns</div>
+    <p>LLMs can <em>appear</em> intelligent, but they generate responses by predicting likely patterns. They do <strong>not</strong> automatically know whether an answer is true or correct. Why this matters for security: <em>many vulnerabilities also follow recognisable patterns</em>. That is exactly why AI can help identify suspicious code &mdash; and exactly why every finding still needs evidence and verification.</p>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Three behaviours the deck demonstrates</h3>
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Sampling is not deterministic</h4>
+      <p>The same prompt does not always produce exactly the same response. Two identical requests can return two different findings, which is a feature for coverage and a problem for reproducibility &mdash; so record the prompt, the model and the settings alongside every finding.</p>
+    </div>
+    <div class="why-card pro">
+      <h4>Context changes the response</h4>
+      <p>&ldquo;What are we working on today?&rdquo; answered with &ldquo;It's Sunday&rdquo; produces a different reply than the same question asked cold. Earlier messages provide context that shapes what the model says next, which is why a stale or contaminated conversation degrades an investigation.</p>
+    </div>
+    <div class="why-card pro">
+      <h4>The system prompt is a control layer</h4>
+      <p>The system prompt sets the model's instructions, role and behavioural boundaries before the user interacts with it. Change &ldquo;you are a friendly assistant&rdquo; to &ldquo;you are a security reviewer reporting evidence only&rdquo; and the same user prompt produces a materially different analysis.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Boundaries are part of the design, not an afterthought:</strong> when a request carries harmful intent, the model should recognise it and respond within its safety boundaries. In a security investigation the same principle applies structurally &mdash; the agent's permitted targets, tools and actions are defined <em>before</em> the work starts, not negotiated while it runs.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A student runs the same prompt twice against the same file and receives two different vulnerability lists. What is the correct reading?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A different answer is not evidence that the model learned from the first run — within one conversation, earlier messages supply context, but sampling alone already makes identical prompts diverge.">The model learned from the first response and changed its mind</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Generation is a prediction over patterns, and it is not deterministic: the same prompt can produce different responses. That is why you record the prompt, model and settings with every finding, and why running the same review more than once is a coverage technique." data-bad="">Output is not deterministic, so the run conditions must be recorded and repeated runs are a coverage technique</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Neither list has been verified yet. Variation between the two says nothing about which one is grounded in the code.">The second list is the accurate one because it had more time to reason</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tokens" class="section" data-track="tokens">
+  <h2 class="section-title">Key Takeaway 2: Code Is Data Too</h2>
+  <p class="section-lead">An LLM works by processing information as tokens and patterns: <strong>text &rarr; tokens &rarr; patterns &rarr; prediction</strong>. Code, execution traces and other technical artefacts are also text, so they can be analysed the same way &mdash; within limits the deck makes explicit.</p>
+
+  <div class="flow-grid">
+    <div class="flow-node">Text</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Tokens</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Patterns</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Prediction</div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Artefact</th><th>Signal available to the model</th><th>Difficulty</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Mainstream source code</strong> (Python, Java, C, JavaScript)</td><td>Huge volume of natural-language-like signal plus clean paired examples of code and explanation</td><td>Lowest &mdash; the patterns are well represented</td></tr>
+        <tr><td><strong>An obscure language with no syntax provided</strong></td><td>The model lacks token boundaries, keywords, structure and grammar hints</td><td>It must first <em>guess</em>: is this functional or object oriented? What is a function declaration? How are variables defined? It may hallucinate structure from other languages and default to something that looks like C, Python or Java style.</td></tr>
+        <tr><td><strong>Decompilation from machine code</strong></td><td>Less natural-language signal, less structured high-level patterns, fewer clean paired examples; machine code is low level and ambiguous</td><td>Much harder &mdash; requires reasoning about <em>semantics</em>, not just syntax</td></tr>
+        <tr><td><strong>Cryptographic and consensus proofs</strong></td><td>Not even verifiable by inspection of text alone; may require humans to validate manually</td><td>The hardest type of security question</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Hallucination</div>
+    <p><strong>Hallucination means the model produces something that sounds correct but is not grounded in reality.</strong> In vulnerability discovery that takes the shape of a reported weakness with no path through the code that reaches it &mdash; a plausible narrative supported by nothing. The lecture's reaction is not to abandon the tool but to <em>pause, think</em>, and reduce the room for invention.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Consequences for your own reviews:</strong> supply the syntax (or the language, the build files and a representative module) before asking for analysis; prefer artefacts with high signal; and treat an analysis of decompiled or proof-level material as a hypothesis generator, never as a conclusion.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You ask a model to review a binary's decompiled output for memory-safety bugs. Why is this a harder task than reviewing the original C source?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Volume makes a task expensive, not fundamentally harder. The deck's point is the quality of the signal, not the size of the file.">The decompiled file is usually much larger</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck lists less natural-language signal, fewer structured high-level patterns, fewer clean paired examples, and low-level ambiguity — so the task requires reasoning about semantics rather than just syntax." data-bad="">There is less natural-language and structural signal, fewer clean paired examples, and the code is low-level and ambiguous</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Decompilers can be imperfect, but the deck's argument is about the signal available to the model, not about tooling quality.">Decompilers cannot recover enough code to analyse at all</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-reasoning" class="section" data-track="reasoning">
+  <h2 class="section-title">Reasoning Models: The Aha Moment for Security</h2>
+  <p class="section-lead">A reasoning model does more internal processing before producing its answer. The lecture's example is the OpenAI o-series family, whose behaviour is described by four observable properties.</p>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>1. Internal scratchpad</h3>
+      <p>Some internal working happens before the model speaks.</p>
+    </div>
+    <div class="metric-card">
+      <h3>2. That work can be long</h3>
+      <p>Hundreds or thousands of tokens of internal reasoning.</p>
+    </div>
+    <div class="metric-card">
+      <h3>3. A visible indicator</h3>
+      <p>You may see a &ldquo;thinking&rdquo; indicator while it works.</p>
+    </div>
+    <div class="metric-card">
+      <h3>4. Controllable effort</h3>
+      <p>Effort is often selectable &mdash; low, medium, high in some variants.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The caveat the deck states explicitly:</strong> more reasoning can improve performance, but it does <em>not</em> guarantee a correct answer. Reasoning reduces the rate of shallow answers; it does not create ground truth.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The aha moment for security</div>
+    <p>After o3-class and R1-class reasoning models: <em>security has completely changed</em>; things that did not work before are now starting to work; and we start to find real vulnerabilities on a large scale. Read this as a shift in the <strong>economics of investigation</strong> &mdash; deep multi-step analysis became cheap enough to run across many targets &mdash; not as a claim that the output is verified.</p>
+  </div>
+
+  <div class="compare-tabs">
+    <div class="tab-content active">
+      <h3>Before reasoning models</h3>
+      <p>Single-pass pattern matching: the model answers immediately from the surface of the prompt. Useful for triage and for explaining a snippet you already suspect, weak at following a data flow across several files.</p>
+    </div>
+    <div class="tab-content">
+      <h3>With reasoning models</h3>
+      <p>The model can hold an intermediate chain of steps &mdash; trace a value from input to sink, hold several hypotheses at once, notice that hypothesis two contradicts the code it read in step one. The hidden reasoning is effort you can scale, and it is also a step you cannot audit directly.</p>
+    </div>
+  </div>
+
+  <div id="ix-reasoning"></div>
+</section>
+
+<section id="sec-agents" class="section" data-track="agents">
+  <h2 class="section-title">Terminal AI Agents: Tools, Evidence and Boundaries</h2>
+  <p class="section-lead">The deck's next step is blunt: <em>reasoning is not enough</em>. Code repositories can be huge &mdash; thousands of files, projects that depend on each other &mdash; while the context window is small.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The three facts that force a new architecture</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Repositories are enormous and interdependent</li>
+        <li>The context window cannot hold them</li>
+        <li>LLMs handle text in a relatively &ldquo;cheap&rdquo; way &mdash; that is their advantage</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What already exists to be driven</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Basic terminal tools: <code>grep</code>, <code>ls</code>, <code>cd</code>, <code>cat</code>, <code>top</code></li>
+        <li>Networking tools</li>
+        <li>Static analysis and dynamic analysis programs</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition &mdash; an AI agent</div>
+    <p>An AI agent can decide whether to answer directly or <strong>use a tool to gather more evidence</strong>. It emits a tool-call instruction, receives the tool result, and uses that result to decide what to do next or what to answer. The tool gathers evidence; the AI reasons over it.</p>
+  </div>
+
+  <div id="ix-agent-loop"></div>
+
+  <div class="arch-diagram">
+    <svg viewBox="0 0 720 300" role="img" aria-label="Diagram of an agent investigation loop: system prompt, user prompt, LLM, tool call, tool executor, tool result, then verification and report">
+      <rect x="18" y="22" width="150" height="62" rx="12" fill="rgba(5,150,105,0.10)" stroke="#059669" stroke-width="1.6"></rect>
+      <text x="93" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#047857">System prompt</text>
+      <text x="93" y="66" text-anchor="middle" font-size="10" fill="#565d75">role, scope, boundaries</text>
+
+      <rect x="18" y="112" width="150" height="62" rx="12" fill="rgba(37,99,235,0.10)" stroke="#2563eb" stroke-width="1.6"></rect>
+      <text x="93" y="137" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8">User prompt</text>
+      <text x="93" y="156" text-anchor="middle" font-size="10" fill="#565d75">question, evidence, target</text>
+
+      <rect x="222" y="66" width="150" height="66" rx="12" fill="rgba(124,58,237,0.10)" stroke="#7c3aed" stroke-width="1.6"></rect>
+      <text x="297" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#6d28d9">LLM</text>
+      <text x="297" y="111" text-anchor="middle" font-size="10" fill="#565d75">reasoning (hidden)</text>
+
+      <rect x="222" y="196" width="150" height="66" rx="12" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.6"></rect>
+      <text x="297" y="222" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">Tool executor</text>
+      <text x="297" y="241" text-anchor="middle" font-size="10" fill="#565d75">grep, cat, analyzer</text>
+
+      <rect x="428" y="196" width="150" height="66" rx="12" fill="rgba(148,163,184,0.16)" stroke="#94a3b8" stroke-width="1.6"></rect>
+      <text x="503" y="222" text-anchor="middle" font-size="12" font-weight="700" fill="#475569">Tool result</text>
+      <text x="503" y="241" text-anchor="middle" font-size="10" fill="#565d75">raw evidence, not a verdict</text>
+
+      <rect x="550" y="66" width="152" height="66" rx="12" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.6"></rect>
+      <text x="626" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#047857">Human check</text>
+      <text x="626" y="111" text-anchor="middle" font-size="10" fill="#565d75">reproduce, then report</text>
+
+      <path d="M168 143 L222 100" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ah)"></path>
+      <path d="M168 40 L195 40 L195 92 L222 92" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ah)"></path>
+      <path d="M297 132 L297 196" fill="none" stroke="#f59e0b" stroke-width="1.6" marker-end="url(#ah)"></path>
+      <path d="M372 229 L428 229" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#ah)"></path>
+      <path d="M503 196 L503 150 L372 112" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ah)"></path>
+      <path d="M372 88 L550 88" fill="none" stroke="#10b981" stroke-width="1.6" marker-end="url(#ah)"></path>
+      <text x="461" y="78" text-anchor="middle" font-size="10" fill="#047857">candidate finding</text>
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="#94a3b8"></path>
+        </marker>
+      </defs>
+    </svg>
+    <p class="arch-caption">The evidence loop: a tool call returns facts, the model reasons over those facts, and only a human closes the loop by reproducing the finding. The dashed arrow is the part that makes an agent useful and dangerous at once &mdash; it decides its own next tool call.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>From AI agent to security investigation:</strong> the first question is not &ldquo;can the AI do it?&rdquo; but <strong>&ldquo;is the AI authorised to act?&rdquo;</strong> An agent with terminal access is executing commands against real systems. The security boundary &mdash; which targets, which tools, which actions, what it may never touch &mdash; has to be enforced somewhere deliberate, and the deck's point is that this is a design decision, not a default.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Layer</th><th>What belongs there</th><th>Failure if it is missing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Authority</td><td>Written scope: in-scope systems, permitted techniques, time window, escalation path</td><td>The agent acts outside authorisation &mdash; a legal and ethical problem, not just a technical one</td></tr>
+        <tr><td>Boundary enforcement</td><td>Sandbox, read-only mounts, allow-listed commands, credential isolation</td><td>A prompt injection or a wrong command reaches production</td></tr>
+        <tr><td>Evidence trail</td><td>Every tool call, result and reasoning step retained for review</td><td>You cannot reproduce or defend a finding</td></tr>
+        <tr><td>Capability tiering</td><td>More cyber capability is granted only with more trust in the operator</td><td>Access to the most powerful tooling becomes the weakest link</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An agent is asked &ldquo;what files are in this folder?&rdquo;. It replies that it will need to run a listing command, emits a tool call, receives three file names, and then answers. What does this example actually demonstrate?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The listing came from the tool, not from the model's memory. That distinction is the entire point of the example.">The model already knew the answer and the tool call was decorative</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The tool gathers evidence and the AI uses that evidence to decide what to do next or what to answer — the model supplies the decision, the tool supplies the facts." data-bad="">The agent decides to gather evidence with a tool, then reasons over the returned result</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Running a command is an action, not proof that the agent verified anything. Verification is the human step that this example does not yet reach.">The agent has verified that the folder is safe to analyse</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-prompt" class="section" data-track="prompt">
+  <h2 class="section-title">Using AI to Find Vulnerabilities: Context, Evidence, Boundaries</h2>
+  <p class="section-lead">The deck's operating rules are three lines long, and every one of them is a design instruction: AI is powerful but it is not careful by default; you must give it <em>context, evidence and boundaries</em>; and never trust a finding until you verify it.</p>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Context</h4>
+      <p>Bad prompts produce shallow answers; partial code produces shallow analysis. Supply the language, the build files, the module boundary, the framework in use, and the contract the code is supposed to satisfy.</p>
+    </div>
+    <div class="why-card pro">
+      <h4>Evidence</h4>
+      <p>Ask for the tool output, the file and line, the execution trace, the minimal reproducible case. A claim with no artefact attached is a hypothesis, not a finding.</p>
+    </div>
+    <div class="why-card pro">
+      <h4>Boundaries</h4>
+      <p>State what the agent may read, run and change, and what it must never touch. Define the definition of done before the investigation starts.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Weak prompt</th><th>Why it fails</th><th>Stronger framing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;Find the vulnerabilities.&rdquo;</td><td>No artefact, no scope, no output contract; invites a confident list with no proof</td><td>&ldquo;Review <em>this module</em> for untrusted input reaching a query. For each candidate, give file, line, the data path and the input that would trigger it. Report &lsquo;none found&rsquo; if the path does not exist.&rdquo;</td></tr>
+        <tr><td>&ldquo;Is this code secure?&rdquo;</td><td>A yes/no question answers itself; you get a verdict instead of an analysis</td><td>&ldquo;List the assumptions this code makes about its inputs, then say which of those assumptions the caller violates.&rdquo;</td></tr>
+        <tr><td>&ldquo;Here are 40 000 lines. Find bugs.&rdquo;</td><td>The context window cannot hold it; the model samples the surface and stops</td><td>&ldquo;Start by listing the entry points, then analyse one entry point at a time and record what has already been checked.&rdquo;</td></tr>
+        <tr><td>&ldquo;You are a helpful assistant.&rdquo;</td><td>No role boundaries, so the model optimises for a satisfying answer</td><td>&ldquo;You are a security reviewer. Report only what the evidence supports; state explicitly when a claim is unverified.&rdquo;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-workflow"></div>
+  <script type="application/json" id="ix-workflow">
+  {
+    "title": "Order an AI-assisted review workflow",
+    "subtitle": "Click the steps to rebuild the order the Week 2 material implies.",
+    "steps": [
+      "Define the target, the scope and the authority in writing",
+      "Give the model the context it needs: language, build files, module boundary, expected contract",
+      "Enumerate the attack surface — entry points, trust boundaries, data flows",
+      "Run this week's toolbox: static analysis, fuzzing, manual review, LLM reading",
+      "Ask for concrete proof of each candidate finding, not a list",
+      "Run the review again with different phrasing, models and effort settings",
+      "Reproduce the finding yourself and trace the exact data path",
+      "Write up the evidence, the impact and the fix — and record what was checked and found clean"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Technique</th><th>What it contributes</th><th>Where AI fits</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Manual review</strong></td><td>Judgement about intent, contracts and design; notices the logic flaw no pattern covers</td><td>Prepares context, summarises a module, drafts the questions to ask of the code</td></tr>
+        <tr><td><strong>Static analysis</strong></td><td>Whole-codebase coverage, deterministic rules, reproducible results with file and line</td><td>Runs the analyser, triages and clusters its output, explains a rule's reasoning, proposes whether a warning is reachable</td></tr>
+        <tr><td><strong>Fuzzing</strong></td><td>Dynamic evidence: an input that actually crashes or misbehaves is proof, not a prediction</td><td>Writes and mutates harnesses and seed corpora, reads the crash dump, proposes the minimal case</td></tr>
+        <tr><td><strong>LLM code review</strong></td><td>Pattern recognition at volume, across languages and unfamiliar code, with no rule to write first</td><td>The reading itself &mdash; with the caveat that its output is a hypothesis until a human confirms it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which instruction would most improve a shallow analysis of a partial code listing?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Asking for confidence does not add information; an ungrounded answer can be stated with high confidence. The deck's fix for shallowness is context and evidence.">Ask the model to state its confidence level for each claim</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck states the cause directly: bad prompts produce shallow answers and partial code produces shallow analysis. Supplying the missing context — language, framework, surrounding module, expected contract — is what raises the depth of the analysis." data-bad="">Supply the missing context: the language, the framework, the surrounding module and the contract the code must satisfy</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Raising effort can help a reasoning model work longer, but effort cannot supply information the prompt never provided. Partial code still yields partial analysis.">Set the reasoning effort to high and re-run the same partial listing</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-failures" class="section" data-track="failures">
+  <h2 class="section-title">Failure Modes and How to Counter Them</h2>
+  <p class="section-lead">Three named failure modes each come with the deck's own countermeasures. Learn them as problem-and-response pairs: that is how they appear in an exam question.</p>
+
+  <div id="ix-failure"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Models can be lazy</h3>
+      <p><strong>Problem:</strong> the model stops at the first obvious issue. If it works for too long it is not user friendly &mdash; models were trained not to work for too long.</p>
+      <p><strong>What to do:</strong></p>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Summarise what has already been checked, in a file or a table</li>
+        <li>Explicitly ask for new and different issues</li>
+        <li>Ask for edge cases</li>
+        <li>Ask for non-obvious logic flaws</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Models can hallucinate</h3>
+      <p><strong>Problem:</strong> it reports fake vulnerabilities.</p>
+      <p><strong>What to do:</strong></p>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Ask for concrete proof</li>
+        <li>Ask for a minimal reproducible example</li>
+        <li>Ask for the exact execution trace</li>
+        <li>Ask it to generate a PoC (then verify that PoC yourself)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:1.25rem;">
+    <div class="col-card">
+      <h3>Models can miss things</h3>
+      <p><strong>Problem:</strong> it overlooks vulnerabilities.</p>
+      <p><strong>What to do:</strong></p>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Run multiple times</li>
+        <li>Change the phrasing</li>
+        <li>Use different models</li>
+        <li>Use different temperatures</li>
+        <li>Ask the model to critique its own answer</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Models are sensitive to framing and short on context</h3>
+      <p><strong>Problem:</strong> bad prompts give shallow answers; partial code gives shallow analysis.</p>
+      <p><strong>What to do:</strong></p>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Rewrite the prompt around the artefact and the contract</li>
+        <li>Give the module, not the fragment</li>
+        <li>Ask a narrower question with a defined output format</li>
+        <li>Split a large target into units you can actually supply</li>
+      </ul>
+    </div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-fail-match"></div>
+  <script type="application/json" id="ix-fail-match">
+  {
+    "title": "Match the failure mode to the countermeasure",
+    "subtitle": "Click a failure on the left, then its response on the right.",
+    "pairs": [
+      ["Lazy &mdash; stops at the first obvious issue", "Summarise what has been checked, then ask explicitly for new, different, edge-case and non-obvious logic flaws"],
+      ["Hallucinating &mdash; reports fake vulnerabilities", "Demand concrete proof: a minimal reproducible example and the exact execution trace"],
+      ["Missing things &mdash; overlooks vulnerabilities", "Run multiple times, change the phrasing, use different models and temperatures, ask for self-critique"],
+      ["Framing-sensitive &mdash; shallow answers", "Rewrite the prompt around the artefact, the contract and a defined output format"],
+      ["Context-starved &mdash; shallow analysis of partial code", "Supply the whole module, the language, the build files and the framework in use"],
+      ["Non-deterministic &mdash; two runs, two answers", "Record the prompt, model, temperature and effort with every finding so it can be reproduced"]
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>One sentence that covers the section:</strong> the countermeasures are not about making the model smarter &mdash; they are about making the <em>claim</em> checkable. Every technique above either forces the model to attach evidence, or forces the search to cover ground a single run would have skipped.
+  </div>
+</section>
+
+<section id="sec-verify" class="section" data-track="verify">
+  <h2 class="section-title">Human Verification: From Finding to Evidence</h2>
+  <p class="section-lead">The point the deck returns to twice: <em>never trust a finding until you verify it</em>. Verification is a procedure, not a feeling of confidence.</p>
+
+  <div data-ix="pipeline" data-ix-src="#ix-verify-pipe"></div>
+  <script type="application/json" id="ix-verify-pipe">
+  {
+    "title": "The verification pipeline for a single candidate finding",
+    "subtitle": "A candidate is not a vulnerability until it survives every gate in this chain.",
+    "nodes": [
+      { "label": "Candidate", "note": "The model's claim: a weakness, a location and a reason." },
+      { "label": "Locate", "note": "Open the file at the stated line. Confirm the code is what the model said it was." },
+      { "label": "Trace the data path", "note": "Follow the value from its source to the sink by hand. Every hop must exist in the code, not in the narrative." },
+      { "label": "Test the trigger", "note": "Construct the input in an authorised environment. A crash or observed misbehaviour is evidence; a description of one is not." },
+      { "label": "Minimise", "note": "Reduce to the smallest case that still demonstrates the issue, so someone else can reproduce it." },
+      { "label": "Assess impact", "note": "What does an attacker gain, under which preconditions, with what reachability? State the limits of your evidence." },
+      { "label": "Report", "note": "Finding, evidence, reproduction steps, impact, fix — plus what was checked and found clean." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Verdict</th><th>What you have</th><th>What you do next</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Confirmed</strong></td><td>A reachable path and a demonstrated effect</td><td>Minimise, assess impact, report with evidence and a proposed fix</td></tr>
+        <tr><td><strong>Refuted</strong></td><td>The path does not reach the sink, or the input cannot be attacker-controlled</td><td>Record it as refuted with the reason &mdash; a refuted candidate is a result, and it prevents the same false lead being chased twice</td></tr>
+        <tr><td><strong>Unresolved</strong></td><td>The code is ambiguous, the dependency is unavailable, or you lack authorisation to test</td><td>State the limit explicitly and hand it to a human with the context needed to decide</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The AI solved it &mdash; but did we learn anything?</strong> The deck asks this question because an investigation has value beyond its answer. What you want to see in the transcript is the process: <em>failures &rarr; adaptation &rarr; partial success &rarr; verification</em>. That visible chain is what makes the result auditable, teachable and repeatable &mdash; and it is also what distinguishes investigation from asking a machine for a lucky guess.
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Responsible use</div>
+    <p>Every example in this unit is conceptual and standards-based. Analysis stays inside systems you are authorised to test, findings are reported through the agreed channel, and no third-party system is ever targeted. Capability and trust are matched: the more powerful the tooling, the more explicit the authorisation must be.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; designing an investigation, not making a request.</strong> Scenario: you are handed a small web service and asked to use AI to find vulnerabilities, within an authorised lab environment.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Set the boundaries first.</strong> Written scope: this service, in this lab, read-only for the agent, no outbound network. That is the answer to &ldquo;is the AI authorised to act?&rdquo;, and it is decided before any prompt is written.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Build the context package.</strong> Language and framework, build files, the module map, the routes that accept untrusted input, and the contract the code is meant to satisfy. Partial code produces shallow analysis, so the unit of work is one entry point with its callees &mdash; not the whole repository.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Combine the techniques.</strong> Static analysis gives deterministic coverage and file-and-line output; the LLM triages and clusters that output and explains which warnings are reachable; manual review judges intent and design; fuzzing supplies dynamic proof for the candidates that are reachable. No single technique is asked to do the whole job.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Prompt for evidence, not verdicts.</strong> &ldquo;For each candidate give file, line, the data path from source to sink, and the input that would trigger it. If the path does not exist, say so.&rdquo; This is the countermeasure to hallucination: a fake finding cannot survive the demand for a trace.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Cover the gaps a single run leaves.</strong> Run again with different phrasing, a different model and a different temperature; ask for edge cases and non-obvious logic flaws after summarising what has already been checked. Non-determinism is turned from a defect into a coverage technique.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Verify by hand, then report.</strong> Open each file, trace the data path yourself, construct the trigger in the lab, minimise it, state the impact and its preconditions, and record what was refuted along the way. The report is the evidence chain, not the model's list.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; triaging one AI report.</strong> A model returns: &ldquo;Critical SQL injection in the user search function; user input is concatenated into the query string.&rdquo;</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Locate.</strong> Open the file at the stated line. If the code there is a parameterised query built with bound placeholders, the finding is already refuted &mdash; record the reason and move on. Most false positives die at this step.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Trace the data path.</strong> Is the value that reaches that line actually attacker-controlled? Follow it back through validation, encoding, the framework's own escaping and the caller. A path that breaks anywhere in that chain refutes the candidate.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Test the trigger.</strong> In the authorised lab instance, supply the input and observe. A returned error, a changed result set or a crash is evidence. A description of what &ldquo;would&rdquo; happen is not.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Minimise.</strong> Reduce to the smallest input that still shows the behaviour, so a reviewer can reproduce it in seconds. This is also the test of whether you understood the mechanism rather than the symptom.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Check the inverse.</strong> Ask the model to argue why the finding is <em>wrong</em>: &ldquo;give the strongest reason this input cannot reach the sink.&rdquo; A model asked to critique its own answer often finds the framework control it missed the first time &mdash; and sometimes fails to, which raises your confidence in the confirmed case.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Write the verdict.</strong> One of three outcomes &mdash; confirmed (evidence, impact, fix), refuted (the reason, so nobody re-chases it), or unresolved (the precise limit, handed to a human). Any of the three is a professional result; only an unverified claim is not.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Tutorial exercise &mdash; working backwards from an artefact you did not build.</strong> The deck introduces the mobile pipeline as the lab's shape: <em>Kotlin / Java</em> human-readable code is built and compiled into an <em>APK</em>, which is what you receive; you then install and run it. Your task is to work backwards &mdash; understand, investigate, verify.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name what you have and what you lost.</strong> You hold the compiled package, not the source: symbol names may be stripped or obfuscated, and the manifest, resources and native libraries are part of the artefact. Job one is to reconstruct enough structure to ask sensible questions.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Set the boundary before touching it.</strong> Analysis of an app you are authorised to assess, in an isolated environment, with no interaction with the app's live backend. This is the same authorisation question as for any agent with tools &mdash; capability matched by trust.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Choose the right technique for each layer.</strong> Manifest and permission review is structural and deterministic, so it is read directly. Decompiled bytecode is where AI-assisted reading is weakest &mdash; less natural-language signal, fewer clean paired examples, low-level and ambiguous &mdash; so treat any AI claim about decompiled code as a hypothesis to be checked against the code itself.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Ask for structure, then for suspicion.</strong> First: &ldquo;list the entry points, exported components and the trust boundary between app and backend.&rdquo; Only then: &ldquo;which of these handle untrusted data, and what would a data path from input to a sensitive sink look like?&rdquo; Splitting the two keeps the model grounded in the artefact you supplied.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Verify dynamically.</strong> Observe the app running in the isolated environment and let behaviour &mdash; not the narrative &mdash; decide. Failures, adaptations and partial successes are the raw material of the investigation log: <em>failures &rarr; adaptation &rarr; partial success &rarr; verification</em>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Report the process as well as the finding.</strong> Because the same week's lecture asks whether we learned anything when the AI solved it, the write-up should show what was tried, what failed, what the tool reported, and which step a human confirmed. That is the difference between an answer and an investigation.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

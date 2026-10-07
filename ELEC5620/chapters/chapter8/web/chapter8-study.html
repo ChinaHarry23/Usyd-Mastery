@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 8: Agile Model Practice &mdash; ELEC5620</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter8-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 study guide for ELEC5620: agile values and Scrum in modelling terms, lightweight and iterative modelling, executable models, model testing, code generation, the model-code round trip, and how package and deployment diagrams carry a Sprint.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 8: Agile Model Practice &mdash; ELEC5620">
+<meta property="og:description" content="Week 8 study guide for ELEC5620: agile values and Scrum in modelling terms, lightweight and iterative modelling, executable models, model testing, code generation, and the model-code round trip.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F501;</span>
+      <h2>Week 8</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-agile" class="nav-link" data-section="agile">From Waterfall to Agile</a></li>
+    <li><a href="#sec-values" class="nav-link" data-section="values">Agile Values &amp; Scrum</a></li>
+    <li><a href="#sec-modelling" class="nav-link" data-section="modelling">Modelling Without Ceremony</a></li>
+    <li><a href="#sec-executable" class="nav-link" data-section="executable">Executable Models</a></li>
+    <li><a href="#sec-toolchain" class="nav-link" data-section="toolchain">Model-Driven Toolchain</a></li>
+    <li><a href="#sec-roundtrip" class="nav-link" data-section="roundtrip">Model&ndash;Code Round Trip</a></li>
+    <li><a href="#sec-diagrams" class="nav-link" data-section="diagrams">Modelling a Sprint</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter8-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter8-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 8 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">ELEC5620 &mdash; Model-Based Software Engineering</p>
+    <h1>Week 8: Agile Model Practice</h1>
+    <p class="hero-subtitle">Modelling without the ceremony: agile values read as modelling rules, lightweight and iterative models, executable and testable models, code generation, and keeping the model alive across the iterations that follow.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F501;</span>
+        <span>Waterfall silos &rarr; cross-functional Sprints</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2702;</span>
+        <span>Model just enough to answer the question</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2699;</span>
+        <span>Executable models and generated code</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F501;</span>
+        <span>Model and code stay in step</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter8-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter8-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 8 lecture deck (<em>Agile Software Process Model Practice</em>) and the Week 8 tutorial on package and deployment diagrams</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-agile" class="section" data-track="agile">
+  <h2 class="section-title">From Waterfall to Agile</h2>
+  <p class="section-lead">The deck starts where the whole unit started: with the process the models were supposed to serve. Waterfall organises work by <em>stage</em>; agile organises it by <em>iteration</em>. Everything else in Week 8 follows from that change of axis.</p>
+
+  <div class="concept-box">
+    <p><strong>The waterfall model, as the lecture describes it:</strong> development activities are divided into stages, each stage is owned by a separate team of specialists, and the work is passed from team to team using <em>documents</em>. At the end of all the stages you have a software product ready to ship &mdash; and each specialist team is then assigned to a new product.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Strengths the waterfall model does have</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Clear stages and explicit handoffs</li>
+        <li>A document trail between specialist teams</li>
+        <li>Easy to plan once the requirements stop moving</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Why the deck moves on</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Rapid-fire change makes a frozen plan expensive</li>
+        <li>Handoffs lose information that no document recovered</li>
+        <li>A large feature set can raise the customer's cost rather than lower it</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="ix-model-shift"></div>
+
+  <div class="callout">
+    <strong>Say this instead of &ldquo;waterfall is wrong&rdquo;:</strong> waterfall optimises for a stable specification and specialist teams; agile optimises for change and for a cross-functional team. The week's argument is that the second assumption is the one that holds in a market where new technology, new players and new requirements keep arriving &mdash; which is why the lecture answers its own question with &ldquo;small is beautiful&rdquo;.
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-agile-timeline"></div>
+  <script type="application/json" id="ix-agile-timeline">
+  {
+    "title": "How the process arrived here",
+    "subtitle": "The milestones the Week 8 deck and tutorial name, plus the two dates that place this unit's own materials in the story.",
+    "events": [
+      { "label": "1970", "title": "Waterfall: development activities through time", "detail": "Stages, specialist teams and document handoffs. The lecture's baseline: the work is divided into stages and passed from one team to the next." },
+      { "label": "1940s–1980s", "title": "Iterative and incremental development", "detail": "The general idea the lecture credits agile with: produce working products in stages, so the result is a growing set of completed and working software." },
+      { "label": "Early 1990s", "title": "Scrum", "detail": "The lecture dates Scrum to the early 1990s and calls its structure very simple: three roles, three lists, three meetings. It is less extreme than some other methodologies." },
+      { "label": "2001", "title": "The Agile Manifesto", "detail": "Agile becomes a named framework with a set of values: keep things small, deliver partially-completed software frequently, talk to the customer often, write more code than documentation, learn together as a team." },
+      { "label": "Sprint", "title": "A 2 to 4 week timebox", "detail": "The iteration becomes the unit of planning: iteration planning at the start, development work in the middle, iteration review at the end, and a retrospective after that." },
+      { "label": "Now", "title": "Agents join the team", "detail": "The deck's closing section adds review, evaluation, integration and rework capacity to the forecast, and asks the team to independently check generated code and tests." }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-waterfall"></div>
+  <script type="application/json" id="ix-race-waterfall">
+  {
+    "title": "Waterfall — where the process weight sits",
+    "subtitle": "Illustrative 0–5 weightings derived from the lecture's description of the model. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Number of distinct stages", "value": 5, "display": "many, strictly ordered" },
+      { "name": "Team handoffs per feature", "value": 5, "display": "one per stage boundary" },
+      { "name": "Documentation as the handoff medium", "value": 5, "display": "the default channel" },
+      { "name": "Frequency of customer feedback", "value": 1, "display": "mostly at the end" },
+      { "name": "Cost of a late requirement change", "value": 5, "display": "very high" }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-agile"></div>
+  <script type="application/json" id="ix-race-agile">
+  {
+    "title": "Agile — where the process weight sits",
+    "subtitle": "Same five dimensions, same 0–5 scale. The weight moves from stages and documents to iterations and feedback.",
+    "max": 5,
+    "rows": [
+      { "name": "Number of distinct stages", "value": 1, "display": "one loop, repeated" },
+      { "name": "Team handoffs per feature", "value": 1, "display": "inside one team" },
+      { "name": "Documentation as the handoff medium", "value": 2, "display": "kept, but not the only channel" },
+      { "name": "Frequency of customer feedback", "value": 5, "display": "every iteration" },
+      { "name": "Cost of a late requirement change", "value": 2, "display": "absorbed as a new backlog item" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">The Week 8 lecture lists agile practices and then says &ldquo;will you use every Agile practice? Maybe not&hellip;&rdquo;. What is required instead?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The practices are explicitly described as a menu, not a checklist. The deck asks what is required and answers with values.">Every practice on the list, because Scrum mandates them</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The practices are not all required &mdash; the lecture's answer is agile values, which is why &ldquo;don't do Agile, be Agile&rdquo; is the framing." data-bad="">Agile values &mdash; the practices are a menu, not a checklist</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The lecture says documentation is still important in an agile project; what changes is that it must not be the only kind of communication.">Nothing: if you run iterations you are agile by definition</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-values" class="section" data-track="values">
+  <h2 class="section-title">Agile Values and the Scrum Frame</h2>
+  <p class="section-lead">Week 8's actual subject is models, but the deck spends its first half establishing the process those models live inside. Read every Scrum element below as a <em>constraint on your modelling</em>.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definitions</div>
+    <p><strong>Agile development</strong> is <em>adaptive</em> (teams and process stay flexible under rapid-fire change), <em>iterative/incremental</em> (working products in stages, a growing set of completed and working software) and <em>people-oriented</em> (team organisation and process support good people, the most important ingredient to project success).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>What the week says</th><th>Week 2&ndash;7 idea it changes</th><th>What you actually do about it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Keep things small</td><td>Whole-system models drawn before any code</td><td>Model one feature or one iteration's slice at a time</td></tr>
+        <tr><td>Deliver partially-completed software frequently</td><td>A single design that must be complete before implementation</td><td>Keep only the parts of the design the next increment uses</td></tr>
+        <tr><td>Talk to the customer often</td><td>Requirements captured once and frozen</td><td>Elaborate a small set of functional requirements per iteration</td></tr>
+        <tr><td>Write more code than documentation</td><td>Models as the deliverable</td><td>Model where the model answers a question no one can answer by reading code</td></tr>
+        <tr><td>Everyone on the team learns together</td><td>Handoff between specialist teams</td><td>Make the model legible to the whole team, not only to modellers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Three roles</h3>
+      <p><strong>Product Owner</strong> owns the rate of investment, is available for the whole product development period, gets answers to requirements questions, talks with customers about priorities and keeps the Product Backlog current. <strong>Scrum Master</strong> is the rules guardian, coach, remover of impediments and referee. <strong>Team Member</strong> does the work: a normal team is 5 to 9 people in a single location.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Three lists</h3>
+      <p><strong>Product Backlog</strong> &mdash; every feature and sub-feature known to be needed, in priority order, open to new items at any time. <strong>Sprint Backlog</strong> &mdash; the tasks the team committed to for this iteration. <strong>Impediments List</strong> &mdash; the obstacles surfaced by the Daily Scrum.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Three meetings</h3>
+      <p><strong>Planning</strong> (release and Sprint) at the start. <strong>Daily Scrum</strong> every day: 15 minutes, no longer, everyone speaks, and no problem solving in the meeting. <strong>Sprint Review</strong> at the end, followed by a retrospective that is &ldquo;like a post-mortem, but it isn't dead yet&rdquo;.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Estimation rule</h3>
+      <p>Managers and customers set priority with the Product Owner; the <em>team</em> estimates size and effort. And the rule that follows: even if managers and customers do not like the estimates, they are not allowed to change them.</p>
+    </div>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>&#x2705; Still important in an agile project</h4>
+      <ul>
+        <li><strong>Documentation</strong> &mdash; but if it is the only kind of communication in your project, it is not good.</li>
+        <li><strong>A development plan</strong> &mdash; in a different format: the schedule is built from iterations, and each iteration lets the team incorporate what it learned instead of following a non-adaptive plan.</li>
+        <li><strong>Real working code</strong> &mdash; more valuable than documents because it is less ambiguous; documents are easy to leave something out of and easy to misinterpret.</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>&#x26A0;&#xFE0F; The failure modes to name</h4>
+      <ul>
+        <li>&ldquo;Development in iterations&rdquo; without the rest is not agile: the deck's version is <em>don't do Agile, be Agile</em>.</li>
+        <li>A document that nobody reads. If the artefact is a PBI at all, it has to contribute value &mdash; otherwise leave it out &ldquo;because you are Agile&rdquo;.</li>
+        <li>Iteration estimates that are too pessimistic: the burndown chart reaches zero well before the end of the iteration.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A Scrum team finishes Sprint Planning and management then asks for one extra screen to be added during the Sprint. What does the Week 8 material say should happen?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is exactly what the lecture rules out: management should not add new work product outputs to the Sprint.">It is added to the Sprint, since priorities can change at any time</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. New items go to the Product Backlog; if they are important enough they get done in the next 2&ndash;4 week iteration." data-bad="">It goes on the Product Backlog, not into the running Sprint</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Managers and customers set priority, but the team owns estimates &mdash; this is not an estimation question.">The Product Owner re-estimates the whole backlog first</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-modelling" class="section" data-track="modelling">
+  <h2 class="section-title">Modelling Without the Ceremony</h2>
+  <p class="section-lead">This is the pivot of the week. An agile project still models; what it refuses is the model that exists only to be a document. The test is not &ldquo;is this diagram complete?&rdquo; but &ldquo;which question does this diagram answer, and who is going to read it?&rdquo;</p>
+
+  <div class="def-box">
+    <div class="def-label">Working rule</div>
+    <p><strong>Lightweight modelling:</strong> produce the smallest model that answers the question in front of the team, at the moment it is asked, and expect to change it in the next iteration. A model is <em>kept</em> when it earns its place &mdash; as a PBI whose value is real, as a shared understanding the code cannot express, or as an input a tool consumes. A model that nobody reads is left out.</p>
+  </div>
+
+  <div id="ix-live-model"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question the team is asking</th><th>Smallest model that answers it</th><th>What would be ceremony</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Who uses this, and to what end?</td><td>One user story, or one use case with its main scenario</td><td>A full requirements specification written before the iteration starts</td></tr>
+        <tr><td>What are we building in this increment?</td><td>Product Backlog items in priority order, with the team's effort estimates</td><td>A document that restates the backlog and that nobody reads</td></tr>
+        <tr><td>Is the structure still sound?</td><td>The two or three classes the increment touches, with their associations and multiplicities</td><td>Re-drawing every class in the system for each Sprint</td></tr>
+        <tr><td>Does the ordering logic still hold?</td><td>One state machine for the object whose lifecycle changed</td><td>An activity diagram for behaviour that has not changed since Week 6</td></tr>
+        <tr><td>Can this be deployed?</td><td>One deployment diagram with the nodes the increment actually uses</td><td>A deployment diagram listing hardware nobody will provision</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The three agile modelling tests.</strong> (1) <em>Purpose</em> &mdash; name the decision this model changes; if there is none, do not draw it. (2) <em>Audience</em> &mdash; name who reads it; if the answer is &ldquo;nobody&rdquo;, the lecture's own advice is to leave it out. (3) <em>Lifetime</em> &mdash; say when it will be updated or deleted. A model with no answer to the third test becomes the stale artefact that agile development is accused of producing.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; trimming a model to fit one Sprint.</strong> The increment is: <em>&ldquo;Registered users can manage their notification preferences&rdquo;</em>, from the Week 8 tutorial's user-story exercise. Apply the three tests to each candidate model and keep only what survives.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Write the story first, at the size of an increment.</strong> &ldquo;As a registered user, I want to manage my notification preferences so that I can control how and when I receive updates.&rdquo; The story is a PBI: it is a customer feature, small enough for one Sprint, and its estimate comes from the team.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Class model &mdash; purpose test.</strong> The question is whether a preference belongs to the user or to a separate <code>Subscription</code>. That decision changes the database and the API, so the model earns its place: one class box with <code>User</code>, one with <code>NotificationPreference</code>, an association with multiplicity <code>1</code> to <code>0..*</code>, and the invariant that a preference is unique per user and channel. Everything else in the class diagram is ceremony for this Sprint.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>State machine &mdash; purpose test.</strong> A preference is <em>default</em>, <em>customised</em>, or <em>muted</em>, and only the transition from default to customised requires an event. That is three states and four transitions: small, and it settles the question &ldquo;what happens when a user clears every channel?&rdquo; which the story does not answer on its own.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Audience and lifetime tests.</strong> Both models are read by the whole team during the Sprint, and both are updated in the same change as the code. A use case document restating the user story, and a sequence diagram for the unchanged login flow, fail both tests: no reader, and no maintenance plan.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say what you deliberately left out.</strong> The deployment view, the package structure of unrelated subsystems, and the activity diagram for account creation. The retrospective can ask whether a missing model caused rework; the answer decides what to keep next Sprint, which is the iterative part of iterative modelling.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which artefact would agile modelling keep, according to the Week 8 material?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A design document is a possible PBI, but the lecture's test applies: if it is a document nobody reads, leave it out.">A design document written for completeness and filed for the unit's records</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A model kept because a tool consumes it or because it settles a design question has a reader and a purpose; both are the agile tests." data-bad="">A class model the code generator consumes and the team updates with each change</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The lecture allows a GUI prototype as a PBI &ldquo;certainly&rdquo;, but plain restatement of what the code already says fails the purpose and audience tests.">A diagram that restates the current source code in boxes</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-executable" class="section" data-track="executable">
+  <h2 class="section-title">Executable and Testable Models</h2>
+  <p class="section-lead">Agile's preference for working software over documents (with the lecture's caveat that documents still matter) has a direct modelling consequence: a model that can be executed or checked is worth more than one that can only be read.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>An <strong>executable model</strong> is precise enough that a tool can run it &mdash; state machines with triggers, guards and effects; operations with pre- and post-conditions; OCL invariants. A <strong>testable model</strong> is one whose claims are attached to checks that fail when the claim is broken. Both replace a prose promise with something that produces evidence.</p>
+  </div>
+
+  <div id="ix-state-machine"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Model element</th><th>Executable reading</th><th>Test that fails when it is wrong</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>State and transition</td><td>Trigger, guard and effect are all present, so the transition can fire</td><td>Fire the trigger in the source state and assert the target state</td></tr>
+        <tr><td>Guard</td><td>A boolean over the object's attributes</td><td>Fire the trigger with the guard false and assert nothing happens</td></tr>
+        <tr><td>Association multiplicity</td><td><code>1</code> and <code>0..*</code> are cardinality constraints</td><td>Insert a second child where the model says one, and expect rejection</td></tr>
+        <tr><td>Invariant (OCL)</td><td>A predicate evaluated after every operation</td><td>Construct an object that violates it and expect the check to fail</td></tr>
+        <tr><td>Pre- and post-condition</td><td>Contract on an operation</td><td>Call the operation out of contract and assert the error, not the result</td></tr>
+        <tr><td>Acceptance test</td><td>A scenario the requirements already named</td><td>Run the scenario end to end and compare with the expected outcome</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why the lecture's requirements advice matters here.</strong> The Week 8 deck says that for some key requirements you should create acceptance tests <em>at the same time as you write the requirements</em>. In modelling terms that means the requirement arrives with its test, the test constrains the model, and the model stops being an opinion: a Sprint is &ldquo;done&rdquo; only when the model's claims and the acceptance tests agree.
+  </div>
+
+  <div class="callout">
+    <strong>The trade this section is asking you to make:</strong> express a constraint in the model only when the model is the cheaper place to settle it. A guard that stops an illegal transition is cheap in the model and expensive to rediscover in code; a validation that one line of code answers is the reverse.
+  </div>
+</section>
+
+<section id="sec-toolchain" class="section" data-track="toolchain">
+  <h2 class="section-title">The Model-Driven Toolchain</h2>
+  <p class="section-lead">Agile modelling is not done by hand in a drawing tool and then forgotten. The model sits in a chain of automated steps, and every step in that chain is where an iteration can be kept honest.</p>
+
+  <div data-ix="pipeline" data-ix-src="#ix-mde-pipeline"></div>
+  <script type="application/json" id="ix-mde-pipeline">
+  {
+    "title": "From a Sprint's model to a deployed increment",
+    "subtitle": "Each stage is a place the model can be checked; the Week 8 deck names the management layer (Jira) and the review step explicitly.",
+    "nodes": [
+      { "label": "Model the increment", "note": "The smallest model that answers this Sprint's question: a class slice, a state machine, a package or deployment view." },
+      { "label": "Model repository", "note": "Namespaces and packages hold the model; the repository, not a folder of files, is the unit that is versioned." },
+      { "label": "Validate the model", "note": "Run the executable parts: guards fire only when their conditions hold, OCL invariants are evaluated, multiplicities reject bad instances." },
+      { "label": "Generate", "note": "Transform the model into code: class skeletons, state machine dispatch, schema. The transformation is repeatable, so regeneration is cheap." },
+      { "label": "Build and test", "note": "Compile the generated code and run the tests derived from the model and the acceptance criteria." },
+      { "label": "Deploy and observe", "note": "Ship the increment and watch it in the environment the deployment diagram describes." },
+      { "label": "Feed back", "note": "Runtime evidence and review findings become new Product Backlog items — or a change to the model, which restarts the chain." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>What must be true for the next stage to work</th><th>Cost of skipping it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Model</td><td>The model answers one named question and is legible to the whole team</td><td>The generator emits code nobody asked for</td></tr>
+        <tr><td>Repository</td><td>Every element has one home namespace; two packages never share a name</td><td>Duplicated elements and silently diverging copies</td></tr>
+        <tr><td>Validate</td><td>Guards, invariants and multiplicities are all expressed, not implied</td><td>The defect surfaces as a runtime failure after the Sprint review</td></tr>
+        <tr><td>Generate</td><td>The transformation is repeatable and its output is not hand-edited without a marker</td><td>The next regeneration overwrites somebody's fix</td></tr>
+        <tr><td>Test</td><td>Each acceptance criterion has a test that can fail</td><td>&ldquo;Done&rdquo; means &ldquo;the demo worked once&rdquo;</td></tr>
+        <tr><td>Feed back</td><td>Evidence is specific enough to become a backlog item</td><td>The retrospective produces opinions instead of work</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Jira as the management layer.</strong> The Week 8 tutorial and lecture both point at Jira Software for running Scrum on the project: create the project, start from the Scrum template, keep the backlog and the board, and track the Sprint with a burndown chart. The model repository holds the design; Jira holds the commitments, the estimates and the evidence that the increment is finished. An <strong>epic</strong>, a <strong>story</strong> and a <strong>theme</strong> are the three levels at which that work is named, and a user story is the unit of work: an informal, general explanation of a software feature, simpler than a use case, written from the user's perspective as <em>&ldquo;As a &lt;role&gt;, I want to &lt;goal&gt; so that &lt;benefit&gt;&rdquo;</em>.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team regenerates code from the model and loses a fix that a developer made by hand last Sprint. Which stage of the toolchain failed?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Validation passing is exactly why the loss was silent: the model was consistent, and the hand edit was never part of it.">Validate &mdash; the model should have rejected the inconsistency</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. A repeatable transformation assumes generated output is not hand-edited without a marker; either the edit moves into the model or the region is marked protected and the round trip is redefined." data-bad="">Generate &mdash; the transformation assumed output was not hand-edited</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Deployment happened after the loss. The failure is in how model and code were kept in step, which is the generation contract.">Deploy &mdash; the increment was shipped before the merge</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-roundtrip" class="section" data-track="roundtrip">
+  <h2 class="section-title">The Model&ndash;Code Round Trip</h2>
+  <p class="section-lead">Generation is only half of the loop. The other half is what happens when the code teaches you something the model did not know &mdash; which, in an iterative process, is most Sprints.</p>
+
+  <div id="ix-roundtrip"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Forward: model &rarr; code</h3>
+      <p>The model is the source. A transformation emits class skeletons, state dispatch, schema and configuration. Because the transformation is repeatable, regenerating after a model change is cheap &mdash; that cheapness is what makes modelling affordable inside a two-week Sprint.</p>
+    </div>
+    <div class="col-card">
+      <h3>Reverse: code &rarr; model</h3>
+      <p>Implementation always discovers something: an edge case, a constraint the model missed, an operation that turned out to belong elsewhere. The reverse step is <em>deliberate</em> &mdash; the learning is folded back into the model in the same change, not left in the code as a private truth.</p>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The consistency rule that makes the loop safe</h3>
+    <p>A round trip is only usable when three things are true of it: the transformation is <em>deterministic</em> (same model, same output), the model is the <em>single source</em> for everything the generator owns, and every manual edit is either <em>moved into the model</em> or placed in a region the generator is told to leave alone. Break any of the three and the loop becomes a race between the tool and the developer.</p>
+  </div>
+
+  <div class="callout">
+    <strong>What the round trip buys an agile team:</strong> the same two things agile already asks for. <em>Faster feedback</em> &mdash; a model that generates and runs can be corrected in minutes, where a document is corrected in a meeting. And <em>one shared truth</em> &mdash; the lecture's reason for preferring working code is that it is less ambiguous than a document; a model that is kept in step with the code inherits that property instead of competing with it.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Tutorial exercise &mdash; planning one Sprint in Jira and in the model.</strong> The Sprint goal is: <em>&ldquo;A customer can track an order from the store's order-processing screen.&rdquo;</em> Work the Week 8 tutorial's backlog and board material together with the model repository.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Write the story, then split it.</strong> &ldquo;As a customer, I want to enter my tracking serial number and see the current shipping status so that I know when to expect the delivery.&rdquo; Split into PBIs: the tracking lookup, the status display, and the error case for an unknown serial number. Each PBI gets an effort estimate <em>from the team</em>, and the priorities are set by the Product Owner with the customer.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Sort the Sprint with MoSCoW.</strong> <em>Must:</em> serial-number lookup and status display. <em>Should:</em> the unknown-serial message. <em>Could:</em> a delivery estimate in days. <em>Would like:</em> a map of the courier's progress. Only the must-haves and should-haves are forecast into the 2&ndash;4 week Sprint; the rest stay on the Product Backlog.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Model only the must-haves.</strong> A package view with <code>Track Order</code>, <code>Order Processing</code> and <code>Shipping</code>, and the dependencies the tutorial's Order Processing subsystem needs: <code>&lt;&lt;access&gt;&gt;</code> between Track Order and Order Processing in both directions, <code>&lt;&lt;import&gt;&gt;</code> from Shipping into Track Order, and the Track Order dependency on the UI Framework.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Add the executable part.</strong> The tracking request has states &mdash; <em>submitted</em>, <em>looking up</em>, <em>found</em>, <em>not found</em> &mdash; with a guard on &ldquo;serial number is well formed&rdquo;. That machine is what the acceptance test drives: a well-formed serial number reaches <em>found</em> or <em>not found</em>, and a malformed one never leaves <em>submitted</em>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Track it, then reflect.</strong> Draw the Sprint on the board, watch the burndown each day, and hold the 15-minute Daily Scrum for obstacles only. If the burndown goes <em>up</em> because a PBI was under-estimated, acknowledge it early rather than padding the next estimate &mdash; and if the model was the thing that was wrong, that is a round-trip correction, not a code-only fix.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Where does a discovery made while coding belong in an agile model-driven process?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the round trip broken. The model then stops being the source, and the next regeneration reintroduces the defect you just fixed.">In the code only &mdash; the model was agreed at planning time</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The learning is folded back into the model in the same change, which is what keeps the model a single source rather than a historical sketch." data-bad="">Back into the model, in the same change as the code fix</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A retrospective can trigger the correction, but the correction itself has to reach the model or the next generation undoes it.">Into the retrospective notes, for the next release</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-diagrams" class="section" data-track="diagrams">
+  <h2 class="section-title">Modelling a Sprint: Packages and Deployment</h2>
+  <p class="section-lead">The Week 8 tutorial puts two diagram types in front of you. Both are organisational rather than algorithmic, which is exactly why they survive an iterative process: they are cheap to redraw and they answer questions the code cannot.</p>
+
+  <div class="def-box">
+    <div class="def-label">Package diagram</div>
+    <p>Package diagrams structure high-level system elements to <em>simplify complex class diagrams</em> by grouping classes. Packages are drawn as file folders and can be used on any UML diagram; a package is a collection of logically related UML elements and represents a <strong>namespace</strong>. Names must be unique within a system, but classes inside different packages may share a name. The atomic modules of nested packages are usually class diagrams.</p>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-package-map"></div>
+  <script type="application/json" id="ix-package-map">
+  {
+    "title": "Order subsystem — read the notation",
+    "subtitle": "Click each marker: every one is a notation element this week expects you to draw and to justify.",
+    "svg": "<svg viewBox=\"0 0 800 520\" role=\"img\" aria-label=\"UML package diagram of an order subsystem with three packages, an external UI Framework, and stereotype-labelled dependencies\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"520\" fill=\"#fbfbfe\"></rect><g><path d=\"M110 78 L190 78 L190 106 L110 106 Z\" fill=\"#eef0fe\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><rect x=\"110\" y=\"100\" width=\"220\" height=\"150\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></rect><text x=\"122\" y=\"124\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">Shipping</text><line x1=\"110\" y1=\"136\" x2=\"330\" y2=\"136\" stroke=\"#4f46e5\" stroke-width=\"1\" opacity=\"0.45\"></line><text x=\"122\" y=\"158\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#565d75\">Carrier status lookup</text><text x=\"122\" y=\"178\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#565d75\">Tracking serial numbers</text></g><g><path d=\"M300 170 L380 170 L380 198 L300 198 Z\" fill=\"#eef0fe\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><rect x=\"300\" y=\"192\" width=\"220\" height=\"150\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></rect><text x=\"312\" y=\"216\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">Track Order</text><line x1=\"300\" y1=\"228\" x2=\"520\" y2=\"228\" stroke=\"#4f46e5\" stroke-width=\"1\" opacity=\"0.45\"></line><text x=\"312\" y=\"250\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#565d75\">Tracking screen</text><text x=\"312\" y=\"270\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#565d75\">Status display</text></g><g><path d=\"M120 290 L200 290 L200 318 L120 318 Z\" fill=\"#eef0fe\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><rect x=\"120\" y=\"312\" width=\"220\" height=\"150\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></rect><text x=\"132\" y=\"336\" font-family=\"ui-monospace, monospace\" font-size=\"14\" fill=\"#141826\">Order Processing</text><line x1=\"120\" y1=\"348\" x2=\"340\" y2=\"348\" stroke=\"#4f46e5\" stroke-width=\"1\" opacity=\"0.45\"></line><text x=\"132\" y=\"370\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#565d75\">Order details</text><text x=\"132\" y=\"390\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#565d75\">Order status updates</text></g><g><path d=\"M630 170 L710 170 L710 198 L630 198 Z\" fill=\"#eef0fe\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><rect x=\"630\" y=\"192\" width=\"110\" height=\"96\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></rect><text x=\"640\" y=\"250\" font-family=\"ui-monospace, monospace\" font-size=\"13\" fill=\"#141826\">UI</text><text x=\"640\" y=\"270\" font-family=\"ui-monospace, monospace\" font-size=\"13\" fill=\"#141826\">Framework</text></g><g stroke=\"#7c3aed\" stroke-width=\"1.8\"><line x1=\"230\" y1=\"100\" x2=\"345\" y2=\"170\"></line><polygon points=\"345,170 336,164 334,174\" fill=\"#7c3aed\" stroke=\"none\"></polygon></g><g><rect x=\"226\" y=\"122\" width=\"72\" height=\"18\" fill=\"#fbfbfe\"></rect><text x=\"232\" y=\"136\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#7c3aed\">«import»</text></g><g stroke=\"#2563eb\" stroke-width=\"1.8\"><line x1=\"340\" y1=\"228\" x2=\"222\" y2=\"292\"></line><polygon points=\"222,292 231,288 226,280\" fill=\"#2563eb\" stroke=\"none\"></polygon></g><g stroke=\"#2563eb\" stroke-width=\"1.8\"><line x1=\"250\" y1=\"300\" x2=\"352\" y2=\"248\"></line><polygon points=\"352,248 343,252 348,260\" fill=\"#2563eb\" stroke=\"none\"></polygon></g><g><rect x=\"256\" y=\"262\" width=\"74\" height=\"18\" fill=\"#fbfbfe\"></rect><text x=\"260\" y=\"276\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#2563eb\">«access»</text></g><g stroke=\"#7c3aed\" stroke-width=\"1.8\"><line x1=\"520\" y1=\"250\" x2=\"628\" y2=\"250\"></line><polygon points=\"628,250 619,245 619,255\" fill=\"#7c3aed\" stroke=\"none\"></polygon></g><g><rect x=\"538\" y=\"228\" width=\"74\" height=\"18\" fill=\"#fbfbfe\"></rect><text x=\"542\" y=\"242\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#7c3aed\">«access»</text></g><text x=\"24\" y=\"500\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#7b829a\">Dashed arrow = dependency; the stereotype names the kind.</text></svg>",
+    "points": [
+      { "x": 19, "y": 22, "label": "Package Shipping", "detail": "A package is drawn as a folder: a rectangle with a small tab at the top carrying the name. It is a namespace, so the names inside it are qualified by it." },
+      { "x": 38, "y": 50, "label": "Package Track Order", "detail": "One of the two packages the tutorial derives from the problem description: the module responsible for giving customers tracking information for the products they ordered." },
+      { "x": 24, "y": 80, "label": "Package Order Processing", "detail": "The second package the tutorial identifies. Track Order has to talk to it to learn the order details, which is what makes the dependency between the two exist at all." },
+      { "x": 84, "y": 50, "label": "External package: UI Framework", "detail": "The last dependency the tutorial maps. A package may depend on something outside the subsystem; drawing it makes the boundary of your model explicit." },
+      { "x": 30, "y": 30, "label": "«import» dependency", "detail": "A dashed arrow from Shipping to Track Order labelled «import»: Track Order imports data or functionality from Shipping. «import» is one of the two dependency subtypes the tutorial names." },
+      { "x": 33, "y": 67, "label": "«access» dependency, both ways", "detail": "Track Order gets order details from Order Processing, and Order Processing has to know the tracking info the customer gave. Two modules accessing each other is what the tutorial calls an «access» dual dependency." },
+      { "x": 72, "y": 65, "label": "Dependency direction", "detail": "The tutorial's rule: if a change in one package could force a change in another, the latter depends on the former. Read the arrow as “changes here can force changes there”." }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Deployment diagram</div>
+    <p>A deployment diagram consists of <strong>nodes</strong> and the relationships between them. It describes the structure of the system at <em>runtime</em>: the configuration of hardware and how software is deployed into the network structure, giving a static view of the deployment. It is used to visualise the topology of the physical components, to understand distributed systems, and there is only one deployment diagram for a system model. The parameters it controls are <em>performance, scalability, maintainability and portability</em>.</p>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-deployment-map"></div>
+  <script type="application/json" id="ix-deployment-map">
+  {
+    "title": "Order management — deployment notation",
+    "subtitle": "The tutorial's second diagram, drawn as notation: nodes, node instances, node as container, artifacts and communication paths.",
+    "svg": "<svg viewBox=\"0 0 800 520\" role=\"img\" aria-label=\"UML deployment diagram with a PC client node, a modem, a cache server holding an artifact, and three clustered Linux servers each containing a deployed artifact\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"520\" fill=\"#fbfbfe\"></rect><g><path d=\"M40 70 L150 70 L150 124 L40 124 Z\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M150 70 L162 82 L162 136 L52 136 L40 124\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M40 70 L52 82 L162 82\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><text x=\"58\" y=\"106\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#141826\">&#171;PC Client&#187;</text></g><text x=\"40\" y=\"154\" font-family=\"ui-monospace, monospace\" font-size=\"13\" fill=\"#141826\">:Browser</text><text x=\"40\" y=\"174\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"11\" fill=\"#565d75\">user&#39;s workstation</text><g><path d=\"M250 72 L340 72 L340 110 L250 110 Z\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M250 72 L262 84 L352 84 L352 122 L262 122 L250 110\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M250 72 L262 84 L352 84\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><text x=\"272\" y=\"106\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#141826\">Modem</text></g><g><line x1=\"166\" y1=\"106\" x2=\"246\" y2=\"100\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></line><rect x=\"180\" y=\"88\" width=\"64\" height=\"18\" fill=\"#fbfbfe\"></rect><text x=\"184\" y=\"102\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#4f46e5\">&#171;HTTP&#187;</text></g><g><ellipse cx=\"675\" cy=\"82\" rx=\"75\" ry=\"20\" fill=\"#eef0fe\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></ellipse><path d=\"M600 82 L600 180 A75 20 0 0 0 750 180 L750 82\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><ellipse cx=\"675\" cy=\"180\" rx=\"75\" ry=\"20\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></ellipse><text x=\"634\" y=\"126\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#141826\">Cache server</text><text x=\"618\" y=\"180\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"11\" fill=\"#565d75\">clustered control flow</text><ellipse cx=\"666\" cy=\"54\" rx=\"20\" ry=\"7\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.4\"></ellipse><path d=\"M646 54 L646 72 A20 7 0 0 0 686 72 L686 54\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.4\"></path><ellipse cx=\"666\" cy=\"72\" rx=\"20\" ry=\"7\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.4\"></ellipse></g><g><line x1=\"354\" y1=\"112\" x2=\"596\" y2=\"130\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></line></g><g><line x1=\"560\" y1=\"296\" x2=\"680\" y2=\"216\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></line><rect x=\"582\" y=\"242\" width=\"86\" height=\"20\" fill=\"#fbfbfe\"></rect><text x=\"586\" y=\"257\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#4f46e5\">&#171;TCP/IP&#187;</text></g><g><path d=\"M40 300 L190 300 L190 356 L40 356 Z\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M190 300 L202 312 L202 368 L52 368 L40 356\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M40 300 L52 312 L202 312\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><text x=\"58\" y=\"340\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#141826\">&#171;Server&#187;</text></g><text x=\"40\" y=\"390\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#141826\">Server 1 : Linux</text><path d=\"M52 404 L88 404 L88 440 L64 440 L52 452 L52 404 Z\" fill=\"#ffffff\" stroke=\"#2563eb\" stroke-width=\"1.5\"></path><text x=\"98\" y=\"428\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#2563eb\">order.war</text><g><path d=\"M300 300 L450 300 L450 356 L300 356 Z\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M450 300 L462 312 L462 368 L312 368 L300 356\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M300 300 L312 312 L462 312\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><text x=\"318\" y=\"340\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#141826\">&#171;Server&#187;</text></g><text x=\"300\" y=\"390\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#141826\">Server 2 : Linux</text><path d=\"M312 404 L348 404 L348 440 L324 440 L312 452 L312 404 Z\" fill=\"#ffffff\" stroke=\"#2563eb\" stroke-width=\"1.5\"></path><text x=\"358\" y=\"428\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#2563eb\">order.war</text><g><path d=\"M560 300 L710 300 L710 356 L560 356 Z\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M710 300 L722 312 L722 368 L572 368 L560 356\" fill=\"#ffffff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><path d=\"M560 300 L572 312 L722 312\" fill=\"none\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></path><text x=\"578\" y=\"340\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#141826\">&#171;Server&#187;</text></g><text x=\"560\" y=\"390\" font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"#141826\">Server 3 : Linux</text><path d=\"M572 404 L608 404 L608 440 L584 440 L572 452 L572 404 Z\" fill=\"#ffffff\" stroke=\"#2563eb\" stroke-width=\"1.5\"></path><text x=\"618\" y=\"428\" font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"#2563eb\">order.war</text><g><line x1=\"190\" y1=\"286\" x2=\"150\" y2=\"330\" stroke=\"#2563eb\" stroke-width=\"1.6\" stroke-dasharray=\"5 4\"></line><text x=\"216\" y=\"282\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#2563eb\">Monitoring</text></g><text x=\"40\" y=\"502\" font-family=\"ui-sans-serif, sans-serif\" font-size=\"12\" fill=\"#7b829a\">3-D box = node; &#171;artifact&#187; document = what is deployed inside it.</text></svg>",
+    "points": [
+      { "x": 19, "y": 22, "label": "Package Shipping", "detail": "A package is drawn as a folder: a rectangle with a small tab at the top carrying the name. It is a namespace, so the names inside it are qualified by it." },
+      { "x": 38, "y": 50, "label": "Package Track Order", "detail": "One of the two packages the tutorial derives from the problem description: the module responsible for giving customers tracking information for the products they ordered." },
+      { "x": 24, "y": 80, "label": "Package Order Processing", "detail": "The second package the tutorial identifies. Track Order has to talk to it to learn the order details, which is what makes the dependency between the two exist at all." },
+      { "x": 84, "y": 50, "label": "External package: UI Framework", "detail": "The last dependency the tutorial maps. A package may depend on something outside the subsystem; drawing it makes the boundary of your model explicit." },
+      { "x": 30, "y": 30, "label": "«import» dependency", "detail": "A dashed arrow from Shipping to Track Order labelled «import»: Track Order imports data or functionality from Shipping. «import» is one of the two dependency subtypes the tutorial names." },
+      { "x": 33, "y": 67, "label": "«access» dependency, both ways", "detail": "Track Order gets order details from Order Processing, and Order Processing has to know the tracking info the customer gave. Two modules accessing each other is what the tutorial calls an «access» dual dependency." },
+      { "x": 72, "y": 65, "label": "Dependency direction", "detail": "The tutorial's rule: if a change in one package could force a change in another, the latter depends on the former. Read the arrow as “changes here can force changes there”." }
+    ]
+  }
+  </script>
+
+  
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Element</th><th>Notation</th><th>What it lets you check in a Sprint review</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Package</td><td>Rectangle with a tab at the top</td><td>Does every new class have exactly one home namespace?</td></tr>
+        <tr><td>Dependency</td><td>Dashed arrow, optionally with a stereotype</td><td>Did this increment create a cycle between two packages?</td></tr>
+        <tr><td><code>&lt;&lt;import&gt;&gt;</code></td><td>Dependency stereotype</td><td>Does this package import another package's functionality rather than reimplementing it?</td></tr>
+        <tr><td><code>&lt;&lt;access&gt;&gt;</code></td><td>Dependency stereotype</td><td>Does this package need help from another package's functions &mdash; and is the reverse dependency acceptable?</td></tr>
+        <tr><td>Node</td><td>Three-dimensional box; optional icon in the upper right</td><td>Is every runtime resource the increment needs actually there?</td></tr>
+        <tr><td>Node instance</td><td><code>name : type</code>, name underscored</td><td>Are we describing a type or a specific machine?</td></tr>
+        <tr><td>Artifact</td><td>Rectangle with <code>&lt;&lt;artifact&gt;&gt;</code> and a document icon</td><td>What exactly is deployed, and what evidence ships with it?</td></tr>
+        <tr><td>Association</td><td>Line between nodes, protocol noted</td><td>Which communication paths must exist for the demo to work?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Deployment versus component diagrams.</strong> The tutorial draws the contrast explicitly: most UML diagrams deal with the logical components of a system, whereas the deployment diagram focuses on the <em>hardware topology</em> &mdash; the hardware components on which software components are deployed. The two are closely related: a component diagram describes components and how they are deployed, and the deployment diagram names the machines they land on.
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 8 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Iteration replaces stage</h4>
+        <p>Waterfall divides work into stages owned by specialist teams and joined by documents. Agile delivers working software in short timeboxed iterations from one cross-functional team.</p>
+        <div class="flip-hint">Process shift</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Lightweight modelling</h4>
+        <p>Model the smallest thing that answers the question in front of the team. Three tests: purpose, audience, lifetime. A model nobody reads is left out.</p>
+        <div class="flip-hint">Modelling rule</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Executable and testable</h4>
+        <p>Triggers, guards and effects make a model runnable; acceptance tests written with the requirements make it checkable. Both are evidence, not opinion.</p>
+        <div class="flip-hint">Evidence</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>The round trip</h4>
+        <p>Generate from the model, discover in the code, fold the learning back into the model in the same change. Deterministic transformation, one source, marked manual edits.</p>
+        <div class="flip-hint">Consistency</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The one-sentence answer for an exam question on agile modelling:</strong> agile modelling keeps models that earn their place by answering a question a reader actually has, makes them executable and testable so they produce evidence, and keeps them in step with the code through a round trip that runs inside the iteration &mdash; which is the only way a model survives rapid-fire change.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you say what agile changes about the <em>unit</em> of planning, name the three roles, three lists and three meetings, and state the three tests a model has to pass to be kept?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Bring a package diagram for one subsystem and a deployment diagram for one environment. Be ready to justify every dependency arrow with the tutorial's rule: changes here can force changes there.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which sentence would earn the marks for &ldquo;what is agile model practice?&rdquo;</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is the ceremonial reading the week argues against: the model exists to be maintained, not to be filed. Purpose and audience are the tests.">Produce a complete model of the system before coding and keep it as the project's documentation</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Small models that answer a live question, made executable and testable so they produce evidence, and kept in step with the code inside the iteration." data-bad="">Model the smallest thing that answers the current question, make it executable and testable, and keep it consistent with the code through the round trip</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Agile does not drop modelling. The deck's preference for working code over documents is an argument about ambiguity, not a licence to skip design.">Skip modelling entirely &mdash; the code is the model</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

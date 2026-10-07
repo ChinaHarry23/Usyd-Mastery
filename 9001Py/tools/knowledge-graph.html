@@ -5,88 +5,80 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Knowledge Graph — COMP9001</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #0f1117; --bg-card: #181b24; --bg-sidebar: #13151d; --border: #2a2e3a;
-  --text: #e4e6ed; --text-muted: #9299ac; --text-dim: #6b7280; --accent: #6c8cff;
-  --accent-glow: rgba(108,140,255,0.08); --green: #34d399; --yellow: #fbbf24; --purple: #a78bfa;
-  --font: 'Inter', -apple-system, sans-serif; --radius: 12px; --radius-sm: 8px;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
-.top-bar {
-  position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 1rem; padding: 0.65rem 1.5rem;
-  background: rgba(15,17,23,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); flex-wrap: wrap;
-}
-.top-bar a { color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
-.top-bar .title { font-size: 1rem; font-weight: 700; color: var(--text); }
-.top-bar .spacer { flex: 1; }
-.dashboard { max-width: 1180px; margin: 0 auto; padding: 2rem 1.5rem; }
-.hero {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 1.5rem; margin-bottom: 1.5rem;
-}
-.hero h1 { font-size: 1.8rem; margin-bottom: 0.6rem; }
-.hero p { color: var(--text-muted); line-height: 1.6; }
-.chapters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
-.ch-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 1.25rem; transition: border-color 0.3s; text-decoration: none; color: inherit;
-}
-.ch-card:hover { border-color: var(--accent); }
-.ch-num { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
-.ch-card h3 { margin: 0.55rem 0; font-size: 1rem; }
-.chip-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.85rem; }
-.chip { font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 999px; background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(108,140,255,0.16); }
-.card-actions { display: flex; gap: 0.75rem; margin-top: 0.9rem; flex-wrap: wrap; }
-.card-actions a { color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
-</style>
-<script defer src="../data/site-data.js"></script>
-<link rel="stylesheet" href="../../shared/chat-panel.css">
-<meta name="description" content="Knowledge Graph — COMP9001 — Interactive force-directed concept graph with chapter filtering, search, and difficulty sorting.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<meta name="description" content="Knowledge Graph — COMP9001 — Interactive force-directed concept graph with week filtering, search, and difficulty sorting.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Knowledge Graph — COMP9001">
-<meta property="og:description" content="Knowledge Graph — COMP9001 — Interactive force-directed concept graph with chapter filtering, search, and difficulty sorting.">
+<meta property="og:description" content="Knowledge Graph — COMP9001 — Interactive force-directed concept graph with week filtering, search, and difficulty sorting.">
 <meta property="og:locale" content="en_AU">
 </head>
+<link rel="stylesheet" href="../../shared/knowledge-graph.css">
+<link rel="stylesheet" href="../../shared/chat-panel.css">
 <body>
+
 <div class="top-bar">
-  <a href="../index.html">&#x1F3E0; Home</a>
-  <a href="math-knowledge-graph.html">&#x1F4D0; Foundations Graph</a>
-  <span class="title">&#x1F578; Knowledge Graph</span>
+  <a href="../index.html" id="navHome">&larr; Home</a>
+  <span class="sep" style="width:1px;height:16px;background:var(--border);"></span>
+  <a href="math-knowledge-graph.html" id="navOther">Foundations</a>
+  <span class="sep" style="width:1px;height:16px;background:var(--border);"></span>
+  <span class="title" id="pageTitle">Knowledge Graph</span>
   <span class="spacer"></span>
-</div>
-
-<div class="dashboard">
-  <div class="hero">
-    <h1>Knowledge Graph</h1>
-    <p>This tool now sits in the same visual family as the `x270` tools. For COMP9001, it currently acts as a chapter concept map overview that links directly into the chapter study pages while the deeper interactive graph content is being expanded.</p>
+  <input class="search-box" id="searchBox" type="text" placeholder="Search concepts...">
+  <div class="controls" style="flex-wrap:wrap;max-width:52rem;">
+    <span class="sep"></span>
+    <label><input type="checkbox" id="chkCh1" checked> <span id="labelCh1">W1</span></label>
+    <label><input type="checkbox" id="chkCh2" checked> <span id="labelCh2">W2</span></label>
+    <label><input type="checkbox" id="chkCh3" checked> <span id="labelCh3">W3</span></label>
+    <label><input type="checkbox" id="chkCh4" checked> <span id="labelCh4">W4</span></label>
+    <label><input type="checkbox" id="chkCh5" checked> <span id="labelCh5">W5</span></label>
+    <span class="sep"></span>
+    <label><span id="thresholdText">Threshold</span> <input type="range" id="thresholdSlider" min="1" max="10" value="3" step="1"> <span id="thresholdVal">3</span></label>
+    <span class="sep"></span>
+    <button id="btnDiffSort">Sort by Difficulty</button>
+    <button id="btnChapterSort">Group by Week</button>
+    <button id="btnReset">Reset View</button>
   </div>
-
-  <div class="chapters-grid" id="graphGrid"></div>
 </div>
 
-<script>
-window.addEventListener("DOMContentLoaded", function () {
-  var site = window.COMP9001_SITE || { chapters: [] };
-  var mount = document.getElementById("graphGrid");
-  mount.innerHTML = site.chapters.map(function (chapter) {
-    return '<article class="ch-card">' +
-      '<div class="ch-num">Chapter ' + chapter.number + '</div>' +
-      '<h3>' + chapter.title + '</h3>' +
-      '<p style="color:var(--text-muted); line-height:1.55;">' + chapter.summary + '</p>' +
-      '<div class="chip-row">' + chapter.concepts.slice(0, 5).map(function (concept) {
-        return '<span class="chip">' + concept + '</span>';
-      }).join('') + '</div>' +
-      '<div class="card-actions">' +
-        '<a href="../chapters/chapter' + chapter.number + '/web/chapter' + chapter.number + '-study.html">Study Guide →</a>' +
-        '<a href="../chapters/chapter' + chapter.number + '/web/chapter' + chapter.number + '-mindmap.html">Mind Map →</a>' +
-      '</div>' +
-    '</article>';
-  }).join('');
-});
-</script>
+<canvas id="graphCanvas"></canvas>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-label" id="ttLabel"></div>
+  <div class="tt-chapter" id="ttChapter"></div>
+  <div class="tt-diff" id="ttDiff"></div>
+  <div class="tt-def" id="ttDef"></div>
+  <div class="tt-conn" id="ttConn"></div>
+  <div class="tt-hint" id="ttHint"></div>
+</div>
+
+<div class="legend">
+  <h4 id="legendWeeks">Weeks</h4>
+  <div class="legend-item" id="legendW1"><span class="legend-dot" style="background:#0891b2"></span><span> W1</span></div>
+  <div class="legend-item" id="legendW2"><span class="legend-dot" style="background:#0ea5e9"></span><span> W2</span></div>
+  <div class="legend-item" id="legendW3"><span class="legend-dot" style="background:#2563eb"></span><span> W3</span></div>
+  <div class="legend-item" id="legendW4"><span class="legend-dot" style="background:#6366f1"></span><span> W4</span></div>
+  <div class="legend-item" id="legendW5"><span class="legend-dot" style="background:#7c3aed"></span><span> W5</span></div>
+  <div class="legend-section">
+    <h4 id="legendDiff">Difficulty</h4>
+    <div class="legend-item" id="legendDiffScale" style="font-size:0.7rem;">&#9679; small = easier &nbsp; &#11044; larger = harder</div>
+    <div class="legend-item" id="legendClick" style="font-size:0.7rem;">Click node &rarr; source page</div>
+  </div>
+  <div class="legend-section">
+    <h4 id="legendLayout">Layout</h4>
+    <div class="legend-item" id="legendSort" style="font-size:0.7rem;"><strong>Sort by Difficulty</strong> &mdash; top = easier, bottom = harder</div>
+    <div class="legend-item" id="legendGroup" style="font-size:0.7rem;"><strong>Group by Week</strong> &mdash; W1 &larr; left &hellip; W5 &rarr; right</div>
+    <div class="legend-item" id="legendBoth" style="font-size:0.65rem; opacity:0.9;">Enable <strong>both</strong> for a week &times; difficulty grid.</div>
+  </div>
+</div>
+
+<div class="stats" id="statsBox"></div>
+
+<script src="kg-data.js"></script>
+<script src="../../shared/knowledge-graph.js"></script>
 <script src="../../shared/chat-panel.js"></script>
+<script src="../../shared/site-reset.js"></script>
 </body>
 </html>

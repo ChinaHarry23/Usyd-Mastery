@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6: Modelling Behaviour — ELEC5620</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter6-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 study guide for ELEC5620: UML causality, actions, activities with control and object flow, interactions with lifelines and messages, state machines with events and guards, run-to-completion semantics and orthogonal regions.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 6: Modelling Behaviour — ELEC5620">
+<meta property="og:description" content="Week 6 study guide for ELEC5620: UML causality, actions, activities with control and object flow, interactions with lifelines and messages, state machines with events and guards, run-to-completion semantics and orthogonal regions.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" data-i18n="nav_home" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F9E9;</span>
+      <h2>Week 6</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-causality" class="nav-link" data-section="causality">How Things Happen</a></li>
+    <li><a href="#sec-actions" class="nav-link" data-section="actions">Actions</a></li>
+    <li><a href="#sec-rtc" class="nav-link" data-section="rtc">Active Objects &amp; RTC</a></li>
+    <li><a href="#sec-activities" class="nav-link" data-section="activities">Activities</a></li>
+    <li><a href="#sec-interactions" class="nav-link" data-section="interactions">Interactions</a></li>
+    <li><a href="#sec-states" class="nav-link" data-section="states">State Machines</a></li>
+    <li><a href="#sec-hierarchy" class="nav-link" data-section="hierarchy">Branching &amp; Hierarchy</a></li>
+    <li><a href="#sec-concurrency" class="nav-link" data-section="concurrency">Orthogonal Regions</a></li>
+    <li><a href="#sec-agentic" class="nav-link" data-section="agentic">Agentic AI Models</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter6-math.html" class="nav-link" data-i18n="link_math" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter6-mindmap.html" class="nav-link" data-i18n="link_mindmap" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" data-i18n="link_quiz" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" data-i18n="link_fc" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Week 6 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">ELEC5620 — Model-Based Software Engineering</p>
+    <h1>Week 6: Modelling Behaviour</h1>
+    <p class="hero-subtitle">Expressing dynamics: activity diagrams with control and object flow, sequence diagrams with lifelines and messages, and state machines with events, guards and actions &mdash; all resting on one object-oriented semantic foundation.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9E9;</span>
+        <span>Actions &rarr; activities &rarr; interactions &rarr; state machines</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F517;</span>
+        <span>Causality: a network of communicating objects</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x23F1;</span>
+        <span>Message queues and run-to-completion</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F916;</span>
+        <span>Agentic AI worked examples</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter6-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter6-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 6 lecture deck (Yuan, <em>Modelling Behavior</em>) and the Week 6 tutorial and laboratory notes</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-causality" class="section" data-track="causality">
+  <h2 class="section-title">How Things Happen in UML</h2>
+  <p class="section-lead">Week 5 modelled what a system <em>is</em>. Week 6 models what it <em>does</em>: the deck calls the underlying story UML's model of causality.</p>
+
+  <div class="concept-box">
+    <p><strong>The model of causality from the lecture:</strong> UML is a <strong>discrete, event-driven model of computation</strong> built from a network of communicating objects. All behaviour stems from objects &mdash; an action is always executed <em>by</em> some object, on some object.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Individual object behaviour</h3>
+      <p>The behaviour specification attached to one class or object: which actions it performs, in what order, and how it reacts to the events it receives. A state machine is the canonical notation for this view.</p>
+    </div>
+    <div class="col-card">
+      <h3>Inter-object (system) behaviour</h3>
+      <p>The emergent behaviour of the network: objects invoking operations on each other and sending signals. This is what an interaction (sequence or communication diagram) or an activity diagram captures.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Action, in the deck's words</div>
+    <p>An <strong>action</strong> is a named element which represents a single atomic step within an activity, i.e. that is not further decomposed within the activity. An action is executed by an object and may change the contents of one or more variables or slots. If it is a communication action it may <em>invoke an operation on another object</em> or <em>send a signal to another object</em>. Its successor actions are determined either by <strong>control flow</strong> or by <strong>data flow</strong>.</p>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-semantics-stack"></div>
+  <script type="application/json" id="ix-semantics-stack">
+  {
+    "title": "UML 2 run-time semantics: four behaviour formalisms, one foundation",
+    "subtitle": "Read the pipeline bottom-up. Everything above the structural base is behaviour; everything below it is structure. The deck draws this as a stack, not a sequence.",
+    "nodes": [
+      { "label": "Structural semantic base", "note": "Objects exist, are linked, and own values. Structure is the substrate every behaviour model stands on." },
+      { "label": "Object existence and inter-object communication", "note": "Objects are created, destroyed and addressed. Communication means invoking an operation or sending a signal." },
+      { "label": "Flow-based behaviour semantics", "note": "Actions are enabled by the flow of control and data tokens between them. This is the machinery activities are built from." },
+      { "label": "Behavioural semantic base (actions)", "note": "Single atomic steps and exactly what they do to objects, links, attributes and variables." },
+      { "label": "Activities", "note": "Coordinated flow of actions: the flow-of-control model of computation, with partitions for who does what." },
+      { "label": "Interactions", "note": "Messages between collaborating instances: the event-driven view of system behaviour over time." },
+      { "label": "State machines", "note": "Discrete states and transitions for one object: the event-driven view of an individual object's life." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Formalism</th><th>Model of computation</th><th>Answers the question</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Actions</strong></td><td>Atomic steps with defined semantics</td><td>What exactly happens when this one step executes?</td></tr>
+        <tr><td><strong>Activities</strong></td><td>Control and data flow</td><td>In what order do the steps run, and who performs them?</td></tr>
+        <tr><td><strong>Interactions</strong></td><td>Event-driven system behaviour</td><td>Which objects exchange which messages, and in what order?</td></tr>
+        <tr><td><strong>State machines</strong></td><td>Event-driven object behaviour</td><td>How does this object react to events over its lifetime?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Why the unit insists on models:</strong> &ldquo;Build a smart health agent that helps me arrange care&rdquo; leaves behaviour unspecified. What happens when record data is unavailable or outdated? What if the user cancels mid-booking? How do you distinguish a failed booking from a successful booking whose response was lost? What if an older symptom summary finishes processing after a newer one? Models give the developer and the coding agent a <em>shared place to resolve these questions before they become inconsistent code</em> &mdash; and the modelling effort should stay proportional to the uncertainty.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team must show which objects exchange which messages, and in what order, for one booking scenario. Which Week 6 formalism is written for exactly that?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A state machine describes one object's reactions to events over its lifetime. It does not show the message traffic between objects.">A state machine for the booking object</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Interactions focus on communications between collaborating instances communicating via messages, and the sequence diagram captures the time sequence of that message flow." data-bad="">An interaction (a sequence diagram)</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Actions are the atomic steps inside a behaviour. They are the raw material, not the notation for inter-object message ordering.">A catalogue of the actions available in the system</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-actions" class="section" data-track="actions">
+  <h2 class="section-title">Actions: The Atomic Step</h2>
+  <p class="section-lead">Every behaviour in UML is ultimately a combination of actions. Getting the granularity right is what makes a model checkable rather than decorative.</p>
+
+  <div class="def-box">
+    <div class="def-label">Action vs activity</div>
+    <p><strong>Action</strong> &mdash; a named element representing a single atomic step within an activity, not further decomposed inside that activity. <strong>Activity</strong> &mdash; a behaviour composed of individual elements that are actions, represented as a coordinated flow of them. Actions are drawn as <em>round-cornered rectangles</em>, and the name is usually an action verb or a noun with a short explanation.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What actions are for</h3>
+      <p>Modelling fine-grained behavioural phenomena that manipulate and access UML entities &mdash; objects, links, attributes, operations. The deck's examples are exactly this granularity: <em>create link</em>, <em>write attribute</em>, <em>destroy object</em>.</p>
+    </div>
+    <div class="col-card">
+      <h3>What the standard fixes</h3>
+      <p>The UML standard defines both a <strong>set of actions with their semantics</strong> (what happens when each is executed) and a <strong>method for combining actions</strong> into more complex behaviours. Two modellers using the same action vocabulary must get the same run-time meaning.</p>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-action-deck"></div>
+  <script type="application/json" id="ix-action-deck">
+  {
+    "title": "The six capability areas of UML actions",
+    "subtitle": "Say which UML entity each family manipulates before you flip the card.",
+    "cards": [
+      { "front": "Communication actions", "back": "send, call, receive — the actions that pass messages between objects.", "hint": "Messaging" },
+      { "front": "Object actions", "back": "create, destroy, reclassify, start — the actions that change an object's existence or its class.", "hint": "Existence" },
+      { "front": "Link actions", "back": "create, destroy, read, write — the actions that work on links, the run-time instances of associations.", "hint": "Linking" },
+      { "front": "Structural feature actions", "back": "read, write, clear — the actions that access attributes and association ends of a classifier.", "hint": "Classifier features" },
+      { "front": "Variable actions", "back": "read, write, clear — the actions that work on local variables rather than on object features.", "hint": "Local state" },
+      { "front": "Exception actions", "back": "interrupt, error — the actions that model abnormal termination and interruption of a behaviour.", "hint": "Abnormal flow" }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Capability</th><th>Representative actions</th><th>Where you meet it in the Week 6 models</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Communication</td><td>send, call, receive</td><td>The messages on a sequence diagram; the communicate action behind every arrow</td></tr>
+        <tr><td>Object</td><td>create, destroy, reclassify, start</td><td>Starting an active object; the initial node of a workflow creating its first object</td></tr>
+        <tr><td>Link</td><td>create, destroy, read, write</td><td>Creating the association between a booking and a slot</td></tr>
+        <tr><td>Structural feature</td><td>read, write, clear</td><td><code>ctr := 0</code> in the deck's stop transition; <code>value</code> in a guard</td></tr>
+        <tr><td>Variable</td><td>read, write, clear</td><td><code>gain := calculatePotentialGain(value)</code> at a choice point</td></tr>
+        <tr><td>Exception</td><td>interrupt, error</td><td><code>error(&ldquo;badPIN&rdquo;)</code> on the <code>[else]</code> branch of the ATM interaction</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The tutorial's framing:</strong> actions and activities cover <em>micro-level</em> behaviour, while state machines and interactions capture <em>macro-level</em> behaviour. A model that mixes the two levels in one diagram is a model nobody can check.
+  </div>
+</section>
+
+<section id="sec-rtc" class="section" data-track="rtc">
+  <h2 class="section-title">Run Time: Active Objects and Run-to-Completion</h2>
+  <p class="section-lead">Actions need a scheduler. The deck's answer is the distinction between passive and active objects, and the run-to-completion rule that keeps concurrent events from tearing an object apart.</p>
+
+  <div class="def-box">
+    <div class="def-label">Active object, in the deck's words</div>
+    <p>An <strong>active object</strong> is an object that, as a direct consequence of its creation, commences to execute its classifier behaviour, and does not cease until either the complete behaviour is executed or the object is terminated by some external object. The points at which it responds to messages received from other objects are determined <em>solely</em> by its own behaviour specification. Notation: the class box carries <strong>parallel lines</strong> on its left edge to distinguish it from a passive class.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Passive objects</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Respond whenever one of their operations (or receptions) is invoked</li>
+        <li>Invocation is not scheduled by the object itself</li>
+        <li>Concurrent invocations are possible, so <strong>conflicts are possible</strong></li>
+        <li>Reading <code>getA()</code> while another caller runs <code>setA(1)</code> is the classic hazard</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Active objects</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Run concurrently with everything else in the system</li>
+        <li>Respond only when they execute a <strong>receive</strong> action</li>
+        <li>Incoming messages wait in a <strong>message queue</strong></li>
+        <li>Which queued event is taken is decided by the chosen <strong>scheduling policy</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="ix-rtc"></div>
+
+  <div class="def-box">
+    <div class="def-label">Run-to-completion (RTC)</div>
+    <p>Any messages arriving between successive <em>receive</em> actions are queued and only considered for handling on the next receive action. The object handles <strong>one thing at a time</strong>: the current step always finishes before the next event is looked at. This is what avoids concurrency conflicts inside one object.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Rule</th><th>Statement in the deck</th><th>Consequence for design</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Queuing</strong></td><td>Events arriving mid-step are queued, not delivered</td><td>No state is observed half-updated &mdash; but latency is bounded by the longest step</td></tr>
+        <tr><td><strong>Priority</strong></td><td>In some systems (for example real-time systems) messages carry different priorities</td><td>High-priority events can jump the queue and interrupt handling of low-priority ones</td></tr>
+        <tr><td><strong>Priority inversion</strong></td><td>A high-priority message has to wait for a low-priority message</td><td>RTC is susceptible to it &mdash; but only where the high- and low-priority events are handled by the <em>same</em> object, not by the system as a whole</td></tr>
+        <tr><td><strong>Interruption</strong></td><td>If a high-priority event arrives for an object that is ready to receive it, processing of low-priority events by <em>other</em> active objects can be interrupted</td><td>Priority is a cross-object scheduling property, not a private one</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Communication type</th><th>Motto</th><th>What happens</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Synchronous</strong></td><td>Call and wait</td><td>Object1 calls <code>opX()</code>; Object2 executes the method; Object1 blocks until the reply returns</td></tr>
+        <tr><td><strong>Asynchronous</strong></td><td>Send and continue</td><td>Object1 sends <code>sigX()</code> to a reception, or makes an asynchronous operation call whose replies are discarded; Object2 executes the method while Object1 continues</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>RTC in agentic software.</strong> The deck's example: an agent receives a plan from an LLM and then validates the proposed tool action, records the tool request identifier, arranges asynchronous tool execution, and enters <code>WaitingForTool</code>. If the user sends <em>Cancel</em> during those updates, what could happen if the cancellation were processed halfway through updating the agent's state? The design rules that follow: <strong>keep reactions short</strong>, <strong>treat LLM output as input to validate</strong>, and <strong>define the boundary</strong> of what one reaction may change.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An active object is executing a long action when three messages arrive. Under run-to-completion semantics, what happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the passive-object hazard. An active object decides for itself when it is ready to receive, which is exactly what prevents mid-step interference.">The messages interrupt the action immediately and are handled concurrently with it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Messages arriving between successive receive actions are queued and only considered on the next receive action, so the current step finishes first." data-bad="">The messages are queued and only considered at the next receive action</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing is discarded in RTC — discarding a request is a design decision the model would have to state explicitly.">The messages are discarded because the object is busy</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-activities" class="section" data-track="activities">
+  <h2 class="section-title">Activities: Control Flow, Object Flow and Swimlanes</h2>
+  <p class="section-lead">An activity is where UML lets you draw a workflow: what happens, in what order, and who is responsible for each step.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>An <strong>activity</strong> is a parameterised behaviour represented as a coordinated flow of actions. It contains <strong>activity nodes</strong> &mdash; which may be <em>action</em>, <em>object</em> or <em>control</em> nodes &mdash; and the flow of execution is modelled as activity nodes connected by <strong>activity edges</strong>.</p>
+  </div>
+
+  <div id="ix-activity"></div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-activity-notation"></div>
+  <script type="application/json" id="ix-activity-notation">
+  {
+    "title": "Activity diagram notation, annotated",
+    "subtitle": "Click each numbered marker to see what the element means and where it appears in the deck's order-processing graph.",
+    "svg": "<svg viewBox='0 0 900 430' role='img' aria-label='Activity diagram showing initial node, actions, control flow, a choice with guards, an object node with state, activity final, flow final, fork, join and an interruptible region with contract notes' xmlns='http://www.w3.org/2000/svg'><rect x='0' y='0' width='900' height='430' fill='#fbfcff'></rect><circle cx='30' cy='64' r='11' fill='#1f2937'></circle><line x1='41' y1='64' x2='74' y2='64' stroke='#4f46e5' stroke-width='2'></line><path d='M74 64 l-12 -6 l0 12 z' fill='#4f46e5'></path><rect x='76' y='38' width='140' height='52' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><text x='146' y='70' text-anchor='middle' font-size='14' fill='#312e81' font-family='sans-serif'>Receive order</text><line x1='216' y1='64' x2='250' y2='64' stroke='#4f46e5' stroke-width='2'></line><path d='M250 64 l-12 -6 l0 12 z' fill='#4f46e5'></path><rect x='252' y='38' width='140' height='52' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><text x='322' y='70' text-anchor='middle' font-size='14' fill='#312e81' font-family='sans-serif'>Fill order</text><line x1='392' y1='64' x2='426' y2='64' stroke='#4f46e5' stroke-width='2'></line><path d='M426 64 l-12 -6 l0 12 z' fill='#4f46e5'></path><polygon points='466,30 504,64 466,98 428,64' fill='#fff7ed' stroke='#f59e0b' stroke-width='2'></polygon><text x='512' y='44' font-size='11' fill='#b45309' font-family='monospace'>[in stock]</text><text x='420' y='122' font-size='11' fill='#b45309' font-family='monospace' text-anchor='end'>[else]</text><line x1='504' y1='64' x2='536' y2='64' stroke='#4f46e5' stroke-width='2'></line><path d='M536 64 l-12 -6 l0 12 z' fill='#4f46e5'></path><rect x='538' y='32' width='130' height='64' fill='#ecfdf5' stroke='#059669' stroke-width='2'></rect><line x1='538' y1='64' x2='668' y2='64' stroke='#059669' stroke-width='1.5'></line><text x='603' y='54' text-anchor='middle' font-size='13' fill='#065f46' font-family='sans-serif'>Order</text><text x='603' y='84' text-anchor='middle' font-size='12' fill='#047857' font-family='monospace'>[filled]</text><line x1='668' y1='64' x2='702' y2='64' stroke='#4f46e5' stroke-width='2'></line><path d='M702 64 l-12 -6 l0 12 z' fill='#4f46e5'></path><rect x='704' y='38' width='130' height='52' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><text x='769' y='70' text-anchor='middle' font-size='14' fill='#312e81' font-family='sans-serif'>Ship order</text><line x1='834' y1='64' x2='854' y2='64' stroke='#4f46e5' stroke-width='2'></line><path d='M854 64 l-12 -6 l0 12 z' fill='#4f46e5'></path><circle cx='872' cy='64' r='14' fill='none' stroke='#1f2937' stroke-width='2.5'></circle><circle cx='872' cy='64' r='7' fill='#1f2937'></circle><line x1='466' y1='98' x2='466' y2='138' stroke='#4f46e5' stroke-width='2'></line><path d='M466 138 l-6 -12 l12 0 z' fill='#4f46e5'></path><rect x='396' y='140' width='140' height='50' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><text x='466' y='170' text-anchor='middle' font-size='14' fill='#312e81' font-family='sans-serif'>Backorder</text><line x1='466' y1='190' x2='466' y2='226' stroke='#4f46e5' stroke-width='2'></line><path d='M466 226 l-6 -12 l12 0 z' fill='#4f46e5'></path><circle cx='466' cy='248' r='15' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'></circle><line x1='456' y1='238' x2='476' y2='258' stroke='#4f46e5' stroke-width='2.5'></line><line x1='476' y1='238' x2='456' y2='258' stroke='#4f46e5' stroke-width='2.5'></line><rect x='280' y='282' width='560' height='130' rx='12' fill='none' stroke='#94a3b8' stroke-width='2' stroke-dasharray='7 5'></rect><text x='296' y='306' font-size='11' font-family='monospace' fill='#64748b'>Interruptible region</text><text x='296' y='334' font-size='11' font-family='monospace' fill='#64748b'>&#171;precondition&#187; Order entered</text><text x='296' y='356' font-size='11' font-family='monospace' fill='#64748b'>&#171;postcondition&#187; Order complete</text><rect x='300' y='366' width='150' height='42' rx='14' fill='#eef2ff' stroke='#4f46e5' stroke-width='2'></rect><text x='375' y='392' text-anchor='middle' font-size='13' fill='#312e81' font-family='sans-serif'>Cancel order</text><line x1='700' y1='387' x2='452' y2='387' stroke='#dc2626' stroke-width='2'></line><path d='M452 387 l12 -6 l0 12 z' fill='#dc2626'></path><text x='706' y='381' font-size='12' fill='#b91c1c' font-family='sans-serif'>Order cancel request</text><rect x='56' y='298' width='120' height='9' fill='#1f2937'></rect><line x1='116' y1='266' x2='116' y2='296' stroke='#4f46e5' stroke-width='2'></line><path d='M116 296 l-6 -12 l12 0 z' fill='#4f46e5'></path><line x1='86' y1='307' x2='86' y2='346' stroke='#4f46e5' stroke-width='2'></line><path d='M86 346 l-6 -12 l12 0 z' fill='#4f46e5'></path><line x1='146' y1='307' x2='146' y2='346' stroke='#4f46e5' stroke-width='2'></line><path d='M146 346 l-6 -12 l12 0 z' fill='#4f46e5'></path><rect x='56' y='348' width='120' height='9' fill='#1f2937'></rect><line x1='116' y1='357' x2='116' y2='398' stroke='#4f46e5' stroke-width='2'></line><path d='M116 398 l-6 -12 l12 0 z' fill='#4f46e5'></path><text x='190' y='296' font-size='11' font-family='monospace' fill='#64748b'>fork</text><text x='190' y='352' font-size='11' font-family='monospace' fill='#64748b'>join</text></svg>",
+    "points": [
+      { "x": 3.3, "y": 14.9, "label": "Initial node", "detail": "A filled circle: the single entry point of the activity. A token is placed here when the activity starts." },
+      { "x": 16.2, "y": 14.9, "label": "Action: round-cornered rectangle", "detail": "One atomic step — 'Receive order'. Not decomposed any further inside this activity." },
+      { "x": 51.8, "y": 14.9, "label": "Choice with guards", "detail": "A diamond where mutually exclusive guards decide the route. The deck's order-processing graph labels the branches the same way." },
+      { "x": 67.0, "y": 14.9, "label": "Object node (may include state)", "detail": "The order as it exists between two actions, annotated with the state it is in — here [filled]. An edge that carries an object rather than control is an object flow." },
+      { "x": 76.1, "y": 14.9, "label": "Object flow into a control step", "detail": "The same arrow shape carries data as well as control: the filled order is what 'Ship order' consumes." },
+      { "x": 85.4, "y": 14.9, "label": "Action with a parameter in the flow", "detail": "'Ship order' reads its input from the object node rather than from an explicit pin in this rendering." },
+      { "x": 96.0, "y": 14.9, "label": "Activity final", "detail": "The bullseye: the whole activity stops, and every token anywhere in it is consumed." },
+      { "x": 51.8, "y": 57.7, "label": "Flow final", "detail": "A circle with a cross: this one path ends without stopping the rest of the activity. Use it when a branch simply finishes." },
+      { "x": 12.9, "y": 69.3, "label": "Fork and join", "detail": "The thick bars: a fork splits one flow into concurrent flows, a join waits for all of them before continuing. A simple join (without concurrency) is drawn the same way." },
+      { "x": 32.9, "y": 79.1, "label": "Interruptible region and contracts", "detail": "The dashed frame groups the cancel path. «precondition» Order entered and «postcondition» Order complete are the activity's contracts, exactly as in the deck's order-processing example." },
+      { "x": 66.7, "y": 90.0, "label": "Accept event action", "detail": "An incoming 'Order cancel request' can fire while the region is active — that is what makes the region interruptible." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Element</th><th>Drawn as</th><th>Reads as</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Control flow / data flow</td><td>Arrow</td><td>An edge: the successor action is enabled</td></tr>
+        <tr><td>Activity or action</td><td>Round-cornered rectangle</td><td>One atomic step</td></tr>
+        <tr><td>Object node</td><td>Rectangle (may include state)</td><td>A value or object travelling between actions</td></tr>
+        <tr><td>Pin (object)</td><td>Small square on the action's border</td><td>An input or output of that specific action</td></tr>
+        <tr><td>Choice</td><td>Diamond with guards</td><td>Alternatives whose guards are mutually exclusive</td></tr>
+        <tr><td>Simple join</td><td>Thick bar</td><td>Synchronisation point</td></tr>
+        <tr><td>Control fork / control join</td><td>Thick bar (fork / join)</td><td>Split into concurrent flows / wait for all of them</td></tr>
+        <tr><td>Initial node</td><td>Filled circle</td><td>Where the activity starts</td></tr>
+        <tr><td>Activity final</td><td>Bullseye</td><td>Everything in the activity stops</td></tr>
+        <tr><td>Flow final</td><td>Circle with a cross</td><td>Only this path ends</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Activity partitioning (swimlanes)</div>
+    <p>An <strong>activity partition</strong> is an activity group for actions that have some common characteristic. Partitions often correspond to <em>organisational units or business actors</em> in a business model, and the partitioning criteria are the <strong>modeller's choice</strong>: geography, department, role or system boundary are all legitimate, as long as the criterion is stated.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Partition in the deck's example</th><th>Contains</th><th>Why the boundary is drawn there</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>OrderDepartment (Sydney / Newcastle)</td><td>Receive order, Fill order, Ship order, Close order</td><td>Geography is the criterion — the same department in two places</td></tr>
+        <tr><td>Accounting</td><td>Send invoice, Accept payment</td><td>Organisational unit that owns the money steps</td></tr>
+        <tr><td>Customer</td><td>Make payment</td><td>A business actor outside the company boundary</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; an activity diagram for the smart health agent.</strong> The deck draws the booking scenario with three swimlanes: <em>Patient</em>, <em>Agent</em> and <em>Scheduling System</em>. Rebuild the reasoning step by step.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Fix the boundary.</strong> The activity is one booking, not the whole agent. Entry point: the patient requests an appointment. Exit points: self-care advice delivered, or booking confirmed with the doctor system.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Choose the partitions.</strong> The obvious common characteristic is <em>who performs the step</em>. Patient: Request appointment, Select preferred time slot. Agent: Analyze symptoms, Suggest self-care advice, Present options to patient, Notify patient. Scheduling System: Retrieve doctor availability, Return available slots, Send confirmation, Confirm booking with doctor system.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Draw the backbone as control flow.</strong> Request appointment &rarr; Analyze symptoms &rarr; a choice. One guard leads to <em>If mild</em> &rarr; Suggest self-care advice (a flow final: this path is over, but the activity is not). The other leads to <em>If need doctor</em> &rarr; Retrieve doctor availability.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Make the data explicit with object nodes.</strong> &ldquo;Return available slots&rdquo; produces a slot list that &ldquo;Present options to patient&rdquo; consumes; &ldquo;Select preferred time slot&rdquo; produces a chosen slot that the confirmation step consumes. Those nodes are the parts of the workflow a reader can actually check.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Add the exception path, not just the happy path.</strong> Wrap the confirmation steps in an interruptible region and let a &ldquo;Cancel booking&rdquo; accept-event action fire inside it. This is the diagram-level answer to the deck's question &ldquo;what happens if the user cancels while booking is underway?&rdquo;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Say what the model still does not decide.</strong> An activity shows order and responsibility, not the reaction to a duplicate confirmation or a lost response. Those need a state machine (for the agent's own lifecycle) and an interaction (for the message traffic with the scheduling system).</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An activity diagram puts &ldquo;Fill order&rdquo; in the OrderDepartment lane and &ldquo;Make payment&rdquo; in the Customer lane. What does the deck say the partition means?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Partitions are not a type hierarchy. Generalisation is a structural relationship, and the deck is explicit that partitioning criteria are the modeller's choice.">It is a generalisation relationship between the two lanes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: a partition is an activity group for actions that share a common characteristic — often an organisational unit or business actor — and the criterion is chosen by the modeller." data-bad="">It groups actions that share a common characteristic, such as an organisational unit or business actor</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Concurrency is shown by fork and join bars inside an activity, not by the lanes. Two lanes do not imply two threads.">It declares that the two lanes execute concurrently</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-interactions" class="section" data-track="interactions">
+  <h2 class="section-title">Interactions: Sequence, Communication and Overview</h2>
+  <p class="section-lead">An interaction is the system-level view: collaborating instances exchanging messages. The deck gives three concrete notational forms for the same idea.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition and precondition</div>
+    <p><strong>Interactions</strong> focus on the communications between collaborating instances communicating via messages. They require a prior definition of a <strong>collaboration structure</strong>, which defines the context for the interaction. Multiple concrete notational forms exist: the <strong>sequence diagram</strong>, the <strong>communication diagram</strong> and the <strong>interaction overview diagram</strong>.</p>
+  </div>
+
+  <div id="ix-seq"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Element</th><th>Meaning</th><th>Deck example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Interaction frame</td><td>Names the interaction and declares its lifelines</td><td><code>sd ATM-transaction</code>, <code>sd CheckPin</code>, <code>sd Book appointment</code></td></tr>
+        <tr><td>Lifeline</td><td>One object or one part taking part in the interaction</td><td><code>client:</code>, <code>atm:</code>, <code>dbase:</code></td></tr>
+        <tr><td>Message</td><td>A communication action: call an operation or send a signal</td><td><code>insertCard</code>, <code>data(PIN)</code>, <code>check(PIN)</code>, <code>result(chk)</code></td></tr>
+        <tr><td>Synchronous message</td><td>Call and wait: the sender blocks for the reply</td><td><code>check(PIN)</code> followed by <code>result(chk)</code></td></tr>
+        <tr><td>Asynchronous message</td><td>Send and continue; replies are discarded</td><td>A signal sent to a reception</td></tr>
+        <tr><td>Interaction occurrence</td><td><code>ref</code>: reuse another interaction here instead of redrawing it</td><td><code>ref CheckPin</code>, <code>ref DoTransaction</code>, <code>ref Make booking</code>, <code>ref DoMore</code></td></tr>
+        <tr><td>Combined (in-line) fragment</td><td>A control structure over the messages inside it</td><td><code>alt [chk = OK] &hellip; [else] error(&ldquo;badPIN&rdquo;)</code>; <code>loop</code> in the financial-advisor example</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-notation-match"></div>
+  <script type="application/json" id="ix-notation-match">
+  {
+    "title": "Match the notation to what it commits you to",
+    "subtitle": "Click a term on the left, then its meaning on the right.",
+    "pairs": [
+      ["Interaction frame — sd CheckPin", "Names the interaction and the lifelines that take part in it"],
+      ["Lifeline", "One object or one part of an object, with its own line of time"],
+      ["Synchronous message", "Call and wait: the caller does not continue until the reply arrives"],
+      ["Asynchronous message", "Send and continue: the sender carries on and any reply is discarded"],
+      ["Reply", "The return of control and of a result from the invoked operation"],
+      ["Interaction occurrence — ref", "Reuses another interaction at this point instead of redrawing its messages"],
+      ["Combined fragment — alt with guards", "Splits the interaction into alternative branches selected by the guards"],
+      ["Combined fragment — loop", "Repeats the enclosed messages while the guard holds"]
+    ]
+  }
+  </script>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Communication diagram</h3>
+      <p>Shows interactions between objects using <strong>sequenced messages</strong>: the objects are drawn as nodes and the messages are numbered &mdash; <code>1: query</code>, then <code>2b: get</code> &mdash; so the numbering carries the ordering that the sequence diagram carries with vertical position. The connectors follow the structure of the collaboration, so a communication diagram is the natural bridge from an object diagram: an <em>association</em> connects classes, a <em>link</em> connects instances, and the sequenced messages travel along those links.</p>
+    </div>
+    <div class="col-card">
+      <h3>Interaction overview diagram</h3>
+      <p>Provides an overview of the <strong>flow of control where the nodes of the flow are interactions</strong>. It contains the activity-diagram node set: initial node, flow final node, activity final node, decision node, merge node, fork node and join node &mdash; with <code>ref</code> nodes holding the interactions. Use it when the question is &ldquo;which interaction happens next, and under which condition?&rdquo; rather than &ldquo;what is the message order inside one interaction?&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question you are answering</th><th>Use</th><th>Because</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What is the exact time order of messages between these objects?</td><td>Sequence diagram</td><td>Vertical position <em>is</em> time, and lifelines make concurrency visible</td></tr>
+        <tr><td>Which objects are involved, and along which links do they talk?</td><td>Communication diagram</td><td>Nodes and numbered messages emphasise structure and coupling</td></tr>
+        <tr><td>Which interaction runs when, across a whole scenario?</td><td>Interaction overview diagram</td><td>Its nodes are interactions; the flow of control is the activity notation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-workflow-seq"></div>
+  <script type="application/json" id="ix-workflow-seq">
+  {
+    "title": "Order the behaviour-modelling workflow",
+    "subtitle": "The deck's discipline: resolve the questions in the model before they become inconsistent code, and keep the effort proportional to the uncertainty.",
+    "steps": [
+      "Fix the scenario: one trigger, one outcome, and the boundary of what you are modelling",
+      "Identify the participating objects and the collaboration structure that is the context for the interaction",
+      "Choose the formalism: activity for control and object flow, interaction for message ordering, state machine for event-driven reactions",
+      "Lay out the elements in the order the system actually executes them",
+      "Add guards, alternatives and references so the edge cases are explicit rather than implied",
+      "Check the model against the requirements and write down what it still leaves unspecified"
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">The ATM sequence sends <code>check(PIN)</code> to the database and only continues once <code>result(chk)</code> comes back. Which communication type is that?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Synchronous means call and wait: the caller blocks while the method executes and resumes only when the reply arrives." data-bad="">Synchronous &mdash; call and wait, with a reply returning the result</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Asynchronous means send and continue, and any reply is discarded. Here the result(chk) reply is essential to the next step.">Asynchronous &mdash; send and continue, discarding the reply</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An interaction occurrence (ref) is a reuse mechanism, not a communication type. The question is about how the message is delivered.">An interaction occurrence, because the check is delegated</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-states" class="section" data-track="states">
+  <h2 class="section-title">State Machines: Events, Guards and Actions</h2>
+  <p class="section-lead">A state machine is the notation for one object's event-driven life. The examinable detail is the anatomy of a transition and the exact order in which its actions run.</p>
+
+  <div class="def-box">
+    <div class="def-label">The role of statecharts</div>
+    <p>Statecharts show the <strong>discrete behaviour</strong> of a part of a designed system through <strong>finite state transitions</strong>. They are used to describe <strong>event-driven</strong> behaviour: what the object does when something happens, rather than what it computes.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Event and event occurrence</div>
+    <p>An <strong>event</strong> is an instantaneous change of state in the system. The deck names three kinds:</p>
+    <ul style="padding-left:1.1rem; line-height:1.7;">
+      <li><strong>Message event</strong> &mdash; the receipt by an object of either a call of an operation or a signal.</li>
+      <li><strong>Change event</strong> &mdash; a change in the system configuration.</li>
+      <li><strong>Time event</strong> &mdash; occurs at the specified time.</li>
+    </ul>
+    <p>An <strong>event occurrence</strong> is an instance of an event: it occurs at a particular time instant and has <em>no duration</em>.</p>
+  </div>
+
+  <div id="ix-state"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Anatomy of a transition</h3>
+      <p><code>trigger [guard] / effect</code> &mdash; for example <code>bid [value &lt; 100] /reject</code>. The trigger is the event that makes the transition eligible; the guard is a Boolean predicate that must hold; the effect is the behaviour executed when the transition is taken.</p>
+    </div>
+    <div class="col-card">
+      <h3>The rule about guards</h3>
+      <p>Guards are for <em>conditional execution</em> of transitions and must be <strong>side-effect free</strong>. A guard may read the system; it may not change it. Anything that must be computed belongs in the transition's effect, which is why the deck's choice example computes <code>gain</code> in the effect rather than in a guard.</p>
+    </div>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-transition-timeline"></div>
+  <script type="application/json" id="ix-transition-timeline">
+  {
+    "title": "One transition, resolved in time: the lamp example",
+    "subtitle": "The deck's simple case. Exit actions prefix the transition action; entry actions postfix it.",
+    "events": [
+      { "label": "1", "title": "The event occurs", "detail": "Event off arrives. A transition out of LampOn is selected: its trigger matches and its guard, if any, holds. Guards are evaluated now and must be side-effect free." },
+      { "label": "2", "title": "Exit action of the source state", "detail": "exit/ printf(\"exiting\") runs first. Exit actions always prefix the transition action." },
+      { "label": "3", "title": "The transition action", "detail": "off/ printf(\"to off\") — the effect written on the transition itself." },
+      { "label": "4", "title": "Entry action of the target state", "detail": "entry/ lamp.off() runs last. Entry actions always postfix the transition action." },
+      { "label": "5", "title": "Run to completion", "detail": "Only now is the object ready for the next event. Anything that arrived meanwhile is waiting in the queue." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Transition</th><th>Actions executed, in order</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>LampOn &mdash;off/ printf(&ldquo;to off&rdquo;)&rarr; LampOff</code></td><td><code>printf(&ldquo;exiting&rdquo;)</code> &rarr; <code>printf(&ldquo;to off&rdquo;)</code> &rarr; <code>lamp.off()</code></td><td>Exit of LampOn prefixes the effect; entry of LampOff postfixes it</td></tr>
+        <tr><td><code>LampOff &mdash;off/ printf(&ldquo;needless&rdquo;)&rarr; LampOff</code> (self-transition)</td><td><code>printf(&ldquo;exiting&rdquo;)</code> &rarr; <code>printf(&ldquo;needless&rdquo;)</code> &rarr; <code>lamp.off()</code></td><td>The state does not change, but it is still exited and re-entered &mdash; hence the deck's name for it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Entry and exit actions are a dynamic assertion mechanism.</strong> They let a state guarantee something about the world while it is active: <code>LampOn</code> asserts the lamp is on when entered and unconditionally restores the invariant on the way out, whatever transition caused the exit.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A transition carries <code>bid [value &lt; 100] /reject</code>. Which statement about the guard is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the effect's job. A guard that changed state would make transition selection depend on evaluation order, which is exactly what the deck's side-effect-free rule prevents.">The guard may update <code>value</code> so that later guards see the new figure</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: guards are Boolean predicates used for conditional execution of transitions, and they must be side-effect free." data-bad="">The guard must be side-effect free: it may read <code>value</code>, not change it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A guard is not an event. The trigger is the event; the guard only decides whether that event actually fires the transition.">The guard is the trigger, so the transition fires whenever the guard changes</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-hierarchy" class="section" data-track="hierarchy">
+  <h2 class="section-title">Branching, Hierarchy and Completion</h2>
+  <p class="section-lead">Real state machines do not stay flat. The deck's answer to complexity is a graduated one: first branch precisely, then nest, then let nested machines hand control back on their own.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Construct</th><th>When the guards are evaluated</th><th>Deck example</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Junction pseudostate</strong> &mdash; static conditional branching</td>
+          <td><em>Before</em> the transition is taken. The junction is merely a graphical shortcut for convenient rendering of decision trees.</td>
+          <td><code>Selling &mdash;bid [value &lt; 100] /reject&rarr; Unhappy</code>; <code>[value &ge; 200] /sell</code>; <code>[(value &ge; 100) &amp; (value &lt; 200)] /sell</code></td>
+        </tr>
+        <tr>
+          <td><strong>Choice pseudostate</strong> &mdash; dynamic conditional branching</td>
+          <td><em>At the point when the choice point is reached</em>, after the incoming transition's effect has run.</td>
+          <td><code>Selling &mdash;bid /gain := calculatePotentialGain(value)&rarr; &diams;</code> then <code>[gain &ge; 200] /sell</code>, <code>[gain &lt; 100] /reject</code>, <code>[(gain &ge; 100) &amp; (gain &lt; 200)] /sell</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The distinction that earns marks:</strong> a junction decides with the values the system had <em>before</em> the transition; a choice decides with the values the transition <em>just produced</em>. If the branch condition depends on a computation, you need a choice &mdash; and the computation must sit in the effect of the incoming transition.
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Hierarchical state machines</h3>
+      <p>The deck's phrase is a <em>graduated attack on complexity</em>: states are decomposed into state machines. <code>LampFlashing</code> contains <code>FlashOn</code> and <code>FlashOff</code>, each with its own entry action and its own timed transitions (<code>1sec/</code>), and a <strong>default transition to the initial pseudostate</strong> decides which substate is entered first.</p>
+    </div>
+    <div class="col-card">
+      <h3>Group transitions and triggering rules</h3>
+      <p>A <strong>group transition</strong> is a higher-level transition drawn on a composite state: it applies whatever the active substate is. Two or more transitions may share the same event trigger &mdash; when they do, the <strong>innermost</strong> one wins, so <code>on/</code> on <code>FlashOn</code> pre-empts the group-level <code>on/</code>.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Completion transitions</div>
+    <p>A completion transition is triggered by a <strong>completion event</strong>: an event generated automatically when an immediately nested state machine terminates. It has an <strong>implicit trigger</strong> &mdash; nothing is written before the slash &mdash; so the deck's committing example runs <code>Phase1 &rarr; Phase2 &rarr; CommitDone</code> without any external event being involved.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked answer &mdash; the deck's complex order-of-actions exercise.</strong> Two nested machines: <code>S1</code> (entry <code>en1</code>, exit <code>exS1</code>) contains <code>S11</code> (entry <code>en11</code>, exit <code>exS11</code>); <code>S2</code> (entry <code>enS2</code>) contains <code>S21</code> (entry <code>enS21</code>, exit <code>exS21</code>) with an initial pseudostate <code>H*</code>. The transitions are <code>E1/act1</code> from <code>S1</code> to <code>S2</code>, and <code>E3/act3</code> from <code>S21</code> to <code>S2</code>.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>The rule.</strong> Exits run from the innermost active state outwards, up to but not including the transition's <em>least common ancestor</em>. Then the transition action runs. Then entries run from the least common ancestor inwards, down to the target state.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Question 1: in S1::S11, event E1 occurs.</strong> The transition leaves <code>S1</code> altogether, so the least common ancestor is above both <code>S1</code> and <code>S2</code>. Everything active is exited: <code>exS11</code> then <code>exS1</code>. Then the effect <code>act1</code>. Then the target is entered from the outside in: <code>enS2</code>, and because <code>S2</code>'s default transition leads to <code>S21</code>, <code>enS21</code>.</p><p><strong>Sequence:</strong> <code>exS11 &rarr; exS1 &rarr; act1 &rarr; enS2 &rarr; enS21</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Question 2: in S2::S21, event E3 occurs.</strong> The target is <code>S2</code> itself and the source <code>S21</code> is inside it, so the least common ancestor is <code>S2</code> &mdash; a state that is <em>not</em> exited. Only <code>exS21</code> runs. Then <code>act3</code>. Then <code>S2</code>'s default transition enters <code>S2</code> again through its initial pseudostate: <code>enS2</code>, then <code>enS21</code>.</p><p><strong>Sequence:</strong> <code>exS21 &rarr; act3 &rarr; enS2 &rarr; enS21</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Why the two answers differ.</strong> The number of exit actions is decided entirely by whether the transition crosses the boundary of the composite state. Crossing it (E1) destroys the nested configuration and rebuilds it; staying inside it (E3) resets only the region below the boundary. This is the same LCA reasoning that makes group transitions cheap to write and expensive to get wrong.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question"><code>Selling</code> receives <code>bid</code>, computes <code>gain := calculatePotentialGain(value)</code>, and then branches on <code>[gain &ge; 200]</code>, <code>[gain &lt; 100]</code> and the middle case. Which pseudostate is that, and why?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A junction evaluates its guards before the transition is taken, so it cannot branch on a value the transition itself computes.">A junction, because three guards leave one point</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: a choice pseudostate evaluates its guards when the choice point is reached — after the incoming transition's effect has computed gain." data-bad="">A choice pseudostate, because the guards are evaluated when the choice point is reached</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A completion transition has an implicit trigger and fires when a nested machine terminates. Nothing here waits for a nested machine.">A completion transition, because the effect ran first</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-concurrency" class="section" data-track="concurrency">
+  <h2 class="section-title">Orthogonal Regions: Concurrent Viewpoints</h2>
+  <p class="section-lead">The last piece of the state-machine vocabulary is also the most misused. Orthogonality is about simultaneous <em>descriptions</em> of one entity, not about several entities running at once.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p><strong>Orthogonality</strong> should be used to capture <em>different concurrent views of the same entity</em>. <strong>Orthogonal regions of a state</strong> combine multiple simultaneous descriptions: the deck's example splits one person into an <code>age</code> region (Child, Adult, Retiree) and a <code>financialStatus</code> region (Poor, Rich), so the object is always in exactly one state of each region at the same time.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Semantic rule</th><th>What it means</th><th>Consequence for the model</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Regions execute concurrently</td><td>All mutually orthogonal regions detect the same events and respond to them simultaneously</td><td>In practice this usually reduces to some type of interleaving, and the order of the two responses is not specified</td></tr>
+        <tr><td>A state is a combination</td><td>The object's situation is the tuple of its region states</td><td>Child&nbsp;&times;&nbsp;Rich is a different situation from Child&nbsp;&times;&nbsp;Poor, and both are legal</td></tr>
+        <tr><td>The same event can hit every region</td><td><code>robBank/</code> moves <code>LawAbiding &rarr; Outlaw</code> in one region and <code>Poor &rarr; Rich</code> in the other</td><td>One event, two independent effects, no sequencing between them</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Do not fall into this trap.</strong> The concurrency of orthogonal regions is the concurrency of <em>different viewpoints</em>. It should not be used to model concurrent objects: object concurrency has different semantics from region concurrency, and the deck names this as the way most modellers misuse regions. If you have two objects that run at the same time and exchange messages, you want active objects with message queues &mdash; not two regions of one state machine.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-region-match"></div>
+  <script type="application/json" id="ix-region-match">
+  {
+    "title": "Which construct fits the situation?",
+    "subtitle": "Each situation needs exactly one of the Week 6 constructs. Match them.",
+    "pairs": [
+      ["Two independent properties of one object that change separately", "Orthogonal regions of a state"],
+      ["Two objects running at the same time and exchanging messages", "Active objects with message queues and run-to-completion"],
+      ["One event that moves a whole composite state to another composite state", "A group transition on the composite state"],
+      ["Two transitions share a trigger, one on a substate", "The innermost transition wins"],
+      ["A transition with no written trigger that fires when a nested machine finishes", "A completion transition with an implicit trigger"],
+      ["Branching that must use values produced by the incoming transition's effect", "A choice pseudostate"],
+      ["Branching that is only a convenient rendering of a decision tree", "A junction pseudostate"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A modeller models a web server and its three worker processes as four orthogonal regions of one state machine. According to the deck, what is wrong with that?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Region concurrency is the concurrency of different viewpoints of the same entity; object concurrency has different semantics, and the deck explicitly warns against this use." data-bad="">Region concurrency models different viewpoints of one entity, not concurrent objects</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The notation will happily accept it — that is exactly why the deck calls it a trap. The problem is semantic, not syntactic.">Nothing: orthogonal regions are the standard notation for concurrent objects</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Orthogonal regions do respond to the same events simultaneously. The issue is what is being modelled, not whether events reach every region.">It is wrong because each region must respond to a different event</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-agentic" class="section" data-track="agentic">
+  <h2 class="section-title">Agentic AI: The Same Models, A New Domain</h2>
+  <p class="section-lead">The deck reuses every formalism on a smart health agent, then pushes to a harder example. Use these as the template for your own project models.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question the natural-language brief leaves open</th><th>Model that resolves it</th><th>What the model must contain</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What happens when record data is unavailable or outdated?</td><td>Activity diagram</td><td>A choice after &ldquo;Analyze symptoms&rdquo; with an explicit guard for the unusable-data branch</td></tr>
+        <tr><td>What if the user cancels while booking is underway?</td><td>Activity diagram with an interruptible region, plus a state machine</td><td>A cancel accept-event action inside the region; a state the agent can be interrupted in</td></tr>
+        <tr><td>How do you tell a failed booking from a successful booking whose response was lost?</td><td>Interaction (sequence diagram)</td><td>Explicit reply messages, plus the alternative fragment for the missing reply</td></tr>
+        <tr><td>What if an older symptom summary finishes after a newer one?</td><td>State machine</td><td>States and guards that reject a stale result rather than overwriting the newer one</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Smart health agent &mdash; the three models</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Activity:</strong> swimlanes Patient, Agent, Scheduling System; <em>If mild</em> &rarr; self-care advice, <em>If need doctor</em> &rarr; retrieve availability, present options, select slot, confirm.</li>
+        <li><strong>Sequence:</strong> <code>sd Book appointment</code> with an <code>alt</code> on <code>[chk = need doctor]</code> referencing <code>sd Make booking</code>, and <code>[chk = mild]</code> giving self-care advice; <code>sd Make booking</code> runs request slots &rarr; return slots &rarr; present slots &rarr; select slot &rarr; confirm booking &rarr; send confirmation &rarr; notify patient.</li>
+        <li><strong>State machine:</strong> Idle &rarr; Analysing &rarr; (If mild) Advising Self-care, or (If need doctor) Make Booking &rarr; QueSchedule &rarr; Slot received &rarr; PresOptions &rarr; Choice received &rarr; Booking confirmed.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>The RTC design rules the deck derives</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Keep reactions short</strong> &mdash; a long reaction is a long window in which nothing else is observed.</li>
+        <li><strong>Treat LLM output as input to validate</strong> &mdash; the plan is a proposal, not a command.</li>
+        <li><strong>Define the boundary</strong> &mdash; say exactly which state one reaction may change before it completes.</li>
+        <li><strong>Validate, record, arrange, wait</strong> &mdash; the four updates before <code>WaitingForTool</code> are one completion unit; a <em>Cancel</em> arriving halfway through is the failure the model exists to prevent.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-health"></div>
+  <script type="application/json" id="ix-race-health">
+  {
+    "title": "Smart Health Agent — behaviour complexity",
+    "subtitle": "Illustrative 0–5 scores drawn from the deck's own analysis of the two agent examples. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "External systems integrated", "value": 1, "display": "one scheduling system" },
+      { "name": "Continuous monitoring (looping)", "value": 1, "display": "one-shot booking" },
+      { "name": "Branching: mild / need doctor / cancel", "value": 3, "display": "alt plus an interruptible region" },
+      { "name": "Exception handling", "value": 2, "display": "failed or lost booking" },
+      { "name": "Participants in the sequence diagram", "value": 3, "display": "patient, agent, system" }
+    ]
+  }
+  </script>
+
+  <div data-ix="race" data-ix-src="#ix-race-finance"></div>
+  <script type="application/json" id="ix-race-finance">
+  {
+    "title": "Smart Financial Advisor Agent — the same five dimensions",
+    "subtitle": "The deck's second scenario is deliberately harder: looping behaviour, more external systems, branching on approval, and real exception handling. Same scale, same dimensions.",
+    "max": 5,
+    "rows": [
+      { "name": "External systems integrated", "value": 2, "display": "market data API + brokerage" },
+      { "name": "Continuous monitoring (looping)", "value": 5, "display": "portfolio tracking loop" },
+      { "name": "Branching: approve / reject / alternatives", "value": 5, "display": "alt and loop fragments" },
+      { "name": "Exception handling", "value": 5, "display": "market crash, trade rejection" },
+      { "name": "Participants in the sequence diagram", "value": 4, "display": "client, agent, API, brokerage" }
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>What the deck says to produce for the financial-advisor scenario:</strong> an activity diagram with swimlanes <em>Client</em>, <em>Smart Financial Advisor Agent</em>, <em>Market Data API</em> and <em>Brokerage System</em>, actions such as <em>Analyze client profile</em>, <em>Get market data</em> and <em>Present options to client</em>, and an explicit condition on whether the client approves; a sequence diagram with four participants using <code>alt</code> and <code>loop</code>; and a state machine whose first job is to <em>define the correct states</em>.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked answer &mdash; the cancel-during-booking question, modelled three ways.</strong> The brief-sentence is &ldquo;if the user cancels while booking is underway, the agent must stop&rdquo;. Here is what each model contributes, and what each one cannot say.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Activity view.</strong> Draw the booking steps inside an interruptible region and add an <em>Accept event action</em> for &ldquo;Cancel requested&rdquo;. The region gives you the answer to &ldquo;may this happen while that is running?&rdquo; in one visual grouping &mdash; and it forces you to say what happens to the partially completed booking.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Interaction view.</strong> A sequence diagram with a <code>par</code>-like alternative is not enough on its own: you must draw the cancel message arriving <em>between</em> two booking messages and add the reply that the scheduling system sends for the already-issued request. That reply is precisely the message that is otherwise lost.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>State machine view.</strong> The agent's states decide the outcome: <code>MakeBooking</code> has exit <code>notifyPatient()</code>; a <code>Cancelling</code> state that records &ldquo;a request is in flight&rdquo; is what lets the agent distinguish an orphaned confirmation from a fresh one. Without a state for that situation, the model cannot express the difference at all.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>RTC view.</strong> All of this only works if each reaction is short and the boundary of one reaction is defined: validate the plan, record the request identifier, arrange execution, enter <code>WaitingForTool</code>. If <em>Cancel</em> is processed halfway through those updates, the agent can hold a request identifier for a tool call it believes was never made. Run-to-completion is what makes &ldquo;halfway through&rdquo; impossible.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;The activity diagram shows where cancellation may interrupt the workflow; the interaction shows which reply can be lost; the state machine gives the agent a state in which a late reply can be recognised as stale; and run-to-completion guarantees that the cancellation is handled either before or after the update sequence, never inside it.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 6 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>All behaviour stems from objects</h4>
+        <p>UML's causality is a discrete, event-driven model of computation over a network of communicating objects. An action is a single atomic step executed by an object.</p>
+        <div class="flip-hint">Foundation</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Four formalisms, one semantic base</h4>
+        <p>Actions for fine-grained manipulation, activities for control and data flow, interactions for message ordering, state machines for event-driven reactions.</p>
+        <div class="flip-hint">Vocabulary</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Exit prefixes, entry postfixes</h4>
+        <p>On a transition: exit actions of the source, then the transition's effect, then entry actions of the target &mdash; and the whole thing runs to completion.</p>
+        <div class="flip-hint">Semantics</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Regions are viewpoints, not objects</h4>
+        <p>Orthogonal regions give concurrent descriptions of one entity. Concurrent objects need active objects, message queues and RTC &mdash; different semantics.</p>
+        <div class="flip-hint">Trap</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you state what makes an object active, write the action sequence for a transition between nested states, and say exactly when a choice pseudostate evaluates its guards?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial and lab</h3>
+      <p>Bring one scenario from your project and say which behaviour model answers which open question. The laboratory continues the modelling work &mdash; the runtime view of your classes is what your behaviour models must be consistent with.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's notation into a reference card and its semantics into relationships you can write from memory. Then attempt the Quiz Hub and the Flashcards for Week 6.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

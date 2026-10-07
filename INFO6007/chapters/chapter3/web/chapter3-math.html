@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 3: Time Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 3 foundations for INFO6007: the WBS dictionary and decomposition rules, the notation for CPM, the forward and backward pass with float arithmetic, PERT three-point estimating and its standard deviation, dependency taxonomy and the estimating-technique comparison.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 3: Time Management">
+<meta property="og:description" content="Week 3 foundations for INFO6007: the WBS dictionary and decomposition rules, the notation for CPM, the forward and backward pass with float arithmetic, PERT three-point estimating and its standard deviation, dependency taxonomy and the estimating-technique comparison.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter3-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 3 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-notate" class="toc-link">Notation &amp; the symbol glossary</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-cpm" class="toc-link">The critical path, worked</a></li>
+    <li><a href="#sec-m-pert" class="toc-link">Three-point estimating</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Dependency &amp; constraint taxonomy</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Choosing and defending an estimate</a></li>
+  </ul>
+  <a href="chapter3-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO6007 &mdash; Week 3 supplement</p>
+  <h1>Foundations: the arithmetic behind a schedule</h1>
+  <p class="hero-desc">Week 3 is the first quantitative week of the unit. The examinable material is small and exact: the decomposition rules of the WBS, the forward and backward pass that produce early and late dates, the float formula, and the PERT weighted average with its standard deviation. This page states each one precisely and then works the numbers through, so you can reproduce them under exam conditions.</p>
+  <div class="chip-list">
+    <span>Every formula worked with real numbers</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Two animated walk-throughs: CPM and PERT</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on arithmetic. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Work breakdown structure</div>
+    <p>A <strong>deliverable-oriented hierarchical decomposition</strong> of the work involved in a project that defines the total scope of the project. It is produced by <strong>decomposition</strong>: high-level deliverables are broken into sub-deliverables, and those into <strong>work packages</strong> &mdash; the lowest level at which work is estimated, assigned and controlled. Every item is documented in the <strong>WBS dictionary</strong>.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Critical path</div>
+    <p>The <strong>longest sequence of dependent activities</strong> in the project &mdash; the path that determines the shortest possible project duration. Every activity on it has <strong>zero float</strong>, so any delay on the critical path delays the entire project.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Float (slack)</div>
+    <p>The amount of time an activity can be delayed without delaying the project finish date (or a constrained milestone). It is computed as \(\text{float} = LS - ES = LF - EF\). Zero float defines a critical activity; a small positive float defines a <em>near-critical</em> activity, which a status report must track just as closely.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Schedule baseline</div>
+    <p>The <strong>approved version of the schedule model</strong>, used as the reference for reporting progress and measuring variance. It is distinct from the current forecast: a forecast that has drifted is information, whereas a forecast quietly substituted for the baseline makes variance reporting impossible.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Three-point estimate (PERT)</div>
+    <p>An estimate built from three durations: <strong>optimistic</strong> \(O\) (shortest time if everything goes well), <strong>most likely</strong> \(M\) (best guess under normal conditions) and <strong>pessimistic</strong> \(P\) (longest time if things go wrong). They are combined as \(E = \dfrac{O + 4M + P}{6}\) with spread \(\sigma = \dfrac{P - O}{6}\).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>WBS</td><td>Deliverable-oriented, hierarchical, defines <em>total</em> scope</td><td>Calling a task list or an org chart a WBS</td></tr>
+        <tr><td>Work package</td><td>The lowest level you estimate and assign &mdash; one owner, a testable output</td><td>Naming a phase (&ldquo;development&rdquo;) as a package</td></tr>
+        <tr><td>Critical path</td><td>Longest dependent sequence, and zero float</td><td>Saying &ldquo;the most important activities&rdquo; or &ldquo;the shortest path&rdquo;</td></tr>
+        <tr><td>Float</td><td>Delay tolerated <em>without</em> moving the finish date</td><td>Treating float as spare time that is safe to spend</td></tr>
+        <tr><td>Lead vs lag</td><td>Lead starts a successor early; lag makes it wait</td><td>Mixing the two up, which reverses the schedule effect</td></tr>
+        <tr><td>Baseline vs forecast</td><td>Baseline is approved and frozen; forecast moves</td><td>Reporting the forecast as though it were the baseline</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An activity has ES = 9, EF = 14, LS = 10, LF = 15. What is its float, and what does that imply?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="LF − EF = 15 − 14 = 1, not 5. That figure is the early finish — the day the activity ends on the forward pass.">5 days, so it is not critical</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: 15 − 14 = 1 day, and LS − ES = 10 − 9 = 1 as well. It is near-critical — one day of slip makes it critical." data-bad="">1 day, so it is near-critical</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Float is not zero here, because the late dates differ from the early dates. Zero float is what defines a critical activity.">0 days, so it is on the critical path</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notate">
+  <h2 class="section-title">Notation and the symbol glossary</h2>
+  <p class="section-lead">The deck writes the method in prose. The symbols below are introduced here so the arithmetic can be written compactly, and so every table on this page can be read at a glance.</p>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture states the method in words and one PERT formula. The symbols here are a <em>revision aid</em> introduced for this page; they are standard project-management notation, but they are not the lecture's own notation and should not be quoted as such.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(d_i\)</div><div class="sym-cell">duration of activity \(i\)</div><div class="sym-cell">Estimated elapsed working time for one activity, with a stated basis</div>
+    <div class="sym-cell">\(ES_i\)</div><div class="sym-cell">early start</div><div class="sym-cell">Earliest day activity \(i\) can begin, given its predecessors</div>
+    <div class="sym-cell">\(EF_i\)</div><div class="sym-cell">early finish</div><div class="sym-cell">\(EF_i = ES_i + d_i\)</div>
+    <div class="sym-cell">\(LS_i\)</div><div class="sym-cell">late start</div><div class="sym-cell">Latest day \(i\) can begin without moving the project finish</div>
+    <div class="sym-cell">\(LF_i\)</div><div class="sym-cell">late finish</div><div class="sym-cell">\(LF_i = LS_i + d_i\)</div>
+    <div class="sym-cell">\(F_i\)</div><div class="sym-cell">float (slack)</div><div class="sym-cell">\(F_i = LS_i - ES_i = LF_i - EF_i\); zero means critical</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">project duration</div><div class="sym-cell">The maximum \(EF\) over all activities — the length of the critical path</div>
+    <div class="sym-cell">\(P(i)\)</div><div class="sym-cell">predecessor set</div><div class="sym-cell">Activities that must satisfy their dependency before \(i\) can start</div>
+    <div class="sym-cell">\(O, M, P\)</div><div class="sym-cell">optimistic, most likely, pessimistic</div><div class="sym-cell">The three durations of a three-point estimate</div>
+    <div class="sym-cell">\(E\)</div><div class="sym-cell">PERT expected duration</div><div class="sym-cell">\(E = (O + 4M + P)/6\) — a weighted average, not a plain mean</div>
+    <div class="sym-cell">\(\sigma\)</div><div class="sym-cell">standard deviation</div><div class="sym-cell">\(\sigma = (P - O)/6\) — the spread of the estimate</div>
+    <div class="sym-cell">\(\ell\)</div><div class="sym-cell">lead / lag</div><div class="sym-cell">Positive \(\ell\) is a lag (wait); negative \(\ell\) is a lead (overlap)</div>
+    <div class="sym-cell">\(W\)</div><div class="sym-cell">work package</div><div class="sym-cell">A leaf of the WBS: one owner, an estimate, a testable output</div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-cpm-order"></div>
+  <script type="application/json" id="ix-m-cpm-order">
+  {
+    "title": "Order the critical path calculation",
+    "subtitle": "Rebuild the sequence in which a network is solved, forward pass first.",
+    "steps": [
+      "Draw the network: one node per activity, one arrow per dependency",
+      "Forward pass — set ES = 0 for activities with no predecessor",
+      "Forward pass — compute EF = ES + duration, and pass it to successors",
+      "Set the project duration T = the maximum EF in the network",
+      "Backward pass — set LF = T for activities with no successor",
+      "Backward pass — compute LS = LF − duration, and pass it back to predecessors",
+      "Compute float F = LS − ES for every activity",
+      "Mark F = 0 as the critical path and record near-critical activities"
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Two rules that carry the whole method.</strong> On the forward pass an activity with several predecessors takes the <em>maximum</em> early finish as its early start: it cannot begin until the last prerequisite is done. On the backward pass an activity with several successors takes the <em>minimum</em> late start as its late finish: it must be done before the earliest of them needs to begin. Every CPM error traces back to taking the wrong one of those two.
+  </div>
+</section>
+
+<section class="section" id="sec-m-cpm">
+  <h2 class="section-title">The critical path, worked end to end</h2>
+  <p class="section-lead">The lecture's Activity-on-Node example gives ten activities. Its real value is that it contains every complication the method has: multiple predecessors, a merge point, a branch that turns out not to be critical, and a near-critical activity that a careless answer would miss.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Activity</th><th>Duration \(d\)</th><th>Predecessors \(P(i)\)</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>Float \(F\)</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>A</strong></td><td>5</td><td>&mdash;</td><td>0</td><td>5</td><td>0</td><td>5</td><td><strong>0</strong></td><td>Critical</td></tr>
+        <tr><td><strong>B</strong></td><td>4</td><td>A</td><td>5</td><td>9</td><td>5</td><td>9</td><td><strong>0</strong></td><td>Critical</td></tr>
+        <tr><td><strong>C</strong></td><td>5</td><td>B</td><td>9</td><td>14</td><td>15</td><td>20</td><td>6</td><td>Float</td></tr>
+        <tr><td><strong>D</strong></td><td>6</td><td>B</td><td>9</td><td>15</td><td>9</td><td>15</td><td><strong>0</strong></td><td>Critical</td></tr>
+        <tr><td><strong>E</strong></td><td>7</td><td>D</td><td>15</td><td>22</td><td>15</td><td>22</td><td><strong>0</strong></td><td>Critical</td></tr>
+        <tr><td><strong>F</strong></td><td>3</td><td>C, D</td><td>15</td><td>18</td><td>20</td><td>23</td><td>5</td><td>Float</td></tr>
+        <tr><td><strong>G</strong></td><td>6</td><td>D</td><td>15</td><td>21</td><td>16</td><td>22</td><td>1</td><td>Near-critical</td></tr>
+        <tr><td><strong>H</strong></td><td>7</td><td>F, G</td><td>21</td><td>28</td><td>23</td><td>30</td><td>2</td><td>Near-critical</td></tr>
+        <tr><td><strong>I</strong></td><td>8</td><td>E, G</td><td>22</td><td>30</td><td>22</td><td>30</td><td><strong>0</strong></td><td>Critical</td></tr>
+        <tr><td><strong>J</strong></td><td>3</td><td>H, I</td><td>30</td><td>33</td><td>30</td><td>33</td><td><strong>0</strong></td><td>Critical</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-m-aon"></div>
+  <script type="application/json" id="ix-m-aon">
+  {
+    "title": "The same network, with early dates and float on every node",
+    "subtitle": "Read the boxes from left to right for the forward pass, then right to left for the backward pass. Click any node for its arithmetic.",
+    "svg": "<svg viewBox=\"0 0 620 400\" role=\"img\" aria-label=\"Activity on node network diagram for ten activities with early dates and float marked, and the critical path in red\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"mHead\" markerWidth=\"10\" markerHeight=\"10\" refX=\"8\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L8,3 L0,6 z\" fill=\"#64748b\"></path></marker><marker id=\"mHeadRed\" markerWidth=\"10\" markerHeight=\"10\" refX=\"8\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L8,3 L0,6 z\" fill=\"#dc2626\"></path></marker></defs><rect x=\"0\" y=\"0\" width=\"620\" height=\"400\" fill=\"#fbfbff\"></rect><g stroke=\"#64748b\" stroke-width=\"1.7\" fill=\"none\" marker-end=\"url(#mHead)\"><path d=\"M158,80 L216,80\"></path><path d=\"M328,58 L380,58 L380,132\"></path><path d=\"M350,102 Q350,196 284,193\"></path><path d=\"M284,258 Q284,296 266,301\"></path><path d=\"M376,280 Q480,280 480,190\"></path><path d=\"M266,344 Q400,344 400,306\"></path><path d=\"M458,302 L520,302\"></path></g><g stroke=\"#dc2626\" stroke-width=\"2.4\" fill=\"none\" marker-end=\"url(#mHeadRed)\"><path d=\"M158,80 L216,80\"></path><path d=\"M328,58 L380,58 L380,132\"></path><path d=\"M380,192 L380,212\"></path><path d=\"M380,270 L380,284\"></path><path d=\"M438,302 L520,302\"></path></g><g font-family=\"system-ui, sans-serif\" text-anchor=\"middle\"><g><rect x=\"64\" y=\"58\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fee2e2\" stroke=\"#dc2626\" stroke-width=\"2.4\"></rect><text x=\"111\" y=\"76\" font-size=\"13\" font-weight=\"700\" fill=\"#7f1d1d\">A · 5</text><text x=\"111\" y=\"92\" font-size=\"10\" fill=\"#7f1d1d\">ES 0 · F 0</text></g><g><rect x=\"234\" y=\"58\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fee2e2\" stroke=\"#dc2626\" stroke-width=\"2.4\"></rect><text x=\"281\" y=\"76\" font-size=\"13\" font-weight=\"700\" fill=\"#7f1d1d\">B · 4</text><text x=\"281\" y=\"92\" font-size=\"10\" fill=\"#7f1d1d\">ES 5 · F 0</text></g><g><rect x=\"238\" y=\"172\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></rect><text x=\"285\" y=\"190\" font-size=\"13\" font-weight=\"700\" fill=\"#312e81\">C · 5</text><text x=\"285\" y=\"206\" font-size=\"10\" fill=\"#4338ca\">ES 9 · F 6</text></g><g><rect x=\"334\" y=\"150\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fee2e2\" stroke=\"#dc2626\" stroke-width=\"2.4\"></rect><text x=\"381\" y=\"168\" font-size=\"13\" font-weight=\"700\" fill=\"#7f1d1d\">D · 6</text><text x=\"381\" y=\"184\" font-size=\"10\" fill=\"#7f1d1d\">ES 9 · F 0</text></g><g><rect x=\"334\" y=\"228\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fee2e2\" stroke=\"#dc2626\" stroke-width=\"2.4\"></rect><text x=\"381\" y=\"246\" font-size=\"13\" font-weight=\"700\" fill=\"#7f1d1d\">E · 7</text><text x=\"381\" y=\"262\" font-size=\"10\" fill=\"#7f1d1d\">ES 15 · F 0</text></g><g><rect x=\"222\" y=\"300\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#eef2ff\" stroke=\"#4f46e5\" stroke-width=\"1.8\"></rect><text x=\"269\" y=\"318\" font-size=\"13\" font-weight=\"700\" fill=\"#312e81\">F · 3</text><text x=\"269\" y=\"334\" font-size=\"10\" fill=\"#4338ca\">ES 15 · F 5</text></g><g><rect x=\"344\" y=\"286\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fffbeb\" stroke=\"#d97706\" stroke-width=\"2\"></rect><text x=\"391\" y=\"304\" font-size=\"13\" font-weight=\"700\" fill=\"#78350f\">G · 6</text><text x=\"391\" y=\"320\" font-size=\"10\" fill=\"#92400e\">ES 15 · F 1</text></g><g><rect x=\"434\" y=\"166\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fffbeb\" stroke=\"#d97706\" stroke-width=\"2\"></rect><text x=\"481\" y=\"184\" font-size=\"13\" font-weight=\"700\" fill=\"#78350f\">H · 7</text><text x=\"481\" y=\"200\" font-size=\"10\" fill=\"#92400e\">ES 21 · F 2</text></g><g><rect x=\"434\" y=\"280\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fee2e2\" stroke=\"#dc2626\" stroke-width=\"2.4\"></rect><text x=\"481\" y=\"298\" font-size=\"13\" font-weight=\"700\" fill=\"#7f1d1d\">I · 8</text><text x=\"481\" y=\"314\" font-size=\"10\" fill=\"#7f1d1d\">ES 22 · F 0</text></g><g><rect x=\"520\" y=\"280\" width=\"94\" height=\"44\" rx=\"9\" fill=\"#fee2e2\" stroke=\"#dc2626\" stroke-width=\"2.4\"></rect><text x=\"567\" y=\"298\" font-size=\"13\" font-weight=\"700\" fill=\"#7f1d1d\">J · 3</text><text x=\"567\" y=\"314\" font-size=\"10\" fill=\"#7f1d1d\">EF 33 · F 0</text></g></g><text x=\"18\" y=\"30\" font-family=\"system-ui, sans-serif\" font-size=\"10\" font-weight=\"700\" fill=\"#94a3b8\" letter-spacing=\"0.08em\">FORWARD PASS →</text><text x=\"602\" y=\"30\" font-family=\"system-ui, sans-serif\" font-size=\"10\" font-weight=\"700\" fill=\"#94a3b8\" letter-spacing=\"0.08em\" text-anchor=\"end\">← BACKWARD PASS</text><text x=\"310\" y=\"382\" font-family=\"system-ui, sans-serif\" font-size=\"12\" fill=\"#dc2626\" text-anchor=\"middle\">Critical path A → B → D → E → I → J, total 33 days. Near-critical: G with 1 day of float, H with 2.</text></svg>",
+    "points": [
+      { "x": 17.9, "y": 20.0, "label": "A — ES 0, EF 5, float 0", "detail": "No predecessor, so ES = 0 and EF = ES + d = 5. In the backward pass LF = min(LS of B) = 5 and LS = 0, so float = 0 − 0 = 0." },
+      { "x": 45.3, "y": 20.0, "label": "B — ES 5, EF 9, float 0", "detail": "One predecessor (A, EF 5), so ES = 5 and EF = 9. B is common to the C branch and the D branch, and the D branch is critical, which is what keeps B's float at zero." },
+      { "x": 46.0, "y": 48.5, "label": "C — ES 9, EF 14, float 6", "detail": "Forward: ES = 9, EF = 14. Backward: C's only successor is F, so LF = LS(F) = 20 and LS = 20 − 5 = 15. Float = 15 − 9 = 6. Note how large that is: F does not have to start until day 20 because it feeds H, and H in turn has two days of slack before J." },
+      { "x": 61.5, "y": 43.0, "label": "D — ES 9, EF 15, float 0", "detail": "ES = 9 from B, EF = 9 + 6 = 15. D branches to E, F and G. Its LF comes from E, which is critical, so LS = 15 − 6 = 9 and float = 0." },
+      { "x": 61.5, "y": 62.5, "label": "E — ES 15, EF 22, float 0", "detail": "ES = EF(D) = 15, EF = 22. Backward: E feeds I, whose late start is 22, so LF = 22, LS = 15, float = 0." },
+      { "x": 43.4, "y": 80.5, "label": "F — ES 15, EF 18, float 5", "detail": "Two predecessors: C (EF 14) and D (EF 15). ES takes the maximum, 15 — not 14. EF = 18. Backward: F's only successor is H, whose late start is 23, so LF = 23, LS = 23 − 3 = 20 and float = 20 − 15 = 5." },
+      { "x": 63.1, "y": 77.0, "label": "G — ES 15, EF 21, float 1", "detail": "ES = 15 from D, EF = 21. Backward: G feeds H (late start 23) and I (late start 22), so LF takes the minimum of the two, 22; LS = 22 − 6 = 16 and float = 16 − 15 = 1. One day of slip and G starts pushing I, which is critical." },
+      { "x": 77.6, "y": 47.0, "label": "H — ES 21, EF 28, float 2", "detail": "Two predecessors: F (EF 18) and G (EF 21). ES = max(18, 21) = 21, EF = 28. Backward: H's only successor is J, whose late start is 30, so LF = 30, LS = 30 − 7 = 23 and float = 23 − 21 = 2." },
+      { "x": 77.6, "y": 81.5, "label": "I — ES 22, EF 30, float 0", "detail": "Predecessors E (EF 22) and G (EF 21): ES = max(22, 21) = 22, EF = 30. Backward: I feeds J whose late start is 30, so LF = 30, LS = 22, float = 0. The 8-day activity is the longest single task in the network." },
+      { "x": 91.5, "y": 81.5, "label": "J — ES 30, EF 33, float 0", "detail": "Predecessors H (EF 28) and I (EF 30): ES = max(28, 30) = 30, EF = 30 + 3 = 33. J is the last activity, so LF = 33, LS = 30, float = 0, and the project duration T = 33 days." }
+    ]
+  }
+  </script>
+
+  <div id="ix-m-cpm"></div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>Forward pass.</strong> Set \(ES_i = 0\) for every activity with no predecessor, then sweep the network from start to finish:</p>
+        \[ ES_i = \max_{j \in P(i)} EF_j, \qquad EF_i = ES_i + d_i \]
+        <p>Merges are where the maximum rule earns its keep. F has predecessors C (\(EF = 14\)) and D (\(EF = 15\)), so \(ES_F = 15\) even though one predecessor finished a day earlier. H has F (\(EF = 18\)) and G (\(EF = 21\)), so \(ES_H = 21\).</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>Project duration.</strong> The network's finish date is the largest early finish present:</p>
+        \[ T = \max_i EF_i = EF_J = 33\ \text{days} \]
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>Backward pass.</strong> Set \(LF_i = T\) for every activity with no successor, then sweep from finish to start:</p>
+        \[ LF_i = \min_{k \,\in\, S(i)} LS_k, \qquad LS_i = LF_i - d_i \]
+        <p>where \(S(i)\) is the set of successors of \(i\). The minimum rule is what protects the critical chain. G has two successors, H (\(LS = 23\)) and I (\(LS = 22\)), so \(LF_G = \min(23, 22) = 22\) and \(LS_G = 16\): it is I, not H, that constrains G. H has only one successor, J, so \(LF_H = LS_J = 30\) and \(LS_H = 23\). Merges on the backward pass take the minimum for exactly the reason merges on the forward pass take the maximum.</p>
+      </div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>Float and the critical path.</strong> For every activity, \(F_i = LS_i - ES_i = LF_i - EF_i\). The critical path is the set of activities with \(F_i = 0\), which here is A, B, D, E, I and J:</p>
+        \[ \text{path} = A \to B \to D \to E \to I \to J, \qquad \sum d = 5 + 4 + 6 + 7 + 8 + 3 = 33 \]
+        <p>The float column is where the marks are. G has 1 day, H has 2, F has 5 and C has 6 &mdash; so G and H are near-critical and belong in the same sentence as the critical path, while C and F are the resources you can borrow from. Note also what the method did <em>not</em> do: it did not declare G critical. G starts on the same day as E and feeds the same successor, but G takes 6 days where E takes 7, so the longer branch wins and G keeps its float.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>The exam-safe way to present a CPM answer.</strong> State the rule you applied at each merge (&ldquo;ES is the maximum early finish of the predecessors&rdquo;), give the table, name the critical path with its summed durations, and finish with the two consequences: which activities have zero float, and which have small float and therefore need watching. An answer that only names a path has answered half the question.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Activity F has predecessors C (EF = 14) and D (EF = 15). What is F's early start on the forward pass?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="14 is C's early finish. If F started then, D would not yet be complete and F's work would be built on an unfinished input.">14, the earliest of the two finishes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. An activity with multiple predecessors cannot start until the last of them is finished, so ES is the maximum of the predecessors' early finishes." data-bad="">15, the maximum of the two finishes</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Adding the durations is not how the forward pass works — predecessors are a waiting condition, not a sum of work.">29, the sum of the two finishes</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; a five-activity network solved from scratch.</strong> A university is replacing its enrolment system. Activities and dependencies:</p>
+    <div class="table-responsive">
+      <table class="styled-table">
+        <thead><tr><th>ID</th><th>Activity</th><th>\(d\)</th><th>Predecessor</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>Configure the new system</td><td>5</td><td>&mdash;</td></tr>
+          <tr><td>B</td><td>Migrate student records</td><td>7</td><td>A</td></tr>
+          <tr><td>C</td><td>Integrate with the payment system</td><td>6</td><td>A, lag 4 (vendor access)</td></tr>
+          <tr><td>D</td><td>Test end to end</td><td>4</td><td>B, C</td></tr>
+          <tr><td>E</td><td>Train staff</td><td>8</td><td>D, lead 2 (SS overlap)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>A.</strong> No predecessor: \(ES_A = 0\), \(EF_A = 0 + 5 = 5\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>B.</strong> \(ES_B = EF_A = 5\), \(EF_B = 5 + 7 = 12\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>C — the external dependency.</strong> C cannot begin before the vendor grants access at day 4, so \(ES_C = \max(EF_A,\ 4) = \max(5, 4) = 5\), and \(EF_C = 5 + 6 = 11\). Had the vendor promised day 6 instead of day 4, \(ES_C = 6\) and everything downstream would shift.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>D — a merge.</strong> \(ES_D = \max(EF_B, EF_C) = \max(12, 11) = 12\), \(EF_D = 12 + 4 = 16\). The one-day difference between B and C is exactly the float C will carry.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>E — a lead.</strong> E may start 2 days before D finishes, so \(ES_E = ES_D - 2 = 10\) and \(EF_E = 10 + 8 = 18\). The negative lag is what a lead is: it overlaps the successor with its predecessor and shortens the schedule.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Backward pass.</strong> \(T = EF_E = 18\), so \(LF_E = 18\) and \(LS_E = 10\). The start-to-start lead runs backwards too: \(LS_D = LS_E + 2 = 12\), hence \(LF_D = 16\). Then \(LS_B = LS_C = LF_D = 12\), so \(LF_B = 19\) and \(LF_C = 18\). Finally \(LF_A = \min(LS_B, LS_C) = 12\) and \(LS_A = 7\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <p><strong>Read the result.</strong> D has float \(12 - 12 = 0\) and E has float \(10 - 10 = 0\), so the critical chain is \(D \to E\) &mdash; the finish is protected by the testing and training pair, not by the activities that look longest. A has \(7 - 0 = 7\) days of float, B has \(12 - 5 = 7\) and C has \(12 - 5 = 7\).</p>
+          <div class="table-responsive">
+            <table class="styled-table">
+              <thead><tr><th>ID</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>Float</th></tr></thead>
+              <tbody>
+                <tr><td>A</td><td>0</td><td>5</td><td>7</td><td>12</td><td>7</td></tr>
+                <tr><td>B</td><td>5</td><td>12</td><td>12</td><td>19</td><td>7</td></tr>
+                <tr><td>C</td><td>5</td><td>11</td><td>12</td><td>18</td><td>7</td></tr>
+                <tr><td>D</td><td>12</td><td>16</td><td>12</td><td>16</td><td><strong>0</strong></td></tr>
+                <tr><td>E</td><td>10</td><td>18</td><td>10</td><td>18</td><td><strong>0</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="margin-top:0.7rem;">The lesson is the one people get wrong under exam pressure: <em>the critical path is not the chain with the largest durations, it is the chain with zero float</em>, and a start-to-start lead can move the zero-float point downstream. Seven days of float on the front end is real, but it is not free &mdash; it is the only room the plan has, and the vendor's access date, the uncertain legacy data and the two shared specialists are all competing for it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-pert">
+  <h2 class="section-title">Three-point estimating: weighted average and spread</h2>
+  <p class="section-lead">PERT replaces a single duration with a distribution. Two numbers come out of it: the expected duration, which goes into the network, and the standard deviation, which tells you how much the answer can move.</p>
+
+  <div class="theorem-box">
+    <h3>The PERT weighted average</h3>
+    <p>With \(O\) the optimistic, \(M\) the most likely and \(P\) the pessimistic duration:</p>
+    \[ E = \frac{O + 4M + P}{6}, \qquad \sigma = \frac{P - O}{6} \]
+    <p style="margin-top:0.6rem;">The most likely value carries four of the six weights, so the estimate stays anchored to normal conditions; the optimistic and pessimistic values share the remaining two. Because the pessimistic tail is usually further from \(M\) than the optimistic one is, \(E\) normally sits <em>above</em> \(M\) &mdash; and that asymmetry is the point of the technique rather than an accident of the arithmetic.</p>
+  </div>
+
+  <div id="ix-m-pert"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Activity</th><th>\(O\)</th><th>\(M\)</th><th>\(P\)</th><th>\(E = (O + 4M + P)/6\)</th><th>\(\sigma = (P - O)/6\)</th><th>\(\pm 2\sigma\) range</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Integration and security testing</td><td>4</td><td>8</td><td>18</td><td>\((4 + 32 + 18)/6 = 9.0\) weeks</td><td>\(14/6 = 2.33\)</td><td>4.3 &ndash; 13.7 weeks</td></tr>
+        <tr><td>App and API build</td><td>10</td><td>12</td><td>20</td><td>\((10 + 48 + 20)/6 = 13.0\) weeks</td><td>\(10/6 = 1.67\)</td><td>9.7 &ndash; 16.3 weeks</td></tr>
+        <tr><td>Dubbo pilot</td><td>3</td><td>4</td><td>8</td><td>\((3 + 16 + 8)/6 = 4.5\) weeks</td><td>\(5/6 = 0.83\)</td><td>2.8 &ndash; 6.2 weeks</td></tr>
+        <tr><td>Expanded trials</td><td>6</td><td>10</td><td>14</td><td>\((6 + 40 + 14)/6 = 10.0\) weeks</td><td>\(8/6 = 1.33\)</td><td>7.3 &ndash; 12.7 weeks</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Reading the two numbers</h3>
+      <p>\(E\) is what you put in the network; \(\sigma\) is what you tell the sponsor. Testing has the widest spread in the table (\(2\sigma = 4.7\) weeks) even though its expected duration is shorter than the build's. A schedule that carries point estimates hides exactly this difference.</p>
+    </div>
+    <div class="col-card">
+      <h3>Where PERT is the wrong tool</h3>
+      <p>For a four-week pilot with strong precedent, three estimates are overhead: analogous estimating with expert judgement gives the same answer faster. PERT earns its cost on uncertain technical work &mdash; interfaces, integrations and anything with an unproven supplier.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Summing variances, not deviations.</strong> When activities are independent, the variance of a path is the sum of the individual variances, \(\sigma_{\text{path}}^2 = \sum \sigma_i^2\), and the path deviation is its square root. Standard deviations are never added directly. If the two-week uncertainty of testing and the two-week uncertainty of the build share a cause &mdash; the same unfamiliar interface &mdash; they are not independent, and the sum overstates the confidence. State that caveat; it is usually worth a mark.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A build is estimated at O = 10, M = 12, P = 20 weeks. What are E and \(\sigma\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="14 is the plain arithmetic mean (10 + 12 + 20)/3. PERT weights the most likely value four times, which pulls the result towards the middle.">E = 14 weeks, σ = 1.67</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: E = (10 + 48 + 20)/6 = 78/6 = 13 weeks and σ = (20 − 10)/6 = 1.67 weeks. The expected value sits between the mean and the most likely value." data-bad="">E = 13 weeks, σ = 1.67</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="12 is M alone, and 10/6 is the deviation only if you subtracted the wrong pair — σ uses P − O.">E = 12 weeks, σ = 0.33</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; from three estimates to a defensible schedule range.</strong> A vendor integration is estimated at \(O = 3\), \(M = 6\), \(P = 15\) weeks. The project manager is asked: &ldquo;can you commit to nine weeks?&rdquo;</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Expected duration.</strong> \(E = \dfrac{3 + 4(6) + 15}{6} = \dfrac{42}{6} = 7.0\) weeks. Compare that with the plain arithmetic mean, \(\dfrac{3 + 6 + 15}{3} = 8.0\) weeks: PERT's four-fold weight on \(M\) pulls the estimate <em>down</em> here, because the pessimistic value is not far enough from the most likely one to dominate. The direction of the pull depends entirely on the shape of the three numbers, which is why the formula must be applied rather than eyeballed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Spread.</strong> \(\sigma = \dfrac{15 - 3}{6} = 2.0\) weeks, so the one-sigma band is 5&ndash;9 weeks and the two-sigma band is 3&ndash;11 weeks.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Interpret the commitment.</strong> Nine weeks is exactly \(E + 1\sigma\). Under a normal approximation that is roughly an 84% confidence level &mdash; defensible, but it leaves a one-in-six chance of overrun. A nine-week commitment is therefore reasonable <em>if</em> the plan carries contingency and the variance threshold for escalation is set below one week.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the assumptions.</strong> The normal approximation is an assumption, not a result; \(O\), \(M\) and \(P\) came from expert judgement, so they carry the estimator's optimism; and the three points are treated as independent draws from one distribution rather than as a mixture of scenarios. Naming these is what separates a defensible answer from a confident one.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Dependency and constraint taxonomy</h2>
+  <p class="section-lead">Most Week 3 exam questions reduce to classification: which dependency type is this, which estimating technique applies, and what does the constraint do to the network? These are the axes the deck gives you.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; the four dependency relationships</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Type</th><th>Reads as</th><th>Effect on the network</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Finish-to-Start (FS)</strong></td><td>B starts after A finishes</td><td>The default; \(ES_B \ge EF_A\)</td><td>Build the interface, then integration-test it</td></tr>
+        <tr><td><strong>Start-to-Start (SS)</strong></td><td>B starts when A starts</td><td>Overlaps the two; with a lead, \(ES_B = ES_A - \ell\)</td><td>Write checker guidance as support preparation begins</td></tr>
+        <tr><td><strong>Finish-to-Finish (FF)</strong></td><td>B finishes when A finishes</td><td>Couples the end dates; \(EF_B \ge EF_A\)</td><td>Testing cannot finish until the build finishes</td></tr>
+        <tr><td><strong>Start-to-Finish (SF)</strong></td><td>B finishes when A starts</td><td>Rare; usually a handover constraint</td><td>Legacy support ends when the new service starts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; mandatory or discretionary, internal or external</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Mandatory (hard logic)</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Inherent in the nature of the work</li>
+        <li>Cannot be removed by decision</li>
+        <li>Example: integration before end-to-end testing</li>
+        <li><strong>Schedule consequence:</strong> never the place to look for compression</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Discretionary (soft logic)</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Chosen from best practice, preference or convenience</li>
+        <li>Can be re-decided when the schedule demands it</li>
+        <li>Example: usability testing before rather than alongside the security review</li>
+        <li><strong>Schedule consequence:</strong> the first place fast tracking looks</li>
+      </ul>
+    </div>
+  </div>
+  <p><strong>External</strong> dependencies rely on work outside the project team's control &mdash; police and licence-checker readiness before a live pilot, or a vendor granting access to a payment system. <strong>Internal</strong> dependencies sit between activities the team controls. The classification matters because it decides what the project manager can actually change: soft logic is negotiable, hard logic is not, and an external date has to be managed by contract and fallback rather than by better planning.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 3 &mdash; which estimating technique fits</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Situation</th><th>Best technique</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Early planning, little information, a close precedent exists</td><td>Analogous</td><td>Fast and cheap; needs expert judgement only to validate the similarity</td></tr>
+        <tr><td>A consistent, scalable relationship is measurable</td><td>Parametric</td><td>Unit rate &times; number of units; works whenever the relationship is genuinely linear</td></tr>
+        <tr><td>Uncertain technical work with a wide pessimistic tail</td><td>Three-point / PERT</td><td>Represents variability instead of hiding it; produces both a value and a range</td></tr>
+        <tr><td>Detailed packages already estimated by the people doing the work</td><td>Bottom-up</td><td>Most accurate, most expensive; only possible after full decomposition</td></tr>
+        <tr><td>The work is understood but not yet specified (later phases)</td><td>Rolling wave</td><td>Plan near-term work in detail and leave the rest at a higher level, refining as information arrives</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-race"></div>
+  <script type="application/json" id="ix-m-race">
+  {
+    "title": "Estimating techniques compared",
+    "subtitle": "Illustrative 0–5 ratings built from the Week 3 definitions. Accuracy rises with effort; speed falls with it.",
+    "max": 5,
+    "rows": [
+      { "name": "Analogous — speed", "value": 5, "display": "fastest" },
+      { "name": "Analogous — accuracy", "value": 2, "display": "coarse" },
+      { "name": "Parametric — speed", "value": 4, "display": "fast once the unit rate is known" },
+      { "name": "Parametric — accuracy", "value": 3, "display": "good if the relationship holds" },
+      { "name": "Three-point — speed", "value": 2, "display": "slowest to produce" },
+      { "name": "Three-point — accuracy", "value": 4, "display": "exposes the range" },
+      { "name": "Bottom-up — accuracy", "value": 5, "display": "most accurate" },
+      { "name": "Bottom-up — effort", "value": 5, "display": "needs a complete WBS first" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A team is three weeks into a nine-month project and must give the sponsor an order-of-magnitude figure for a module they have not yet specified. Which technique fits best?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Analogous estimating is top-down, uses historical data from similar work, and is exactly what the lecture recommends for early stages when information is limited — provided expert judgement validates the similarity." data-bad="">Analogous estimating, because it is fast and works when information is limited</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Bottom-up needs work packages that do not exist yet. It is the most accurate method and the least available this early.">Bottom-up estimating, because accuracy matters most for the sponsor</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="PERT needs O, M and P from someone who understands the work. With an unspecified module there is nobody to supply three credible values.">Three-point PERT, because it always produces the most honest number</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A pilot must be ready before police and licence-checker readiness is confirmed. What kind of dependency is that, and what follows from it?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It is not inherent in the technical work — the team could pilot without the police if it chose to. That makes it discretionary rather than mandatory.">Mandatory and internal, so it can never be compressed</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Readiness of an outside party is an external dependency. It cannot be fixed by planning alone, so it needs a contractual date, an owner outside the team, and a fallback." data-bad="">External, so it needs a committed date from the other party and a fallback plan</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="External dependencies are exactly the ones the team cannot control, which is why they are the most dangerous to a baseline.">Internal, because the project team still runs the pilot</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Choosing and defending an estimate</h2>
+  <p class="section-lead">The tutorial work for this week is requirement gathering and stakeholder analysis, and the schedule is where those outputs become commitments. The skill being tested is not arithmetic &mdash; it is being able to say what an estimate is based on, and what would invalidate it.</p>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: formulas and what they commit you to",
+    "subtitle": "Say the formula or the rule out loud before you flip the card.",
+    "cards": [
+      { "front": "Early finish", "back": "EF = ES + duration. On the forward pass an activity with several predecessors takes ES = max(EF of predecessors) — it waits for the last one.", "hint": "Forward pass" },
+      { "front": "Late start", "back": "LS = LF − duration. On the backward pass an activity with several successors takes LF = min(LS of successors) — it must be ready for the earliest of them.", "hint": "Backward pass" },
+      { "front": "Float", "back": "F = LS − ES = LF − EF. Zero float means critical; a small positive float means near-critical and worth watching in every status report.", "hint": "The result" },
+      { "front": "Project duration", "back": "T = the maximum early finish in the network. The sum of the durations along the critical path equals T by definition.", "hint": "CPM" },
+      { "front": "PERT expected duration", "back": "E = (O + 4M + P) / 6. The most likely value carries four of the six weights.", "hint": "Three-point" },
+      { "front": "PERT standard deviation", "back": "σ = (P − O) / 6. Use it to quote a range such as E ± 2σ instead of a single date, and never add standard deviations along a path — add variances.", "hint": "Spread" },
+      { "front": "Lead versus lag", "back": "A lead lets the successor start before the predecessor finishes and speeds the schedule up. A lag forces a wait after the predecessor finishes and slows it down.", "hint": "Timing modifiers" },
+      { "front": "Compression rule", "back": "Fast tracking means parallelising sequential activities and adds risk; crashing means adding resources to critical-path activities and adds cost. Neither does anything on a path that already has float.", "hint": "Control" }
+    ]
+  }
+  </script>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>An estimate is four things</h3>
+      <p>The number, its basis, its range, and the assumption that would invalidate it. An answer that gives only the number has given a quarter of an estimate.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Requirements become activities</h3>
+      <p>Every requirement you trace in the RTM has to be satisfied by some activity in the schedule. If it maps to no activity, either the requirement is out of scope or the WBS is incomplete.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Constraints decide feasibility</h3>
+      <p>Fixed dates, limited specialists and external approvals are constraints, not estimates. Negative float is the network reporting that a constraint cannot be met as written.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Say what you would do next</h3>
+      <p>Name the activity you would crash, the dependency you would fast track, the estimate you would re-baseline, and the milestone you would escalate &mdash; in that order of preference.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; defending the schedule for the HR management system case study.</strong> Twelve months, a fixed December deployment, two senior developers, a design team free only after four weeks, and payroll vendor approval that may take up to three weeks.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Separate estimates from constraints.</strong> Requirements gathering, design, development, testing and training are estimates &mdash; they have ranges. The December date, the two developers and the four-week design wait are constraints &mdash; they have no range and cannot be estimated away.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Model the resource constraint.</strong> Two senior developers available at a time means development activities that would otherwise be parallel are serialised. In the network that is a resource-driven dependency: it looks discretionary, but with only two people it behaves like hard logic.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Model the external dependency.</strong> Payroll vendor approval is external, so it is scheduled with a committed date and a fallback: begin the interface specification in parallel so that only the final integration waits. Then compute the sensitivity rather than assuming the worst &mdash; if approval takes five weeks instead of three, integration starts two weeks later, and whether the end date moves depends entirely on how much float integration has.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Give the answer in the right shape.</strong> &ldquo;Deployment stays on 1 December provided payroll integration retains at least two weeks of float. It currently has <em>n</em> weeks. If approval slips beyond three weeks, integration becomes critical and I will either fast-track training against testing &mdash; a discretionary dependency I can re-decide &mdash; or request approval to crash the two critical development activities. If neither recovers the time, the December date requires an approved baseline change, and I will bring that to the steering committee with the forecast attached.&rdquo;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Close the loop with scope.</strong> Requirements gathered from HR stakeholders become activities; the requirements traceability matrix is the check that nothing was gathered and then dropped. That is why scope validation gates are also schedule milestones: an unaccepted deliverable cannot be depended on by the activity that follows it.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the six processes, the WBS, the network diagrams and the Gantt chart; this page carries the arithmetic. Then attempt the Quiz Hub and the Flashcards for Week 3.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO6007ChapterUI) return;
+    try {
+      window.initINFO6007ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO6007 chapter 3] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

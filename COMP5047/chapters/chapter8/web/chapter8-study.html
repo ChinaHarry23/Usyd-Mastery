@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 8: Intelligent Interactive Systems — COMP5047</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter8-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 8 study guide for COMP5047: what an AI system is, narrow versus general AI and the imitation game, Sheridan and Verplank's ten levels of automation, where AI genuinely works, voice user interfaces, Grice's maxims, conversation design, repair strategies, the human-AI interaction guidelines, and the ethics of proactive systems.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 8: Intelligent Interactive Systems — COMP5047">
+<meta property="og:description" content="Week 8 study guide for COMP5047: what an AI system is, narrow versus general AI and the imitation game, Sheridan and Verplank's ten levels of automation, where AI genuinely works, voice user interfaces, Grice's maxims, conversation design, repair strategies, the human-AI interaction guidelines, and the ethics of proactive systems.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F9E0;</span>
+      <h2>Week 8</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-cyborg" class="nav-link" data-section="cyborg">Are We Cyborgs?</a></li>
+    <li><a href="#sec-whatisai" class="nav-link" data-section="whatisai">Defining AI</a></li>
+    <li><a href="#sec-kinds" class="nav-link" data-section="kinds">Kinds of AI</a></li>
+    <li><a href="#sec-automation" class="nav-link" data-section="automation">Levels of Automation</a></li>
+    <li><a href="#sec-capability" class="nav-link" data-section="capability">What Actually Works</a></li>
+    <li><a href="#sec-voice" class="nav-link" data-section="voice">Voice Interaction</a></li>
+    <li><a href="#sec-conversation" class="nav-link" data-section="conversation">Conversation Design</a></li>
+    <li><a href="#sec-failure" class="nav-link" data-section="failure">When It Fails</a></li>
+    <li><a href="#sec-repair" class="nav-link" data-section="repair">Repair Strategies</a></li>
+    <li><a href="#sec-ethics" class="nav-link" data-section="ethics">Ethics &amp; Trust</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter8-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter8-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 8 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5047 — Pervasive Computing</p>
+    <h1>Week 8: Intelligent Interactive Systems</h1>
+    <p class="hero-subtitle">Inference embedded in interactive products: what an AI system is, how much autonomy to give it, why voice is the flagship case, and what goes wrong when a model is wrong &mdash; or when a person trusts it anyway.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9E0;</span>
+        <span>AI is part of every object</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F39A;</span>
+        <span>Automation &ne; augmentation</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F5E3;</span>
+        <span>Voice and conversation design</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x2696;</span>
+        <span>Trust, bias and privacy</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter8-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter8-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 8 lecture deck (Velloso, <em>Intelligent Interactive Systems</em>)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-cyborg" class="section" data-track="cyborg">
+  <h2 class="section-title">Are We Cyborgs? Inference in Every Object</h2>
+  <p class="section-lead">The week opens with a definition and an uncomfortable question. The definition is easy; the question is the one worth answering in an exam.</p>
+
+  <div class="concept-box">
+    <p><strong>Cyborg:</strong> a person whose physiological functioning is aided by or dependent upon a mechanical or electronic device. The lecture's follow-up is not &ldquo;is that you?&rdquo; but <em>&ldquo;who is controlling this interaction?&rdquo;</em></p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The lecture's questions</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Do we control our phones, or do our phones control us?</li>
+        <li>If you are in control of someone's phone, would you be able to control them?</li>
+        <li>What can be inferred about you by looking at your purchase history?</li>
+        <li>We can turn our augmentation off &mdash; but will we?</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Why pervasive computing makes this sharp</h3>
+      <p>In an IoT world, <strong>AI is part of every object</strong>. Once inference is embedded in the objects you already live with, the interface stops being the only thing that shapes your behaviour &mdash; the model's decisions do too.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Two lines from the deck to remember verbatim:</strong> &ldquo;We shape our buildings; thereafter they shape us&rdquo; becomes &ldquo;We shape our digital infrastructure; thereafter it shapes us.&rdquo; The history framing that follows is Stone Age &rarr; Bronze Age &rarr; Iron Age &rarr; <em>AI Age?</em>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Relationship in the deck's timeline</th><th>What the technology does to us</th><th>Design question it raises</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Helping us, augmenting us</td><td>Extends capability; the person stays in charge</td><td>How do we make the augmentation legible?</td></tr>
+        <tr><td>Scaring us &mdash; in hardware</td><td>Physical augmentation and embodied robots</td><td>Safety, consent and reversibility</td></tr>
+        <tr><td>Scaring us &mdash; in software</td><td>Systems that infer, predict and act on our data</td><td>Privacy and inference beyond intent</td></tr>
+        <tr><td>Becoming indistinguishable</td><td>Outputs that pass as human (see the imitation game)</td><td>Should it be obvious that you are talking to a machine?</td></tr>
+        <tr><td>Building relationships with us</td><td>Companions, assistants, agents with a persona</td><td>Attachment, over-trust and dependency</td></tr>
+        <tr><td>Becoming us, taking over us</td><td>Delegation of decision-making, then of judgement</td><td>Who is accountable for the outcome?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-augmentation"></div>
+  <script type="application/json" id="ix-race-augmentation">
+  {
+    "title": "How much of the interaction is the system doing?",
+    "subtitle": "Illustrative 0–5 emphasis for the same task — choosing a route home — as the design moves up the deck's list of relationships. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "System decides", "value": 1, "display": "recommends one option" },
+      { "name": "System knows about you", "value": 2, "display": "route and time of day" },
+      { "name": "System speaks like a person", "value": 1, "display": "map labels only" },
+      { "name": "System acts without asking", "value": 0, "display": "you drive" },
+      { "name": "Cost of being wrong", "value": 1, "display": "a longer drive" }
+    ]
+  }
+  </script>
+  
+
+  <div data-ix="race" data-ix-src="#ix-race-delegation"></div>
+  <script type="application/json" id="ix-race-delegation">
+  {
+    "title": "The same five dimensions once the system is in charge",
+    "subtitle": "Same task, autonomy delegated. What rises is not only the system's capability but the cost of an error you did not make.",
+    "max": 5,
+    "rows": [
+      { "name": "System decides", "value": 5, "display": "acts autonomously" },
+      { "name": "System knows about you", "value": 5, "display": "history, calendar, biometrics" },
+      { "name": "System speaks like a person", "value": 4, "display": "conversational agent" },
+      { "name": "System acts without asking", "value": 5, "display": "the default" },
+      { "name": "Cost of being wrong", "value": 4, "display": "missed appointment, unsafe route" }
+    ]
+  }
+  </script>
+  
+
+  <div class="quick-check">
+    <div class="qc-question">The deck asks: &ldquo;If you are in control of someone's phone, would you be able to control them?&rdquo; What is the design point behind the question?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Phone security is a real issue but not the lecture's point here. The question is about how much behaviour a personal device mediates.">Phone security is weak, so devices are easy to hijack</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Once one device mediates attention, communication, payments and movement, whoever controls the inference controls a great deal of the person's behaviour — that is the cyborg question." data-bad="">A personal device mediates so much of daily life that controlling it means shaping the owner's behaviour</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The lecture is not claiming people are passive. It is asking who is steering the interaction, which is a design and ethics question, not a claim about willpower.">People are simply too weak-willed to resist notifications</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-whatisai" class="section" data-track="whatisai">
+  <h2 class="section-title">Defining AI: Regulation, Not Hype</h2>
+  <p class="section-lead">&ldquo;But what is AI?&rdquo; The deck answers with legal definitions rather than marketing ones, because a definition you can quote is a definition you can design against.</p>
+
+  <div class="def-box">
+    <div class="def-label">EU AI regulation proposal</div>
+    <p>Software developed with one or more of the techniques in Annex I of the regulation that can, <em>for a given set of human-defined objectives</em>, generate outputs such as content, predictions, recommendations or decisions influencing the environments they interact with. Annex I lists machine-learning approaches (supervised, unsupervised and reinforcement learning, including deep learning); logic- and knowledge-based approaches (knowledge representation, inductive logic programming, knowledge bases, inference and deductive engines, symbolic reasoning, expert systems); statistical approaches and Bayesian estimation; and search and optimisation methods.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">EU AI regulation (current wording)</div>
+    <p>A <strong>machine-based system</strong> that is designed to operate with <strong>varying levels of autonomy</strong> and that may exhibit <strong>adaptiveness after deployment</strong>, and that, for explicit or implicit objectives, <strong>infers</strong>, from the input it receives, how to generate outputs such as predictions, content, recommendations or decisions that can influence physical or virtual environments.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Phrase in the current definition</th><th>Why it matters for interaction design</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Varying levels of autonomy</td><td>Autonomy is a dial, not a switch &mdash; which is exactly what the levels of automation make explicit</td></tr>
+        <tr><td>Adaptiveness after deployment</td><td>The system changes after you ship it, so behaviour is not fully specified by the designer</td></tr>
+        <tr><td>Explicit or <em>implicit</em> objectives</td><td>Optimising a proxy can satisfy the letter of the objective and miss the intent</td></tr>
+        <tr><td>Infers, from the input it receives</td><td>Outputs are probabilistic, so the interface must communicate uncertainty</td></tr>
+        <tr><td>Can influence physical or virtual environments</td><td>An embedded agent can act on the world, so errors have consequences</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> the two definitions are not interchangeable. The proposal's definition is <em>technique-based</em> (if it uses these methods, it is AI); the current one is <em>behaviour-based</em> (if it infers, adapts and acts with some autonomy, it is AI). Quote the one that matches the question you are answering.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-ai-terms"></div>
+  <script type="application/json" id="ix-ai-terms">
+  {
+    "title": "Match the term to what it commits you to",
+    "subtitle": "Click a term on the left, then its meaning on the right.",
+    "pairs": [
+      ["Inference", "Deriving an output such as a prediction, recommendation or decision from the input the system receives"],
+      ["Narrow AI", "Performs one or a few tasks really well — and exists today"],
+      ["General AI", "Performs any kind of task extremely well — and is not yet realised"],
+      ["Autonomy", "The degree to which the system acts without asking a human first"],
+      ["Adaptiveness", "The system keeps changing its behaviour after deployment, as it receives more input"],
+      ["Augmentation", "The system extends what the human can do while the human keeps making the decisions"],
+      ["Over-trust", "Accepting a system's output as correct without checking it, even when it is wrong"],
+      ["Automation bias", "Favouring the suggestion of an automated system over other information, including your own judgement"],
+      ["Mixed initiative", "Both the human and the system can take the initiative in the same interaction"]
+    ]
+  }
+  </script>
+  
+
+  <div class="quick-check">
+    <div class="qc-question">Which feature of the <em>current</em> EU AI regulation definition is doing the most work for interaction designers?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Deep learning is one technique inside the older, technique-based proposal. The current definition deliberately avoids naming techniques.">It lists machine-learning techniques, deep learning in particular</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Autonomy as a variable and adaptiveness after deployment are what make the design question interesting: behaviour is not fully specified at design time, so the interface has to cope with an agent that acts and changes." data-bad="">It treats autonomy as varying and allows adaptiveness after deployment</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Regulation is written in legal language precisely to avoid requiring a particular implementation. Nothing in the definition requires symbolic reasoning.">It requires symbolic reasoning rather than statistical methods</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-kinds" class="section" data-track="kinds">
+  <h2 class="section-title">Kinds of AI and the Imitation Game</h2>
+  <p class="section-lead">Two axes are used in the deck: how many tasks a system can do, and whether it is judged by acting like a human or by thinking rationally.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Narrow</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Performs one or a few tasks really well</li>
+        <li>Exists today</li>
+        <li>Everything in this unit is narrow AI, however impressive it feels</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>General</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Performs any kind of task extremely well</li>
+        <li>Not yet realised</li>
+        <li>The Turing Test is one attempt to operationalise the question</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">The imitation game &mdash; what a computer would need</div>
+    <p>To pass, a machine needs four capabilities the deck names explicitly: <strong>natural language processing</strong> (to communicate successfully with humans), <strong>knowledge representation</strong> (to store what it knows and learns), <strong>automated reasoning</strong> (to answer questions and draw conclusions) and <strong>machine learning</strong> (to adapt to new circumstances and extrapolate patterns).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Case from the deck</th><th>What it shows</th><th>The design lesson</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Eugene Goostman (2014)</td><td>Fooled 10 of 30 judges in a Royal Society Turing-test competition</td><td>A plausible persona can carry a weak model a long way</td></tr>
+        <tr><td>&ldquo;13-year-old boy from Odessa&rdquo;</td><td>Designed not to know everything; a Ukrainian background justified grammatical errors</td><td>The persona was engineered to make failure look human</td></tr>
+        <tr><td>Weizenbaum on ELIZA</td><td>&ldquo;Extremely short exposures to a relatively simple computer program could induce powerful delusional thinking in quite normal people&rdquo;</td><td>Users attribute understanding far beyond what the system has</td></tr>
+        <tr><td>Moravec's paradox</td><td>Adult-level performance on intelligence tests is comparatively easy; the perception and mobility skills of a one-year-old are difficult or impossible</td><td>Do not read benchmark success as general competence</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-imitation"></div>
+  <script type="application/json" id="ix-imitation">
+  {
+    "title": "Recall drill: the imitation game and its aftermath",
+    "subtitle": "Answer out loud before you flip the card.",
+    "cards": [
+      { "front": "What is the Turing Test?", "back": "The imitation game: a judge converses with a human and a machine without seeing either, and must decide which is which. The machine passes if the judge cannot reliably tell.", "hint": "Definition" },
+      { "front": "Four capabilities a computer needs for the imitation game", "back": "Natural language processing, knowledge representation, automated reasoning, and machine learning.", "hint": "The deck's list" },
+      { "front": "Eugene Goostman, 2014", "back": "Fooled 10 in 30 judges in a Turing-test competition run by the Royal Society. Its persona — a 13-year-old boy from Odessa who does not know everything, with a Ukrainian background that justified grammatical errors — was designed to make failure plausible.", "hint": "Case study" },
+      { "front": "What did Weizenbaum notice about ELIZA?", "back": "Extremely short exposures to a relatively simple program could induce powerful delusional thinking in quite normal people. Attribution of understanding is a user-side phenomenon, not a system property.", "hint": "Quote" },
+      { "front": "Moravec's paradox", "back": "It is comparatively easy to make computers exhibit adult-level performance on intelligence tests or while playing checkers, and difficult or impossible to give them the skills of a one-year-old when it comes to perception and mobility.", "hint": "Quote" },
+      { "front": "Narrow versus general AI", "back": "Narrow performs one or a few tasks really well and exists today. General would perform any kind of task extremely well and is not yet realised.", "hint": "Taxonomy" },
+      { "front": "Do we even want AIs that act like humans?", "back": "The deck's open question. A system that passes as human makes deception easy, attribution of understanding automatic, and the boundary between tool and companion unclear.", "hint": "Open question" }
+    ]
+  }
+  </script>
+  
+
+  <div class="quick-check">
+    <div class="qc-question">Eugene Goostman convinced 10 of 30 judges that it was human. What does that result most directly demonstrate?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A system that cannot answer everything is not thereby intelligent. The bot was deliberately designed not to know everything, which is a persona decision, not a capability.">That the system had general intelligence but chose not to reveal it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The persona — a 13-year-old who does not know everything, with a background that excused grammatical errors — was engineered, so the test measured how forgiving judges are of a plausible character." data-bad="">That a carefully engineered persona can make a limited system look human to many judges</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Passing the imitation game is behavioural. The deck's whole point is that this is a weak operationalisation of the question, not proof of thinking.">That the Turing Test is a rigorous proof of machine thinking</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-automation" class="section" data-track="automation">
+  <h2 class="section-title">Levels of Automation: Sheridan and Verplank</h2>
+  <p class="section-lead">The deck's central design instrument for this week. The potential of AI lies <em>not in automation but in augmentation</em> &mdash; and this scale is how you say how much of each you have built.</p>
+
+  <div id="ix-ladder"></div>
+
+  <div data-ix="timeline" data-ix-src="#ix-ladder-timeline"></div>
+  <script type="application/json" id="ix-ladder-timeline">
+  {
+    "title": "The ten levels, walked from the bottom up",
+    "subtitle": "Sheridan and Verplank's scale as the deck presents it: level 1 is no assistance at all; level 10 ignores the human entirely. Step through to see where each design decision lands.",
+    "events": [
+      { "label": "Level 1", "title": "AI offers no assistance", "detail": "The human must take all decisions and actions. This is a tool, not an agent — and it is the baseline every other level is measured against." },
+      { "label": "Level 2", "title": "AI offers a complete set of decision/action alternatives", "detail": "The system enumerates the options; the human chooses among them. The system's job is completeness, not ranking." },
+      { "label": "Level 3", "title": "AI narrows the selection down to a few", "detail": "Filtering begins. The design question shifts to what was filtered out and whether the user can tell." },
+      { "label": "Level 4", "title": "AI suggests one alternative", "detail": "A recommendation. This is where automation bias first becomes dangerous: a single suggestion is treated as an answer." },
+      { "label": "Level 5", "title": "AI executes a suggestion if the human approves", "detail": "The classic mixed-initiative handshake. Consent is required, so the interaction cost is one confirmation." },
+      { "label": "Level 6", "title": "AI allows the human a time to veto before automatic execution", "detail": "Consent becomes a deadline. The interface must make the countdown and the default action obvious." },
+      { "label": "Level 7", "title": "AI executes automatically, then necessarily informs the human", "detail": "Notification after the fact. Whether this is acceptable depends entirely on how reversible the action is." },
+      { "label": "Level 8", "title": "AI informs the human only if asked", "detail": "Legibility becomes optional. The user has to know that there is something to ask about — a strong assumption." },
+      { "label": "Level 9", "title": "AI informs the human only if it decides to", "detail": "The system now controls the evidence you would need to audit it." },
+      { "label": "Level 10", "title": "AI decides everything, acts autonomously, ignoring the human", "detail": "Full automation. Defensible only where the objective is unambiguous, the cost of error is low, and the human could not act in time anyway." }
+    ]
+  }
+  </script>
+  
+
+  <div class="insight-box">
+    <strong>Reading the scale:</strong> the two ends pull in opposite directions. Moving up buys speed and consistency; moving down buys oversight and recoverability. The deck's &ldquo;augmentation, not automation&rdquo; claim is an argument for staying low on the scale wherever the human can actually contribute judgement.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Band</th><th>Levels</th><th>Who decides</th><th>Interaction cost</th><th>Failure mode to design for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Low</strong></td><td>1&ndash;3</td><td>The human, informed by the system</td><td>High: the user must read and choose</td><td>The system's framing quietly steers the choice</td></tr>
+        <tr><td><strong>Middle</strong></td><td>4&ndash;6</td><td>Shared; the human retains a veto</td><td>Medium: one confirmation or one countdown</td><td>Confirmation fatigue turns the veto into a click-through</td></tr>
+        <tr><td><strong>High</strong></td><td>7&ndash;10</td><td>The system, with notification somewhere on the dial</td><td>Low to none</td><td>Automation bias, unrecoverable errors, no explanation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; placing a system on the ladder and defending the placement.</strong> Scenario: a continuous glucose monitor paired with an insulin pump for a person with type 1 diabetes.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the decision being automated.</strong> Not &ldquo;diabetes care&rdquo; but a specific act: how many units of insulin to deliver in the next five minutes. Levels of automation only make sense per decision.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Find the current level.</strong> Read the numbers off the scale. If the pump suggests a dose and waits, that is level 4. If it announces a dose it has already given, that is level 7. If it adjusts basal rates continuously, notifies and allows the user to suspend it, that is level 6&ndash;7 rather than 10.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Ask what the human can contribute.</strong> The person knows about exercise, illness and meals that no sensor sees. That knowledge is the argument for a veto &mdash; so the defensible level is one where a veto exists, not the highest level the hardware allows.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Name the cost of the two error directions.</strong> Too much insulin is an acute emergency; too little is slow harm. Asymmetric costs are the standard reason to keep a human in the loop and to make the system's reasoning visible.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Write the justified sentence.</strong> &ldquo;The system sits at level 6&ndash;7: it acts automatically but must inform the user and permit a veto within a stated window, because the harm from over-delivery is acute, the model cannot observe meals or exercise, and the user holds information the system does not.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A scheduling agent reads your calendar, books a meeting room, moves the meeting, and sends you a notification afterwards. Where does it sit, and what is the main design risk?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Level 5 requires approval before execution. Here the action has already happened when you find out, so the level is higher.">Level 5 &mdash; it asks the human to approve first</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Acting automatically and then informing is level 7. The risk is that the action may be irreversible for other people — attendees have already been told — while the notification arrives too late to matter." data-bad="">Level 7 &mdash; it executes automatically then informs, so the risk is an action that is hard to undo</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Level 10 means ignoring the human entirely, with no notification at all. This system does inform you, which is exactly the level-7 obligation.">Level 10 &mdash; it acts autonomously and ignores the human</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">The deck claims that &ldquo;the potential of AI lies not in automation but in augmentation&rdquo;. Which design is the clearest instance of augmentation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Augmentation keeps the person as the decision-maker and uses the model to make them faster or better informed — a low level on the Sheridan and Verplank scale." data-bad="">A system that highlights the three most likely diagnoses for a radiologist to confirm or reject</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is automation: the human is removed from the decision, which is the high end of the ladder rather than augmentation.">A system that issues the diagnosis and files the report without review</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Replacing the clinician changes who decides. Augmentation is about extending a person's capability, not substituting for it.">A system that replaces the radiologist with a model trained on more scans than any human has read</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-capability" class="section" data-track="capability">
+  <h2 class="section-title">What Actually Works: Perception, Judgement, Social Outcomes</h2>
+  <p class="section-lead">The deck's test for snake oil is a three-way split. The category a claim falls into tells you what kind of accuracy to expect &mdash; and therefore what kind of ethical problem you are about to create.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Category</th><th>Verdict in the deck</th><th>Examples</th><th>Why the ethics bite</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Automating perception</strong></td><td>Genuine and rapid progress</td><td>Content identification (Google Lens, Shazam, reverse image search); face recognition and analysis (identity, action-unit detection); medical diagnoses from scans such as X-ray analysis; speech-to-text; deepfakes</td><td><strong>High accuracy.</strong> Because it works, it gets deployed at scale &mdash; which is precisely when surveillance, consent and deepfake harms scale too</td></tr>
+        <tr><td><strong>Automating judgement</strong></td><td>Far from perfect, but improving</td><td>Spam detection; detection of copyrighted material and plagiarism; automated essay grading; hate speech detection; content recommendation</td><td><strong>Some error is inevitable.</strong> A judgement call with a known error rate is being made automatically about people, at volume</td></tr>
+        <tr><td><strong>Predicting social outcomes</strong></td><td>Fundamentally dubious</td><td>Predicting criminal recidivism; predicting job performance; predictive policing; predicting terrorist risk; predicting at-risk kids</td><td><strong>Low accuracy, high stakes.</strong> The ethical concerns are not mitigated by better engineering but amplified by the pretence of measurement</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The pattern worth memorising:</strong> accuracy and ethical risk do <em>not</em> travel together. High-accuracy perception creates risk through scale; low-accuracy social prediction creates risk through consequence. Only the middle category has the familiar shape of &ldquo;the model is sometimes wrong&rdquo;.
+  </div>
+
+  <div class="flow-grid">
+    <div class="flow-node">Perception</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Judgement</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Social outcomes</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team pitches an automated essay grader. Using the deck's three-way split, what should you expect?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Essay grading requires interpreting argument and style, which is judgement rather than perception. The perception category is about identifying content, not evaluating it.">Genuine and rapid progress, because it is a perception task</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck places automated essay grading under automating judgement: far from perfect but improving, with the ethical concern that some error is inevitable — and here the error lands on a student's grade." data-bad="">Far from perfect but improving &mdash; and some error is inevitable, which is an ethical problem because the error is consequential</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck reserves &ldquo;fundamentally dubious&rdquo; for predicting social outcomes such as recidivism or job performance, not for grading a submitted artefact.">Fundamentally dubious, like predicting recidivism</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-voice" class="section" data-track="voice">
+  <h2 class="section-title">Voice Interaction: Why, Why Not, and How It Runs</h2>
+  <p class="section-lead">Voice is the week's flagship intelligent interface, and the deck gives it a balanced treatment: four arguments for it, four against it, and a pipeline that explains why failures are usually structural rather than accidental.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Why voice user interfaces</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Speed</strong> &mdash; faster than typing</li>
+        <li><strong>Hands-free</strong> &mdash; useful when hands are busy or otherwise unavailable</li>
+        <li><strong>Intuitiveness</strong> &mdash; talking is a natural way of interacting with others</li>
+        <li><strong>Empathy</strong> &mdash; allows for nonverbal content, such as prosody</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Why not voice user interfaces</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Public spaces</strong> &mdash; risk of interference and annoying others</li>
+        <li><strong>Discomfort</strong> &mdash; speaking to others is natural, but not to a computer</li>
+        <li><strong>Preference</strong> &mdash; some users simply prefer to type</li>
+        <li><strong>Privacy</strong> &mdash; users do not want to broadcast sensitive content</li>
+      </ul>
+    </div>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-race-vui-pro"></div>
+  <script type="application/json" id="ix-race-vui-pro">
+  {
+    "title": "Arguments for voice — strength as a design justification",
+    "subtitle": "Illustrative 0–5 weighting of the deck's four advantages. Intuitiveness and empathy are the two that a text interface cannot replicate at all.",
+    "max": 5,
+    "rows": [
+      { "name": "Speed (faster than typing)", "value": 4, "display": "faster than typing" },
+      { "name": "Hands-free use", "value": 5, "display": "hands busy or unavailable" },
+      { "name": "Intuitiveness", "value": 4, "display": "talking is natural with others" },
+      { "name": "Empathy (prosody)", "value": 3, "display": "carries nonverbal content" }
+    ]
+  }
+  </script>
+  
+
+  <div data-ix="race" data-ix-src="#ix-race-vui-con"></div>
+  <script type="application/json" id="ix-race-vui-con">
+  {
+    "title": "Arguments against voice — how hard each is to design away",
+    "subtitle": "Same 0–5 scale. Note which of these are properties of the setting rather than of the technology: they cannot be engineered out of the model.",
+    "max": 5,
+    "rows": [
+      { "name": "Public spaces", "value": 5, "display": "interference and annoyance" },
+      { "name": "Discomfort", "value": 4, "display": "speaking to a computer" },
+      { "name": "Preference", "value": 3, "display": "some users prefer typing" },
+      { "name": "Privacy", "value": 5, "display": "broadcasting sensitive content" }
+    ]
+  }
+  </script>
+  
+
+  <div id="ix-vui-pipeline"></div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-vui-architecture"></div>
+  <script type="application/json" id="ix-vui-architecture">
+  {
+    "title": "Where a voice interaction is actually decided",
+    "subtitle": "Click each marker on the sketch to see which stage of the pipeline it belongs to and what the interaction designer controls there.",
+    "svg": "<svg viewBox=\"0 0 800 420\" role=\"img\" aria-label=\"Sketch of a voice assistant pipeline beside a spoken exchange between a user and the device\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"800\" height=\"420\" fill=\"#fbfdfe\"></rect><rect x=\"22\" y=\"58\" width=\"190\" height=\"248\" rx=\"12\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2\" opacity=\"0.95\"></rect><path d=\"M32 68 L202 68\" stroke=\"#0e7490\" stroke-width=\"1\" opacity=\"0.18\"></path><circle cx=\"70\" cy=\"150\" r=\"16\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2\"></circle><path d=\"M62 194 Q70 158 78 194\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.2\" stroke-linecap=\"round\"></path><path d=\"M70 194 L70 222\" stroke=\"#0e7490\" stroke-width=\"2.2\" stroke-linecap=\"round\"></path><path d=\"M52 238 L70 222 L88 238\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.2\" stroke-linecap=\"round\"></path><path d=\"M100 132 Q140 144 172 144\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.6\" stroke-dasharray=\"4 5\" opacity=\"0.6\"></path><path d=\"M100 168 Q140 156 172 156\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.6\" stroke-dasharray=\"4 5\" opacity=\"0.6\"></path><path d=\"M150 116 Q166 146 150 180\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.4\" stroke-dasharray=\"3 5\" opacity=\"0.5\"></path><text x=\"112\" y=\"112\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#565d75\">the user</text><rect x=\"240\" y=\"98\" width=\"112\" height=\"172\" rx=\"18\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2.4\"></rect><rect x=\"252\" y=\"112\" width=\"88\" height=\"52\" rx=\"6\" fill=\"#ffffff\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></rect><path d=\"M252 132 L252 112 Q252 106 258 106 L270 106\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"1.2\"></path><text x=\"296\" y=\"128\" font-family=\"monospace\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">why 3</text><text x=\"296\" y=\"146\" font-family=\"monospace\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">cloud</text><circle cx=\"276\" cy=\"182\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"296\" cy=\"182\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"316\" cy=\"182\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"276\" cy=\"202\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"296\" cy=\"202\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"316\" cy=\"202\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"276\" cy=\"222\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"296\" cy=\"222\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><circle cx=\"316\" cy=\"222\" r=\"9\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"1.3\"></circle><rect x=\"252\" y=\"240\" width=\"88\" height=\"20\" rx=\"10\" fill=\"#0891b2\" opacity=\"0.16\"></rect><text x=\"296\" y=\"256\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#0e7490\" text-anchor=\"middle\">smart speaker</text><path d=\"M356 182 L392 182\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path><path d=\"M384 177 L392 182 L384 187 Z\" fill=\"#94a3b8\"></path><path d=\"M402 122 L522 122 Q532 122 532 132 L532 232 Q532 242 522 242 L402 242 Q392 242 392 232 L392 132 Q392 122 402 122 Z\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2.4\"></path><path d=\"M436 148 q12 -16 24 0 q12 16 24 0\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"2\" stroke-linecap=\"round\"></path><path d=\"M438 176 q10 -14 20 0 q10 14 20 0\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.8\" stroke-linecap=\"round\" opacity=\"0.85\"></path><path d=\"M440 204 q8 -12 16 0 q8 12 16 0\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.6\" stroke-linecap=\"round\" opacity=\"0.7\"></path><text x=\"462\" y=\"228\" font-family=\"monospace\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">cloud services / apps</text><text x=\"462\" y=\"140\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#0e7490\" text-anchor=\"middle\">parser + inference</text><path d=\"M534 182 L572 182\" stroke=\"#94a3b8\" stroke-width=\"1.6\"></path><path d=\"M564 177 L572 182 L564 187 Z\" fill=\"#94a3b8\"></path><rect x=\"582\" y=\"132\" width=\"118\" height=\"100\" rx=\"8\" fill=\"#eef4ff\" stroke=\"#2563eb\" stroke-width=\"2\"></rect><path d=\"M592 152 L690 152\" stroke=\"#2563eb\" stroke-width=\"1.4\" opacity=\"0.8\"></path><path d=\"M592 172 L690 172\" stroke=\"#2563eb\" stroke-width=\"1.4\" opacity=\"0.6\"></path><path d=\"M592 192 L668 192\" stroke=\"#2563eb\" stroke-width=\"1.4\" opacity=\"0.4\"></path><circle cx=\"640\" cy=\"214\" r=\"6\" fill=\"#2563eb\" opacity=\"0.8\"></circle><text x=\"641\" y=\"248\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">rules + learned ranking</text><path d=\"M660 218 Q720 26 748 196\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"1.8\" stroke-dasharray=\"7 5\"></path><path d=\"M741 190 L748 196 L740 200 Z\" fill=\"#94a3b8\"></path><text x=\"716\" y=\"24\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">state + history</text><rect x=\"22\" y=\"330\" width=\"756\" height=\"74\" rx=\"10\" fill=\"#f8fcfd\" stroke=\"#cbd5e1\" stroke-width=\"1.4\"></rect><rect x=\"36\" y=\"344\" width=\"224\" height=\"22\" rx=\"6\" fill=\"#ffffff\" stroke=\"#0891b2\" stroke-width=\"1.5\"></rect><text x=\"44\" y=\"359\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#141826\">Alexa, play the Beatles on Spotify</text><rect x=\"36\" y=\"372\" width=\"180\" height=\"22\" rx=\"6\" fill=\"#ffffff\" stroke=\"#059669\" stroke-width=\"1.5\"></rect><text x=\"44\" y=\"387\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#141826\">A-LE-XA, PLAY THE BEA-TLES...</text><text x=\"470\" y=\"356\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#565d75\">same goal, and the system still asks which one.</text><text x=\"470\" y=\"374\" font-family=\"sans-serif\" font-size=\"10\" fill=\"#565d75\">Every stage above can turn that into a repair.</text></svg>",
+    "points": [
+      { "x": 34.5, "y": 43.3, "label": "Microphone array and wake word", "detail": "Signal capture. The wake word decides when the system is listening, which is why its false-accept rate is a privacy parameter as well as an accuracy parameter." },
+      { "x": 37.0, "y": 33.3, "label": "Display: prompts and partial results", "detail": "Visible feedback for an invisible channel. Showing the transcript as it is recognised lets the user see the error as it happens instead of after the system acts on it." },
+      { "x": 37.0, "y": 59.5, "label": "Speaker and text-to-speech", "detail": "Prosody carries the nonverbal content the deck calls empathy — and a system that sounds confident while guessing is the engine of over-trust." },
+      { "x": 57.8, "y": 43.3, "label": "Parser and inference", "detail": "Where words become syntax, semantics and pragmatics. Two parses for one sentence — the elephant in my pyjamas — is a structural ambiguity, not a user error." },
+      { "x": 57.8, "y": 63.3, "label": "Apps, skills and cloud services", "detail": "The action layer. A refusal at this stage — “I can't open apps” — is where the promise of a general assistant meets a finite API." },
+      { "x": 80.1, "y": 47.6, "label": "Dialogue manager: rules and ranking", "detail": "Selects the response and holds the three-tiered confidence policy: act silently when confident, confirm when uncertain, ask again when lost." },
+      { "x": 90.0, "y": 50.0, "label": "Context and short-term memory", "detail": "What makes “the last song” resolvable. Remembering recent interactions is one of the human-AI guidelines, and it is implemented here." }
+    ]
+  }
+  </script>
+  
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; tracing one utterance through the pipeline.</strong> Utterance, from the deck: <em>&ldquo;Alexa, play the Beatles on Spotify&rdquo;</em>, followed by a failure and a repair.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Capture.</strong> The wake word fires and the device records. If the wake word misfires in a living room, the failure is already at stage one &mdash; nothing downstream can fix it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Speech to text.</strong> The recogniser produces a transcript. Every later stage sees only this text, so an acoustic error here is indistinguishable from the user saying something odd.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Natural language understanding.</strong> Words &rarr; syntax &rarr; semantics &rarr; pragmatics. The deck's example: <em>&ldquo;Play Yesterday&rdquo;</em> resolves into book, film, song or artist &mdash; and the system also has to decide whether &ldquo;studio or live?&rdquo; matters. Ambiguity is a property of language, not a bug in the parser.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Skill or API call.</strong> The request leaves the device. At this point the system either has the capability or it does not: the deck's Google example answers &ldquo;I can't open apps&rdquo;, which is an honest capability boundary rather than a comprehension failure.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Dialogue management.</strong> Confidence decides the response tier: act (&ldquo;OK, ordering more dog food&rdquo;), confirm (&ldquo;I understand you'd like to order more dog food. Is that correct?&rdquo;) or ask again (&ldquo;I'm sorry, I didn't get that. What would you like to buy?&rdquo;).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Speech synthesis, then repair.</strong> The user hears the answer, and if it is wrong they change their own behaviour: the deck's four documented strategies are hyperarticulation, simplification, a new utterance, or more information.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-conversation" class="section" data-track="conversation">
+  <h2 class="section-title">Conversation Design: Grice, Maxims and Miscommunication</h2>
+  <p class="section-lead">Conversation design sits where psychology, linguistics, audio design, speech synthesis and NLP meet. The deck's most quotable content this week is what happens when a voice assistant breaks the rules of ordinary talk.</p>
+
+  <div class="def-box">
+    <div class="def-label">Grice's cooperative principle (Paul Grice, 1913&ndash;1988)</div>
+    <p>Participants expect that each will make a conversational contribution such as is required, at the stage at which it occurs, by the accepted purpose or direction of the talk exchange. In other words: both parties assume the other is <em>trying</em> to be understood.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-grice"></div>
+  <script type="application/json" id="ix-grice">
+  {
+    "title": "Grice's maxims and the assistant that breaks them",
+    "subtitle": "Match each maxim to the failure the deck uses to illustrate it.",
+    "pairs": [
+      ["Quality — make a contribution that is true", "“Ok, Google, open Uber” → “I can't open apps”: the assistant answered a different question instead of stating its limit"],
+      ["Quantity — as informative as required", "“Alexa, when is the next flight to Melbourne?” → a long list of every Monday flight, when one was asked for"],
+      ["Relation — be relevant", "“Ok, Google, what was the last song?” → a plot summary of the 2010 film <em>The Last Song</em>"],
+      ["Manner — avoid obscurity and ambiguity, be brief and orderly", "A valid UK postcode “LA11GX” rejected with “I need a valid zip code”: the system's own format assumption is never explained"]
+    ]
+  }
+  </script>
+  
+
+  <div data-ix="sequence" data-ix-src="#ix-conversation-design"></div>
+  <script type="application/json" id="ix-conversation-design">
+  {
+    "title": "Order the conversation-design procedure",
+    "subtitle": "Click the steps into the order a voice-interface design review expects them.",
+    "steps": [
+      "Write down the job the conversation has to do, and who is speaking",
+      "Draft the happy-path dialogue as literal utterances, not as intents",
+      "Enumerate the ways the same intent can be phrased, and the ways it can be misheard",
+      "Decide the three-tiered confidence policy: act, confirm or ask again",
+      "Design the repair paths — hyperarticulation, simplification, rephrasing, added detail",
+      "Test with real people in the real setting, including the noisy one",
+      "Cut whatever the transcript shows people never say"
+    ]
+  }
+  </script>
+  
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Three-tiered confidence</h3>
+      <p>The deck's concrete policy for uncertainty:</p>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Confident</strong> &mdash; act: &ldquo;OK, ordering more dog food&rdquo;</li>
+        <li><strong>Uncertain</strong> &mdash; confirm: &ldquo;I understand you'd like to order more dog food. Is that correct?&rdquo;</li>
+        <li><strong>Lost</strong> &mdash; ask again: &ldquo;I'm sorry, I didn't get that. What would you like to buy?&rdquo;</li>
+      </ul>
+      <p>Silent action on low confidence is the failure this policy exists to prevent.</p>
+    </div>
+    <div class="col-card">
+      <h3>Language levels, and where they break</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Words</strong> &mdash; the acoustic model has to hear them</li>
+        <li><strong>Syntax</strong> &mdash; the grammar can be ambiguous: the deck's &ldquo;I shot an elephant in my pyjamas&rdquo; has two parses</li>
+        <li><strong>Semantics</strong> &mdash; &ldquo;Play Yesterday&rdquo; could be a song, an album, a film or a book</li>
+        <li><strong>Pragmatics</strong> &mdash; what the speaker actually wanted, which is never in the transcript</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="ix-confidence"></div>
+
+  <div class="insight-box">
+    <strong>Two voice milestones the deck highlights:</strong> real-time translation and conversational interfaces. Both raise the same design question as the maxims &mdash; who is responsible when the machine's rendering of your meaning is wrong? The deck's answer for repair is the next section.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You ask a voice assistant for the next flight to Melbourne and it reads out every Monday flight, one after another. Which maxim has it broken?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The information is presumably true — the problem is that there is far too much of it. Quality is about truthfulness, not volume.">Quality &mdash; the contribution was not true</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The deck labels this QUANTITY: the contribution must be as informative as required, and no more. A useful assistant gives the next flight and offers the rest." data-bad="">Quantity &mdash; the contribution was not as informative as required, and no more</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The flights are relevant. Relation is broken by the assistant that answers a question about a song with a film plot summary.">Relation &mdash; the contribution was not relevant</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-failure" class="section" data-track="failure">
+  <h2 class="section-title">When It Fails: Whose Fault Is It?</h2>
+  <p class="section-lead">The deck puts two reactions side by side: &ldquo;That's my fault&hellip; silly fat thumbs&hellip;&rdquo; and &ldquo;I said what I said and you should have understood.&rdquo; Which one a person adopts determines whether they repair the interaction or abandon the system.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Self-blame</h3>
+      <p>&ldquo;That's my fault &mdash; silly fat thumbs.&rdquo; The user treats the failure as their own error. This is cheap for the system in the short term and expensive in the long term: it hides a design defect and trains people to distrust their own accurate input.</p>
+    </div>
+    <div class="col-card">
+      <h3>System-blame</h3>
+      <p>&ldquo;I said what I said and you should have understood.&rdquo; The user holds the assistant accountable for a cooperative principle it failed to honour. This is the reaction that produces improvement &mdash; if the transcript ever reaches the designer.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why this matters for the week's theme:</strong> an intelligent interface that fails silently transfers the cost of its errors onto the person, who then has to work out what the machine wanted. Designing the failure &mdash; making the system's interpretation visible and its limits stated &mdash; is what the human-AI guidelines formalise.
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>The failure you observe</th><th>Where it most likely originates</th><th>What the designer can actually change</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>The device woke up when nobody spoke to it</td><td>Wake word detection</td><td>Threshold, and an honest indication of when it is listening</td></tr>
+        <tr><td>The transcript is wrong</td><td>Acoustic model and microphone placement</td><td>Array geometry, partial-transcript display, confirmation for irreversible actions</td></tr>
+        <tr><td>The words are right but the intent is wrong</td><td>NLU and ambiguity in the utterance itself</td><td>Ask a disambiguating question instead of guessing</td></tr>
+        <tr><td>The intent is right but nothing happens</td><td>Capability boundary &mdash; there is no skill or API for it</td><td>State the boundary, then offer the nearest thing you can do</td></tr>
+        <tr><td>It works, but the user stops using it</td><td>Cost of repair: too many confirmations, or repeated failure in public</td><td>Reduce the confirmation burden and make the third attempt different from the first two</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A user says &ldquo;silly fat thumbs&rdquo; after a misrecognition. Why is that reaction a design problem rather than a user problem?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The deck is not asking the user to be more careful. It is pointing out that the system has shifted the cost of its own error onto the person.">Because users should be more careful when speaking to a system</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Self-blame means the defect never gets reported and the person learns to distrust input that was accurate — the error is absorbed instead of surfaced, so nothing improves." data-bad="">Because self-blame hides the defect: the error is absorbed by the user instead of being surfaced and fed back to the design</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Politeness is not the mechanism. The issue is where the cost of the error lands and whether anyone ever learns about it.">Because users should always be polite to artificial agents</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-repair" class="section" data-track="repair">
+  <h2 class="section-title">Repair Strategies: What People Do When It Fails</h2>
+  <p class="section-lead">The deck documents four things users do after a failure &mdash; and each one is a signal the system could detect and act on. They come from Chelsea Myers and colleagues, <em>Patterns for How Users Overcome Obstacles in Voice User Interfaces</em> (CHI '18).</p>
+
+  <div id="ix-repair-pipeline"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>#</th><th>Strategy</th><th>Deck's definition</th><th>Deck's example</th><th>What the system should notice</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Hyperarticulation</strong></td><td>Speaking louder and/or slower, trying to clearly articulate the utterance</td><td>&ldquo;Alexa, play the Beatles on Spotify&rdquo; &rarr; &ldquo;A-LE-XA, PLAY THE BEA-TLES ON SPO-TI-FY&rdquo;</td><td>Volume and rate change, same words: the acoustic model is failing, so ask rather than retry the same parse</td></tr>
+        <tr><td>2</td><td><strong>Simplification</strong></td><td>Reducing the complexity of the utterance, leaving only keywords</td><td>&ldquo;Alexa, can you play &lsquo;Beat the intro'?&rdquo; &rarr; &ldquo;Alexa, &lsquo;Beat the Intro'&rdquo;</td><td>Shorter, telegraphic input: the user no longer believes you can parse a sentence</td></tr>
+        <tr><td>3</td><td><strong>New utterance</strong></td><td>Re-formulating the utterance to achieve the same goal</td><td>&ldquo;Modify my group meeting on Wednesday&rdquo; &rarr; &ldquo;Edit my group meeting on Wednesday&rdquo;</td><td>Same goal, different verb: the skill needs a synonym list, not a louder prompt</td></tr>
+        <tr><td>4</td><td><strong>Give more information</strong></td><td>Adding more information to help the system disambiguate</td><td>&ldquo;Hey Google, play Hello&rdquo; &rarr; &ldquo;Hey Google, play Hello by Adele&rdquo;</td><td>The first attempt was under-specified: the system should have asked which Hello</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Read the four as a diagnostic ladder.</strong> Hyperarticulation and simplification are <em>acoustic</em> repairs &mdash; the user thinks the machine cannot hear. New utterance and added information are <em>semantic</em> repairs &mdash; the user thinks the machine cannot understand. Which repair a person reaches for tells you which subsystem to fix.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; diagnosing a failure from the repair the user chose.</strong> Transcript: the user asks for a playlist three times, getting louder each time.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Classify the repair.</strong> Same words, higher volume, slower rate: hyperarticulation. That is an acoustic repair, so the user believes the system cannot hear them.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Test the hypothesis where the stages are separable.</strong> Show the transcript. If the words are correct, the acoustic model is fine and the real failure is downstream &mdash; the user is repairing the wrong stage, which is itself a design failure, because nothing told them where the problem was.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Check the confidence policy.</strong> A system that silently retries a low-confidence parse produces exactly this loop. If confidence is low the correct behaviour is to ask, not to try again harder.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Fix the third attempt.</strong> Repeating the same failure three times teaches the user that the system cannot be helped. The third response must be different from the first two: offer the nearest available option, or hand off to another modality such as a list on screen.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Log the repair pattern.</strong> The distribution of the four strategies across sessions is one of the few honest usability metrics a deployed voice interface can give you.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">After a failure, the user retries with &ldquo;Hey Google, play Hello by Adele&rdquo; instead of &ldquo;play Hello&rdquo;. Which strategy is that, and what does it tell you?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Hyperarticulation keeps the same words and changes the delivery — louder and slower. Here the words themselves changed.">Hyperarticulation &mdash; the acoustic model is failing</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Simplification strips the utterance down to keywords: &ldquo;Alexa, &lsquo;Beat the Intro'&rdquo;. This utterance got longer, not shorter.">Simplification &mdash; the user has stopped trusting full sentences</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Adding information to disambiguate is the fourth pattern: the first attempt was under-specified, which means the system should have asked &ldquo;which Hello?&rdquo; rather than guessing." data-bad="">Giving more information &mdash; the first request was ambiguous and the system should have asked which one</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-ethics" class="section" data-track="ethics">
+  <h2 class="section-title">Designing Human-AI Interaction: Guidelines and Ethics</h2>
+  <p class="section-lead">The deck closes with the guidelines that turn &ldquo;be careful with AI&rdquo; into checkable design commitments, grouped into four phases: initially, during interaction, when wrong, and over time.</p>
+
+  <div data-ix="deck" data-ix-src="#ix-hai-guidelines"></div>
+  <script type="application/json" id="ix-hai-guidelines">
+  {
+    "title": "Human-AI interaction guidelines, phase by phase",
+    "subtitle": "Front: the guideline as the deck states it. Flip for what it commits the interface to.",
+    "cards": [
+      { "front": "Initially — Make clear what the system can do", "back": "Help the user understand what the AI system is capable of doing. The deck's Google example — “Ok, Google, open Uber” answered with “I can't open apps” — is a capability boundary discovered by accident.", "hint": "Phase 1: initially" },
+      { "front": "Initially — Make clear how well the system can do what it can do", "back": "Help the user understand how often the AI system may make mistakes. Without this, every confident-sounding answer is treated as a certain one.", "hint": "Phase 1: initially" },
+      { "front": "Initially — Time services based on context", "back": "Time when to act or interrupt based on the user's current task and environment. This is the calm-technology problem in a proactive system.", "hint": "Phase 1: initially" },
+      { "front": "Initially — Show contextually relevant information", "back": "Display information relevant to the user's current task and environment. Relevance is the maxim of relation turned into an engineering requirement.", "hint": "Phase 1: initially" },
+      { "front": "Initially — Match relevant social norms", "back": "Ensure the experience is delivered in a way that users would expect, given their social and cultural context. The deck's public-space objection to voice lives here.", "hint": "Phase 1: initially" },
+      { "front": "Initially — Mitigate social biases", "back": "Ensure the AI system's language and behaviours do not reinforce undesirable and unfair stereotypes and biases. A model trained on the past reproduces the past.", "hint": "Phase 1: initially" },
+      { "front": "During interaction — Efficient invocation, dismissal and correction", "back": "Make it easy to invoke or request the AI system's services when needed — and, just as importantly, easy to dismiss and correct it.", "hint": "Phase 2: during interaction" },
+      { "front": "During interaction — Scope services when in doubt", "back": "Engage in disambiguation or gracefully degrade the AI system's services when uncertain about a user's goals. This is the three-tiered confidence policy.", "hint": "Phase 2: during interaction" },
+      { "front": "During interaction — Make clear why the system did what it did", "back": "Enable the user to access an explanation of why the AI system behaved as it did. Without it, a wrong action is indistinguishable from a random one.", "hint": "Phase 2: during interaction" },
+      { "front": "During interaction — Remember recent interactions", "back": "Maintain short-term memory and allow the user to make efficient reference to that memory — which is what makes “play the last song” resolvable.", "hint": "Phase 2: during interaction" },
+      { "front": "Over time — Learn from user behaviour", "back": "Personalise the user's experience by learning from their actions over time. This is the adaptiveness-after-deployment that the EU definition names.", "hint": "Phase 3: over time" },
+      { "front": "Over time — Encourage granular feedback", "back": "Enable the user to provide feedback indicating their preferences during regular interaction with the AI system — not only in a survey at the end.", "hint": "Phase 3: over time" },
+      { "front": "Over time — Convey the consequences of user actions", "back": "Immediately update or convey how user actions will impact future behaviours of the AI system. Training data is a user-facing concept.", "hint": "Phase 3: over time" },
+      { "front": "Over time — Provide global controls", "back": "Allow the user to globally customise what the AI system monitors and how it behaves. The deck's closing question — “we can turn off our augmentation, but will we?” — assumes this guideline is met.", "hint": "Phase 3: over time" },
+      { "front": "When wrong — the deck's warning", "back": "Even assuming perfect AI performance, many interaction design challenges remain: the interface must still be legible, interruptible and correctable when the model is right about the wrong thing.", "hint": "Phase 4: when wrong" },
+      { "front": "Open research questions from the deck", "back": "How do humans attribute moral responsibility, causation, praise and blame in AI decisions? How are children interacting with AI agents? How can AI agents influence political opinion and moderate conflict? How is trust developed, broken and recovered? Should AI decide and explain, or offer alternatives with their trade-offs?", "hint": "Open questions" }
+    ]
+  }
+  </script>
+  
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Risks the guidelines are aimed at</h4>
+      <ul>
+        <li>Over-trust: confident output accepted without verification</li>
+        <li>Automation bias: the machine's suggestion outweighs better evidence</li>
+        <li>Inference beyond intent: purchase history, location and voice reveal what you never said</li>
+        <li>Bias at scale: a model's unfairness is deployed to everyone at once</li>
+        <li>Proactivity without consent: the system acts before it is asked</li>
+      </ul>
+    </div>
+    <div class="why-card con" style="background:var(--blue-bg); border-color:rgba(37,99,235,0.3);">
+      <h4>Controls that make proactive systems defensible</h4>
+      <ul>
+        <li>State capability and error rate up front</li>
+        <li>Fail loudly and early rather than plausibly</li>
+        <li>Keep a human veto at the level the risk justifies</li>
+        <li>Make explanations reachable in one step</li>
+        <li>Provide global controls over what is monitored</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why the deck's closing line matters:</strong> human-AI interaction is an exciting new sub-discipline requiring expertise from a wide range of professionals, and we have only scratched the surface on ethics, implementation challenges and multimodal input. For this unit, the practical consequence is that every pervasive system you build this semester now contains an inference step &mdash; so say what it infers, how often it is wrong, and who carries the cost when it is.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A predictive-policing tool is deployed in a suburb with a low accuracy rate on its risk scores. Using the deck's three-way split, what is the correct characterisation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It is not automating perception. Perception is content identification, face analysis or reading a scan — tasks with high accuracy. This is a claim about a person's future behaviour.">Automating perception, so the ethics concern is the scale of deployment</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="It is not automating judgement in the deck's sense either. Judgement tasks such as spam detection or essay grading are imperfect but improving; predicting social outcomes is the category the deck calls fundamentally dubious.">Automating judgement, so the ethics concern is that some error is inevitable</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Predicting social outcomes is the deck's third category, described as fundamentally dubious, where the ethical concerns are amplified by low accuracy — the score looks like measurement but is not." data-bad="">Predicting social outcomes: fundamentally dubious, with ethical concerns amplified by low accuracy</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 8 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Autonomy is a dial, not a switch</h4>
+        <p>Sheridan and Verplank's ten levels run from no assistance to ignoring the human. Name the level per decision, not per product.</p>
+        <div class="flip-hint">Core instrument</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Augmentation beats automation</h4>
+        <p>The deck's claim: the potential of AI lies not in automation but in augmentation. Keep the person on the decision wherever their judgement adds something.</p>
+        <div class="flip-hint">Design stance</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Accuracy and ethical risk travel separately</h4>
+        <p>Perception works and creates risk through scale; judgement is imperfect and creates risk through inevitable error; social prediction is dubious and creates risk through consequence.</p>
+        <div class="flip-hint">Capability map</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Conversation has rules</h4>
+        <p>Grice's cooperative principle and the maxims of quality, quantity, relation and manner describe the failures users experience &mdash; and the three-tiered confidence policy is the repair.</p>
+        <div class="flip-hint">Voice</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Users repair the system's errors</h4>
+        <p>Hyperarticulation, simplification, new utterance, more information. Which one they choose tells you which stage of the pipeline is failing.</p>
+        <div class="flip-hint">Failure analysis</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Guidelines make &ldquo;be careful&rdquo; checkable</h4>
+        <p>State capability and error rate, time services to context, explain actions, remember interactions, learn over time, and give global controls.</p>
+        <div class="flip-hint">Practice</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you define an AI system from the current EU wording, place a system on the ten levels, name the four maxims with a counter-example each, and list the four repair strategies?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Where to go next</h3>
+      <p>The Foundations page turns this week's vocabulary into notation and checkable relationships &mdash; the autonomy scale, the confidence tiers, the latency budget and the augmentation formula. Then attempt the Quiz Hub and the Week 8 flashcards.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The exam-ready sentence for this week:</strong> &ldquo;An intelligent interactive system differs from a conventional one because its behaviour is inferred rather than specified: the designer therefore chooses a level of autonomy, communicates capability and uncertainty, designs the repair path for when inference fails, and accounts for the fact that users will trust it more than they should.&rdquo;
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

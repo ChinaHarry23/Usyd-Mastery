@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 4: Web Applications</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter4-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 foundations for COMP5618: exact definitions for web application, web server and application server, the request/response notation behind sessions and authorisation, an HTTP status-code taxonomy, a threat-model checklist for web application flaws, and the NAXSI/learning-mode tutorial walked through.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 4: Web Applications">
+<meta property="og:description" content="Week 4 foundations for COMP5618: definitions, notation for sessions and authorisation, the HTTP status-code taxonomy, and a threat-model checklist for web application flaws.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter4-study.html" data-i18n="math_back_study">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 4 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Layer &amp; status taxonomy</a></li>
+  </ul>
+  <div class="toc-group">Notation &amp; models</div>
+  <ul>
+    <li><a href="#sec-m-notation" class="toc-link">Sessions, authorisation, caching</a></li>
+    <li><a href="#sec-m-model" class="toc-link">Threat-model checklist</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial: NAXSI walkthrough</a></li>
+  </ul>
+  <a href="chapter4-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5618 &mdash; Week 4 supplement</p>
+  <h1>Foundations: the vocabulary and notation behind web application security</h1>
+  <p class="hero-desc">Week 4 is conceptual, so this page does the equivalent of a formula sheet. It pins down the definitions the lecture relies on, gives compact notation for sessions, authorisation and caching, builds a status-code and layer taxonomy you can be examined on, and ends with the threat-model checklist that turns &ldquo;this app is vulnerable&rdquo; into a markable answer.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 4 lecture deck</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+    <span>Threat-model checklist for exam answers</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Web application</div>
+    <p>A software application accessed through a web browser or web-enabled device, hosted on a remote server and reached over a network, delivering its functionality through web technologies such as HTML, CSS and JavaScript. It receives HTTP requests and generates HTTP responses, and it is a complex system with multiple layers and dependencies.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Web server</div>
+    <p>A software application that handles the delivery of web content over the internet. It receives and processes HTTP requests from clients, returns HTTP responses containing the requested content, and acts as the intermediary between clients and the hosted application &mdash; listening on a port and either serving a resource or forwarding the request.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Application server</div>
+    <p>The component that handles the actual processing of HTTP requests: executing the back-end code, implementing the business logic, accessing the database through its interface methods, and managing caching layers. It is where the dynamic page is generated.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Web application firewall (WAF)</div>
+    <p>A security solution designed to protect web applications from various types of attacks and vulnerabilities. It acts as a shield between the application and the client, analysing and filtering incoming requests and responses, and is typically positioned in front of the web server, on-premises or in the cloud.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Web application</td><td>Browser-accessed, remotely hosted, HTTP-speaking, layered</td><td>&ldquo;A website with buttons&rdquo; &mdash; no mention of where it runs or how it is reached</td></tr>
+        <tr><td>Web server</td><td>Receives and processes HTTP requests, returns responses, is the intermediary</td><td>Confusing the server software with the application it forwards to</td></tr>
+        <tr><td>Application server</td><td>Back-end code, business logic, database access, caching</td><td>Calling it &ldquo;the back end&rdquo; without naming what it does</td></tr>
+        <tr><td>Session</td><td>State reconstructed across stateless requests from a token</td><td>&ldquo;A cookie&rdquo; &mdash; the cookie is the carrier, the session is the state</td></tr>
+        <tr><td>WAF</td><td>Analyses and filters requests <em>and responses</em> at the edge</td><td>Presenting it as a fix rather than mitigation until a patch is deployed</td></tr>
+        <tr><td>Same-origin policy</td><td>Scheme + host + port define the origin; script cannot read across origins</td><td>Describing it as a server-side control &mdash; it is enforced by the browser</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what does the application server do?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Serving static content and managing connections are web server responsibilities. The application server handles the processing that the web server forwards to it.">It serves the static files and manages the incoming connections</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: it executes the back-end code, implements the business logic, accesses the database through its interface methods and manages caching — generating the dynamic page that the web server then delivers." data-bad="">It executes the back-end code and business logic, accesses the database and manages caching</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Persisting data is the database's job. The application server is the component that reads from and writes to it.">It persists the application's data and enforces the schema</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; assigning a finding to a layer.</strong> Given a description of a flaw, the first markable step is naming the component that owns it, because that is what determines who fixes it and which control counts.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>&ldquo;The vendor's sample admin page is reachable on the production host.&rdquo;</strong> Nothing was programmed wrongly and no user input is involved. The deployment kept a default: <em>web server</em> layer, security misconfiguration. Control: configure to OWASP and NIST guidance and remove sample content.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>&ldquo;A search parameter changes which rows a product query returns.&rdquo;</strong> User input reaches a query parser: <em>application server</em> layer, SQL injection. Controls: fix the query's structure, validate the expected format, give the database account least privilege, and log the queries executed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>&ldquo;A review containing markup executes for everyone who views the page.&rdquo;</strong> Stored data reaches an HTML parser at render time: the failure is at the <em>output</em> position, even though the data was accepted at the application layer. Controls: encode or escape on output through an anti-XSS library; validate and sanitise on input as the second layer.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>&ldquo;Two users see the same personalised page after a cache warm-up.&rdquo;</strong> The cache returned a response computed for somebody else: <em>cache</em> layer. Control: key stored responses on the identity and authorisation state entitled to see them, never on the URL alone.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The sentence to reuse.</strong> &ldquo;The flaw is <em>X</em> at the <em>Y</em> layer, reached through <em>Z</em>, and it survives because no control at that layer evaluates it &mdash; the fix belongs at <em>Y</em>, not at the edge.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Layer &amp; status taxonomy</h2>
+  <p class="section-lead">Exam questions usually ask you to place a flaw. Two axes do most of that work: which component owns the flaw, and what the application's own responses reveal about it.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; which component owns the flaw</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Component</th><th>Owns</th><th>Lecture flaws that live here</th><th>Control that belongs here</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Web server</strong></td><td>Receiving, routing, serving, connection management, security measures</td><td>Security misconfigurations (default pages, exposed files, weak TLS settings)</td><td>Configure to OWASP and NIST guidance; remove defaults and sample content</td></tr>
+        <tr><td><strong>Application server</strong></td><td>Back-end code, business logic, database access, caching</td><td>SQL injection, XSS, CSRF, broken authentication, insecure direct object access, missing function-level access control, invalidated redirects</td><td>Validation and sanitisation, output encoding, CSRF tokens, authorisation checks on every function</td></tr>
+        <tr><td><strong>Cache</strong></td><td>Reusing a stored response instead of recomputing it</td><td>One user's response served to another; authorisation decisions cached past a revocation</td><td>Key the cache on identity and authorisation state, never on URL alone</td></tr>
+        <tr><td><strong>Database</strong></td><td>Persisting data, enforcing schema and relationships</td><td>The data that is exposed, and the privilege level the application's credentials hold</td><td>Least-privilege accounts; parameterised access; audit logging</td></tr>
+        <tr><td><strong>Client / browser</strong></td><td>Rendering, executing script, attaching cookies, enforcing the same-origin policy</td><td>The execution site of XSS; the automatic-cookie behaviour CSRF depends on</td><td>Output encoding (so script never reaches the DOM), CSRF tokens, cookie attributes such as HttpOnly and SameSite</td></tr>
+        <tr><td><strong>Edge filter (WAF)</strong></td><td>Inspecting and filtering requests and responses</td><td>Nothing original &mdash; it mitigates what is already there</td><td>Rules tuned to the application's risk profile, plus exceptions learned from normal traffic</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; what the response code tells you</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Class</th><th>Meaning</th><th>Examples</th><th>What to look for when testing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>2xx</strong></td><td>Success: the request was received, understood and accepted</td><td>200 OK, 201 Created, 204 No Content</td><td>A 200 in response to an unauthorised request is the signature of missing authorisation and of a successful injection</td></tr>
+        <tr><td><strong>3xx</strong></td><td>Redirection: further action is needed at another location</td><td>301 Moved Permanently, 302 Found, 307 Temporary Redirect</td><td>The redirect target is the attack surface for invalidated redirects and forwards</td></tr>
+        <tr><td><strong>4xx</strong></td><td>Client error: the request was wrong or not permitted</td><td>400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found</td><td>401 vs 403 distinguishes &ldquo;not authenticated&rdquo; from &ldquo;authenticated but not allowed&rdquo;; 404 on a real resource can be deliberate obfuscation</td></tr>
+        <tr><td><strong>5xx</strong></td><td>Server error: the request was valid but the server failed</td><td>500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable</td><td>A 500 after a malformed parameter means input reached a parser unvalidated &mdash; verbose error pages leak structure</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>The tutorial's use of this.</strong> When NAXSI is enforcing, the tutorial has you observe the changed response code in the browser's developer tools; when learning mode is on, the request reaches the application and the response code changes back. The status code is the cheapest evidence in the whole exercise, and it needs no access to the server's logs to read.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A request for another user's invoice returns <code>200 OK</code> with that user's data. What does the status code alone tell you?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A 200 is the opposite of a rejection. The server did not refuse the request; it served it.">The request was rejected but the body was returned anyway</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The server accepted the request and produced the record, so nothing on the server side stopped it. That is the signature of missing authorisation — either function-level or object-level — rather than a transport or parsing problem." data-bad="">The server treated the request as valid and authorised, so no authorisation check stopped it</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A 200 says nothing about how fast the response was produced. Caching is a separate question and would need its own evidence.">The response was served from cache rather than from the database</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-notation">
+  <h2 class="section-title">Sessions, authorisation and caching in notation</h2>
+  <p class="section-lead">Three relationships are worth being able to write from memory: how identity is reconstructed, how access is decided, and what a cache actually saves.</p>
+
+  <div class="theorem-box">
+    <h3>1. Identity is reconstructed, not remembered</h3>
+    <p>HTTP is stateless, so the server holds no memory of the previous request. Each request carries a session token, and the server maps that token to an identity and a set of permissions:</p>
+    \[ \operatorname{session} : \operatorname{token} \;\longmapsto\; (\operatorname{identity},\ \operatorname{permissions}) \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Consequence: the token <em>is</em> the credential. Possession is sufficient, which is why stolen tokens, passwords or keys are described in the lecture as a stolen identity.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Access requires authentication <em>and</em> authorisation</h3>
+    <p>Two independent predicates have to hold before a function may run. Let \(a\) be authentication (is the caller who they claim to be?) and \(z\) be authorisation (is that identity permitted to perform this action?):</p>
+    \[ \operatorname{grant} \;=\; a \;\land\; z \]
+    <p style="margin-top:0.6rem;">Missing function-level access control is the case \(a = \text{true}\) and \(z\) never evaluated. Insecure direct object access is the same shape one level down: the object identifier is used before \(z\) is asked about <em>that</em> object.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. A session that can be forged is an identity that can be forged</h3>
+    <p>Write \(u_{\text{apparent}}\) for the identity the application believes it is serving and \(u_{\text{actual}}\) for the human at the browser. When authentication material is captured, the two separate:</p>
+    \[ \operatorname{token}_{\text{stolen}} \;\Rightarrow\; u_{\text{apparent}} = u_{\text{victim}} \;\neq\; u_{\text{actual}} \]
+    <p style="margin-top:0.6rem;">The defence chain from the deck attacks the left-hand side: a strong unique password makes the credential harder to obtain, and a second verification step means a stolen password alone does not complete the login. Neither control helps once the token has already been issued.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. What a cache buys, and what it costs</h3>
+    <p>With \(h\) the hit ratio, \(t_{\text{hit}} \approx 1\text{&ndash;}2\) ms and \(t_{\text{miss}} \approx 50\text{&ndash;}100\) ms from the deck:</p>
+    \[ t_{\text{avg}} \;=\; h\,t_{\text{hit}} + (1-h)\,t_{\text{miss}} \]
+    <p style="margin-top:0.6rem;">At \(h = 0.9\) that is roughly 6&ndash;12 ms against 50&ndash;100 ms uncached &mdash; a large win, which is exactly why caching survives review. The security condition is the part that gets skipped: a cached response is only safe if it was keyed on the identity and authorisation state entitled to see it.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose. The symbols below are a <em>revision aid</em> introduced here so that the week's relationships can be written compactly; they are not lecture notation and should not be quoted as such.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(R\)</div><div class="sym-cell">request</div><div class="sym-cell">One HTTP request: method, path, parameters, headers and cookies</div>
+    <div class="sym-cell">\(S\)</div><div class="sym-cell">server state</div><div class="sym-cell">What the application knows after the request; HTTP itself carries none of it</div>
+    <div class="sym-cell">\(\operatorname{token}\)</div><div class="sym-cell">session token</div><div class="sym-cell">The value in the session cookie: a bearer credential in every practical sense</div>
+    <div class="sym-cell">\(\operatorname{identity}\)</div><div class="sym-cell">identity</div><div class="sym-cell">The user the application believes it is serving</div>
+    <div class="sym-cell">\(\operatorname{permissions}\)</div><div class="sym-cell">permissions</div><div class="sym-cell">What that identity is allowed to do: the input to every authorisation decision</div>
+    <div class="sym-cell">\(a\)</div><div class="sym-cell">authentication</div><div class="sym-cell">Is the caller who they claim to be? Answered once, at login</div>
+    <div class="sym-cell">\(z\)</div><div class="sym-cell">authorisation</div><div class="sym-cell">Is this identity permitted to perform this action on this object? Answered per request</div>
+    <div class="sym-cell">\(\operatorname{grant}\)</div><div class="sym-cell">access granted</div><div class="sym-cell">The decision \(a \land z\); both terms are required</div>
+    <div class="sym-cell">\(u\)</div><div class="sym-cell">user</div><div class="sym-cell">Written \(u_{\text{apparent}}\) for what the application sees and \(u_{\text{actual}}\) for the human at the browser</div>
+    <div class="sym-cell">\(h\)</div><div class="sym-cell">cache hit ratio</div><div class="sym-cell">Fraction of requests answered from the cache without touching the database</div>
+    <div class="sym-cell">\(E_{\text{codec}}\)</div><div class="sym-cell">encode / escape coverage</div><div class="sym-cell">Proportion of user-controlled output positions that are correctly encoded before rendering</div>
+    <div class="sym-cell">\(M\)</div><div class="sym-cell">filter mode</div><div class="sym-cell">\(\text{enforce}\) (block and log) or \(\text{learn}\) (log only, take no action)</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An application checks that a user is logged in, then loads the record whose id appears in the URL. Which term of \(\operatorname{grant} = a \land z\) is missing?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Logging in is exactly what establishes a. The question states the check happens, so authentication is present.">\(a\), because the session was never established</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The user is authenticated, but nothing asks whether that identity may see this particular record — that is insecure direct object access, and the missing term is the authorisation decision on the object." data-bad="">\(z\), because nothing checks whether this identity may access this object</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="h describes cache behaviour. It is a performance term and has no bearing on whether an access decision was made.">\(h\), because the record was served from cache</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-model">
+  <h2 class="section-title">Threat-model checklist for a web application</h2>
+  <p class="section-lead">Most Week 4 exam questions reduce to &ldquo;given this application, where would you look and what would you report?&rdquo;. Run the checklist in order and the answer writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the web application threat model",
+    "subtitle": "Rebuild the order in which to interrogate an application before you write a finding.",
+    "steps": [
+      "Map the components: client, web server, application server, cache, database and any edge filter",
+      "Enumerate the entry points the application actually accepts, including the ones the interface never sends",
+      "Identify where user-controlled data becomes an instruction, a path or a rendered document",
+      "Trace the flow of the session token and decide what possession of it grants",
+      "Ask which functions and objects have an authorisation decision, and which only have a hidden link",
+      "Record what the responses reveal: status codes, error detail, timing and headers",
+      "Pair every finding with a control at the layer that owns it, and say what the control does not cover"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Components</td><td>Which of the four layers the flaw belongs to, and whether a WAF sits in front</td><td>You describe a flaw without saying where it lives or who must fix it</td></tr>
+        <tr><td>2. Entry points</td><td>Parameters, bodies, headers, cookies and methods the interface never uses</td><td>You assume the form's own validation is a control</td></tr>
+        <tr><td>3. Data flow</td><td>The interpreter that consumes user input: query parser, HTML parser, filesystem</td><td>You name the flaw without naming the interpreter it abuses</td></tr>
+        <tr><td>4. Session flow</td><td>How the token is issued, carried, stored, expired and revoked</td><td>You treat 2FA as protection for a session that was already issued</td></tr>
+        <tr><td>5. Authorisation</td><td>A server-side check on every function and every object</td><td>You accept a hidden link or a disabled button as an access control</td></tr>
+        <tr><td>6. Response evidence</td><td>Status codes, stack traces, version banners, redirect targets</td><td>You claim an impact you have no response evidence for</td></tr>
+        <tr><td>7. Control pairing</td><td>Validation <em>and</em> structural safety <em>and</em> least privilege</td><td>You answer &ldquo;validate input&rdquo; and stop, when the flaw is structural</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Validation versus structure.</strong> The lecture's stated solution for SQL injection is input validation: ensure user input is the correct format and length before it reaches the query, and reject or sanitise what does not match. That is necessary. It is not sufficient, because it requires predicting every dangerous input. The structural control &mdash; keeping the query's shape fixed and binding data into it &mdash; removes the class rather than the instance. A complete answer names both, then adds least-privilege credentials and logging.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-pairs"></div>
+  <script type="application/json" id="ix-m-pairs">
+  {
+    "title": "Match the exam question to the layer that answers it",
+    "subtitle": "Click a question on the left, then the component on the right.",
+    "pairs": [
+      ["Why did a well-formed request return a server error?", "The application server: input reached a parser it was not validated for"],
+      ["Why did another user's record come back with a 200?", "The authorisation logic: an object-level access decision was never made"],
+      ["Why does the attack reach the application in learning mode but not when enforcing?", "The edge filter: it inspects and filters, and in learning mode only logs"],
+      ["Why does the page execute script that a user submitted last week?", "Output encoding: stored untrusted data was rendered without escaping"],
+      ["Why did a request triggered by another site arrive authenticated?", "The browser: cookies are attached automatically for the target origin"],
+      ["Why was the default administrative page reachable in production?", "Configuration: the deployment kept the vendor's defaults"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer best explains why &ldquo;validate the input&rdquo; alone is an incomplete response to an injection finding?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Validation is a legitimate control; the lecture names it. The problem is coverage, not legitimacy.">Validation is not a real security control and should not be mentioned</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Validation depends on anticipating every dangerous input, so it reduces instances rather than removing the class. Fixing the query's structure so user data can never be a clause removes the class; validation, least privilege and logging then reduce what a residual mistake can reach." data-bad="">Validation reduces instances of a flaw but does not remove the class, because it depends on predicting every dangerous input</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Validation runs server-side and does apply here. The issue is its completeness, not its location.">Validation only works on the client side, so the server never sees it</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-controls"></div>
+  <script type="application/json" id="ix-m-controls">
+  {
+    "title": "Self-test: the lecture's controls and what each one actually covers",
+    "subtitle": "Say the limitation out loud before you flip the card.",
+    "cards": [
+      { "front": "Input validation", "back": "Ensure user input is the correct format and length before it ever reaches the database query; reject or sanitise anything that does not match. Covers the inputs you anticipated.", "hint": "Lecture solution" },
+      { "front": "Anti-XSS encoding or escaping libraries", "back": "Automatically encode or escape user input so that it is rendered as text rather than executed as markup. Covers output positions the library is actually applied to.", "hint": "Lecture solution" },
+      { "front": "CSRF tokens", "back": "A value the attacker's page cannot know or read, submitted with the request so a forged request can be told apart from a real one. Covers cross-site request forgery; it does not fix XSS, which can read the token.", "hint": "Lecture solution" },
+      { "front": "Reauthentication", "back": "Demanding credentials again for a sensitive action. Covers the case where a session token has been stolen but the attacker does not hold the password.", "hint": "Lecture solution" },
+      { "front": "Two-factor authentication", "back": "A second verification step so stolen credentials alone fail. Covers the login step; it does not rescue a session that was issued before the theft.", "hint": "Defence chain" },
+      { "front": "Access controls on every function", "back": "Verify user access privileges before granting access to any function or feature, server-side. Covers missing function-level access control and, applied per object, insecure direct object access.", "hint": "Lecture solution" },
+      { "front": "Configuration to OWASP and NIST guidance", "back": "Remove default passwords and sample content, and configure to recognised standards. Covers security misconfiguration, which the lecture attributes to human error.", "hint": "Lecture solution" },
+      { "front": "WAF in front of the application", "back": "Analyses and filters incoming requests and responses, shields known weaknesses until a proper patch is deployed, logs and alerts. Covers what its rules describe — and it is mitigation, not a fix.", "hint": "Edge control" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked classification.</strong> Place three findings using the checklist, two sentences each.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>A search page returns every product when the query contains a quotation mark.</strong> Data flow: user text is assembled into the database query, so it can occupy an instruction position. Verdict: SQL injection at the application server. Controls: fix the query's structure, validate the expected format and length, run the database account with least privilege, and log the queries actually executed. Response evidence: a result set larger than any legitimate search, and often a 500 once the malformed statement reaches the parser.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>A product review is displayed to every visitor, and the review contains script.</strong> Data flow: stored untrusted data is rendered into HTML without escaping. Verdict: stored XSS at the output position. Controls: encode or escape on output using an anti-XSS library, validate and sanitise on input, and remember that script in the origin can read CSRF tokens and act with the user's session.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>A normal account reaches the admin console by editing one path segment.</strong> Authorisation: \(a = \text{true}\) but \(z\) was never evaluated for that function. Verdict: missing function-level access control. Control: a server-side privilege check before the function executes, applied to every entry point, not just the link in the menu. Response evidence: a 200 where a 403 is expected.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;The flaw is X at layer Y, reached through entry point Z, with impact I, and the control belongs at layer Y as well &mdash; input validation reduces the instances, but only fixing the structure removes the class.&rdquo; Every clause in that sentence is checkable, which is why it scores.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial walkthrough: hosting, then filtering</h2>
+  <p class="section-lead">The Week 4 tutorial builds an application-layer firewall in front of a deliberately vulnerable application. Each step produces an observable checkpoint, and the last step is the one that matters: the same attack, blocked and allowed, with the code unchanged.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Host it first</h3>
+      <p>Host the vulnerable application on NginX rather than Apache. Because NginX has no built-in PHP support, PHP-FPM provides the CGI bridge between the server and the application.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Contain it</h3>
+      <p>Put the vulnerable host on a NAT network with the attack VM, then switch it to a host-only adapter so the deliberately vulnerable application is not exposed to any other host.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Filter it</h3>
+      <p>Compile NginX with the filter module, point the denied-URL page in its rules file, and reference that rules file from the site configuration so it is applied.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Then try to break it</h3>
+      <p>Send attack requests from the command line and from the application's own interface, and read <code>/var/log/nginx/error.log</code> to see what the filter recorded about each one.</p>
+    </div>
+  </div>
+
+  <div id="ix-naxsi"></div>
+
+  <div class="proof-block">
+    <div class="proof-step">
+      <div class="step-num">1</div>
+      <div class="step-body"><p><strong>Why learning mode exists.</strong> Enabling the filter in learning mode prevents it from taking any action except logging suspicious requests to the Nginx error log. On a real site the first rule set will flag legitimate traffic; learning mode is how you find those requests before they become blocked users.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">2</div>
+      <div class="step-body"><p><strong>What you do with the log.</strong> By examining the log lines generated from legitimate, non-attack requests, exceptions can be made to the built-in or custom rules so that legitimate requests are not blocked. The log is the input to the configuration, not just evidence.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">3</div>
+      <div class="step-body"><p><strong>What the tutorial warns about.</strong> Properly configuring and implementing a WAF on a high-traffic website can require a lot of effort, and it is usually a good idea to give legitimate users who land on the &ldquo;request denied&rdquo; page a route to contact the webmaster.</p></div>
+    </div>
+    <div class="proof-step">
+      <div class="step-num">4</div>
+      <div class="step-body"><p><strong>The checkpoint sequence.</strong> Start and stop the services and show the server running; show the PHP configuration page from the host, proving the request path; use <code>curl</code> to send a suspicious request and show it recorded in <code>error.log</code>; log in to the vulnerable application from the host browser; then demonstrate XSS and SQLi both blocked and, with learning mode on, allowed.</p></div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; what the difference between the two modes proves.</strong></p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Observation, enforcing.</strong> The request is refused before the application sees it, the browser shows a different response code, and the event appears in the error log. Nothing about the application changed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Observation, learning mode.</strong> The identical request reaches the application and produces the vulnerable behaviour, and all the filter produces is a log line. Again, nothing about the application changed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Inference.</strong> The difference between the two runs is entirely the filter's mode. Therefore the filter is the only thing preventing exploitation, and the underlying defect is untouched &mdash; which is exactly why the deck describes WAF protection as shielding known weaknesses until a proper patch is deployed.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Report wording.</strong> &ldquo;SQL injection remains present in the application and is currently only mitigated at the edge; the mitigating rule set must be maintained and the application code must still be fixed. Evidence: identical requests produce different outcomes when filter mode changes.&rdquo;</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Scope.</strong> All of this was performed against a deliberately vulnerable application in a host-only lab network. The same requests aimed at a system you do not own or have written permission to test are an offence, not an exercise.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the definitions and notation here, the four-component request stack and the vulnerability classes on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5618ChapterUI) return;
+    try {
+      window.initCOMP5618ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5618 chapter 4] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

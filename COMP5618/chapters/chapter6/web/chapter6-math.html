@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 6: Linux OS Introduction</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 foundations for COMP5618: permission arithmetic and the setuid equation, privilege escalation as a state model, crontab and sudoers notation, and a hardening checklist for Linux and SSH.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 6: Linux OS Introduction">
+<meta property="og:description" content="Week 6 foundations for COMP5618: permission arithmetic and the setuid equation, privilege escalation as a state model, crontab and sudoers notation, and a hardening checklist for Linux and SSH.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter6-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 6 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-perms" class="toc-link">Permission arithmetic</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-esc" class="toc-link">Escalation as a state model</a></li>
+    <li><a href="#sec-m-cron" class="toc-link">crontab &amp; sudoers notation</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-harden" class="toc-link">Hardening checklist</a></li>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial triage review</a></li>
+  </ul>
+  <a href="chapter6-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5618 &mdash; Week 6 supplement</p>
+  <h1>Foundations: permissions, identity and the escalation equation</h1>
+  <p class="hero-desc">Week 6 is a systems week, so the foundations page does three jobs: it pins down the definitions the lecture relies on, turns the permission string into arithmetic you can compute with, and states privilege escalation as a small state model &mdash; a process cannot manufacture privilege for itself, so escalation always means finding a mechanism that hands it an identity. The notation here is a revision aid built from the lecture's examples, not lecture notation.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the Week 6 deck</span>
+    <span>Permission arithmetic from the ping example</span>
+    <span>Escalation model covers all four lecture techniques</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Linux and the kernel</div>
+    <p><strong>Linux</strong> is an open-source operating system based on UNIX, known for its powerful and versatile features. Its core component, the <strong>kernel</strong>, was created by Linus Torvalds and released in 1991. It is a <strong>UNIX-like</strong> system because it shares UNIX's design principles: a hierarchical file system, multiuser support and a command-line interface.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Linux distribution</div>
+    <p>A collection of software bundled together to form a complete operating system &mdash; kernel, package manager, window manager, text editor and web browser &mdash; giving users a ready-to-use environment with pre-installed software and utilities.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Program-specific user</div>
+    <p>A dedicated account under which a single program runs, created during that program's installation or configuration and granted only the privileges it needs. Because the program does not run with root access, a compromise is confined to that account's privileges instead of spreading across the system.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Setuid (SUID) permission</div>
+    <p>A per-file permission that allows the file to be executed with the privileges of its <em>owner</em> rather than those of the user executing it. It is identified by the letter <code>s</code> in the permission string, in place of the owner's <code>x</code>. <strong>SGID</strong> does the same for the file's group.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Privilege escalation</div>
+    <p>The process of gaining higher privileges or access rights than were originally granted to a user or a running process. The four techniques the lecture names are the setuid bit, kernel vulnerabilities, sudoers entries and cron jobs.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Rootkit</div>
+    <p>Malicious software that grants unauthorised access to a Linux system while evading detection, providing privileged control and remaining hidden from traditional security measures &mdash; through kernel-level hooks and backdoor access, or by modifying system binaries and kernel modules.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Setuid</td><td>Executes with the <em>owner's</em> privileges, marked by <code>s</code></td><td>Confusing it with a password prompt or with an administrator-only file</td></tr>
+        <tr><td>Program-specific user</td><td>A dedicated low-privilege account, and containment as the consequence</td><td>Calling it a convenience feature with no security purpose</td></tr>
+        <tr><td>Privilege escalation</td><td>Higher privileges than originally granted</td><td>Describing it as any successful intrusion, even one that stays inside one account</td></tr>
+        <tr><td>sudoers entry</td><td>A specific command delegated to a user or group</td><td>Assuming any sudoers entry is equivalent to full sudo</td></tr>
+        <tr><td>Cron job</td><td>A scheduled task, often under root's crontab</td><td>Forgetting that the task inherits the crontab owner's privileges</td></tr>
+        <tr><td>Rootkit</td><td>Unauthorised access <em>and</em> evasion of detection</td><td>Defining it as any malware, dropping the stealth requirement</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="sec-m-perms">
+  <h2 class="section-title">Permission arithmetic</h2>
+  <p class="section-lead">The lecture's example line is enough to derive the whole notation. Ten characters, three triads, one special letter.</p>
+
+  <div class="theorem-box">
+    <h3>1. One triad is a three-bit number</h3>
+    <p>Each of the three permission triads &mdash; owner, group, other &mdash; is a three-bit value in the order <em>read, write, execute</em>:</p>
+    \[ d \;=\; 4\,r \;+\; 2\,w \;+\; x, \qquad r, w, x \in \{0, 1\} \]
+    <p style="margin-top:0.6rem;">So <code>rwx</code> is \(4+2+1=7\), <code>r-x</code> is \(4+0+1=5\), <code>r--</code> is \(4\), and <code>---</code> is \(0\). That is why <code>-rwsr-xr-x</code> and <code>4755</code> describe the same file.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The special bits are the leading octal digit</h3>
+    <p>Writing \(S = 4\,s_u + 2\,s_g + t\) for the setuid, setgid and sticky flags, and \(d_u, d_g, d_o\) for the three triads:</p>
+    \[ M \;=\; 4096\,S \;+\; 64\,d_u \;+\; 8\,d_g \;+\; d_o \]
+    <p style="margin-top:0.6rem;">Check it on the lecture's <code>ping</code>: setuid only, so \(S = 4\); the triads are \(7, 5, 5\), giving \(4096 \cdot 4 + 64 \cdot 7 + 8 \cdot 5 + 5 = 16877\), which is <code>040755</code> in octal &mdash; the <code>4</code> in <code>4755</code> is exactly the setuid flag.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The setuid equation: identity changes at <code>exec</code></h3>
+    <p>A process carries a real and an effective identity. Executing a file leaves the real identity alone and may change the effective one:</p>
+    \[ \text{euid} \;=\; \begin{cases} \text{owner}(f), & \text{SUID}(f) = 1 \\ \text{ruid}, & \text{otherwise} \end{cases} \qquad\qquad \text{egid} \;=\; \begin{cases} \text{group}(f), & \text{SGID}(f) = 1 \\ \text{rgid}, & \text{otherwise} \end{cases} \]
+    <p style="margin-top:0.6rem;">The kernel then authorises file access against the <em>effective</em> identity and the supplementary groups. Two consequences follow, and both are examinable:</p>
+    <ul style="padding-left:1.1rem; line-height:1.7; margin-top:0.4rem;">
+      <li>Permission is decided by <strong>who the process is</strong>, never by who launched it or what they typed. There is no password inside <code>exec</code>.</li>
+      <li>If \(\text{euid} = 0\) the identity is root, and root is not subject to the ordinary permission check at all. This is why one wrong <code>s</code> bit outweighs a careful <code>rwxr-x---</code> everywhere else.</li>
+    </ul>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(f\)</div><div class="sym-cell">file</div><div class="sym-cell">The file being executed or read, identified by its path</div>
+    <div class="sym-cell">\(\text{owner}(f)\)</div><div class="sym-cell">owner of <em>f</em></div><div class="sym-cell">The user that owns the file &mdash; the decisive column in <code>ls -l</code></div>
+    <div class="sym-cell">\(\text{ruid}, \text{euid}\)</div><div class="sym-cell">real, effective UID</div><div class="sym-cell">Who started the process, and who the kernel treats it as for permission checks</div>
+    <div class="sym-cell">\(\text{SUID}(f)\)</div><div class="sym-cell">setuid flag</div><div class="sym-cell">1 when the <code>s</code> bit is set in the owner's execute slot</div>
+    <div class="sym-cell">\(d_u, d_g, d_o\)</div><div class="sym-cell">triad digits</div><div class="sym-cell">The three octal digits for owner, group and other</div>
+    <div class="sym-cell">\(S\)</div><div class="sym-cell">special digit</div><div class="sym-cell">4 = setuid, 2 = setgid, 1 = sticky, and sums such as 6 for setuid plus setgid</div>
+    <div class="sym-cell">\(M\)</div><div class="sym-cell">full mode</div><div class="sym-cell">The complete numeric mode, e.g. 16877 for the lecture's <code>ping</code></div>
+    <div class="sym-cell">\(\text{uid} = 0\)</div><div class="sym-cell">root</div><div class="sym-cell">The administrative identity; the goal of every escalation path in this week</div>
+    <div class="sym-cell">\(W\)</div><div class="sym-cell">patch window</div><div class="sym-cell">Time a host stays exposed between a vulnerability becoming known and the patch being deployed</div>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-mode-match"></div>
+  <script type="application/json" id="ix-m-mode-match">
+  {
+    "title": "Match the symbolic mode to its octal form",
+    "subtitle": "Work out the special digit first, then the three triads. Click a mode, then its number.",
+    "pairs": [
+      ["-rwsr-xr-x", "4755 — setuid, and everyone may execute"],
+      ["-rwxr-xr-x", "0755 — a normal executable program"],
+      ["-rw-r-----", "0640 — owner writes, group reads, others get nothing"],
+      ["-rw-------", "0600 — private to the owner, typical for /etc/shadow"],
+      ["-rwxrwxrwt", "1777 — world-writable directory with the sticky bit, as on /tmp"],
+      ["-rwSr--r--", "4644 — setuid set, but nobody may execute it, so the s is capital"],
+      ["-rws--s---", "6710 — setuid and setgid together with no access at all for others"],
+      ["drwx------", "0700 — a directory such as /root that only the owner may enter"]
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Capital S and capital T are warnings, not equivalents.</strong> A lowercase <code>s</code> means setuid <em>and</em> execute; an uppercase <code>S</code> means setuid is set but the execute bit is not, so the flag is currently inert. The same applies to <code>t</code> versus <code>T</code> for the sticky bit. When you audit a host, an uppercase letter is a finding worth explaining: the intent is there but the effect is not.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A binary is reported as mode <code>4755</code>. Which description is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. S = 4 is setuid, and 7-5-5 means the owner may read, write and execute while group and others may read and execute. That is the ping pattern." data-bad="">Setuid is set; owner has rwx, group and others have r-x</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would be 2755 — the leading 2 is setgid. The leading 4 in 4755 is setuid.">Setgid is set; owner has rwx, group and others have r-x</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That would be the sticky bit, whose digit is 1 (as in 1777 on /tmp). The digit 4 is setuid.">The sticky bit is set, so only the owner may delete the file</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked example &mdash; converting between the two notations, and deciding what is dangerous.</strong> Six modes appear in the week's material; decode each one and classify it.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong><code>-rwsr-xr-x</code> &rarr; ?</strong> Special: the owner's slot holds <code>s</code>, so \(S = 4\). Triads: <code>rwx</code> \(= 7\), <code>r-x</code> \(= 5\), <code>r-x</code> \(= 5\). Mode \(= 4755\). <em>Classification:</em> a setuid binary executable by everyone &mdash; safe only if the program cannot be made to run arbitrary commands.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong><code>4755</code> &rarr; which file?</strong> \(4096 \cdot 4 = 16384\), \(64 \cdot 7 = 448\), \(8 \cdot 5 = 40\), \(5\) &rarr; \(16877 = \text{0o40755}\), the lecture's <code>ping</code>. <em>Classification:</em> legitimate &mdash; raw sockets are privileged, and <code>ping</code> offers no command execution.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong><code>-rwxrwxrwt</code> on a directory.</strong> Special: <code>t</code> in the others' slot, so \(S = 1\). Triads 7-7-7, but the leading <code>d</code> marks a directory. Mode \(= 1777\). <em>Classification:</em> expected for <code>/tmp</code> &mdash; everyone may create files, the sticky bit stops them deleting each other's.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong><code>-rwSr--r--</code>.</strong> The capital <code>S</code> is the trap: setuid is set but no execute bit is present on the owner's triad, so the flag has no effect until someone adds <code>x</code>. Mode \(= 4644\). <em>Classification:</em> inert today, a one-character change away from being dangerous. Report it as a latent finding.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Why the enumeration commands are written the way they are.</strong> <code>find / -perm -4000 -type f</code> uses a <em>dash</em> before the mode, which means &ldquo;all of these bits are set&rdquo; rather than &ldquo;exactly this mode&rdquo;. That is why it finds 4711 and 6755 as well, and why it is the right command for an audit: you want every file with setuid, whatever else it has. The matching world-writable check, <code>find / -perm -2 -type f</code>, asks for bit 2 &mdash; the write bit in the others' triad.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-esc">
+  <h2 class="section-title">Privilege escalation as a state model</h2>
+  <p class="section-lead">All four of the lecture's techniques are the same idea wearing different clothes. State the invariant first, then the mechanisms become a lookup table instead of a list to memorise.</p>
+
+  <div class="theorem-box">
+    <h3>4. The invariant: a process cannot create privilege</h3>
+    <p>A process inherits its identities from its parent and can only change them through a kernel-mediated mechanism:</p>
+    \[ \text{priv}(\text{child}) \;\subseteq\; \text{priv}(\text{parent}) \quad\text{unless a mechanism } m \text{ applies} \]
+    <p style="margin-top:0.6rem;">This is why &ldquo;I have a shell&rdquo; and &ldquo;I have the system&rdquo; are different statements. A shell spawned by a web server carries the web server's identity, and the only way out is to find an \(m\) that supplies another one. Every technique in Week 6 is such an \(m\).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Mechanism \(m\)</th><th>Identity the code acquires</th><th>Where it is configured</th><th>Defensive control</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SUID file</td><td>\(\text{owner}(f)\), so root when the file is owned by root</td><td>The file's mode bits, anywhere on the filesystem</td><td>Limit setuid programs, validate their input, audit and patch them</td></tr>
+        <tr><td>SGID file</td><td>\(\text{group}(f)\)</td><td>The group's execute slot holding <code>s</code></td><td>Same audit as SUID; group membership is privileges too</td></tr>
+        <tr><td>sudo command</td><td>The <code>(RunAs)</code> field of the matching directive</td><td><code>/etc/sudoers</code>, edited with <code>visudo</code></td><td>Name the narrowest command, delegate to groups, log sudo activity</td></tr>
+        <tr><td>Cron job</td><td>\(\text{owner}(\text{crontab})\)</td><td>The crontab of the user whose schedule it is</td><td>Root-owned, non-writable scripts and directories; least-privilege scheduling</td></tr>
+        <tr><td>Kernel vulnerability</td><td>Whatever the flaw grants &mdash; typically root</td><td>Nowhere: it is a defect, not a setting</td><td>Patch the kernel; monitor for new CVEs; limit who gets a local shell</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. An escalation path is a chain of identity changes</h3>
+    <p>Write a path as a sequence of identities joined by the mechanism that moves between them. The Week 6 tutorial is one instance:</p>
+    \[ \text{www-data} \;\xrightarrow{\;\text{SUID binary owned by root}\;}\; \text{root} \]
+    <p style="margin-top:0.6rem;">The same notation handles the other three techniques without modification: <code>alice --[sudoers: apt-get update]--&gt; root</code>, <code>www-data --[writable cron script]--&gt; root</code>, and <code>local user --[CVE-2016-0728 keyring flaw]--&gt; root</code>. When a question asks you to &ldquo;explain the escalation&rdquo;, it is asking for the middle arrow: <em>which</em> mechanism, <em>where</em> it is configured, and <em>why</em> it confers the identity.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Why the mechanism matters more than the payload.</strong> Once the identity changes, the payload is trivial &mdash; anything the script or command contains now runs as root. That is why the lecture's defences are all about the mechanism: fewer setuid binaries, narrower sudoers entries, unwritable scheduled scripts, and a patched kernel.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked example &mdash; triaging an enumeration report.</strong> You run an audit on a lab host and collect five findings. Rank them by how directly each one reaches root, and give the control that closes each.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>/usr/local/bin/backup-helper is mode 4755, owned by root.</strong> \(S = 4\), triads 7-5-5. Direct SUID path: any account that can execute it runs as root. <em>Rank 1.</em> Control: establish whether the helper needs the bit at all; if it does, it must validate its input and must not hand control to an interpreter the caller can influence.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>/etc/cron.d/cleanup runs /opt/cleanup/nightly.sh as root, and /opt/cleanup is writable by the www-data group.</strong> Directory write access is enough to replace the script. <em>Rank 2</em>, because it needs no exploit at all &mdash; the schedule supplies the privilege and the persistence. Control: root-owned directory and script (0700), and re-check with <code>find / -writable -type d</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Sudoers contains <code>%support ALL=(ALL) /usr/bin/less</code>.</strong> A pager that can open a shell is a root shell with extra steps. <em>Rank 3.</em> Control: remove the delegation or replace the command with one that has no escape, and remember that sudoers risk is a property of what the command can do, not of how narrow the path looks.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The kernel is three minor versions behind the distribution's current package.</strong> No misconfiguration, but every locally reachable kernel escalation applies &mdash; CVE-2016-0728 was exactly this shape. <em>Rank 4</em> only because it needs a known working exploit; in impact it is rank 1. Control: patch, and track \(W\), the window between disclosure and deployment.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>/var/log/secure is world-readable.</strong> No escalation by itself, but it leaks accounts, schedules and failure patterns. <em>Rank 5.</em> Control: tighten permissions and treat log exposure as reconnaissance, not as a finding to dismiss.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;Ranked by directness: the root-owned setuid binary and the writable root cron script each give an immediate identity change; the sudo delegation gives one if the permitted command can escape; the stale kernel gives one only where a working local exploit exists; the readable log gives reconnaissance rather than privilege.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-cron">
+  <h2 class="section-title">crontab and sudoers notation</h2>
+  <p class="section-lead">Two mini-languages carry most of the delegation on a Linux host. Both are worth being able to read at a glance, because both are where privilege is handed out.</p>
+
+  <div class="theorem-box">
+    <h3>6. A crontab line is five fields and a command</h3>
+    \[ \underbrace{m}_{\text{0–59}}\;\; \underbrace{h}_{\text{0–23}}\;\; \underbrace{dom}_{\text{1–31}}\;\; \underbrace{mon}_{\text{1–12}}\;\; \underbrace{dow}_{\text{0–7}}\;\; \underbrace{\text{command}}_{\text{run as the crontab's owner}} \]
+    <p style="margin-top:0.6rem;">Each field accepts <code>*</code> (any value), a list (<code>1,15</code>), a range (<code>9-17</code>) or a step (<code>*/5</code>). Day-of-week accepts both 0 and 7 for Sunday.</p>
+    <div class="table-responsive" style="margin-top:0.75rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Line</th><th>When it runs</th><th>Where it comes from</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>0 2 * * * /usr/local/bin/cleanup.sh</code></td><td>Every night at 02:00</td><td>The lecture's cleanup example &mdash; deletes temporary files and optimises disk space</td></tr>
+          <tr><td><code>0 12 * * 0 /usr/local/bin/backup.sh</code></td><td>Every Sunday at 12:00</td><td>The lecture's second example, added with <code>sudo crontab -e</code> to root's crontab</td></tr>
+          <tr><td><code>*/5 * * * * /opt/health/ping.sh</code></td><td>Every five minutes</td><td>Step syntax, the shape of a keep-alive script</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>7. A sudoers directive is four fields</h3>
+    \[ \underbrace{\text{who}}_{\text{user or } \%\text{group}}\;\; \underbrace{\text{where}}_{\text{host}}\;=\;(\underbrace{\text{as whom}}_{\text{RunAs}})\;\; \underbrace{\text{which command}}_{\text{absolute path}} \]
+    <p style="margin-top:0.6rem;">The lecture's two lines instantiate it exactly: <code>User1 ALL=(ALL) /usr/bin/reboot</code> permits User1 to run the reboot command as any user on any host, and <code>User2 ALL=(ALL) /usr/bin/apt-get update</code> does the same for one apt-get subcommand. Both the <em>what</em> and the <em>as whom</em> are part of the grant; narrowing either one narrows the privilege.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-cron-race"></div>
+  <script type="application/json" id="ix-m-cron-race">
+  {
+    "title": "What a scheduled task can reach, by who can write to it — illustrative",
+    "subtitle": "An illustrative 0–5 score for how much a root-run scheduled script exposes, depending on who is able to modify it. A revision aid, not measured data.",
+    "max": 5,
+    "rows": [
+      { "name": "Script writable by any local account", "value": 5, "display": "trivial escalation" },
+      { "name": "Parent directory writable", "value": 5, "display": "script can be replaced" },
+      { "name": "Script reads an attacker-controlled file", "value": 3, "display": "input-driven" },
+      { "name": "Script in a root-owned 0700 directory", "value": 1, "display": "expected baseline" },
+      { "name": "Task runs as a service account instead of root", "value": 1, "display": "least privilege" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A crontab line reads <code>0 2 * * * /opt/cleanup.sh</code> and lives in root's crontab. What happens, and as whom?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="02:00 is the minute-and-hour reading. The two zeros would be a different line — check which field is which before answering.">It runs at 02:00 on the second day of every month, as the user who owns the script file</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Minute 0, hour 2, every day of month, every month, every day of week — and because the crontab belongs to root, the command runs as root." data-bad="">It runs every day at 02:00, as root, because that is whose crontab it is</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The first field is minutes, not months. Month is the fourth field — the line would need a 2 in that position.">It runs every two hours, as root, because the 2 is a step value</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-harden">
+  <h2 class="section-title">Hardening as exposure arithmetic</h2>
+  <p class="section-lead">Since distributions differ so widely, there is no one-size-fits-all approach to protecting Linux systems. What the lecture does give you is a list of measures, and each one can be read as a subtraction from something an attacker could otherwise reach.</p>
+
+  <div class="theorem-box">
+    <h3>8. Patch exposure is a time window</h3>
+    <p>For a vulnerability disclosed at \(t_0\) and patched on a host at \(t_1\):</p>
+    \[ W \;=\; t_1 - t_0 \]
+    <p style="margin-top:0.6rem;">\(W\) is the period during which the host is exploitable and the fix is already public. CVE-2016-0728 is the lecture's case study: the keyring facility failed to properly validate certain operations, local users could escalate to root, and the mitigation was to update to the latest patched kernel. Applying security updates and regularly monitoring for new vulnerabilities is what drives \(W\) down.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>9. Attack surface is a sum; hardening is a subtraction</h3>
+    <p>Write the reachable surface as a count of the things that accept input or confer identity:</p>
+    \[ S \;=\; \#\{\text{listening services}\} \;+\; \#\{\text{setuid binaries}\} \;+\; \#\{\text{accounts with sudo}\} \;+\; \#\{\text{root-run scheduled tasks}\} \]
+    <p style="margin-top:0.6rem;">Every recommendation on this page lowers one term without removing a capability anyone needs: the firewall removes listening services, <em>limit setuid-enabled programs</em> removes the second term, <em>limit sudo access to only necessary commands</em> and <em>use groups</em> shrink the third, and least-privilege scheduling shrinks the fourth.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>10. Least privilege bounds the blast radius</h3>
+    <p>When a program is compromised, the impact is bounded by the identity it was running as:</p>
+    \[ \text{impact} \;\le\; \text{priv}(\text{compromised account}) \;\ll\; \text{priv}(\text{root}) \]
+    <p style="margin-top:0.6rem;">This single inequality is the reason <code>nginx</code> runs as <code>www-data</code>, <code>mysqld</code> runs as <code>mysql</code>, and services that need nothing special run as <code>nobody</code>. It is also why Week 6 spends the second half of the lecture trying to break the inequality &mdash; and why every escalation path is a way of restoring \(\text{priv}(\text{compromised}) = \text{priv}(\text{root})\).</p>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-ssh-deck"></div>
+  <script type="application/json" id="ix-m-ssh-deck">
+  {
+    "title": "SSH hardening: directive to risk removed",
+    "subtitle": "Say the directive out loud before you flip the card.",
+    "cards": [
+      { "front": "Disable SSH access for root", "back": "Removes a direct path to the most privileged account and a favourite target for guessing. Restrict access and use AllowUsers to name exactly who may connect.", "hint": "Access" },
+      { "front": "Change the default SSH port", "back": "Mitigates automated scanning and brute-force attacks aimed at the default port 22. Set the Port directive to a non-standard number.", "hint": "Exposure" },
+      { "front": "PermitEmptyPasswords no", "back": "Ensures empty passwords are never accepted for SSH authentication, and pairs with public key authentication or two-factor authentication.", "hint": "Authentication" },
+      { "front": "Key-based authentication", "back": "Uses cryptographic key pairs instead of passwords, with the AuthorizedKeysFile directive pointing at the right location. Stronger than any password policy.", "hint": "Authentication" },
+      { "front": "Disable old protocols and weak ciphers", "back": "Retires SSHv1 and weak cipher suites via the Protocol and Ciphers directives, leaving only secure versions and strong algorithms.", "hint": "Cryptography" },
+      { "front": "ClientAliveInterval and ClientAliveCountMax", "back": "Disconnects idle sessions automatically, so a forgotten terminal cannot become someone else's way in.", "hint": "Session hygiene" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A host is patched on a monthly schedule. A critical kernel escalation is disclosed on day 3 of the cycle and patched on day 30. What is the exposure window \(W\), and what does it mean?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. W = t1 − t0 = 27 days, during which the host is exploitable by anyone who can get local access and the fix is already public." data-bad="">27 days, during which the host is exploitable and the fix is already public</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Thirty days is the patch cycle, not the exposure window. The window starts when the vulnerability becomes known, not when the cycle starts.">30 days, because that is the length of the patch cycle</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Zero would require patching before or at disclosure. The measure that makes W small is monitoring plus a fast, tested deployment path.">0 days, because the monthly patch closed the vulnerability</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial triage review</h2>
+  <p class="section-lead">The Week 6 tutorial is an escalation exercise in your own VM: get a <code>www-data</code> shell through the web application, escalate through a setuid helper you control, then run an automated audit and read its warnings. Use the checklist below to audit what you produced.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Establish the ceiling first</h3>
+      <p>Run <code>whoami</code> in the web shell. If it does not say <code>www-data</code>, you have not established the boundary you are about to cross &mdash; and you cannot describe the escalation afterwards.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Name the mechanism, not the payload</h3>
+      <p>The reportable fact is &ldquo;a root-owned setuid binary executed an interpreter I could write to&rdquo;, not &ldquo;I ran a listener and got a shell&rdquo;. The mechanism is the finding; the payload is the demonstration.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Explain the script rule</h3>
+      <p>Be ready to say why the helper has to be a compiled binary: most kernels ignore the SUID flag on <code>#!</code> scripts, because honouring it would hand every user a scriptable root shell.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Run the audit as root, and read it</h3>
+      <p><code>sudo ./unix-privesc-check detailed | less</code>, then search for <code>WARNING</code>. The value is in the triage: which warning corresponds to the path you actually used, and which are noise on this host.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; writing up the tutorial as a finding.</strong> The tutorial asks for a screencast demonstrating the escalation and the audit script. A markable write-up has five parts; here is the skeleton with the Week 6 material filled in.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Scope and precondition.</strong> Lab VM only, attacker host on the same host-only network. The precondition is a web application reachable from the attacker and vulnerable to SQL injection, plus the ability to run commands on the VM as an administrator while setting up.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Initial access and identity.</strong> The injection yields an operating-system-level shell through the database service. <code>whoami</code> returns <code>www-data</code>: the shell is confined to the web server's program-specific account, which is exactly what the least-privilege design intends.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>The escalation mechanism.</strong> A root-owned executable with the setuid bit set runs an interpreter. By the setuid equation, \(\text{euid} = \text{owner}(f) = 0\), so the interpreter and everything it starts run as root. The identity change came from the file's mode bits, not from any credential the attacker held.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Evidence and verification.</strong> The reverse connection is received on the attacker host, and <code>whoami</code> in that session returns <code>root</code>. The controlled script contents run with root privileges, which demonstrates full control of the machine without knowing the root password.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Detection and remediation, as the defender.</strong> Detection: a SUID binary outside the package manager's records in a world-writable directory (<code>find / -perm -4000 -type f -exec ls -l {} \;</code>), the web server process spawning <code>bash</code>, and an outbound connection from a server that should never initiate one. Remediation: remove the setuid bit and the helper, keep the web application patched so the initial injection fails, run the web and database services under accounts with no write access outside their own directories, and audit remaining setuid binaries against the seven best practices from the lecture.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> permission arithmetic and the setuid equation on this page, the four mechanisms and the detection and hardening slides on the study guide, then the Quiz Hub and Flashcards for retrieval practice. Keep the examples lab-scoped: the techniques in this week are for hosts you own or are authorised to test.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5618ChapterUI) return;
+    try {
+      window.initCOMP5618ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5618 chapter 6] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

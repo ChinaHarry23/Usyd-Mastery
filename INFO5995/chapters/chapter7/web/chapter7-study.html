@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 7: Secure Network, TCP/UDP, TLS and HTTPS — INFO5995</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter7-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 7 study guide for INFO5995: what IP, UDP and TCP do and do not guarantee, port scanning, SYN floods and spoofing, the man-in-the-middle model, and how TLS 1.3 and correctly deployed HTTPS close the gaps.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 7: Secure Network, TCP/UDP, TLS and HTTPS — INFO5995">
+<meta property="og:description" content="Week 7 study guide for INFO5995: what IP, UDP and TCP do and do not guarantee, port scanning, SYN floods and spoofing, the man-in-the-middle model, and how TLS 1.3 and correctly deployed HTTPS close the gaps.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" data-i18n="nav_home" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F510;</span>
+      <h2>Week 7</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-travel" class="nav-link" data-section="travel">Packets on the Wire</a></li>
+    <li><a href="#sec-transport" class="nav-link" data-section="transport">IP, UDP &amp; TCP</a></li>
+    <li><a href="#sec-attacks" class="nav-link" data-section="attacks">Network Attacks</a></li>
+    <li><a href="#sec-mitm" class="nav-link" data-section="mitm">Man-in-the-Middle</a></li>
+    <li><a href="#sec-gaps" class="nav-link" data-section="gaps">Reliability vs Security</a></li>
+    <li><a href="#sec-tls" class="nav-link" data-section="tls">TLS 1.3</a></li>
+    <li><a href="#sec-certs" class="nav-link" data-section="certs">Certificates &amp; Trust</a></li>
+    <li><a href="#sec-https" class="nav-link" data-section="https">HTTPS in Practice</a></li>
+    <li><a href="#sec-impl" class="nav-link" data-section="impl">Implementation Failures</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter7-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter7-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);" data-i18n="link_quiz">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Week 7 built from lecture material</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">INFO5995 — Cybersecurity</p>
+    <h1>Week 7: Secure Network, TCP/UDP, TLS and HTTPS</h1>
+    <p class="hero-subtitle">Your login may already be verified &mdash; but your data still has to travel. This week follows one request across an untrusted internet: what IP, UDP and TCP really guarantee, what an attacker inside the path can do, how TLS 1.3 closes those gaps, and how HTTPS is deployed without giving the protection back.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F310;</span>
+        <span>Untrusted path: read, change, pretend, block</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4E6;</span>
+        <span>IP best effort &rarr; UDP datagrams &rarr; TCP byte stream</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F510;</span>
+        <span>TLS 1.3: confidentiality, integrity, authenticated identity</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F6A7;</span>
+        <span>HTTPS, HSTS and deployment mistakes</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter7-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter7-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 7 lecture deck (<em>Secure Network, TCP/UDP, TLS and HTTPS</em>) and the standards behind it: RFC 8446 (TLS 1.3), RFC 6797 (HSTS), RFC 5280 (X.509 PKI) and NIST SP 800-52 Rev 2.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-travel" class="section" data-track="travel">
+  <h2 class="section-title">Packets on an Untrusted Path</h2>
+  <p class="section-lead">The week opens with a question that has nothing to do with cryptography: once a login is accepted, the data still has to cross networks nobody in the conversation controls.</p>
+
+  <div class="concept-box">
+    <p><strong>The framing claim from the deck:</strong> <em>network security protects data while it moves across untrusted networks.</em> Everything else this week &mdash; IP, UDP, TCP, TLS, HTTPS &mdash; is machinery for doing that in a place where every hop is somebody else's equipment.</p>
+  </div>
+
+  <p>The lecture traces one email from a laptop to a mailbox to make the path concrete. Nothing about it is specific to email: the same six steps describe an HTTP request, a bank transfer or a DNS lookup.</p>
+
+  <div data-ix="pipeline" data-ix-src="#ix-journey"></div>
+  <script type="application/json" id="ix-journey">
+  {
+    "title": "What actually happens when you press Send",
+    "subtitle": "Six steps from the Week 7 deck. The message never travels as one object, and no single party can see the whole path.",
+    "nodes": [
+      { "label": "1. Compose and send", "note": "Your device hands the message to your Wi-Fi router. The application layer has finished its job." },
+      { "label": "2. Split into packets", "note": "The message is broken into small pieces, each carrying a destination address. Size is bounded by the link MTU." },
+      { "label": "3. Cross many networks", "note": "Your router, your ISP, other ISPs and many routers along the way. Packets can take different routes." },
+      { "label": "4. Reach the destination", "note": "The packets arrive at the recipient's mail server, collected from wherever each one travelled." },
+      { "label": "5. Reassemble", "note": "The destination puts the packets back into the original message. Order is restored here, not on the wire." },
+      { "label": "6. The recipient reads it", "note": "The message is now in a mailbox on a device that also belongs to somebody else." }
+    ]
+  }
+  </script>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">Four things that can go wrong on the way</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>What the attacker does</th><th>Deck wording</th><th>Security property at risk</th><th>Where Week 7 answers it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Read</strong></td><td>Eavesdrop on private data</td><td>Confidentiality</td><td>TLS record encryption</td></tr>
+        <tr><td><strong>Change</strong></td><td>Modify transactions in transit</td><td>Integrity</td><td>AEAD authentication tag on every record</td></tr>
+        <tr><td><strong>Pretend</strong></td><td>Impersonate a server or a user</td><td>Authenticity / trust</td><td>Certificates, signatures and hostname validation</td></tr>
+        <tr><td><strong>Block</strong></td><td>Disrupt the connection</td><td>Availability</td><td>Segmentation, rate limiting, upstream scrubbing</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Terminology</div>
+    <p><strong>Unprotected data</strong> is data that is readable or modifiable by any device on the path. The deck's mental model is a chain of custody: your device, your router, your ISP, other networks, the destination network, the destination host &mdash; each one a place where a copy or an edit can happen. <strong>Data in transit</strong> is the only thing this week's controls protect; data at rest and application logic are separate problems.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> &ldquo;the internet is untrusted&rdquo; is not an argument, it is a premise. The markable version names the four capabilities (read, change, pretend, block), maps each to a property, and then says which layer supplies the property.
+  </div>
+</section>
+
+<section id="sec-transport" class="section" data-track="transport">
+  <h2 class="section-title">IP, UDP and TCP: What Each Layer Promises</h2>
+  <p class="section-lead">IP moves packets. It promises nothing about whether they arrive, in what order, or how many copies you get. Transport protocols exist to repair that &mdash; and to stop there.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>IP: addressing and best-effort delivery</h3>
+      <p>Every packet carries a destination IP address and is forwarded hop by hop. The deck's list of what can happen is deliberately unsentimental: packets can be <strong>lost</strong>, <strong>late</strong>, <strong>out of order</strong> or <strong>duplicated</strong>. IP does not promise delivery, order or uniqueness &mdash; which is exactly why UDP and TCP sit above it.</p>
+    </div>
+    <div class="col-card">
+      <h3>UDP: fast datagrams, no waiting</h3>
+      <p>UDP sends independent packets with almost no overhead: no connection setup, no retransmission, no ordering guarantee. The application decides what to do about loss. It is the right choice when <em>late data is less valuable than fresh data</em> &mdash; voice calls, online games, and DNS queries.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Layer</th><th>Unit of transfer</th><th>Ordering</th><th>Delivery</th><th>Per-connection state</th><th>Security</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>IP</strong></td><td>Packet</td><td>None</td><td>Best effort</td><td>None</td><td>None</td></tr>
+        <tr><td><strong>UDP</strong></td><td>Datagram</td><td>None</td><td>Best effort</td><td>None (no setup)</td><td>None</td></tr>
+        <tr><td><strong>TCP</strong></td><td>Byte stream</td><td>In order</td><td>Acknowledged and retransmitted</td><td>Yes: sequence numbers, windows, timers</td><td>None</td></tr>
+        <tr><td><strong>TLS</strong></td><td>Record</td><td>Delegated to TCP</td><td>Delegated to TCP</td><td>Yes: session keys and sequence numbers</td><td>Confidentiality, integrity, server identity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="ix-tcp"></div>
+
+  <div class="def-box">
+    <div class="def-label">Three ideas that make TCP work</div>
+    <p><strong>Sequence numbers</strong> label every byte so the receiver can rebuild the stream and notice gaps. <strong>Cumulative acknowledgements</strong> tell the sender which byte is expected next &mdash; the deck's example is an <code>ACK 131</code> that means &ldquo;everything up to byte 130 arrived&rdquo;. <strong>Windows</strong> let the receiver control how much data may be in flight, which is how TCP adapts to a slow or congested path.</p>
+  </div>
+
+  <div class="algo-diagram">
+    <div class="algo-box input-box">SYN</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box algo-core">SYN-ACK</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box output-box">ACK</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box algo-core">ESTABLISHED</div>
+  </div>
+
+  <p>The three-way handshake is what the deck calls &ldquo;connection state before application data starts moving&rdquo;. Both endpoints agree to start, synchronise sequence numbers, and then begin reliable transfer. When something is missing, the receiver keeps acknowledging the byte it still expects, no progress is made, and the sender retransmits the missing range. <strong>TCP does not replace IP</strong>: it detects problems above IP and recovers from them.</p>
+
+  <div class="insight-box">
+    <strong>The line that sets up the rest of the week:</strong> TCP makes delivery reliable, and it is <em>still not secure</em>. It offers no secrecy and no server identity. Order, acknowledgement and retransmission answer &ldquo;did it arrive?&rdquo;; they say nothing about who is on the other end or who else is reading.
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; read the trace, then name the guarantee.</strong> A capture of one connection shows these four lines. For each, state what TCP has established and what it still has <em>not</em> established.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><code>SYN &rarr; SYN-ACK &rarr; ACK</code>. <strong>Established:</strong> both endpoints exist, are reachable, and have synchronised initial sequence numbers; the server has allocated connection state. <strong>Not established:</strong> anything about identity. The handshake proves an address responded, not which organisation or service it belongs to.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><code>Seq 1&ndash;40, 41&ndash;70, 71&ndash;100, 101&ndash;130</code> followed by <code>ACK 131</code>. <strong>Established:</strong> the receiver rebuilt an ordered byte stream from packets that may have arrived in any order. <strong>Not established:</strong> that the bytes mean what they appear to mean. Reordering is repaired; tampering is not detected.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><code>Seq 41&ndash;70</code> missing, receiver keeps sending <code>ACK 41</code>. <strong>Established:</strong> the sender will retransmit, because no progress triggers recovery. <strong>Not established:</strong> confidentiality. Every one of those bytes crossed the path in the clear.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;TCP answers the delivery question &mdash; order, acknowledgement and retransmission &mdash; and leaves the security questions open: whether the content was private, whether it was changed, and whether the endpoint is the server it claims to be.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A voice call drops individual packets and keeps going, while a file download stalls and recovers. Which property of the transport layer explains the difference?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Neither protocol is encrypted, and encryption would not change whether a lost packet is retransmitted.">The voice call uses encryption and the download does not</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. UDP sends independent datagrams with no retransmission, so loss is absorbed by the application; TCP acknowledges bytes and retransmits what is missing, so the download waits for a complete stream." data-bad="">UDP leaves loss to the application; TCP acknowledges and retransmits to deliver a complete ordered stream</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Ordering is part of the story, but the stall is caused by retransmission on a reliable stream, not by ordering alone.">UDP guarantees ordering and TCP does not</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-attacks" class="section" data-track="attacks">
+  <h2 class="section-title">Network Attacks: Reconnaissance, Availability and Forged Identity</h2>
+  <p class="section-lead">Three attack families from the deck set the agenda for the rest of the week, and each one attacks a different part of the stack.</p>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.25rem;">1. Port scanning: what is exposed?</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The question reconnaissance asks</h3>
+      <p>Which network services are reachable? A scan walks a range of ports and notes which ones answer &mdash; through a completed handshake, a half-open handshake, or the way a closed port refuses.</p>
+    </div>
+    <div class="col-card">
+      <h3>The key idea from the deck</h3>
+      <p>An open port reveals a reachable service; the risk depends on <em>what is running and how it is configured</em>. <strong>Reconnaissance does not equal compromise</strong> &mdash; it identifies possible entry points.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Port</th><th>Service</th><th>What an attacker learns from an answer</th><th>Defensive question</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>22</strong></td><td>SSH &mdash; remote login</td><td>A remote administration surface exists and is reachable</td><td>Is it restricted to a management network, and is password login disabled?</td></tr>
+        <tr><td><strong>80</strong></td><td>HTTP &mdash; web</td><td>Plaintext web traffic is being served</td><td>Should it do anything except redirect to HTTPS?</td></tr>
+        <tr><td><strong>443</strong></td><td>HTTPS &mdash; secure web</td><td>A TLS service is reachable; the version and suites are enumerable</td><td>Is the minimum version enforced and the certificate chain correct?</td></tr>
+        <tr><td><strong>3306</strong></td><td>MySQL &mdash; database</td><td>A database is exposed beyond the application tier</td><td>Why is it reachable from outside the application's segment at all?</td></tr>
+        <tr><td><strong>53</strong></td><td>DNS &mdash; name resolution</td><td>Recursive or authoritative service, often unauthenticated</td><td>Is it rate limited and, where it matters, signed?</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">2. SYN flood: what if the final ACK never comes?</h3>
+  <p>The attacker repeats only the beginning of the handshake. The server allocates state and answers each SYN, and because no final ACK ever arrives, those entries stay in the backlog until the server gives up on them. The service may still be running, but legitimate clients struggle to connect: this is a denial-of-service attack against <strong>availability</strong>.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-syn-flood"></div>
+  <script type="application/json" id="ix-syn-flood">
+  {
+    "title": "Reconstruct the SYN flood",
+    "subtitle": "Click the steps in the order the deck describes them, from the first forged SYN to the effect on real users.",
+    "steps": [
+      "The attacker sends many SYNs, often with forged source addresses",
+      "The server allocates state for each connection and replies with SYN-ACK",
+      "The final ACK never arrives from the claimed client",
+      "Each half-open entry occupies the backlog until the server gives up on it",
+      "The backlog fills, so new legitimate SYNs are dropped",
+      "The service is still running, but users cannot reach it"
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>Why the state is the vulnerability:</strong> TCP was designed to keep connection state, and a SYN is a request to create it. The attack asks the server to make a promise &mdash; and to keep paying for it &mdash; on the word of an address that was never verified. The standard mitigation, <strong>SYN cookies</strong>, removes the promise: the server encodes the connection parameters into its own sequence number and allocates nothing until the ACK actually arrives.
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">3. Spoofing: making the network believe a lie</h3>
+  <p>ARP spoofing and IP spoofing operate at different layers, but both falsify addressing information so that traffic goes somewhere it should not, or appears to come from somewhere it did not.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>ARP spoofing</th><th>IP spoofing</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Scope</strong></td><td>One local network segment</td><td>Any network the forged packet can reach</td></tr>
+        <tr><td><strong>What is forged</strong></td><td>An IP-to-MAC mapping: another host's IP address appears to map to the attacker's MAC address</td><td>The source IP address inside the packet header</td></tr>
+        <tr><td><strong>Immediate effect</strong></td><td>Traffic can be redirected through the attacker</td><td>Source identity can be forged, so replies go elsewhere or nowhere</td></tr>
+        <tr><td><strong>Typical use</strong></td><td>Becoming the path between a victim and the gateway</td><td>Reflection and amplification, and hiding the true origin of a packet</td></tr>
+        <tr><td><strong>Representative controls</strong></td><td>Dynamic ARP inspection with DHCP snooping, port security, 802.1X, static entries for critical hosts</td><td>Ingress and egress filtering (BCP 38) and reverse-path forwarding at the network edge</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Context determines the impact.</strong> The deck's wording is careful: spoofing can enable redirection, impersonation or other attacks. The same forged address is a nuisance on a guest network and a catastrophe in front of a database segment &mdash; which is why <strong>network segmentation</strong> is treated as a control in its own right. Segmentation does not encrypt anything; it limits what a single foothold can reach.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A SYN flood is running against a web server that is still serving cached pages to existing sessions. Which property is under attack, and what is the correct description of the impact?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The attacker is not reading or altering traffic — the forged SYNs never complete. Confidentiality and integrity are not the targets here.">Confidentiality: the attacker is reading the handshake traffic</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Half-open connections consume the backlog so new legitimate clients cannot connect, even though the process is still running — availability is the target." data-bad="">Availability: the backlog fills with half-open connections, so legitimate clients cannot connect</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing is being replayed: the attacker never completes the handshake, so there is no captured exchange to reuse.">Integrity: the attacker is replaying completed handshakes</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-mitm" class="section" data-track="mitm">
+  <h2 class="section-title">Man-in-the-Middle: Becoming the Path</h2>
+  <p class="section-lead">Individually, reading, changing, impersonating and blocking are annoying. An attacker who owns the path can combine all four &mdash; and the deck's warning is that both endpoints may still think the conversation is normal.</p>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    <p>A <strong>man-in-the-middle (MITM) attack</strong> is an <em>active</em> attack in which the adversary inserts itself between two endpoints and relays their traffic, so that each side believes it is talking directly to the other. The deck's three phases: <strong>get in the path</strong>, <strong>impersonate or relay</strong>, and <strong>stay unnoticed</strong>.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Phase</th><th>How it is done</th><th>Why it works</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1. Get in the path</strong></td><td>Rogue Wi-Fi, ARP spoofing, a compromised network device, a hijacked route or a poisoned name resolution</td><td>Traffic follows addressing and routing information, and neither is authenticated at the internet layer</td></tr>
+        <tr><td><strong>2. Impersonate or relay</strong></td><td>Terminate the connection on both sides, or forward it unchanged and copy what passes</td><td>Each endpoint authenticates a connection to its immediate peer, not an end-to-end path</td></tr>
+        <tr><td><strong>3. Stay unnoticed</strong></td><td>Keep latency and behaviour plausible; strip or downgrade protection where possible</td><td>Without an authenticated channel, endpoints have no independent way to compare notes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-path"></div>
+  <script type="application/json" id="ix-path">
+  {
+    "title": "Where an attacker can sit on one request's path",
+    "subtitle": "Click each marker to see what the position buys the attacker — and which control takes it away.",
+    "svg": "<svg viewBox=\"0 0 900 360\" role=\"img\" aria-label=\"Sketch of a client, a local network, an attacker in the middle, the internet and a server\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"900\" height=\"360\" fill=\"#f7fdfb\"></rect><path d=\"M40 210 Q450 186 860 210\" fill=\"none\" stroke=\"#047857\" stroke-width=\"2.4\" stroke-linecap=\"round\" opacity=\"0.5\"></path><path d=\"M40 218 Q450 196 860 218\" fill=\"none\" stroke=\"#047857\" stroke-width=\"1.2\" stroke-linecap=\"round\" opacity=\"0.25\"></path><rect x=\"34\" y=\"96\" width=\"168\" height=\"104\" rx=\"14\" fill=\"#ffffff\" stroke=\"#047857\" stroke-width=\"2.4\"></rect><text x=\"118\" y=\"130\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"14\" fill=\"#047857\">CLIENT</text><text x=\"118\" y=\"154\" text-anchor=\"middle\" font-size=\"13\" fill=\"#565d75\">browser session</text><text x=\"118\" y=\"174\" text-anchor=\"middle\" font-size=\"13\" fill=\"#565d75\">bank.example</text><rect x=\"252\" y=\"112\" width=\"132\" height=\"72\" rx=\"12\" fill=\"#ffffff\" stroke=\"#0e7490\" stroke-width=\"2\" stroke-dasharray=\"6 5\"></rect><text x=\"318\" y=\"142\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"12\" fill=\"#0e7490\">ROGUE AP</text><text x=\"318\" y=\"164\" text-anchor=\"middle\" font-size=\"12\" fill=\"#565d75\">or ARP spoof</text><ellipse cx=\"452\" cy=\"150\" rx=\"74\" ry=\"46\" fill=\"#fef3c7\" stroke=\"#b45309\" stroke-width=\"2.2\"></ellipse><text x=\"452\" y=\"144\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"13\" fill=\"#b45309\">ATTACKER</text><text x=\"452\" y=\"164\" text-anchor=\"middle\" font-size=\"12\" fill=\"#92400e\">in the path</text><path d=\"M560 96 q46 34 0 68 q-46 -34 0 -68\" fill=\"#e0f2fe\" stroke=\"#0369a1\" stroke-width=\"2\"></path><text x=\"596\" y=\"136\" font-size=\"12\" fill=\"#0369a1\">internet</text><rect x=\"700\" y=\"96\" width=\"168\" height=\"104\" rx=\"14\" fill=\"#ffffff\" stroke=\"#047857\" stroke-width=\"2.4\"></rect><text x=\"784\" y=\"130\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"14\" fill=\"#047857\">SERVER</text><text x=\"784\" y=\"154\" text-anchor=\"middle\" font-size=\"13\" fill=\"#565d75\">certificate + key</text><text x=\"784\" y=\"174\" text-anchor=\"middle\" font-size=\"13\" fill=\"#565d75\">TLS listener</text><text x=\"452\" y=\"256\" text-anchor=\"middle\" font-size=\"13\" fill=\"#565d75\">Channel 1</text><text x=\"452\" y=\"232\" text-anchor=\"middle\" font-size=\"13\" fill=\"#565d75\">Channel 2</text><rect x=\"34\" y=\"272\" width=\"834\" height=\"64\" rx=\"12\" fill=\"#ecfdf5\" stroke=\"#059669\" stroke-width=\"1.8\" stroke-dasharray=\"7 5\"></rect><text x=\"451\" y=\"300\" text-anchor=\"middle\" font-size=\"13\" fill=\"#047857\">The only thing that turns interception into a detected failure:</text><text x=\"451\" y=\"322\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"13\" fill=\"#047857\">validate the certificate AND the hostname</text></svg>",
+    "points": [
+      { "x": 13.1, "y": 41.1, "label": "Client", "detail": "The endpoint that has to decide whether it is talking to the real server. Nothing on the network can make that decision for it." },
+      { "x": 35.3, "y": 41.1, "label": "Local network entry point", "detail": "Rogue Wi-Fi or a forged ARP mapping is the cheapest way into the path, because the local segment trusts address resolution." },
+      { "x": 50.2, "y": 41.7, "label": "Attacker in the path", "detail": "Now every byte crosses the adversary. Reading requires no cryptography at all if the traffic is plaintext." },
+      { "x": 65.0, "y": 37.8, "label": "Untrusted internet", "detail": "Many hops, none of them yours. This is the part of the path the deck means by an untrusted network." },
+      { "x": 87.1, "y": 41.1, "label": "Server", "detail": "Holds the private key and presents a certificate. The server cannot tell that its peer is relaying traffic." },
+      { "x": 50.2, "y": 86.7, "label": "The check that matters", "detail": "TLS only defeats a MITM when the client validates the chain and matches the hostname. A client that ignores the warning has handed the attacker a valid session." }
+    ]
+  }
+  </script>
+
+  <div id="ix-mitm"></div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What the attacker gains, mapped to properties</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Read</strong> &rarr; confidentiality</li>
+        <li><strong>Change</strong> &rarr; integrity</li>
+        <li><strong>Redirect</strong> &rarr; trust: traffic is sent somewhere else entirely</li>
+        <li><strong>Block</strong> &rarr; availability</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Why TCP is not the answer</h3>
+      <p>TCP will happily deliver the attacker's bytes in perfect order and retransmit anything that goes missing. Reliability is not authenticity: an ordered, acknowledged byte stream can be entirely false. The deck's transition line is the whole point &mdash; <em>reliable delivery is not enough; security comes from authentication plus encryption</em>.</p>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; classify the scenario.</strong> A staff member joins a &ldquo;free airport Wi-Fi&rdquo; network. A browser later reports a certificate warning for the bank; the user clicks through it and the session proceeds normally.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Phase.</strong> Getting into the path used a rogue access point, so this is phase 1 of the MITM model. No exploit was needed: the client chose the attacker as its gateway.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>What TLS did.</strong> TLS still did its job. The attacker cannot present a certificate for the bank's name that chains to a trusted root, so the client received a name or issuer mismatch &mdash; an integrity and authentication failure, correctly detected.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Where it broke.</strong> The decision to continue. Once the user accepts the warning, the attacker is a legitimate endpoint of <em>that</em> session: read, change, redirect and block all become available, and the padlock icon afterwards means only that a TLS session exists, not that it reaches the bank.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Countermeasures, in order of effect.</strong> HSTS with <code>includeSubDomains</code> and preload removes the click-through for a known site; a certificate-pinning or policy-enforcing client refuses the connection outright; managed devices can require a trusted profile instead of a self-signed interception proxy. The network-side controls (dynamic ARP inspection, 802.1X, avoiding rogue access points) make phase 1 harder but cannot be relied on alone.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;An active attacker on the path turns confidentiality, integrity, trust and availability into a single decision made by the client: whether to validate the server's certificate and hostname.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">An attacker relays every byte between a client and a server, terminating TLS separately on each side with a certificate the client rejects. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="TCP delivered everything correctly — that is precisely the point. The failure is authentication, not delivery.">TCP failed, because the relay broke the byte stream</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The relay is a functioning man-in-the-middle, but the certificate for the server's name does not chain to a trusted root, so a validating client stops — TLS converted interception into a detected failure." data-bad="">The relay worked, but certificate validation failed, which is exactly how TLS is meant to defeat a MITM</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Encryption was not absent: the client had a TLS session with the attacker. What was missing was a valid binding between the server's name and the key.">TLS was not in use, so there was nothing to detect the relay</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-gaps" class="section" data-track="gaps">
+  <h2 class="section-title">Reliability Answers &ldquo;Did It Arrive?&rdquo; &mdash; Security Asks More</h2>
+  <p class="section-lead">This is the hinge of the whole week. The deck lists what TCP cannot do and then introduces the layer that can.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Question</th><th>Property</th><th>What answers it</th><th>What defeats it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Did the bytes arrive, in order, exactly once?</td><td>Reliability</td><td>TCP: sequence numbers, acknowledgements, retransmission, windows</td><td>Loss, congestion &mdash; recovered automatically</td></tr>
+        <tr><td>Was it private?</td><td>Confidentiality</td><td>TLS: authenticated encryption of every record</td><td>Plaintext protocols, a client that accepts an impostor</td></tr>
+        <tr><td>Was it unchanged?</td><td>Integrity</td><td>TLS: an authentication tag over each record's content and metadata</td><td>Applications that act on unverified data</td></tr>
+        <tr><td>Is the endpoint who it claims to be?</td><td>Authenticity</td><td>TLS: certificate chain, signature, hostname match</td><td>Skipped validation, ignored warnings, a coerced trust store</td></tr>
+        <tr><td>Can legitimate users still get through?</td><td>Availability</td><td>Segmentation, rate limiting, capacity and upstream filtering</td><td>SYN floods and other resource-exhaustion attacks</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The deck's own summary of the stack:</strong> the application produces the message, TLS protects it, TCP delivers it in order, and IP moves it. <em>TLS sits between the application and TCP: TCP moves the bytes; TLS makes them trustworthy.</em>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-attack-counter"></div>
+  <script type="application/json" id="ix-attack-counter">
+  {
+    "title": "Match each attack to the control that answers it",
+    "subtitle": "Click a term on the left, then its countermeasure on the right.",
+    "pairs": [
+      ["Port scanning (reconnaissance)", "Inventory the services you expose, close what is unused, and restrict the rest with firewalls and segmentation"],
+      ["SYN flood (availability)", "SYN cookies so no state is allocated before the ACK, plus backlog tuning, rate limiting and upstream scrubbing"],
+      ["ARP spoofing (local segment)", "Dynamic ARP inspection with DHCP snooping, port security, 802.1X and static entries for critical hosts"],
+      ["IP spoofing (forged source address)", "Ingress and egress filtering at the network edge (BCP 38) and reverse-path forwarding"],
+      ["Man-in-the-middle interception", "TLS with certificate chain and hostname validation on the client, and no click-through on warnings"],
+      ["Downgrade from HTTPS to HTTP", "HSTS with includeSubDomains and preload, plus a minimum TLS version policy on the server"],
+      ["Implementation bug such as Heartbleed", "Bounds-checked input handling, rapid patching, key rotation and invalidation of exposed sessions"],
+      ["Exposed database port 3306", "Network segmentation: allow the application tier and nothing else, and require TLS to the database"]
+    ]
+  }
+  </script>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> do not answer an attack question with a product. Answer it with the property under attack, the mechanism that supplies the property, and the failure mode that remains. &ldquo;Use TLS&rdquo; is a control only if the client validates the certificate and the server enforces a minimum version.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team enables TLS on its web service but leaves the minimum version at TLS 1.0 and lets clients ignore certificate errors. Which property is <em>least</em> protected?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Ordering is TCP's job and it is unaffected by the TLS configuration.">Reliability of delivery</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. An old protocol version plus unvalidated certificates means an attacker in the path can negotiate weak parameters or simply present their own certificate — authenticity is the property that collapses, taking confidentiality and integrity with it." data-bad="">Authenticity: with a weak minimum version and ignored certificate errors, an attacker on the path can impersonate the server</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Availability is a real concern for TLS services, but nothing here describes a resource-exhaustion attack — the described weaknesses are about who the peer is.">Availability of the service</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tls" class="section" data-track="tls">
+  <h2 class="section-title">TLS 1.3: Four Moves, One Secure Channel</h2>
+  <p class="section-lead">Transport Layer Security protects application data before it crosses the network. The deck describes the handshake as four moves; the wire protocol implements them as a short, strictly ordered message flow.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Layer</th><th>What it does</th><th>Property added</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Application</strong></td><td>Defines the message &mdash; an HTTP request or response</td><td>Meaning and semantics</td></tr>
+        <tr><td><strong>TLS</strong></td><td>Encrypts, authenticates and verifies the server before data crosses the network</td><td>Confidentiality, integrity, authentication</td></tr>
+        <tr><td><strong>TCP</strong></td><td>Delivers a reliable, ordered byte stream</td><td>Reliability</td></tr>
+        <tr><td><strong>IP</strong></td><td>Forwards packets across networks</td><td>Reachability (best effort)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.5rem;">The deck's four moves</h3>
+  <div class="flow-grid">
+    <div class="flow-node">1. Hello<br><small>agree version + algorithms</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">2. Certificate<br><small>server proves identity</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">3. Key exchange<br><small>create session keys</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">4. Finished<br><small>switch to protected traffic</small></div>
+  </div>
+
+  <div id="ix-tls"></div>
+
+  <div class="def-box">
+    <div class="def-label">What changed in TLS 1.3 (RFC 8446)</div>
+    <p>TLS 1.3 is a redesign, not a tweak. It removed RSA key transport, static Diffie-Hellman, CBC-mode cipher suites, RC4, 3DES, renegotiation and compression. Everything that remains is an <strong>AEAD</strong> cipher suite with an ephemeral key exchange, so <strong>forward secrecy is mandatory</strong>: the session key is derived from a Diffie-Hellman secret that is never transmitted, which is why a later compromise of the server's long-term key does not decrypt recorded sessions. The cipher suite now names only the record protection and the hash; authentication is negotiated separately.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Cipher suite</th><th>Record protection</th><th>Hash for the key schedule</th><th>Note</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>TLS_AES_128_GCM_SHA256</code></td><td>AES-128-GCM</td><td>SHA-256</td><td>The required baseline suite</td></tr>
+        <tr><td><code>TLS_AES_256_GCM_SHA384</code></td><td>AES-256-GCM</td><td>SHA-384</td><td>Larger key and hash for higher assurance margins</td></tr>
+        <tr><td><code>TLS_CHACHA20_POLY1305_SHA256</code></td><td>ChaCha20-Poly1305</td><td>SHA-256</td><td>Preferred where AES hardware is unavailable or timing side channels matter</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The record protocol: what happens to your bytes</h3>
+      <p>Application data is <strong>fragmented</strong> into records, each record is <strong>encrypted</strong> so its content stays confidential, and an <strong>authentication tag</strong> is added so tampering is detected before anything is released to the application. The deck's one-line summary: application data &rarr; TLS record &rarr; protected bytes on the network.</p>
+    </div>
+    <div class="col-card">
+      <h3>Two properties worth stating precisely</h3>
+      <p><strong>Integrity covers metadata, not just content</strong>: the tag is computed over the sequence number and content type as well as the payload, so records cannot be silently reordered, dropped or replayed. <strong>Authentication happens once, at the start</strong>: after the handshake, the session keys do the work, and the certificate is not re-checked per record.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">In TLS 1.3, why does compromising a server's long-term private key not decrypt sessions that were recorded earlier?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Recorded traffic is not re-encrypted, and nothing about the design depends on the attacker deleting captures.">Because the recorded traffic is re-encrypted after the key is rotated</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. TLS 1.3 requires an ephemeral (EC)DHE exchange, so the session keys come from a shared secret that never crossed the network. The long-term key only signed the handshake transcript — that is forward secrecy." data-bad="">Because session keys come from an ephemeral key exchange whose secret was never transmitted; the long-term key only signs the handshake</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The certificate is encrypted in TLS 1.3, but that protects the handshake from observers — it is not what protects old sessions from a later key compromise.">Because the certificate is encrypted, so the long-term key was never sent</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-certs" class="section" data-track="certs">
+  <h2 class="section-title">Certificates: Which Key Do You Trust?</h2>
+  <p class="section-lead">TLS can only authenticate the server if the client already knows which key to trust. That is the entire job of the certificate system, and the deck treats it as a bridge back to the cryptography weeks.</p>
+
+  <div class="concept-box">
+    <p><strong>The bridge, in the deck's own words:</strong> a certificate <em>binds a server name to a public key</em>, and a digital signature lets the browser verify that binding. A trusted <strong>certificate authority</strong> signs the server certificate; the browser checks the CA's signature and the website name, trusts the server's key, and only then uses it to create session keys.</p>
+  </div>
+
+  <div class="diagram-flow">
+    <div class="flow-node">Root CA<br><small>in the trust store</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Intermediate<br><small>signs the leaf</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node flow-highlight">Leaf certificate<br><small>name + public key</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Session keys<br><small>after validation</small></div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-cert-steps"></div>
+  <script type="application/json" id="ix-cert-steps">
+  {
+    "title": "Order the validation a browser performs",
+    "subtitle": "The chain is only useful if every one of these checks passes. Click them in order.",
+    "steps": [
+      "Receive the server's certificate chain during the handshake",
+      "Build a path from the leaf certificate to a trust anchor in the local store",
+      "Verify each signature in the path using the issuer's public key",
+      "Check the validity window, including that the leaf has not expired",
+      "Match the requested hostname against the certificate's subject alternative names",
+      "Check key usage, revocation status and transparency receipts",
+      "Only then use the certified key to authenticate the key exchange"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Check</th><th>What it prevents</th><th>Typical failure message</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Chain to a trusted root</strong></td><td>Self-signed or attacker-issued certificates</td><td>&ldquo;Not issued by a trusted authority&rdquo;</td></tr>
+        <tr><td><strong>Signature verification</strong></td><td>A forged certificate body or a swapped public key</td><td>Chain building fails</td></tr>
+        <tr><td><strong>Validity window</strong></td><td>Reuse of a certificate after its period of authorisation</td><td>&ldquo;Certificate has expired&rdquo;</td></tr>
+        <tr><td><strong>Hostname match</strong></td><td>A valid certificate for a different site being used here</td><td>&ldquo;Certificate is for a different name&rdquo;</td></tr>
+        <tr><td><strong>Key usage and constraints</strong></td><td>A certificate used for a purpose it was not issued for</td><td>Handshake rejected by policy</td></tr>
+        <tr><td><strong>Revocation and transparency</strong></td><td>Continued use of a certificate that was withdrawn or never logged</td><td>Revocation or CT policy failure</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why the hostname check is not optional:</strong> a certificate proves that <em>some</em> name is bound to <em>some</em> key. Only the hostname check proves that the name is <em>yours</em>. An attacker in the path can always obtain a valid certificate for a domain they control; the check is what makes that certificate useless against your bank.
+  </div>
+
+  <div class="callout">
+    <strong>Standards anchor:</strong> the validation procedure above is the practical form of RFC 5280 path validation. In deployment, NIST SP 800-52 Rev 2 adds the policy layer: a minimum protocol version, approved cipher suites, and a documented certificate and key-management process.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A user is redirected to <code>paypa1-secure.example.net</code>, which presents a genuine, currently valid certificate issued for that exact name. Why does this still fail to protect the user?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The certificate is valid and the chain verifies, so nothing about signature or expiry is the problem here.">The certificate is self-signed and therefore untrusted</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Every technical check can pass for a name the attacker legitimately owns. Certificate validation proves control of a name, not that the name is the one the user intended — this is a naming and user-education failure, not a PKI failure." data-bad="">All the technical checks pass for a name the attacker legitimately controls; PKI proves name ownership, not intent</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="TLS is working correctly here. The deception is in the domain name, which TLS cannot judge for the user.">TLS was downgraded to plaintext HTTP by the redirect</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-https" class="section" data-track="https">
+  <h2 class="section-title">HTTPS in Practice: Same Request, Protected</h2>
+  <p class="section-lead">HTTPS is HTTP inside TLS. The request does not change; what changes is that it is protected before it crosses the network &mdash; and that is only true if the deployment does not hand the protection back.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th></th><th>HTTP</th><th>HTTPS</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Port and framing</strong></td><td>Port 80, plaintext</td><td>Port 443, HTTP protected by TLS</td></tr>
+        <tr><td><strong>Can be read</strong></td><td>Yes, by anything on the path</td><td>No &mdash; records are encrypted</td></tr>
+        <tr><td><strong>Can be modified</strong></td><td>Yes, silently</td><td>Tampering is detected by the record tag</td></tr>
+        <tr><td><strong>Server identity</strong></td><td>Not established</td><td>Verified by certificate and hostname check</td></tr>
+        <tr><td><strong>MITM risk</strong></td><td>Inherent</td><td>Reduced to a validation decision the client must get right</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What HTTPS protects</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Confidentiality</strong> &mdash; attackers cannot read the content in transit</li>
+        <li><strong>Integrity</strong> &mdash; silent changes to traffic are detected</li>
+        <li><strong>Authentication</strong> &mdash; the browser verifies the server's certificate</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What HTTPS does not fix</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li><strong>Weak passwords</strong> &mdash; users can still be phished</li>
+        <li><strong>Malware</strong> &mdash; the device may already be compromised</li>
+        <li><strong>Server-side breaches</strong> &mdash; the website may still be vulnerable</li>
+      </ul>
+    </div>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-protocol-timeline"></div>
+  <script type="application/json" id="ix-protocol-timeline">
+  {
+    "title": "How the protocol got here",
+    "subtitle": "Standards context for the deck's TLS material: each generation removed a class of failure the previous one could not fix.",
+    "events": [
+      { "label": "1995", "title": "SSL 2.0", "detail": "The first widely deployed version, quickly replaced after design flaws were found. Never use it." },
+      { "label": "1996", "title": "SSL 3.0", "detail": "The design that TLS was built from. The POODLE attack in 2014 ended its useful life; it is now prohibited." },
+      { "label": "1999", "title": "TLS 1.0", "detail": "Standardised by the IETF. MAC-then-encrypt with CBC mode led to a long series of padding-oracle attacks." },
+      { "label": "2006", "title": "TLS 1.1", "detail": "Added an explicit initialisation vector to close the worst CBC predictability problem." },
+      { "label": "2008", "title": "TLS 1.2", "detail": "Introduced AEAD cipher suites such as AES-GCM and modern hash functions. The full handshake still costs two round trips." },
+      { "label": "2012", "title": "HSTS (RFC 6797)", "detail": "A policy header that lets a site instruct the browser to refuse plaintext for a period — removing the downgrade window for repeat visitors." },
+      { "label": "2018", "title": "TLS 1.3 (RFC 8446)", "detail": "One round trip, AEAD-only, forward secrecy mandatory, certificate encrypted, legacy algorithms and renegotiation removed." },
+      { "label": "Today", "title": "TLS 1.0 and 1.1 deprecated", "detail": "RFC 8996 deprecates them formally. NIST SP 800-52 Rev 2 expects TLS 1.2 or 1.3 with approved suites and a documented configuration." }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">HSTS: turning a policy into a browser behaviour</div>
+    <p><strong>HTTP Strict Transport Security</strong> is a response header, typically <code>Strict-Transport-Security: max-age=63072000; includeSubDomains; preload</code>. Once a browser has seen it, that host is treated as HTTPS-only: plaintext requests are upgraded before they leave the device, and certificate errors become non-bypassable. With <code>includeSubDomains</code> the policy covers every subdomain, and <code>preload</code> submits the host to the browser vendors' built-in list so even the <em>first</em> visit has no plaintext window.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Deployment mistake</th><th>What the attacker does with it</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Plain HTTP remains reachable and no HSTS is set</td><td>SSL stripping: rewrite the links so the session continues in the clear</td><td>Redirect on the same host, then send HSTS with a long max-age</td></tr>
+        <tr><td>Weak minimum version or legacy suites enabled</td><td>Protocol downgrade to a version with known weaknesses</td><td>Require TLS 1.2 or 1.3; disable CBC-only and RC4 suites</td></tr>
+        <tr><td>Pages load some resources over HTTP</td><td>Mixed content: an unauthenticated script rewrites the protected page</td><td>Serve every subresource over HTTPS and set a content security policy</td></tr>
+        <tr><td>Certificate about to expire</td><td>Nothing needs to be attacked &mdash; users are trained to click through warnings</td><td>Automate issuance and renewal, and monitor expiry</td></tr>
+        <tr><td>Cookies without the Secure attribute</td><td>A downgraded request leaks the session cookie</td><td>Set Secure, HttpOnly and an appropriate SameSite policy</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; audit an HTTPS deployment.</strong> A service redirects <code>http://shop.example</code> to <code>https://www.shop.example</code>, sends no HSTS header, and serves its product images from <code>http://cdn.example</code>.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Name the first failure.</strong> The redirect crosses from <code>shop.example</code> to <code>www.shop.example</code>. The first plaintext request is fully exposed and can be answered by an attacker before the redirect ever reaches the real server &mdash; a cross-host redirect is not a substitute for HSTS.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Name the second failure.</strong> No HSTS header means the plaintext window reopens on every new browser profile, cleared cache, or first visit. Adding <code>Strict-Transport-Security: max-age=63072000; includeSubDomains; preload</code> on the HTTPS response removes it for subsequent visits and, once preloaded, for the first one too.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Name the third failure.</strong> Images over <code>http://cdn.example</code> are mixed content. Even with a valid TLS session on the main page, an attacker on the path can substitute an image, and for active content such as scripts the browser may block it or the page may silently lose its integrity guarantee.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State what is already correct.</strong> The main page is protected by TLS on 443, and the server identity is verified by certificate and hostname check. The remaining risk is entirely about <em>keeping</em> the session protected rather than <em>starting</em> it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;HTTPS protects data in transit; HSTS protects the <em>decision</em> to use it. Without a same-host redirect, a long-lived HSTS policy and no mixed content, the attacker no longer needs to break TLS &mdash; they only need to be there before it starts.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A site serves HTTPS correctly but never sends an HSTS header. Which attack does this leave available, and to whom?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Without HSTS the first plaintext request is still available to an attacker on the path, who can strip TLS before it is negotiated — the certificate never gets a chance to fail." data-bad="">SSL stripping on the first visit, to an attacker already in the path</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Forward secrecy is a property of the key exchange in TLS 1.3; an absent HSTS header does not weaken the session keys themselves.">Recovery of the session keys from a later server compromise</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Encryption of the record payload is unaffected. The gap is before the encrypted session exists, not inside it.">Decryption of the TLS records by an observer of the encrypted session</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-impl" class="section" data-track="impl">
+  <h2 class="section-title">When the Implementation Breaks the Promise</h2>
+  <p class="section-lead">TLS can be well designed and still leak everything, because a protocol is only as good as the code that parses its messages. Heartbleed is the deck's case study.</p>
+
+  <div class="def-box">
+    <div class="def-label">The heartbeat extension, and the bug</div>
+    <p><strong>Heartbeat</strong> was a keep-alive: one side sends a small payload with a declared length, and the peer echoes those bytes back, so both sides know the other is still responsive without renegotiating the session. <strong>Heartbleed</strong> was the implementation failing to check that the length the client <em>claimed</em> matched the payload it actually <em>sent</em>. A request that said &ldquo;here is 1 byte&rdquo; but asked for 64&nbsp;KB made the server return up to 64&nbsp;KB of whatever was next to that buffer in memory.</p>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-impl-cards"></div>
+  <script type="application/json" id="ix-impl-cards">
+  {
+    "title": "Self-test: the Heartbleed case, five cards at a time",
+    "subtitle": "Say the answer out loud before you flip the card.",
+    "cards": [
+      { "front": "Normal heartbeat", "back": "A peer sends a small payload and a length; the other echoes exactly those bytes back. Cheap proof that the session is still alive.", "hint": "Intended behaviour" },
+      { "front": "Heartbleed", "back": "The implementation echoed the length claimed by the client instead of the length actually sent, so a short request returned up to 64 KB of adjacent process memory.", "hint": "The bug" },
+      { "front": "What could leak", "back": "Private keys (impersonation and decryption of future sessions), passwords, session cookies (session hijacking), and any other sensitive data recently handled in memory.", "hint": "Impact" },
+      { "front": "Defence mindset", "back": "Patch quickly, rotate exposed keys, invalidate sessions, and monitor for abuse. Assume anything that was in memory is now public.", "hint": "Response" },
+      { "front": "The general lesson", "back": "A length field is untrusted input. Protocol security also depends on careful implementation and input validation — the design was fine, the bounds check was missing.", "hint": "Transferable" },
+      { "front": "Why TLS 1.3 is not the whole answer", "back": "TLS 1.3 removes the heartbeat extension, but the class of bug — trusting a claimed length — recurs in every parser. Version upgrades reduce surface; they do not replace input validation.", "hint": "Scope" }
+    ]
+  }
+  </script>
+
+  <div data-ix="pipeline" data-ix-src="#ix-incident"></div>
+  <script type="application/json" id="ix-incident">
+  {
+    "title": "Incident response for a memory-disclosure bug in TLS",
+    "subtitle": "Order matters: rotating keys before patching just re-exposes the new keys.",
+    "nodes": [
+      { "label": "Contain", "note": "Patch or disable the vulnerable service so no further memory can be read." },
+      { "label": "Revoke and reissue", "note": "Treat the certificate's private key as compromised: reissue with a new key pair." },
+      { "label": "Invalidate sessions", "note": "Expire session cookies and force re-authentication; reset credentials if they may have been read." },
+      { "label": "Verify exposure", "note": "Work out the window of exposure and what was in memory during it." },
+      { "label": "Monitor", "note": "Watch for impersonation and for reuse of anything that leaked." },
+      { "label": "Prevent recurrence", "note": "Add bounds-checked parsing, fuzzing and dependency-update practice to the lifecycle." }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The transferable pattern:</strong> Heartbleed is not really a story about TLS. It is a story about a parser that trusted a number supplied by the other side. The same shape appears in length-prefixed file formats, in decompression, in deserialisation and in protocol gateways &mdash; which is why the deck pairs the case with the reminder that protocol security depends on careful implementation and input validation.
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 7 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>The path is untrusted, so the endpoints must do the work</h4>
+        <p>Read, change, pretend, block. Network security protects data <em>while it moves</em>; nothing on the path can be asked to enforce that for you.</p>
+        <div class="flip-hint">Threat model</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>IP best effort, UDP datagrams, TCP byte stream</h4>
+        <p>IP promises nothing; UDP adds speed and no state; TCP adds order, acknowledgements and retransmission. None of them adds secrecy or identity.</p>
+        <div class="flip-hint">Transport layer</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>TLS 1.3 is one round trip of AEAD and authentication</h4>
+        <p>Hello, certificate, key exchange, Finished &mdash; with ephemeral key agreement, an encrypted handshake and a tagged record for every message after it.</p>
+        <div class="flip-hint">Secure channel</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Trust is a client-side decision</h4>
+        <p>A certificate binds a name to a key. The chain, the validity window and the hostname match are what turn a MITM from an interception into a detected failure.</p>
+        <div class="flip-hint">PKI</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-title" style="font-size:1.05rem; margin-top:1.75rem;">Today's answer, in four steps</h3>
+  <div class="diagram-flow">
+    <div class="flow-node">IP<br><small>moves packets</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">TCP<br><small>delivers reliably</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node flow-highlight">TLS<br><small>protects the channel</small></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">HTTPS<br><small>puts TLS to work</small></div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Exam question pattern</th><th>The answer skeleton</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;Why is TCP not enough for secure communication?&rdquo;</td><td>TCP answers delivery (order, acknowledgement, retransmission) and leaves confidentiality, integrity and server identity open; TLS is layered above it and below the application.</td></tr>
+        <tr><td>&ldquo;Explain how TLS defeats a man-in-the-middle.&rdquo;</td><td>The attacker can only complete a handshake by presenting a certificate; a validating client checks the chain and the hostname, so the attacker's certificate fails and the connection stops.</td></tr>
+        <tr><td>&ldquo;Classify this attack and name a control.&rdquo;</td><td>Name the property under attack, the mechanism exploited, and the control with its limitation &mdash; then say what remains exposed.</td></tr>
+        <tr><td>&ldquo;A site has HTTPS. Is it secure?&rdquo;</td><td>HTTPS protects data in transit. Ask about HSTS, minimum version, mixed content, certificate lifecycle, and everything HTTPS explicitly does not fix.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you state the four things an on-path attacker can do, map them to properties, and name the layer that answers each one?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Before the exam</h3>
+      <p>Be able to draw the TLS 1.3 message flow from memory, and to explain why the client's certificate check &mdash; not the cipher suite &mdash; is what stops an impostor.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week into arithmetic &mdash; encapsulation overhead, sequence and window maths, round-trip budgets, the TLS 1.3 key schedule, key-size and security-strength tables, and the HSTS window. Then work the Quiz Hub and Flashcards for Week 7.
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

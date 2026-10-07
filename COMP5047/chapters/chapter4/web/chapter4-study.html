@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4: Analogue Input and Output (Arduino Part 2) — COMP5047</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter4-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 study guide for COMP5047: the analogue world versus discrete sampling, ADC resolution, analogRead and analogWrite, PWM, voltage dividers, sensor calibration and the serial monitor.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 4: Analogue Input and Output (Arduino Part 2) — COMP5047">
+<meta property="og:description" content="Week 4 study guide for COMP5047: the analogue world versus discrete sampling, ADC resolution, analogRead and analogWrite, PWM, voltage dividers, sensor calibration and the serial monitor.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F39B;</span>
+      <h2>Week 4</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Week 3 Recap</a></li>
+    <li><a href="#sec-timing" class="nav-link" data-section="timing">Timing without delay()</a></li>
+    <li><a href="#sec-debounce" class="nav-link" data-section="debounce">Debouncing</a></li>
+    <li><a href="#sec-analog" class="nav-link" data-section="analog">Digital vs Analogue</a></li>
+    <li><a href="#sec-adc" class="nav-link" data-section="adc">analogRead() &amp; the ADC</a></li>
+    <li><a href="#sec-pwm" class="nav-link" data-section="pwm">analogWrite() &amp; PWM</a></li>
+    <li><a href="#sec-divider" class="nav-link" data-section="divider">Voltage Dividers</a></li>
+    <li><a href="#sec-sensors" class="nav-link" data-section="sensors">Analogue Sensors</a></li>
+    <li><a href="#sec-calibration" class="nav-link" data-section="calibration">Calibration &amp; Serial</a></li>
+    <li><a href="#sec-takeaways" class="nav-link" data-section="takeaways">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter4-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter4-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 4 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5047 — Pervasive Computing</p>
+    <h1>Week 4: Analogue Input and Output (Arduino Part 2)</h1>
+    <p class="hero-subtitle">The analogue world versus discrete sampling, ADC resolution, PWM output, voltage dividers, sensor calibration and serial communication.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4C8;</span>
+        <span>analogRead(): 10 bits, 0&ndash;1023</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4A1;</span>
+        <span>analogWrite(): PWM, 0&ndash;255</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x23F1;</span>
+        <span>millis() instead of delay()</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F39B;</span>
+        <span>Divider, calibrate, serial</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter4-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter4-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 4 lecture deck (Velloso, <em>Analogue Input and Output &mdash; Arduino Part 2</em>)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Where Week 3 Left Off</h2>
+  <p class="section-lead">Week 4 opens with a recap of everything digital, because the analogue half of the unit is built on top of it. Nothing here is new; it is the vocabulary the rest of the lecture assumes.</p>
+
+  <div class="def-box">
+    <div class="def-label">The recap in one line</div>
+    <p>A <strong>microcontroller</strong> is a complete small computer on one chip &mdash; CPU, memory and input/output peripherals &mdash; that runs one program forever in <code>setup()</code> (once) and <code>loop()</code> (repeatedly). Its pins are <em>digital</em>: each one is either near 0&nbsp;V (LOW) or near the supply voltage (HIGH).</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Week 3 idea</th><th>What it gave you</th><th>What Week 4 does with it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Electricity basics</strong></td><td>Voltage, current, resistance, Ohm's law \(V = IR\), short circuits, current-limiting resistors for LEDs</td><td>Voltage dividers turn a changing <em>resistance</em> into a changing <em>voltage</em> the ADC can read</td></tr>
+        <tr><td><strong>Digital I/O</strong></td><td><code>pinMode()</code>, <code>digitalRead()</code>, <code>digitalWrite()</code>, HIGH and LOW, only two states</td><td><code>analogRead()</code> and <code>analogWrite()</code> give 1024 input levels and 256 output levels</td></tr>
+        <tr><td><strong>Pull-up / pull-down resistors</strong></td><td>A floating input picks up noise; a resistor ties it to a known level. <code>INPUT_PULLUP</code> uses the internal one, so a press reads LOW</td><td>The same resistor idea becomes the divider that biases an analogue sensor</td></tr>
+        <tr><td><strong>Components</strong></td><td>LEDs, batteries, buttons, breadboards, datasheets</td><td>Potentiometers, photoresistors, thermistors, flex and force sensors &mdash; each with its own datasheet curve</td></tr>
+        <tr><td><strong>Debouncing</strong></td><td>Mechanical switches bounce, so one press can register several times</td><td>The bounce problem returns as a timing problem: how to sample and filter without blocking</td></tr>
+        <tr><td><strong>The traffic light</strong></td><td>Red 2&nbsp;s, then the next phase, refactored into functions</td><td>It becomes the worked example for why <code>delay()</code> has to go</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The two refactors the deck performs on the traffic light.</strong> First, structure: the timing constants and the pin numbers move to the top, and each phase becomes a function, so <code>loop()</code> reads as a sequence of intentions. Second, and this is the part that matters, the waiting has to go &mdash; the deck links straight to the Arduino reference page for <code>delay()</code> and asks what the problem is.
+  </div>
+
+  <div class="concept-box">
+    <p><strong>Everything in this week is one of two conversions.</strong> On the way in, a physical quantity is turned into a voltage and then into an integer (<em>analogue input</em>). On the way out, an integer is turned into an average voltage or a brightness (<em>analogue output</em>). Every sensor and actuator in the unit is a variation on those two paths.</p>
+  </div>
+</section>
+
+<section id="sec-timing" class="section" data-track="timing">
+  <h2 class="section-title">Non-Blocking Timing: the Problem with delay()</h2>
+  <p class="section-lead">The traffic light works, and it is still wrong. <code>delay()</code> does nothing but wait, and while it waits the microcontroller is not reading anything or doing anything else.</p>
+
+  <div class="code-block">const int RED = 8, YELLOW = 9, GREEN = 10;
+const int BUTTON = 2;
+
+void loop() {
+  digitalWrite(RED, HIGH);
+  delay(2000);            // loop() is frozen inside this call
+  digitalWrite(RED, LOW);
+  digitalWrite(YELLOW, HIGH);
+  delay(1000);
+  digitalWrite(YELLOW, LOW);
+  digitalWrite(GREEN, HIGH);
+  delay(2000);
+  digitalWrite(GREEN, LOW);
+}</div>
+
+  <div class="why-grid">
+    <div class="why-card con">
+      <h4>What delay() actually costs</h4>
+      <ul>
+        <li>Inputs are not read: a pedestrian pressing the button during the 2&nbsp;s red phase is invisible, and the press is lost.</li>
+        <li>Nothing else can run: a second output, a sensor, an incoming serial message all wait.</li>
+        <li>The real period is longer than the sum of the delays, because the work between them takes time too. Timed this way, the light slowly drifts.</li>
+      </ul>
+    </div>
+    <div class="why-card pro">
+      <h4>The pattern that replaces it</h4>
+      <ul>
+        <li>Store the moment the last event happened, not the time until the next one.</li>
+        <li>Ask <code>millis()</code> every pass: has enough time elapsed yet?</li>
+        <li>When it has, do the work, then re-arm the timestamp. The rest of <code>loop()</code> runs thousands of times a second in between.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="ix-blocking"></div>
+
+  <div class="code-block">const unsigned long PHASE_MS = 2000;
+unsigned long phaseStart = 0;          // when the current phase began
+int phase = 0;
+
+void loop() {
+  unsigned long now = millis();
+  if (now - phaseStart &gt;= PHASE_MS) {    // time to move on?
+    phaseStart = now;                  // re-arm: schedule, never wait
+    phase = (phase + 1) % 3;
+    applyPhase(phase);
+  }
+  if (digitalRead(BUTTON) == LOW) {    // still runs during the 2 s phase
+    requestCrossing();
+  }
+}</div>
+
+  <div class="callout">
+    <strong>Subtract, do not compare absolutely.</strong> Write <code>now - phaseStart &gt;= PHASE_MS</code> rather than <code>now &gt;= phaseStart + PHASE_MS</code>. <code>millis()</code> returns an <code>unsigned long</code> that wraps back to zero after about 49.7 days, and only the subtraction form survives the wrap-around.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A sketch waits for a 2&nbsp;s green phase with <code>delay(2000)</code>. A pedestrian presses the button 0.4&nbsp;s into that phase. What happens?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nothing is buffered. The pin is simply not sampled while loop() is suspended, so there is no later moment at which the press could be noticed.">The press is stored in a buffer and handled after the delay finishes</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. delay() suspends loop(), so digitalRead() is not called during the phase and the press is never observed — the classic reason to time with millis() instead." data-bad="">The press is lost, because the pin is not read until the delay returns</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The processor is not sleeping in a way that would wake on a pin change; delay() simply spins until the time is up. Interrupts are a different mechanism entirely.">The processor wakes on the pin change and handles the press immediately</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; a three-phase traffic light that never blocks.</strong> Red 2&nbsp;s, yellow 1&nbsp;s, green 2&nbsp;s, with a button that must be noticed at any moment.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Turn the timeline into a table.</strong> The phases are (red, 2000), (yellow, 1000), (green, 2000). Give each phase a duration rather than a delay, because the duration is now data the loop consults.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Record a start time, not a countdown.</strong> <code>phaseStart = millis()</code> when a phase begins. The elapsed time is then <code>millis() - phaseStart</code>, which is always correct even if the loop is busy for a few milliseconds.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Test the elapsed time once per pass.</strong> <code>if (millis() - phaseStart &gt;= durations[phase])</code> &mdash; when it is true, advance <code>phase</code>, call the function that sets the three LEDs, and re-arm <code>phaseStart</code>.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Put everything else after that test.</strong> Reading the button, updating a display or sending a serial line now happens on every pass of <code>loop()</code>, so the response time is set by how long one pass takes &mdash; microseconds &mdash; instead of by the phase length.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Say why it is better in one sentence.</strong> The blocking version couples the program's responsiveness to its timing; the <code>millis()</code> version makes time a value that is checked rather than a period that is waited out, which is what lets one <code>loop()</code> serve several independent behaviours at once.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-debounce" class="section" data-track="debounce">
+  <h2 class="section-title">Debouncing: Counting Presses Reliably</h2>
+  <p class="section-lead">The deck counts button presses and reports what actually happens: it fails. Switches are mechanical components, and they bounce.</p>
+
+  <div class="def-box">
+    <div class="def-label">Contact bounce</div>
+    <p>When the metal contacts of a switch meet, they collide and rebound several times before settling. Instead of one clean transition the pin produces a burst of HIGH/LOW edges lasting roughly 0.5&ndash;10&nbsp;ms. A program that counts edges therefore counts one physical press as three or four &mdash; the deck's &ldquo;4&times; presses&rdquo; versus the one press the user made. Bounce happens on release as well as on press.</p>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-debounce-seq"></div>
+  <script type="application/json" id="ix-debounce-seq">
+  {
+    "title": "Order a software debounce",
+    "subtitle": "Click the steps to rebuild the non-blocking debounce state machine.",
+    "steps": [
+      "Read the raw pin with digitalRead() on every pass of loop()",
+      "Compare the raw level with the last level you saw",
+      "If it changed, record the time of the change with millis()",
+      "Wait: do not act until the new level has persisted for the debounce interval",
+      "If it changes back sooner, discard the transition as bounce",
+      "Once it survives the interval, accept it as the new stable level",
+      "Act on the accepted edge — count the press or toggle the output"
+    ]
+  }
+  </script>
+
+  <div class="code-block">const int BUTTON = 2;
+const unsigned long DEBOUNCE_MS = 20;
+
+int stableState = HIGH;         // last level we accepted as real
+int lastRaw     = HIGH;         // last level we actually saw
+unsigned long lastChange = 0;   // when the raw level last moved
+int pressCount  = 0;
+
+void loop() {
+  int raw = digitalRead(BUTTON);        // 1. sample every pass
+  if (raw != lastRaw) {                 // 2. it moved
+    lastChange = millis();              // 3. restart the timer
+    lastRaw = raw;
+  }
+  if (millis() - lastChange &gt;= DEBOUNCE_MS &amp;&amp; raw != stableState) {
+    stableState = raw;                  // 4. it survived: accept it
+    if (stableState == LOW) pressCount++;   // 5. act on the accepted edge
+  }
+}</div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Approach</th><th>How it works</th><th>Cost</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Hardware RC filter</strong></td><td>A resistor and capacitor smooth the pin, usually followed by a Schmitt trigger to restore clean edges</td><td>Extra components, and the time constant is fixed once soldered</td></tr>
+        <tr><td><strong>Blocking delay</strong></td><td>Read, <code>delay(20)</code>, read again and compare</td><td>Blocks the loop &mdash; acceptable only in a sketch that does nothing else</td></tr>
+        <tr><td><strong>Time-based state machine</strong></td><td>The <code>millis()</code> pattern above: keep the last stable level and a timestamp</td><td>A few lines of code, no blocking, and the interval is a constant you can tune</td></tr>
+        <tr><td><strong>Library</strong></td><td>A debounce library (for example Bounce2) wraps the same idea</td><td>An extra dependency; identical behaviour</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Same pattern as the traffic light.</strong> Debouncing is a timing problem, so it is solved with <code>millis()</code>, not with <code>delay()</code>. The deck's takeaway is exactly this pairing: use <code>millis()</code> for non-blocking programs, and implement software debouncing for reliable button input.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You hold a button down for two seconds. What does a bouncing contact look like to the microcontroller during that time?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Bounce is fast and happens at the moment of contact — not spread across the whole hold. Once the contacts settle, the level is steady.">It keeps toggling for the entire two seconds</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: a short burst of edges of the order of a millisecond to ten milliseconds around each mechanical transition, then a steady level until release." data-bad="">A burst of edges lasting a few milliseconds at the start, then a steady level</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A pull-up resistor defines the level but does not remove bounce — bounce is mechanical. That is precisely why software debouncing is on the takeaways list.">Nothing unusual, because the internal pull-up resistor removes the bounce</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-analog" class="section" data-track="analog">
+  <h2 class="section-title">Digital and Analogue: a Discrete Machine in a Continuous World</h2>
+  <p class="section-lead">The lecture's headline for the second half of the unit is blunt: <em>Arduinos are digital only</em>. Everything analogue they appear to do is an approximation built out of discrete steps.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The world is continuous</h3>
+      <p>Light, temperature, force, bend and position vary smoothly. Between any two values there is another value: a voltage can be 2.5001&nbsp;V as easily as 2.5&nbsp;V. Signals like these are <strong>analogue</strong>.</p>
+    </div>
+    <div class="col-card">
+      <h3>The microcontroller is discrete</h3>
+      <p>It stores finite patterns of bits and does one thing per clock edge. It can represent 1024 input levels, or 256 output levels &mdash; not infinitely many. Every analogue quantity it touches is therefore an approximation.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Four terms worth having exactly right</div>
+    <p><strong>Transducer</strong> &mdash; a device that converts one form of energy into another. <strong>Sensor</strong> &mdash; an input transducer: light, force or heat in, an electrical property out. <strong>Actuator</strong> &mdash; an output transducer: electrical energy out, light, sound, motion or heat in the world. <strong>Sampling</strong> is measuring a continuous signal at discrete moments in time; <strong>quantisation</strong> is rounding each measurement to the nearest of a finite set of levels. Digitising is both at once.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property</th><th>Digital</th><th>Analogue</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Values on a pin</strong></td><td>Two: LOW (&asymp;0&nbsp;V) and HIGH (&asymp;5&nbsp;V)</td><td>A continuous voltage anywhere in a range</td></tr>
+        <tr><td><strong>Read</strong></td><td><code>digitalRead(pin)</code> &rarr; 0 or 1</td><td><code>analogRead(pin)</code> &rarr; 0&hellip;1023</td></tr>
+        <tr><td><strong>Write</strong></td><td><code>digitalWrite(pin, HIGH|LOW)</code></td><td><code>analogWrite(pin, 0&hellip;255)</code> &mdash; PWM, not a true voltage</td></tr>
+        <tr><td><strong>Pins</strong></td><td>Any digital pin; 14 of them on an Uno (0&ndash;13)</td><td>Inputs A0&ndash;A5; outputs only on the PWM pins ~3, ~5, ~6, ~9, ~10, ~11</td></tr>
+        <tr><td><strong>Resolution</strong></td><td>1 bit, by definition</td><td>10 bits in, 8 bits out on the Uno</td></tr>
+        <tr><td><strong>Error to design around</strong></td><td>Threshold ambiguity near the switching level</td><td>Quantisation error, noise, reference drift, non-linearity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-chain"></div>
+  <script type="application/json" id="ix-chain">
+  {
+    "title": "The analogue acquisition chain, end to end",
+    "subtitle": "Step through it: a physical quantity becomes a number, and the number becomes a decision.",
+    "nodes": [
+      { "label": "Quantity", "note": "Something in the world changes: light level, force on a pad, bend of a strip, position of a knob." },
+      { "label": "Transducer", "note": "The sensor turns that energy into an electrical property — usually a resistance that rises or falls." },
+      { "label": "Conditioning", "note": "A voltage divider (or amplifier and filter) converts it into a voltage inside the 0–5 V input range." },
+      { "label": "Sample", "note": "The ADC's sample-and-hold capacitor captures the voltage at one instant, so it cannot change mid-conversion." },
+      { "label": "Quantise", "note": "Ten comparisons against the reference produce an integer: 0 to 1023 for a 10-bit converter." },
+      { "label": "Calibrate", "note": "Raw counts are mapped onto the physical unit using at least two known reference points." },
+      { "label": "Act or report", "note": "Drive an output with analogWrite(), or send the value to the serial monitor for the person reading it." }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A student says &ldquo;the Arduino's analogue pins are analogue, so the board can output a true analogue voltage&rdquo;. What is the correction?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The input side is a real analogue-to-digital converter, so this half of the claim is fine. The error is on the output side.">The input side is also digital, so no pin is analogue at all</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The chip has a real ADC on its analogue inputs but no digital-to-analogue converter, so analogWrite() switches a pin rapidly instead — PWM — and software or an RC filter turns that into an average voltage." data-bad="">The inputs are genuinely analogue, but there is no DAC: outputs are switched rapidly with PWM to imitate a variable voltage</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Current limits are a real constraint on pins, but they are not the reason the board cannot output a variable voltage.">The pins can output any voltage they like, up to the 40 mA current limit</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-adc" class="section" data-track="adc">
+  <h2 class="section-title">analogRead(): the ADC and Its Resolution</h2>
+  <p class="section-lead">On the input side the microcontroller does have real analogue hardware: a multiplexer and a 10-bit successive-approximation ADC behind the six pins labelled A0 to A5.</p>
+
+  <div data-ix="hotspot" data-ix-src="#ix-pinmap"></div>
+  <script type="application/json" id="ix-pinmap">
+  {
+    "title": "Pin review: an Arduino Uno from above",
+    "subtitle": "Click a marker to see what that group of pins is for — and which of them the analogue functions use.",
+    "svg": "<svg viewBox=\"0 0 900 520\" role=\"img\" aria-label=\"Schematic top view of an Arduino Uno showing the USB port, power jack, digital header, power header, analogue input header, AREF pin and the ATmega328P microcontroller\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"900\" height=\"520\" fill=\"#fbfdfe\"></rect><rect x=\"70\" y=\"36\" width=\"780\" height=\"448\" rx=\"18\" fill=\"#0891b2\" opacity=\"0.10\"></rect><rect x=\"70\" y=\"36\" width=\"780\" height=\"448\" rx=\"18\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.4\" opacity=\"0.55\"></rect><rect x=\"14\" y=\"64\" width=\"58\" height=\"96\" rx=\"6\" fill=\"#e2e8f0\" stroke=\"#94a3b8\" stroke-width=\"2\"></rect><rect x=\"26\" y=\"84\" width=\"34\" height=\"56\" rx=\"3\" fill=\"#cbd5e1\" stroke=\"#94a3b8\" stroke-width=\"1.4\"></rect><text x=\"43\" y=\"180\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">USB</text><rect x=\"14\" y=\"350\" width=\"58\" height=\"96\" rx=\"6\" fill=\"#334155\" stroke=\"#1f2937\" stroke-width=\"2\"></rect><circle cx=\"43\" cy=\"398\" r=\"15\" fill=\"#0f172a\" stroke=\"#64748b\" stroke-width=\"1.6\"></circle><text x=\"43\" y=\"466\" font-family=\"monospace\" font-size=\"11\" fill=\"#565d75\" text-anchor=\"middle\">7-12V</text><rect x=\"170\" y=\"52\" width=\"660\" height=\"34\" rx=\"5\" fill=\"#1f2937\"></rect><rect x=\"170\" y=\"420\" width=\"660\" height=\"34\" rx=\"5\" fill=\"#1f2937\"></rect><text x=\"200\" y=\"120\" font-family=\"monospace\" font-size=\"12\" fill=\"#0e7490\">DIGITAL (PWM ~)</text><text x=\"186\" y=\"410\" font-family=\"monospace\" font-size=\"11\" fill=\"#0e7490\">POWER</text><text x=\"520\" y=\"410\" font-family=\"monospace\" font-size=\"11\" fill=\"#0e7490\">ANALOG IN</text><rect x=\"177\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#0e7490\"></rect><text x=\"186\" y=\"76\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">AREF</text><rect x=\"205\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"214\" y=\"76\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">GND</text><rect x=\"237\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"246\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">0</text><rect x=\"279\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"288\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">1</text><rect x=\"321\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"330\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">2</text><rect x=\"363\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"372\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">3</text><text x=\"372\" y=\"46\" font-family=\"monospace\" font-size=\"11\" fill=\"#f59e0b\" text-anchor=\"middle\">~</text><rect x=\"405\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"414\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">4</text><rect x=\"447\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"456\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">5</text><text x=\"456\" y=\"46\" font-family=\"monospace\" font-size=\"11\" fill=\"#f59e0b\" text-anchor=\"middle\">~</text><rect x=\"489\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"498\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">6</text><text x=\"498\" y=\"46\" font-family=\"monospace\" font-size=\"11\" fill=\"#f59e0b\" text-anchor=\"middle\">~</text><rect x=\"531\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"540\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">7</text><rect x=\"573\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"582\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">8</text><rect x=\"615\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"624\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">9</text><text x=\"624\" y=\"46\" font-family=\"monospace\" font-size=\"11\" fill=\"#f59e0b\" text-anchor=\"middle\">~</text><rect x=\"657\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"666\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">10</text><text x=\"666\" y=\"46\" font-family=\"monospace\" font-size=\"11\" fill=\"#f59e0b\" text-anchor=\"middle\">~</text><rect x=\"699\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"708\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">11</text><text x=\"708\" y=\"46\" font-family=\"monospace\" font-size=\"11\" fill=\"#f59e0b\" text-anchor=\"middle\">~</text><rect x=\"741\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"750\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">12</text><rect x=\"783\" y=\"56\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"792\" y=\"76\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">13</text><rect x=\"177\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"186\" y=\"444\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">IOREF</text><rect x=\"205\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"214\" y=\"444\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">RST</text><rect x=\"233\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"242\" y=\"444\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">3V3</text><rect x=\"261\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"270\" y=\"444\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">5V</text><rect x=\"289\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"298\" y=\"444\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">GND</text><rect x=\"317\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"326\" y=\"444\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">GND</text><rect x=\"345\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#374151\"></rect><text x=\"354\" y=\"444\" font-family=\"monospace\" font-size=\"7.5\" fill=\"#e5e7eb\" text-anchor=\"middle\">VIN</text><rect x=\"511\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#0e7490\"></rect><text x=\"520\" y=\"444\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">A0</text><rect x=\"569\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#0e7490\"></rect><text x=\"578\" y=\"444\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">A1</text><rect x=\"627\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#0e7490\"></rect><text x=\"636\" y=\"444\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">A2</text><rect x=\"685\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#0e7490\"></rect><text x=\"694\" y=\"444\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">A3</text><rect x=\"743\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#0e7490\"></rect><text x=\"752\" y=\"444\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">A4</text><rect x=\"801\" y=\"424\" width=\"18\" height=\"26\" rx=\"2\" fill=\"#0e7490\"></rect><text x=\"810\" y=\"444\" font-family=\"monospace\" font-size=\"9\" fill=\"#e5e7eb\" text-anchor=\"middle\">A5</text><rect x=\"330\" y=\"200\" width=\"240\" height=\"130\" rx=\"8\" fill=\"#111827\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"450\" y=\"255\" font-family=\"monospace\" font-size=\"12\" fill=\"#e5e7eb\" text-anchor=\"middle\">ATmega328P</text><text x=\"450\" y=\"276\" font-family=\"monospace\" font-size=\"10\" fill=\"#94a3b8\" text-anchor=\"middle\">8-bit AVR · 16 MHz</text><text x=\"450\" y=\"293\" font-family=\"monospace\" font-size=\"10\" fill=\"#94a3b8\" text-anchor=\"middle\">1 ADC · no DAC</text><rect x=\"620\" y=\"212\" width=\"120\" height=\"86\" rx=\"6\" fill=\"#111827\" stroke=\"#0f172a\" stroke-width=\"2\"></rect><text x=\"680\" y=\"258\" font-family=\"monospace\" font-size=\"10\" fill=\"#94a3b8\" text-anchor=\"middle\">USB bridge</text><circle cx=\"126\" cy=\"96\" r=\"16\" fill=\"#dc2626\" opacity=\"0.85\"></circle><text x=\"126\" y=\"132\" font-family=\"monospace\" font-size=\"10\" fill=\"#565d75\" text-anchor=\"middle\">reset</text><text x=\"126\" y=\"300\" font-family=\"monospace\" font-size=\"26\" fill=\"#0e7490\" opacity=\"0.28\" text-anchor=\"middle\">UNO</text><text x=\"450\" y=\"500\" font-family=\"monospace\" font-size=\"11\" fill=\"#7b829a\" text-anchor=\"middle\">10-bit ADC on A0-A5  ·  PWM outputs ~3, ~5, ~6, ~9, ~10, ~11  ·  serial on 0 (RX) and 1 (TX)</text></svg>",
+    "points": [
+      { "x": 6.5, "y": 20, "label": "USB connector", "detail": "Power and programming. The board takes 5 V from USB, and this is the port the serial monitor talks through. While a sketch is printing, the USB link is busy carrying those characters." },
+      { "x": 6.5, "y": 76, "label": "Barrel jack (VIN)", "detail": "7–12 V DC in, regulated down to 5 V on board. Datasheet discipline applies: check the polarity and the voltage range before you plug anything in." },
+      { "x": 29.7, "y": 21, "label": "Digital 0 and 1 — RX / TX", "detail": "The hardware serial port. They are also the pins the USB chip uses to program the board, so leave them free while the serial monitor is open or uploads will fail." },
+      { "x": 39, "y": 21, "label": "Digital 2 and 3 — external interrupts", "detail": "The two pins that can trigger an interrupt on a change of level or edge (INT0 and INT1). Pin 3 doubles as a PWM output. Interrupts are how you catch a fast event without polling for it." },
+      { "x": 60, "y": 21, "label": "PWM outputs ~3, ~5, ~6, ~9, ~10, ~11", "detail": "The six pins marked with a tilde on the header are the ones analogWrite() can use. They are ordinary digital outputs on timers, which is why the frequency is fixed by the hardware." },
+      { "x": 76.3, "y": 21, "label": "Digital 8–13", "detail": "Plain digital pins. Pin 13 also drives the on-board LED marked L, which makes it the usual choice for a quick test sketch." },
+      { "x": 50, "y": 37, "label": "ATmega328P", "detail": "The microcontroller itself: 8-bit AVR core at 16 MHz, 32 KB of flash, 2 KB of SRAM, three timers, one 10-bit ADC — and no digital-to-analogue converter, which is the whole reason PWM exists." },
+      { "x": 30, "y": 76, "label": "5 V, 3.3 V and GND rails", "detail": "The supply rails, on the power header. The 3.3 V pin comes from the on-board regulator and supplies only a small current, so check the limit before powering a sensor from it." },
+      { "x": 20.7, "y": 21, "label": "AREF", "detail": "Analogue reference. It sets the voltage that produces the top code, so an external reference makes the measurement independent of the 5 V rail — or, more often, lets you measure a smaller range with finer steps." },
+      { "x": 74, "y": 76, "label": "Analogue inputs A0–A5", "detail": "Six channels into one ADC through a multiplexer. analogRead() selects a channel and returns 0–1023. These pins are digital pins 14–19 as well, so they can still be used with digitalRead() and digitalWrite()." }
+    ]
+  }
+  </script>
+
+  <div class="algo-card">
+    <div class="algo-facts">
+      <span class="fact-pill">10 bits</span>
+      <span class="fact-pill">1024 codes</span>
+      <span class="fact-pill">0&ndash;1023</span>
+      <span class="fact-pill">V<sub>REF</sub> = 5&nbsp;V by default</span>
+      <span class="fact-pill">1 step &asymp; 4.9&nbsp;mV</span>
+      <span class="fact-pill">~100&nbsp;&micro;s per reading</span>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The two questions the deck asks about a potentiometer</h3>
+    <p>The slide shows a potentiometer wired across 5&nbsp;V and GND at the &ldquo;100&nbsp;%&rdquo; position and asks: <em>what is the highest voltage possible on the potentiometer?</em> and <em>what is the highest value read by the Arduino?</em></p>
+    <p style="margin-top:0.6rem;"><strong>Answers:</strong> the wiper can never exceed the supply it is connected to, so the highest voltage is <strong>5&nbsp;V</strong>; the highest number <code>analogRead()</code> returns is <strong>1023</strong>, because that is the largest value ten bits can hold. Turned fully the other way, the wiper sits at 0&nbsp;V and the reading is 0.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Resolution</th><th>Codes (2<sup>N</sup>)</th><th>Step size at V<sub>REF</sub> = 5&nbsp;V</th><th>Where you meet it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>8-bit</td><td>256</td><td>19.5&nbsp;mV</td><td>PWM output resolution, cheap sensor modules</td></tr>
+        <tr><td><strong>10-bit</strong></td><td><strong>1024</strong></td><td><strong>4.88&nbsp;mV</strong></td><td>The Arduino Uno's ADC &mdash; this week's default</td></tr>
+        <tr><td>12-bit</td><td>4096</td><td>1.22&nbsp;mV</td><td>Many ESP32 and ARM boards; also external ADC chips</td></tr>
+        <tr><td>16-bit</td><td>65&nbsp;536</td><td>76&nbsp;&micro;V</td><td>Load cells and audio; needs a clean reference to mean anything</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Resolution is not accuracy.</strong> Ten bits describe how finely the converter <em>reports</em> a voltage. What it actually gets right depends on the stability of the reference, the noise on the ground and supply, the source impedance of the sensor, and the non-linearity of the converter itself. A stable 10-bit reading beats a noisy 16-bit one, which is why the next two sections are about conditioning and calibration rather than about buying a better ADC.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A 10-bit ADC with V<sub>REF</sub>&nbsp;=&nbsp;5&nbsp;V reads a sensor and returns 512. Roughly what voltage is on the pin?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct: 512 of 1024 codes is half of full scale, so about 2.5 V — the step size is 5 V / 1024 ≈ 4.88 mV and 512 × 4.88 mV ≈ 2.5 V." data-bad="">About 2.5&nbsp;V — half of full scale</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This treats the reading as a byte of a 0–255 range. The ADC returns 0–1023; the 0–255 range belongs to analogWrite() on the output side.">About 10&nbsp;V, because 512 of 255 is more than full scale</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="512 counts is a large fraction of 1024, not a small one. Dividing the code by 1023 and multiplying by 5 V gives the answer directly.">About 0.25&nbsp;V — a twentieth of full scale</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; from a potentiometer to a percentage, on paper.</strong> A 10&nbsp;k&Omega; linear potentiometer is wired with its ends on 5&nbsp;V and GND and its wiper on A0. <code>analogRead(A0)</code> returns 743.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Voltage.</strong> One code is \(V_{REF}/2^{10} = 5/1024 \approx 4.883\)&nbsp;mV. So \(V = 743 \times 4.883\ \text{mV} \approx 3.63\)&nbsp;V.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Position.</strong> A potentiometer is a divider, so the fraction of the track from the GND end is \(743/1023 \approx 72.6\)&nbsp;%. If the knob has 300&deg; of travel, that is about 218&deg; from the anticlockwise stop.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Error bar.</strong> One code is 4.883&nbsp;mV, so the reading is only meaningful to about &plusmn;0.1&nbsp;% of the track. Averaging 16 readings would cut random noise by roughly a factor of 4, but it cannot fix a quantisation step that is already there.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The code.</strong> <code>int raw = analogRead(A0);</code> then <code>float volts = raw * (5.0 / 1023.0);</code> and <code>int percent = map(raw, 0, 1023, 0, 100);</code>. Print all three to the serial monitor and turn the knob: if the numbers move smoothly and reach both ends, the wiring and the arithmetic are both right.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Why 1023 in the sketch and 1024 in the arithmetic?</strong> <code>map()</code> treats 1023 as the end of the range, so it interpolates over 1023 gaps and reports a tidy 100&nbsp;%. The ideal quantiser has 1024 steps of \(V_{REF}/1024\). The two differ by 0.1&nbsp;% &mdash; below the noise floor &mdash; but you should be able to say which one you used and why.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-pwm" class="section" data-track="pwm">
+  <h2 class="section-title">analogWrite() and PWM: Faking an Analogue Output</h2>
+  <p class="section-lead">The light bulb can only be on or off. The deck's question is how to dim it to 50&nbsp;% &mdash; and the answer is not a voltage at all, but a duty cycle.</p>
+
+  <div class="def-box">
+    <div class="def-label">PWM &mdash; pulse width modulation</div>
+    <p>Switch a digital output on and off rapidly, fast enough that the load cannot follow, and vary the fraction of each period spent on. That fraction is the <strong>duty cycle</strong> \(D = t_{on}/T\), and the average voltage the load sees is \(V_{avg} = D \times V_{CC}\). At 50&nbsp;% duty on a 5&nbsp;V pin the average is 2.5&nbsp;V, and an LED looks half as bright.</p>
+  </div>
+
+  <div id="ix-pwm"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>analogWrite() value</th><th>Duty cycle</th><th>Average voltage (5&nbsp;V board)</th><th>Looks like</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0</td><td>0&nbsp;%</td><td>0&nbsp;V</td><td>Off</td></tr>
+        <tr><td>64</td><td>25&nbsp;%</td><td>1.25&nbsp;V</td><td>Dim</td></tr>
+        <tr><td>127 / 128</td><td>&asymp;50&nbsp;%</td><td>&asymp;2.5&nbsp;V</td><td>Half brightness</td></tr>
+        <tr><td>191</td><td>75&nbsp;%</td><td>3.75&nbsp;V</td><td>Bright</td></tr>
+        <tr><td>255</td><td>100&nbsp;%</td><td>5&nbsp;V</td><td>Full on &mdash; indistinguishable from digitalWrite(HIGH)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-pwm-race"></div>
+  <script type="application/json" id="ix-pwm-race">
+  {
+    "title": "Eight-bit output values and the average voltage they produce",
+    "subtitle": "The output scale is 0–255, so the input's 0–1023 has to be mapped down before it can drive a lamp.",
+    "max": 255,
+    "rows": [
+      { "name": "analogWrite(pin, 0)", "value": 0, "display": "0 % · 0.00 V" },
+      { "name": "analogWrite(pin, 64)", "value": 64, "display": "25 % · 1.25 V" },
+      { "name": "analogWrite(pin, 128)", "value": 128, "display": "50 % · 2.51 V" },
+      { "name": "analogWrite(pin, 191)", "value": 191, "display": "75 % · 3.75 V" },
+      { "name": "analogWrite(pin, 255)", "value": 255, "display": "100 % · 5.00 V" }
+    ]
+  }
+  </script>
+
+  <div class="code-block">const int LED = 9;      // a PWM pin — the tilde ones: 3, 5, 6, 9, 10, 11
+
+void loop() {
+  for (int v = 0; v &lt;= 255; v += 5) {
+    analogWrite(LED, v);   // duty cycle = v / 255
+    delay(20);
+  }
+  for (int v = 255; v &gt;= 0; v -= 5) {
+    analogWrite(LED, v);
+    delay(20);
+  }
+}</div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Board</th><th>How analogue output is produced</th><th>Practical notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Arduino Uno</strong></td><td>Timer-driven PWM on six pins, 8-bit</td><td>&asymp;490&nbsp;Hz on most PWM pins and &asymp;980&nbsp;Hz on pins 5 and 6; the frequency and resolution are fixed by the timer</td></tr>
+        <tr><td><strong>ESP32 &mdash; LEDC</strong></td><td>A dedicated LED-control peripheral, per the deck: 16 channels rather than 18 pins, and you attach a pin to a channel</td><td>Frequency and resolution are configurable per channel, so you can drive an LED, a servo or a motor at whatever rate suits it</td></tr>
+        <tr><td><strong>ESP32 &mdash; delta-sigma</strong></td><td>The deck describes it as similar to PWM except that it varies the <em>frequency</em> of pulses of equal duration rather than their width</td><td>A 1-bit output whose pulse density encodes the level; a filter turns it into a smooth voltage</td></tr>
+        <tr><td><strong>ESP32 &mdash; DAC</strong></td><td>A genuine digital-to-analogue converter: two 8-bit DACs on pins 25 and 26</td><td>Real analogue voltages with no carrier to filter, at 8-bit resolution</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Two traps with analogWrite().</strong> First, it only works on the PWM pins; on any other pin the Arduino core falls back to a plain digital write, so a value of 128 or more simply switches it HIGH. Second, PWM is a square wave: a piezo speaker or a motor will buzz at the PWM frequency, and a sensor measuring the same supply rail will see the ripple. If you need a steady voltage, follow the PWM pin with a resistor and capacitor whose cutoff is far below the PWM frequency.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">You write <code>analogWrite(6, 128)</code> and measure the pin with a multimeter on DC. What do you read, and what would an oscilloscope show?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="analogWrite() never produces a steady intermediate voltage on an ATmega-based board — there is no DAC. Check the table of boards above.">2.5&nbsp;V steady on both instruments</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: the meter averages the square wave and shows about 2.5 V, while the scope shows a 5 V square wave at the timer's frequency with a 50 % duty cycle." data-bad="">&asymp;2.5&nbsp;V on the meter; a 5&nbsp;V square wave with a 50&nbsp;% duty cycle on the scope</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="0.5 and 5 V describe a 10 % duty cycle, which would be value 26, not 128. Half of 255 is about 128.">0.5&nbsp;V on the meter; a 5&nbsp;V square wave on the scope</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-divider" class="section" data-track="divider">
+  <h2 class="section-title">Voltage Dividers: Turning Resistance into a Reading</h2>
+  <p class="section-lead">The ADC measures a voltage, but most cheap analogue sensors change their resistance. The voltage divider is the two-resistor circuit that bridges the two.</p>
+
+  <div class="theorem-box">
+    <h3>The divider relation</h3>
+    <p>Two resistors in series across a supply, with the output taken from the junction:</p>
+    \[ V_{out} \;=\; V_{in} \cdot \frac{R_2}{R_1 + R_2} \]
+    <p style="margin-top:0.6rem;">where \(R_2\) is the resistor between the output node and ground. The same current flows through both, so the voltage splits in proportion to the resistances. A potentiometer is simply a divider with a moving junction: the wiper cuts the track into \(R_{top}\) and \(R_{bottom}\), and the output is \(V_{in} \cdot R_{bottom}/(R_{top}+R_{bottom})\).</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Sensor as the top resistor</h3>
+      <p>With the sensor between 5&nbsp;V and the output, and a fixed resistor to ground, \(V_{out}\) falls as the sensor's resistance rises. Solve for the sensor: \(R_{s} = R_{fixed}(V_{in}-V_{out})/V_{out}\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Sensor as the bottom resistor</h3>
+      <p>With the fixed resistor on top, \(V_{out}\) rises with the sensor's resistance: \(R_{s} = R_{fixed} \cdot V_{out}/(V_{in}-V_{out})\). This is the more common arrangement for light and force sensors, because a shorted sensor then reads 0&nbsp;V rather than 5&nbsp;V.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Sensor</th><th>Electrical change</th><th>Why a divider is needed</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Potentiometer (10&nbsp;k&Omega;)</td><td>Resistance from wiper to each end</td><td>It <em>is</em> a divider; wire the ends to 5&nbsp;V and GND and the wiper straight to A0</td></tr>
+        <tr><td>Photoresistor (LDR)</td><td>Resistance falls from megohms in the dark to hundreds of ohms in bright light</td><td>The swing is enormous, so pick the fixed resistor near the geometric mean of the two extremes to keep the mid-range readable</td></tr>
+        <tr><td>Thermistor</td><td>Resistance changes with temperature, strongly non-linearly</td><td>A divider makes it readable; the curve still has to be linearised in software</td></tr>
+        <tr><td>Force-sensing resistor</td><td>Resistance falls as force rises</td><td>Divider first, then calibration &mdash; the response is roughly proportional to conductance, not resistance</td></tr>
+        <tr><td>Flex sensor</td><td>Resistance rises as the strip bends</td><td>A divider plus a fixed resistor of the same order as the flat resistance</td></tr>
+        <tr><td>Accelerometer, gyroscope, magnetometer modules</td><td>Output a voltage (or digits) directly</td><td>No divider &mdash; but the analogue versions are <em>ratiometric</em>, so the reference and the sensor supply should be the same rail</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Choosing the fixed resistor.</strong> The divider converts a resistance range into a voltage range, and only part of that voltage range is useful. Pick \(R_{fixed}\) close to the sensor's resistance at the middle of the range you care about: that centres the output near 2.5&nbsp;V and gives the largest swing for the ADC to resolve. A divider also draws current continuously, so a small resistance gives a stiffer, less noise-prone signal at the cost of battery life &mdash; and a resistance that is too large interacts badly with the ADC's own input impedance.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A light-dependent resistor sits between 5&nbsp;V and the output node; a 10&nbsp;k&Omega; resistor sits between the output node and ground. The room gets brighter, so the LDR's resistance drops. What does <code>analogRead()</code> do?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. With the sensor on top, the output is 5 V × R_fixed/(R_LDR + R_fixed); as R_LDR falls the output rises towards 5 V, so the reading climbs towards 1023." data-bad="">The reading rises towards 1023</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is what happens when the sensor is the bottom resistor. Read the divider relation with the LDR in the top position: less top resistance means more voltage at the junction.">The reading falls towards 0</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A resistive sensor produces no current of its own; the divider is a passive network, so nothing saturates — the reading simply moves between 0 and 1023.">The reading saturates at 1023 and stays there in any light</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-sensors" class="section" data-track="sensors">
+  <h2 class="section-title">The Analogue Sensor Family</h2>
+  <p class="section-lead">The deck lines up the sensors you are expected to recognise. What they have in common is that each converts a physical quantity into an electrical one &mdash; and most of them change their resistance.</p>
+
+  <div data-ix="matcher" data-ix-src="#ix-sensor-match"></div>
+  <script type="application/json" id="ix-sensor-match">
+  {
+    "title": "Match the sensor to what it measures",
+    "subtitle": "Click a sensor on the left, then the physical quantity and electrical change on the right.",
+    "pairs": [
+      ["Photoresistor (LDR)", "Light level — resistance falls as illumination rises"],
+      ["Phototransistor", "Light level, with gain — faster and more sensitive than an LDR"],
+      ["Temperature sensor", "Temperature — a thermistor changes resistance, an IC sensor outputs a voltage proportional to °C"],
+      ["Flex sensor", "Bend — resistance rises as the strip is flexed"],
+      ["Force-sensing resistor", "Applied force — resistance falls as pressure rises"],
+      ["Joystick module", "2D position — two potentiometers, one per axis, plus a push button"],
+      ["Accelerometer", "Acceleration — including the constant 1 g of gravity, which is how tilt is sensed"],
+      ["Gyroscope", "Angular velocity — how fast the device is rotating, in °/s"],
+      ["Magnetometer", "Magnetic flux — used as a compass heading, and to detect nearby magnets"]
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Sensor</th><th>What changes</th><th>Typical interface</th><th>Design note</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Photoresistor</strong></td><td>Resistance &darr; with light</td><td>Divider &rarr; analogRead()</td><td>Slow (tens of ms) and very non-linear; fine for &ldquo;is it dark?&rdquo;, poor for measuring lux</td></tr>
+        <tr><td><strong>Phototransistor</strong></td><td>Current &uarr; with light</td><td>Load resistor &rarr; analogRead()</td><td>Much faster and more sensitive; needs a series resistor to turn current into voltage</td></tr>
+        <tr><td><strong>Temperature</strong></td><td>Resistance (thermistor) or output voltage (IC)</td><td>Divider, or direct to an analogue pin</td><td>An IC sensor with a known offset and slope is far easier to calibrate than a bare thermistor</td></tr>
+        <tr><td><strong>Flex</strong></td><td>Resistance &uarr; with bend</td><td>Divider &rarr; analogRead()</td><td>Sensitive to how it is mounted; calibrate per unit and per mounting</td></tr>
+        <tr><td><strong>Force (FSR)</strong></td><td>Resistance &darr; with force</td><td>Divider &rarr; analogRead()</td><td>Reads force, not weight; drifts, and needs a known load for calibration</td></tr>
+        <tr><td><strong>Joystick</strong></td><td>Two resistances</td><td>Two analogue pins (plus one digital for the button)</td><td>Centre reading is rarely exactly 512; calibrate the centre and add a deadband</td></tr>
+        <tr><td><strong>Accelerometer</strong></td><td>Output voltage &prop; acceleration</td><td>Analogue pins, or I&sup2;C on a digital module</td><td>Ratiometric: its full-scale output scales with its supply, so share the ADC reference</td></tr>
+        <tr><td><strong>Gyroscope</strong></td><td>Output voltage &prop; angular velocity</td><td>Analogue pins, or I&sup2;C</td><td>Has a zero-rate offset that drifts with temperature &mdash; measure it at rest and subtract</td></tr>
+        <tr><td><strong>Magnetometer</strong></td><td>Output voltage &prop; magnetic flux</td><td>Analogue pins, or I&sup2;C</td><td>Needs hard-iron calibration: rotate the device through all orientations and record the extremes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Exam nuance.</strong> The deck lists accelerometers, gyroscopes and magnetometers under analogue sensors because the sensing element is analogue, and breakout boards do exist with analogue outputs. In practice most of the modules you buy put the same element on a chip with an I&sup2;C or SPI interface, so the microcontroller reads digits rather than a voltage. Say both: the <em>quantity</em> is analogue, the <em>interface</em> may well be digital, and what that changes is where the quantisation happens.
+  </div>
+</section>
+
+<section id="sec-calibration" class="section" data-track="calibration">
+  <h2 class="section-title">Calibration and the Serial Monitor</h2>
+  <p class="section-lead">A raw count of 743 means nothing on its own. Calibration is the step that gives it a unit &mdash; and the serial monitor is the instrument you calibrate with.</p>
+
+  <div class="def-box">
+    <div class="def-label">Calibration</div>
+    <p>Establishing the relationship between what the sensor reports and what is actually there, by measuring the sensor's output at known reference points. Two points are enough for a linear sensor: record the count at the minimum and at the maximum, then map everything in between. Without it you have a number that responds to the world but does not describe it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Two-point (linear) calibration</h3>
+    <p>With two known references, a raw reading \(r\) becomes a physical value \(x\):</p>
+    \[ x \;=\; x_{1} + (r - r_{1})\cdot\frac{x_{2}-x_{1}}{r_{2}-r_{1}} \]
+    <p style="margin-top:0.6rem;">which is exactly what <code>map(value, fromLow, fromHigh, toLow, toHigh)</code> computes in integer arithmetic: <code>map(raw, rawMin, rawMax, 0, 180)</code> turns a flex sensor's observed range into degrees.</p>
+  </div>
+
+  <div class="code-block">const int FLEX = A0;
+int rawMin = 1023, rawMax = 0;      // observed extremes, seeded the wrong way round
+
+void loop() {
+  int raw = analogRead(FLEX);
+  if (raw &lt; rawMin) rawMin = raw;     // auto-calibrate while the user exercises it
+  if (raw &gt; rawMax) rawMax = raw;
+
+  int angle = map(raw, rawMin, rawMax, 0, 180);
+  angle = constrain(angle, 0, 180);  // map() happily returns nonsense if raw is outside
+
+  Serial.print(raw);  Serial.print('\t');
+  Serial.print(rawMin); Serial.print('\t');
+  Serial.print(rawMax); Serial.print('\t');
+  Serial.println(angle);
+  delay(50);
+}</div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>What the serial monitor gives you</h4>
+      <ul>
+        <li><code>Serial.begin(9600)</code> in <code>setup()</code>, then <code>Serial.print()</code> and <code>Serial.println()</code> in the loop.</li>
+        <li>The baud rate must match the monitor's; the classic symptom of a mismatch is a wall of garbage characters.</li>
+        <li>The Serial Plotter draws the same numbers as a graph, which is how you spot drift, spikes and the exact moment a sensor saturates.</li>
+      </ul>
+    </div>
+    <div class="why-card con">
+      <h4>What it costs</h4>
+      <ul>
+        <li>Printing is slow: a few lines per pass can stretch <code>loop()</code> from microseconds to milliseconds. Gate the printing with the <code>millis()</code> pattern.</li>
+        <li>Pins 0 and 1 are the UART, so they must stay free while the monitor is open.</li>
+        <li>Print with a fixed number of decimals (<code>Serial.print(v, 2)</code>) or the default formatting will hide small changes.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Problem you see</th><th>Likely cause</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Reading jumps by tens of counts</td><td>Noise: long wires, a shared supply, a floating input</td><td>Average several readings, shorten the leads, add a decoupling capacitor</td></tr>
+        <tr><td>Reading drifts over minutes</td><td>Reference or supply drift; a warming sensor</td><td>Use a stable reference, or make the measurement ratiometric</td></tr>
+        <tr><td>Reading pins at 0 or 1023 constantly</td><td>The divider is out of range, or the sensor is wired the wrong way round</td><td>Measure the node with a multimeter first, then choose the fixed resistor</td></tr>
+        <tr><td>Output flickers on and off near a threshold</td><td>Noise crossing the threshold on every pass</td><td>Add hysteresis or a deadband so the output changes only on a real move</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A flex sensor reads 300 when flat and 620 when fully bent, but the sketch maps <code>analogRead()</code> over the full 0&ndash;1023 into 0&ndash;180&deg;. What is wrong with that?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The arithmetic is valid; the problem is that the assumed input range does not match the sensor's real one, so almost the whole output range is unreachable.">Nothing — 0&ndash;1023 is the ADC range, so mapping it is always correct</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Mapping the full ADC range onto 0–180° assumes the sensor uses the full range. It uses only 300–620, so the output moves through roughly 53–109° and the resolution the sensor offers is thrown away." data-bad="">The sensor only occupies part of the ADC range, so the useful swing is compressed into a fraction of the output range</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Degrees are a legitimate unit here. The issue is the assumed input span, not the output unit.">Angles cannot be mapped from an integer; a float and a formula are required</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-3">Show solution</button>
+  <div class="solution-content" id="sol-3">
+    <p><strong>Worked example &mdash; calibrating a force sensor and reporting it.</strong> The sensor is an FSR in a divider with a 10&nbsp;k&Omega; resistor to ground: 5&nbsp;V &rarr; FSR &rarr; A0 &rarr; 10&nbsp;k&Omega; &rarr; GND. With no load the reading is 8; pressing hard by hand it reaches 890. A 1&nbsp;kg mass gives 640.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Establish the extremes.</strong> Record the resting value and the largest value you can reach, over several seconds of use, rather than trusting a single sample: here 8 and 890. These two numbers are the calibration.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Turn them into a percentage.</strong> <code>map(raw, 8, 890, 0, 100)</code>, wrapped in <code>constrain()</code> so that a reading below 8 reports 0 rather than a negative number.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Anchor one physical point.</strong> The 1&nbsp;kg mass gives 640, so 640 counts corresponds to a known force. Report in a unit you can defend: percent of the sensor's own range is honest; grams would need a proper calibration rig at several masses.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Tame the noise.</strong> Take 8 readings in a tight loop and average them before mapping. Averaging \(N\) independent readings reduces random noise by about \(\sqrt{N}\), so 8 readings is roughly a factor of 3.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Watch it on the serial monitor.</strong> Print the raw value, the running minimum, the running maximum and the mapped result on one tab-separated line. Turn on the Serial Plotter: the moment the raw trace flattens at 1023, the divider is saturated and no amount of software will recover the lost range.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-takeaways" class="section" data-track="takeaways">
+  <h2 class="section-title">Week 4 Recap</h2>
+  <p class="section-lead">The deck closes with five takeaways. Everything on this page is one of them.</p>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Write modular Arduino code</h4>
+        <p>Pin numbers and timing constants at the top, one function per behaviour, and a <code>loop()</code> that reads as a list of intentions.</p>
+        <div class="flip-hint">Structure</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Time with millis(), not delay()</h4>
+        <p>Store when something happened and test the elapsed time each pass, so inputs are read and outputs updated thousands of times a second.</p>
+        <div class="flip-hint">Timing</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Debounce every mechanical input</h4>
+        <p>Contacts bounce for up to about 10&nbsp;ms. Accept a new level only after it has been stable for a chosen interval.</p>
+        <div class="flip-hint">Input quality</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Control intensity with PWM</h4>
+        <p>Arduinos are digital only: brightness and speed come from a duty cycle on the ~ pins, not from a variable voltage.</p>
+        <div class="flip-hint">Output</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Read and calibrate analogue sensors</h4>
+        <p>analogRead() gives 0&ndash;1023 against the reference; a divider brings resistive sensors into range, and two known points give the value a unit.</p>
+        <div class="flip-hint">Sensing</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recall"></div>
+  <script type="application/json" id="ix-recall">
+  {
+    "title": "Recall check: the numbers and the patterns",
+    "subtitle": "Answer out loud before you flip each card.",
+    "cards": [
+      { "front": "analogRead() range and resolution", "back": "0–1023 on a 10-bit ADC: 1024 codes, one code ≈ 4.883 mV when V_REF is 5 V.", "hint": "Input side" },
+      { "front": "analogWrite() range and resolution", "back": "0–255 on the PWM pins (~3, ~5, ~6, ~9, ~10, ~11), 8-bit duty cycle, ~490 Hz on most of them.", "hint": "Output side" },
+      { "front": "Why millis() instead of delay()", "back": "delay() suspends loop(), so inputs are missed and timing drifts. millis() lets the loop test elapsed time and keep running.", "hint": "Timing" },
+      { "front": "Why debounce a button", "back": "Mechanical contacts bounce for roughly 0.5–10 ms, so one press can be counted as several. Accept a level only after it is stable.", "hint": "Input quality" },
+      { "front": "The voltage divider relation", "back": "V_out = V_in × R2 / (R1 + R2), with R2 between the output node and ground. A potentiometer is a divider with a moving junction.", "hint": "Conditioning" },
+      { "front": "What calibration produces", "back": "A mapping from raw counts to physical units, established from at least two known reference points — the same arithmetic as map().", "hint": "Meaning" },
+      { "front": "What the serial monitor is for", "back": "Seeing the numbers: Serial.begin(9600) then print; the baud rate must match, pins 0 and 1 are the UART, and printing is slow enough to need gating.", "hint": "Instrument" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which combination is the correct set of Arduino functions for Week 4's two directions?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="digitalRead() returns only 0 or 1 — it cannot see how far a potentiometer has been turned.">digitalRead() for input and analogWrite() for output</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct: analogRead() on A0–A5 returns 0–1023 from the 10-bit ADC, and analogWrite() on the PWM pins sets an 8-bit duty cycle." data-bad="">analogRead() for input and analogWrite() for output</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="These are reversed. analogWrite() cannot read a sensor, and analogRead() cannot set an output level.">analogWrite() for input and analogRead() for output</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="callout">
+    <strong>Where to go next:</strong> the Foundations page turns this week's arithmetic into formulas you can reproduce &mdash; quantisation, duty cycle, the divider, sampling time and two-point calibration &mdash; along with the symbol glossary and the checklist for a sensor design. Then attempt the Quiz Hub and the Flashcards for Week 4.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you state the resolution of both converters, explain why analogWrite() is not a real voltage, and derive the count a 3&nbsp;V input would produce?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prepare for the tutorial</h3>
+      <p>Bring a sensor you intend to use in the project, its datasheet curve, the divider resistor you chose and why. Know what the reading looks like at both extremes before you write any logic on top of it.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

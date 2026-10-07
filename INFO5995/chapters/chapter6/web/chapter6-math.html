@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 6: Applied Cryptography and Secure Communications</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 foundations for INFO5995: entropy and password strength, the security-strength and key-size tables, password-hashing cost parameters, the arithmetic of authentication factors and false accepts, and the HMAC and TLS 1.3 key schedule.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 6: Applied Cryptography and Secure Communications">
+<meta property="og:description" content="Week 6 foundations for INFO5995: entropy and password strength, key-size and security-strength tables, password-hashing cost parameters, authentication arithmetic, and the HMAC and TLS key schedule.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter6-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128272;</span>
+    <h2>Week 6 Foundations</h2>
+  </div>
+  <div class="toc-group">Strength</div>
+  <ul>
+    <li><a href="#sec-m-entropy" class="toc-link">Entropy and guesswork</a></li>
+    <li><a href="#sec-m-strength" class="toc-link">Security strength &amp; key sizes</a></li>
+    <li><a href="#sec-m-hashing" class="toc-link">Password hashing cost</a></li>
+  </ul>
+  <div class="toc-group">Authentication</div>
+  <ul>
+    <li><a href="#sec-m-authmath" class="toc-link">Factors, false accepts, lockouts</a></li>
+  </ul>
+  <div class="toc-group">Protocol</div>
+  <ul>
+    <li><a href="#sec-m-hmac" class="toc-link">HMAC and tag length</a></li>
+    <li><a href="#sec-m-tls" class="toc-link">The TLS 1.3 key schedule</a></li>
+  </ul>
+  <a href="chapter6-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 6 supplement</p>
+  <h1>Foundations: the numbers behind applied cryptography</h1>
+  <p class="hero-desc">Week 6 is a design week, but every design decision in it rests on arithmetic you can be asked to reproduce: how much entropy a password actually has, what &ldquo;112-bit security&rdquo; means across symmetric and asymmetric primitives, what a password-hashing cost parameter buys you, how two authentication factors combine, and how many bits an HMAC tag really needs. This page collects those relationships in one place.</p>
+  <div class="chip-list">
+    <span>Entropy, keyspace and guesswork</span>
+    <span>Security-strength and equivalent key sizes</span>
+    <span>KDF cost parameters and offline guessing</span>
+    <span>HMAC and the TLS 1.3 key schedule</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-entropy">
+  <h2 class="section-title">Entropy and guesswork</h2>
+  <p class="section-lead">Everything in this chapter starts from one quantity: how many equally likely secrets an attacker would have to try. The deck's warning is that hashing raises the cost of guessing &mdash; so you need to be able to say how many guesses there are.</p>
+
+  <div class="theorem-box">
+    <h3>1. Keyspace and entropy</h3>
+    <p>If a secret is chosen uniformly from a set of size \(N\), the number of candidates is \(N\) and the entropy is its base-2 logarithm:</p>
+    \[ H = \log_2 N \quad\text{bits}, \qquad N = 2^{H} \]
+    <p style="margin-top:0.6rem;">For an \(L\)-character password drawn uniformly from an alphabet of \(R\) distinct characters:</p>
+    \[ N = R^{L}, \qquad H = L\,\log_2 R \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Entropy measures the <em>choice</em>, not the string. A 12-character password that a user built from their dog's name and a birth year is not a uniform draw from a \(62^{12}\) keyspace, and its effective entropy is far lower than the formula suggests.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Characters available</th><th>\(R\)</th><th>\(\log_2 R\)</th><th>Entropy of 8 characters</th><th>Entropy of 12 characters</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Lowercase letters</td><td>26</td><td>4.70</td><td>37.6 bits</td><td>56.4 bits</td></tr>
+        <tr><td>+ uppercase</td><td>52</td><td>5.70</td><td>45.6 bits</td><td>68.4 bits</td></tr>
+        <tr><td>+ digits</td><td>62</td><td>5.95</td><td>47.6 bits</td><td>71.5 bits</td></tr>
+        <tr><td>+ 33 symbols (printable ASCII)</td><td>95</td><td>6.57</td><td>52.6 bits</td><td>78.8 bits</td></tr>
+        <tr><td>Diceware word list</td><td>7776</td><td>12.92</td><td>&mdash; (5 words: 64.6 bits)</td><td>&mdash; (6 words: 77.5 bits)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Guesswork: average versus worst case</h3>
+    <p>An attacker who works through a keyspace without repetition expects to find a uniformly random secret about halfway through:</p>
+    \[ G_{\text{avg}} \approx \frac{N}{2} = 2^{\,H-1}, \qquad G_{\text{worst}} = N = 2^{H} \]
+    <p style="margin-top:0.6rem;">In bits this is why one bit of entropy is worth one bit of security: doubling the keyspace doubles the work, and the average case simply loses one bit to the factor of two.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Worked example &mdash; how long is a 40-bit secret worth opposing?</div>
+    <p>Harbour University configures Argon2id so that one guess costs \(W = 1\ \text{ms}\) on the attacker's hardware. A secret with \(H = 40\) bits has \(N = 2^{40} \approx 1.10\times10^{12}\) candidates.</p>
+    \[ \text{expected guesses} = \frac{N}{2} \approx 5.50\times10^{11} \]
+    \[ t = 5.50\times10^{11} \times 10^{-3}\ \text{s} \approx 5.50\times10^{8}\ \text{s} \approx 17.4\ \text{years} \]
+    <p style="margin-top:0.6rem;">Now raise the cost by a factor of ten &mdash; \(W = 10\ \text{ms}\), still entirely acceptable at login &mdash; and the same secret takes about 174 years. Or leave \(W\) alone and add 10 bits of entropy instead: \(N\) grows by \(2^{10} \approx 10^{3}\), so the time grows by the same factor. Two independent levers, one formula.</p>
+  </div>
+
+  <div class="callout">
+    <strong>The two levers are not equivalent.</strong> Raising the cost factor multiplies every guess and is bounded by how much latency a login can tolerate. Raising entropy multiplies the number of guesses and is bounded only by whether humans will accept the result. The deck's insistence on password managers and passkeys is really an argument for the second lever: let a machine generate and store the entropy.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A password is 10 characters drawn uniformly from the 62-character set (letters and digits). Roughly how many bits of entropy does it have?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Ten characters is not ten bits. Each position contributes log₂62 ≈ 5.95 bits, so the exponent grows with length.">About 10 bits, one for each character</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. H = L·log₂R = 10 × log₂62 ≈ 10 × 5.95 = 59.5 bits. Note how the estimate depends on the uniform-draw assumption — a human-chosen 10-character password usually has far less." data-bad="">About 59.5 bits: 10 × log₂62</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="62 is the size of the alphabet R, not the keyspace. The keyspace is R^L = 62^10, and the entropy is its base-2 logarithm.">About 62 bits, because there are 62 possible characters</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-strength">
+  <h2 class="section-title">Security strength and equivalent key sizes</h2>
+  <p class="section-lead">&ldquo;128-bit encryption&rdquo; and &ldquo;128-bit security&rdquo; are not the same claim. The brief's requirement is that you can move between security levels and key sizes across every primitive in the deck.</p>
+
+  <div class="theorem-box">
+    <h3>3. Security strength is the work factor of the best known attack</h3>
+    <p>A primitive has security strength \(b\) bits when the best known attack needs on the order of \(2^{b}\) operations. Three consequences follow, and they are the ones exam questions turn on:</p>
+    \[ b_{\text{exhaustive}}(k) = k \qquad b_{\text{collision}}(n) \approx \frac{n}{2} \qquad b_{\text{factor}}(k) \approx \left(\frac{64}{9}\right)^{1/3} k^{1/3}\,(\log k)^{2/3} \]
+    <p style="margin-top:0.6rem;">A \(k\)-bit symmetric key resists exhaustive search at \(2^{k}\). An \(n\)-bit hash resists <em>collisions</em> only at about \(2^{n/2}\), by the birthday bound. And an RSA modulus of \(k\) bits has no known attack near \(2^{k}\) &mdash; the number field sieve is far cheaper, which is why RSA keys must be enormous to reach the same strength as an AES key.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Birthday bound</div>
+    <p>In a space of \(n\)-bit outputs there are \(2^{n}\) values, so after roughly \(\sqrt{2^{n}} = 2^{n/2}\) hashes a collision is likely. This is why a hash used for collision resistance needs an output <em>twice</em> the target strength, and why SHA-256 is quoted as 128-bit collision resistance rather than 256-bit.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Security strength</th><th>Symmetric cipher</th><th>Hash (collision)</th><th>RSA modulus</th><th>ECDSA / ECDH curve</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>80 bits</strong></td><td>3DES (2-key)</td><td>SHA-1 (160-bit)</td><td>1024-bit</td><td>160-bit</td><td>Deprecated</td></tr>
+        <tr><td><strong>112 bits</strong></td><td>AES-128 (3DES 3-key)</td><td>SHA-224</td><td>2048-bit</td><td>224-bit</td><td>Minimum acceptable</td></tr>
+        <tr><td><strong>128 bits</strong></td><td>AES-128</td><td>SHA-256</td><td>3072-bit</td><td>256-bit</td><td>Standard target</td></tr>
+        <tr><td><strong>192 bits</strong></td><td>AES-192</td><td>SHA-384</td><td>7680-bit</td><td>384-bit</td><td>Comfortable margin</td></tr>
+        <tr><td><strong>256 bits</strong></td><td>AES-256</td><td>SHA-512</td><td>15360-bit</td><td>521-bit</td><td>Long-lived data</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Read the table as a set of equivalences, not a ladder.</strong> AES-128, SHA-256 and a 3072-bit RSA modulus are chosen to sit at the same 128-bit strength. Notice the asymmetry: doubling the symmetric key from 128 to 256 bits costs 16 extra key bytes, while matching that jump with RSA costs roughly a five-fold increase in modulus size and an order-of-magnitude slowdown. That is the practical reason elliptic-curve key exchange dominates modern TLS.
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-strength"></div>
+  <script type="application/json" id="ix-m-strength">
+  {
+    "title": "Match each primitive to the security strength it is chosen for",
+    "subtitle": "Read the table above as equivalences. Click a primitive on the left, then its strength on the right.",
+    "pairs": [
+      ["AES-128", "128-bit strength at a 128-bit key"],
+      ["AES-256", "256-bit strength — 32-byte key, no birthday penalty"],
+      ["SHA-256 as a collision-resistant hash", "128-bit strength, because collisions arrive at 2^(n/2)"],
+      ["RSA with a 3072-bit modulus", "128-bit strength — huge modulus, small strength"],
+      ["ECDSA with a 256-bit curve", "128-bit strength at a 32-byte public key"],
+      ["HMAC-SHA-256 with a full-length tag", "Forgery resistance near 256 bits, not 128 — MACs have no birthday bound"]
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">A system claims &ldquo;256-bit security&rdquo; because it uses SHA-256 to detect tampering with a database row. What is wrong with the claim?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="SHA-256 has no known practical preimage or collision break, so the primitive is not the problem. The problem is what property is being claimed from it.">SHA-256 has been practically broken, so the claim overstates the primitive</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. An n-bit hash gives about n/2 bits of collision resistance — roughly 128 bits for SHA-256 — and a bare hash gives no authenticity at all, since anyone who can edit the row can recompute the digest. The deck's point stands: a hash detects change only when compared against a trusted reference." data-bad="">Collision resistance is only about 128 bits, and a bare hash cannot tell you <em>who</em> changed the value</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Truncating the output would lower the strength further, but the claim is wrong even with the full 256-bit output, for the two reasons above.">The output has been truncated to fit the database column, reducing entropy</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist"></div>
+  <script type="application/json" id="ix-m-checklist">
+  {
+    "title": "Order the key-selection checklist",
+    "subtitle": "Rebuild the order in which to choose and justify a key length for a new service.",
+    "steps": [
+      "State the required security strength in bits for the data's lifetime",
+      "Pick the primitive family — symmetric, hash, or asymmetric",
+      "Convert the strength into a key or output size for that family",
+      "Check every protocol component at that strength, not just the cipher",
+      "Set a rotation and deprecation date before the strength decays"
+    ]
+  }
+  </script>
+</section>
+
+<section class="section" id="sec-m-hashing">
+  <h2 class="section-title">Password hashing cost and the verifier</h2>
+  <p class="section-lead">The deck lists Argon2id, scrypt, bcrypt and PBKDF2 as the acceptable password-hashing functions, "configured to be costly". This section makes that phrase quantitative.</p>
+
+  <div class="theorem-box">
+    <h3>4. Work per guess, and what a cost parameter buys</h3>
+    <p>A memory-hard KDF with \(m\) blocks of memory, \(t\) iterations and \(p\) parallel lanes does work proportional to its memory-time product:</p>
+    \[ W \;\propto\; m \cdot t \cdot p \]
+    <p style="margin-top:0.6rem;">For PBKDF2 the analogous quantity is the iteration count alone, \(W \propto c \cdot H(\cdot)\). Time to exhaust a fraction \(f\) of a keyspace of size \(N\):</p>
+    \[ t_{\text{attack}} \;=\; f \cdot N \cdot W, \qquad t_{\text{attack, avg}} \;=\; \frac{N \cdot W}{2} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Doubling \(m\) or \(t\) doubles the defender's login cost <em>and</em> the attacker's per-guess cost. That symmetry is the whole design: the defender pays once per login, the attacker pays once per guess.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Function</th><th>Cost parameters</th><th>Memory-hard?</th><th>Why you would choose it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Argon2id</strong></td><td>memory \(m\), iterations \(t\), parallelism \(p\)</td><td>Yes</td><td>Current recommendation; hybrid data-independent and data-dependent addressing resists both side-channel and GPU attacks</td></tr>
+        <tr><td><strong>scrypt</strong></td><td>\(N\) (cost), \(r\) (block size), \(p\)</td><td>Yes</td><td>Well-established memory-hard alternative, widely deployed</td></tr>
+        <tr><td><strong>bcrypt</strong></td><td>cost factor \(c\), work \(= 2^{c}\)</td><td>Partly (4&nbsp;KiB working set)</td><td>Very mature; every increment of the cost factor doubles the work</td></tr>
+        <tr><td><strong>PBKDF2</strong></td><td>iteration count \(c\)</td><td>No</td><td>Legacy and FIPS-constrained environments only; cheap to accelerate on GPUs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">What the server stores</div>
+    <p>The stored record is the derived verifier <em>plus</em> the salt <em>plus</em> the algorithm parameters. All three are needed at login, because the server must repeat exactly the same computation:</p>
+    \[ v = \mathrm{KDF}(\text{password}, \text{salt}, m, t, p), \qquad \text{login: } \mathrm{KDF}(\text{candidate}, \text{salt}, m, t, p) \stackrel{?}{=} v \]
+    <p style="margin-top:0.6rem;">Missing parameters mean an unverifiable account after a migration. That is a real operational failure mode, not a theoretical one: rotate the parameters and you must re-derive on the next successful login, because the plaintext is not available to re-hash.</p>
+  </div>
+
+  <div class="def-box warning-box">
+    <div class="def-label">What the salt does and does not do</div>
+    <p>A unique per-account salt defeats precomputed tables and stops two users with the same password from sharing a verifier. It does <strong>not</strong> slow a single guess at all, and it does not help if the attacker is targeting one account rather than the whole database. The salt removes a shortcut; the cost parameter sets the price of a direct guess.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A database of 50,000 verifiers leaks. Every row has a 16-byte salt and Argon2id parameters of \(m = 64\ \text{MiB}\), \(t = 3\), \(p = 1\). Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Salts prevent one precomputed table from covering the whole database, but they do not stop an attacker from guessing per row. Each account still falls to a targeted guess if its password is weak.">The salts make the whole database computationally infeasible to attack</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The cost parameters make each guess expensive for the attacker — but also for the defender, and the leaked salt means the attacker can test guesses offline with no rate limit. High-entropy passwords survive; weak ones do not. That is why the deck insists hashing does not make weak passwords strong." data-bad="">Each guess is expensive, but the attack is offline with no rate limit, so weak passwords still fall</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The salt is stored openly by design, and it is not a secret in the threat model. Its purpose is uniqueness and precomputation resistance, not secrecy.">The leak is contained as long as the salts themselves were kept secret</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-authmath">
+  <h2 class="section-title">Factors, false accepts and lockouts</h2>
+  <p class="section-lead">The deck's counting rule &mdash; factors count separately only when each is independently verified &mdash; is a statement about probability, and it is worth being able to write down.</p>
+
+  <div class="theorem-box">
+    <h3>5. Independent factors multiply; dependent factors do not</h3>
+    <p>If factor 1 is defeated with probability \(p_1\) and factor 2 with probability \(p_2\), then for <em>independent</em> factors:</p>
+    \[ p_{\text{bypass}} = p_1 \, p_2 \]
+    <p style="margin-top:0.6rem;">If the two are verified through the same channel &mdash; one phishing page that collects the password and relays the one-time code in real time &mdash; then a single compromise defeats both and the best you can claim is the weaker of the two:</p>
+    \[ p_{\text{bypass}} \approx \max(p_1, p_2) \]
+    <p style="margin-top:0.6rem;">With \(p_1 = p_2 = 0.01\), independence gives \(10^{-4}\) and dependence gives \(10^{-2}\): a hundredfold difference produced purely by how the factors are verified, not by which factors they are.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>6. False accepts, false rejects and the operating point</h3>
+    <p>A biometric or behavioural matcher returns a similarity score, and a threshold turns it into a decision. Two error rates follow, and they move in opposite directions as the threshold changes:</p>
+    \[ \mathrm{FAR}(\tau) = \Pr[\text{accept} \mid \text{impostor}], \qquad \mathrm{FRR}(\tau) = \Pr[\text{reject} \mid \text{genuine}] \]
+    <p style="margin-top:0.6rem;">Tighten the threshold and FAR falls while FRR rises; loosen it and the reverse happens. The two curves cross at the <strong>crossover error rate</strong> (CER), which is a convenient single-number summary of a matcher. Choosing where to sit on the curve is a policy decision about which error is worse for the use case &mdash; unlocking a phone is not the same risk as authorising a payroll change.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Worked example &mdash; lockout as a rate limit</div>
+    <p>An attacker is allowed \(A\) password attempts per account per day against a keyspace of \(N\) uniformly random candidates. Modelling attempts as independent draws without replacement, the probability that at least one attempt succeeds is:</p>
+    \[ p_{\text{success}} = 1 - \left(1 - \frac{1}{N}\right)^{A} \approx \frac{A}{N} \quad \text{for } A \ll N \]
+    <p style="margin-top:0.6rem;">With \(N = 2^{40}\) and \(A = 10\), \(p_{\text{success}} \approx 10 / 1.10\times10^{12} \approx 9.1\times10^{-12}\) per account per day.</p>
+    <p style="margin-top:0.6rem;">Now apply the same \(A = 10\) across \(U = 50{,}000\) accounts &mdash; the pattern the deck calls <em>password spraying</em>, chosen precisely because it stays under per-account lockout. If each account had an independent \(10^{-3}\) chance (a weak password), the expected number of compromised accounts is:</p>
+    \[ \mathbb{E}[\text{compromised}] = U \cdot p_{\text{success}} = 50{,}000 \times 10^{-3} = 50 \ \text{accounts} \]
+    <p style="margin-top:0.6rem;">The lesson the arithmetic teaches: per-account lockout does not bound a horizontal attack. You need rate limiting and anomaly detection that measure attempts across the whole population, which is why the deck pairs lockouts with monitoring rather than treating either as sufficient.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Control</th><th>Quantity it bounds</th><th>Attack it does not stop</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Per-account lockout</td><td>\(A\) attempts against one account</td><td>Password spraying across many accounts</td></tr>
+        <tr><td>Per-source rate limit</td><td>Attempts from one address</td><td>Distributed attempts from many addresses</td></tr>
+        <tr><td>Global anomaly detection</td><td>Attempts across the population</td><td>Slow, low-and-slow targeting of a few accounts</td></tr>
+        <tr><td>MFA / passkey requirement</td><td>Value of a correct password alone</td><td>Real-time phishing of a one-time code; push fatigue</td></tr>
+        <tr><td>Password-hashing cost \(W\)</td><td>Offline guesses per second after a leak</td><td>Guessing a genuinely low-entropy password</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A portal verifies a password and then a TOTP code, both entered into the same page. What is the correct description of the resulting strength?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. Two categories are in play, so this is genuine MFA against a stolen password. But because both are entered into the same channel, a real-time phishing proxy can relay both and the bypass probability collapses to roughly the weaker factor rather than the product." data-bad="">Real MFA for password theft, but not a product of two probabilities if a single phishing page can relay both</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="They are two different categories — knowledge and possession — so this is not the password + PIN case. The weakness is in the verification channel, not the factor categories.">A single factor entered twice, exactly like password plus PIN</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Independence is a property of the verification paths, not of the algorithms. A relay proxy makes them dependent in practice even though TOTP and passwords are unrelated mechanisms.">Fully independent, because TOTP and passwords are unrelated algorithms</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; rating a proposed login policy with the arithmetic.</strong> The proposal: minimum 8 characters, no MFA for students, lockout after 5 failed attempts per account, and a help desk that resets any account on name plus date of birth.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Bound the keyspace.</strong> An 8-character human-chosen password is not \(95^{8}\). If it is a dictionary word with substitutions, the effective keyspace is more like \(10^{4}\)&ndash;\(10^{6}\) candidates. Assume optimistically \(2^{30}\).</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Price the offline attack.</strong> With \(W = 1\ \text{ms}\), the average attack is \(2^{29} \times 10^{-3}\ \text{s} \approx 6.2\ \text{days}\) per account on a single core, and that parallelises trivially. The hashing cost is doing real work, but it cannot rescue a 30-bit secret.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Price the online attack and its workaround.</strong> Five attempts per account gives \(p \approx 5/2^{30} \approx 4.7\times10^{-9}\) per account. Across 50,000 accounts that is \(2.3\times10^{-4}\) expected compromises per day from a single pass &mdash; small, but repeated daily and combined with a leaked verifier it is not the binding constraint.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Find the cheapest path, which is not cryptographic.</strong> Name plus date of birth is not a secret; both are widely knowable. The recovery path therefore has a bypass probability far higher than either the password or the lockout, and by the rule \(p_{\text{bypass}} \approx \max(p_i)\) it sets the security of the whole design.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>State the fix order, justified by the numbers.</strong> (1) Close the recovery path, because it dominates. (2) Raise the entropy floor with a password manager or passphrase, because \(W\) alone cannot fix 30 bits. (3) Add MFA for students, which multiplies rather than adds when the channel is independent. (4) Move monitoring to the population level, since per-account lockout does not bound spraying.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-terms"></div>
+  <script type="application/json" id="ix-m-terms">
+  {
+    "title": "Self-test: the quantities this page defines",
+    "subtitle": "Say the definition and the formula out loud before you flip the card.",
+    "cards": [
+      { "front": "Entropy H", "back": "H = log₂N bits, where N is the size of the set the secret was drawn from. It measures the choice, not the string.", "hint": "Bits" },
+      { "front": "Guesswork", "back": "Average ≈ N/2 = 2^(H−1); worst case = N = 2^H. One bit of entropy is one bit of average security.", "hint": "Work" },
+      { "front": "Security strength b", "back": "The best known attack needs about 2^b operations. A k-bit symmetric key gives b ≈ k; an n-bit hash gives about n/2 for collisions.", "hint": "Strength" },
+      { "front": "KDF work factor W", "back": "W ∝ m·t·p for Argon2, or ∝ c for PBKDF2. Attack time = f·N·W for a fraction f of the keyspace.", "hint": "Cost" },
+      { "front": "FAR and FRR", "back": "False accept rate = P[accept | impostor]; false reject rate = P[reject | genuine]. They trade off against each other through the decision threshold.", "hint": "Biometrics" },
+      { "front": "Bypass probability", "back": "Independent factors multiply (p₁p₂); factors verified through one channel behave like the weaker one, max(p₁, p₂).", "hint": "MFA" },
+      { "front": "Tag length versus hash length", "back": "A MAC has no birthday bound against forgery, so a truncated HMAC-SHA-256 tag of 128 bits still gives about 128-bit forgery resistance — unlike a 256-bit hash used for collisions.", "hint": "HMAC" }
+    ]
+  }
+  </script>
+</section>
+
+<section class="section" id="sec-m-hmac">
+  <h2 class="section-title">HMAC and tag length</h2>
+  <p class="section-lead">Week 6 assumes the Week 5 construction. Two properties are worth having exactly: how HMAC is built, and how many bits of its output you actually need.</p>
+
+  <div class="theorem-box">
+    <h3>7. The HMAC construction</h3>
+    <p>With a hash \(H\), block size \(B\) bytes and a key \(K\) padded to \(B\) bytes:</p>
+    \[ \mathrm{HMAC}(K, M) = H\bigl((K \oplus \mathrm{opad}) \,\|\, H((K \oplus \mathrm{ipad}) \,\|\, M)\bigr) \]
+    <p style="margin-top:0.6rem;">The nested form is what makes HMAC safe with a Merkle&ndash;Damgård hash: the outer hash binds the inner digest to the key again, so the length-extension property of \(H(K \| M)\) cannot be exploited to forge a tag.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>8. How long should a tag be?</h3>
+    <p>For a MAC with an \(n\)-bit output and an \(n\)-bit key, forgery resistance is about:</p>
+    \[ b_{\text{mac}} \approx \min(n,\; n_{\text{key}}) \quad\text{against forgery, versus}\quad b_{\text{coll}} \approx \frac{n}{2} \quad\text{against collisions} \]
+    <p style="margin-top:0.6rem;">This is why a 128-bit truncated HMAC-SHA-256 tag is a sound choice: an attacker forging a tag must find a <em>specific</em> value, not any collision, so there is no birthday advantage and the full 128 bits of work are required. Truncating below about 96 bits is where online forgery attempts start to matter in practice.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Property needed</th><th>Primitive</th><th>Strength from SHA-256</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Detect accidental change</td><td>Hash</td><td>128-bit collision resistance</td><td>Birthday bound halves the exponent</td></tr>
+        <tr><td>Authenticate a message to a shared-key peer</td><td>HMAC</td><td>Up to 256-bit forgery resistance</td><td>No birthday bound against forgery</td></tr>
+        <tr><td>Prove authorship to anyone</td><td>Digital signature</td><td>Set by the key, not the hash</td><td>Verification uses a public key, so the asset is the private key</td></tr>
+        <tr><td>Confidentiality <em>and</em> authenticity together</td><td>AEAD (e.g. AES-GCM, ChaCha20-Poly1305)</td><td>Set by the cipher key</td><td>Encryption and a tag over the ciphertext and associated data in one construction</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>HMAC does not give freshness.</strong> A recorded \((M, T)\) pair still verifies when replayed, because nothing about it is wrong. Replay protection needs a nonce, a timestamp or a sequence number &mdash; the same mechanism that TLS records use, and the reason a captured handshake message cannot simply be re-sent.
+  </div>
+</section>
+
+<section class="section" id="sec-m-tls">
+  <h2 class="section-title">The TLS 1.3 key schedule</h2>
+  <p class="section-lead">The study page walks the handshake message by message. This section states what the messages are for: turning one shared secret into several short-lived keys, each labelled for exactly one purpose.</p>
+
+  <div class="theorem-box">
+    <h3>9. One secret in, several labelled keys out</h3>
+    <p>TLS 1.3 uses HKDF, a two-step extract-then-expand construction. The shared secret is extracted with a salt, then expanded with an <code>info</code> label into each key it needs:</p>
+    \[ \mathrm{PRK} = \mathrm{HMAC}(\text{salt}, \text{IKM}), \qquad \mathrm{OKM} = \mathrm{HKDF\text{-}Expand}(\mathrm{PRK}, \text{info}, L) \]
+    <p style="margin-top:0.6rem;">The schedule produces a separate secret per epoch &mdash; early, handshake, application &mdash; and within each epoch a separate key per direction and per purpose. Two properties follow, and both are examinable:</p>
+    <ul style="padding-left:1.2rem; line-height:1.75; margin-top:0.5rem;">
+      <li><strong>Compartmentalisation.</strong> Compromising one traffic secret does not reveal another, because each is derived under a distinct label rather than sliced out of one long key.</li>
+      <li><strong>Forward secrecy.</strong> Handshake keys are discarded once application keys exist; the ephemeral key exchange means a later compromise of the server's certificate key does not decrypt recorded sessions.</li>
+    </ul>
+  </div>
+
+  <div class="theorem-box">
+    <h3>10. Record protection: AEAD, nonce and sequence number</h3>
+    <p>Each record is sealed with authenticated encryption using a per-record nonce and an implicit sequence number:</p>
+    \[ C = \mathrm{AEAD\text{-}Seal}\bigl(k,\; \mathrm{nonce} \,\|\, \mathrm{seq},\; \text{plaintext},\; \text{AAD}\bigr) \]
+    <p style="margin-top:0.6rem;">Because the sequence number is an input to the tag, a reordered, replayed or truncated record fails verification rather than being silently accepted. This is the practical answer to the replay gap that a bare HMAC leaves open.</p>
+  </div>
+
+  <div class="def-box example-box">
+    <div class="def-label">Worked example &mdash; mapping a Week 6 control onto the schedule</div>
+    <p>&ldquo;Encrypt data in transit, at rest and in use, and manage the keys&rdquo; becomes concrete once you name which key each statement touches.</p>
+    <div class="table-responsive" style="margin-top:0.9rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Control</th><th>Key or secret involved</th><th>Lifetime</th><th>Failure if mishandled</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>TLS in transit</td><td>Ephemeral key-exchange share → handshake and application traffic secrets</td><td>One connection</td><td>Recorded traffic decryptable if the exchange is not ephemeral</td></tr>
+          <tr><td>Certificate trust</td><td>CA private keys and the root trust store</td><td>Years, with rotation</td><td>A compromised intermediate can mint valid certificates for any name</td></tr>
+          <tr><td>Data at rest</td><td>Database, disk or object-storage keys in a managed service or HSM</td><td>Rotated on schedule</td><td>One key exposes every object it wrapped</td></tr>
+          <tr><td>Backup copy</td><td>The same key hierarchy, or an independent one</td><td>Retention period</td><td>A backup in the production account shares the blast radius</td></tr>
+          <tr><td>Password verifiers</td><td>A KDF with salt and stored parameters &mdash; no key at all</td><td>Until password change</td><td>Nothing to steal that would unlock every password at once</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Why does TLS 1.3 derive several separate traffic secrets rather than encrypting everything under one session key?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Performance is not the reason — deriving a few extra keys through HKDF is cheap. The reason is containment: one compromised secret should not expose unrelated traffic.">Because deriving one long key and slicing it would be computationally slower</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Per-epoch, per-direction, per-purpose keys bound the damage of any single compromise, and the labels mean the same input never yields a key that is valid for two different uses. Handshake keys are then discarded, which is what gives the protocol forward secrecy." data-bad="">To compartmentalise: compromising one labelled secret does not reveal the others, and handshake keys can be discarded</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Separate keys do not make the handshake shorter — TLS 1.3 achieves that with a single round trip. Key separation is a containment property.">To shorten the handshake to a single round trip</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; sizing the crypto in one page for a design review.</strong> You are asked to justify every key length and cost parameter in a new student portal. Produce the numbers.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>State the target strength.</strong> Student records with a multi-decade retention requirement point at 128-bit strength as the floor and 192&ndash;256 bits where a long confidentiality lifetime is claimed. Write the number down before choosing anything.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Translate into primitives.</strong> AES-128 or AES-256 for data at rest; SHA-256 or SHA-384 for integrity, remembering that collision resistance is half the output length; a 256-bit elliptic curve or a 3072-bit RSA modulus for signatures and key transport.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Set the KDF cost.</strong> Pick \(W\) so a legitimate login stays under a tolerable latency, then quote the offline attack time for a stated entropy assumption. At \(W = 1\ \text{ms}\), a 40-bit secret is about 17 years of average attack; state that number rather than the word &ldquo;strong&rdquo;.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Check the components that are usually missed.</strong> Certificate chain and trust store, backup encryption with an independent key, log integrity, the session token's signing key, and the recovery path's identity evidence. Each needs a length, an owner and a rotation date.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Write the weaknesses down.</strong> Any component below the target strength, every place a shared secret is stored, and the one path most likely to be attacked &mdash; usually recovery, because it is a human process. A design review that names its own weakest link is worth more than one that claims none exists.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> these are the numbers behind the study page's story &mdash; entropy behind password risk, key sizes behind the encryption that did <em>not</em> fail at Harbour University, KDF cost behind the verifier the attacker stole, and the key schedule behind the TLS tunnel the stolen password travelled through. Then attempt the Quiz Hub and the Flashcards for Week 6.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 6] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

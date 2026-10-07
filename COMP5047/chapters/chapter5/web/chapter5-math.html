@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 5: Digital Fabrication</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 5 foundations for COMP5047: exact definitions of additive, subtractive and forming processes, the notation for enclosure tolerances and kerf, a process-selection procedure and the worked numbers from the Autodesk Fusion tutorial.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 5: Digital Fabrication">
+<meta property="og:description" content="Week 5 foundations for COMP5047: exact definitions of additive, subtractive and forming processes, the notation for enclosure tolerances and kerf, a process-selection procedure and the worked numbers from the Autodesk Fusion tutorial.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter5-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128208;</span>
+    <h2>Week 5 Foundations</h2>
+  </div>
+  <div class="toc-group">Vocabulary</div>
+  <ul>
+    <li><a href="#sec-m-defs" class="toc-link">Definitions that must be exact</a></li>
+    <li><a href="#sec-m-taxonomy" class="toc-link">Taxonomy &amp; notation</a></li>
+  </ul>
+  <div class="toc-group">Models</div>
+  <ul>
+    <li><a href="#sec-m-models" class="toc-link">Tolerance, kerf and cost arithmetic</a></li>
+    <li><a href="#sec-m-select" class="toc-link">Choosing a process</a></li>
+  </ul>
+  <div class="toc-group">Practice</div>
+  <ul>
+    <li><a href="#sec-m-tutorial" class="toc-link">Tutorial numbers &amp; self-test</a></li>
+  </ul>
+  <a href="chapter5-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">COMP5047 &mdash; Week 5 supplement</p>
+  <h1>Foundations: dimensions, tolerances and process choice</h1>
+  <p class="hero-desc">Week 5 is a making week rather than a formula week, so this page does the equivalent job: it pins down the definitions the lecture relies on, builds the taxonomy of fabrication families, gives you compact notation for the arithmetic that actually decides whether a part fits &mdash; tolerance, kerf, layer count and tooling cost &mdash; and ends with the procedure for choosing a process.</p>
+  <div class="chip-list">
+    <span>Definitions verified against the lecture deck</span>
+    <span>Tolerance figures from the Autodesk Fusion tutorial</span>
+    <span>Notation is a revision aid, not lecture notation</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-defs">
+  <h2 class="section-title">Definitions that must be exact</h2>
+  <p class="section-lead">Marks in this unit are lost on definitions more often than on ideas. Write each of these in one sentence, with the consequence included.</p>
+
+  <div class="def-box">
+    <div class="def-label">Digital fabrication</div>
+    <p>A manufacturing process in which <strong>the machine is controlled by a computer</strong>. The design exists as a digital model, and the machine executes instructions derived from that model rather than being guided by hand. It is not a synonym for 3D printing: laser cutters, vinyl cutters, water jets and CNC mills are all digital fabrication.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Additive manufacturing</div>
+    <p>Create an object by <strong>depositing material</strong>. The deck's examples are fused deposition modelling, binder jetting, stereolithography and digital light processing. Consequence: the part is a stack of layers, so layer height sets vertical resolution and overhangs need support structures (in FDM and SLA).</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Subtractive manufacturing</div>
+    <p>Create an object by <strong>removing material from a solid block of material</strong>. The deck's examples are CNC router, mill and lathe, plasma torch, vinyl cutter, laser cutter and water jet. Consequence: material waste, limited by tool reach, but fast and accurate on sheet stock.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Forming</div>
+    <p>Create an object by <strong>pouring, injecting or pressing material into a mould</strong>: injection moulding and resin casting in the deck. Consequence: one master or tool produces many identical parts, so the economics are dominated by tooling cost and production volume.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">&ldquo;Looks like&rdquo; and &ldquo;works like&rdquo;</div>
+    <p>A <strong>looks-like</strong> prototype explores appearance: it evokes the right visual semantics, explores proportions and shape, and enables study of placement in context. A <strong>works-like</strong> prototype explores function and physical behaviour: the mechanism, the feel of the interaction, the weight of the device. They are different instruments for different questions and are rarely the same object.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">CAD, CAM and G-code</div>
+    <p><strong>CAD &mdash; Computer-Aided Design:</strong> producing the digital model, exported as a mesh (the deck lists .stl, .obj, .dae, .x3d, .wrl and .ply). <strong>CAM &mdash; Computer-Aided Manufacturing:</strong> checking and repairing that mesh, slicing it into layers and emitting machine instructions. <strong>G-code</strong> is that instruction stream: the machine-specific output of the CAM stage.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Kerf</div>
+    <p>The width of material a cutting process removes along its path. It is why a laser-cut slot is wider than the line you drew, and why every joint has to be designed from the <em>measured</em> thickness of the stock plus the kerf rather than from the nominal dimension.</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Term</th><th>Must contain</th><th>Common wrong answer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Digital fabrication</td><td>A computer-controlled machine</td><td>&ldquo;3D printing&rdquo; &mdash; that is one family of it</td></tr>
+        <tr><td>Additive manufacturing</td><td>Depositing material to build the part</td><td>Confusing it with the printer model rather than the process family</td></tr>
+        <tr><td>Subtractive manufacturing</td><td>Removing material from a solid block</td><td>Calling laser cutting additive because it is &ldquo;modern&rdquo;</td></tr>
+        <tr><td>Looks-like prototype</td><td>Visual semantics, proportions, placement</td><td>Treating it as a low-quality version of the real thing instead of a different instrument</td></tr>
+        <tr><td>Kerf</td><td>The material removed by the cut</td><td>Confusing kerf with tolerance &mdash; kerf is the process removing material, tolerance is the stock and the machine varying</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which answer to &ldquo;what is digital fabrication?&rdquo; would earn the mark?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct: a manufacturing process where the machine is controlled by a computer, which is why the same CAD model can feed a laser cutter, a mill or a printer." data-bad="">A manufacturing process in which the machine is controlled by a computer</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This names one family of it. The deck's definition covers subtractive and forming processes too, and the same week teaches all three.">The process of making a part by depositing material layer by layer</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This describes the CAD stage, not fabrication. The machine still has to be driven by the model before anything is fabricated.">Designing an object in a 3D modelling program</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-taxonomy">
+  <h2 class="section-title">Taxonomy &amp; notation</h2>
+  <p class="section-lead">Exam questions in this unit usually ask you to place a process or choose one. These are the three axes the Week 5 material gives you for doing that.</p>
+
+  <h3 style="font-size:1.05rem; margin-top:1.25rem;">Axis 1 &mdash; the family (how material is handled)</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Family</th><th>Material operation</th><th>Digital examples</th><th>Analogue ancestor</th><th>Characteristic failure</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Additive</strong></td><td>Deposit</td><td>FDM, SLA, SLS, binder jetting, DLP</td><td>Clay sculpting</td><td>Layer lines, supports, slow for volume</td></tr>
+        <tr><td><strong>Subtractive</strong></td><td>Remove</td><td>CNC router/mill/lathe, plasma, vinyl cutter, laser, water jet</td><td>Carving</td><td>Material waste, tool reach, no undercuts</td></tr>
+        <tr><td><strong>Forming</strong></td><td>Pour / inject / press</td><td>Injection moulding, resin casting</td><td>Casting</td><td>Tooling cost, and every master defect is copied</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 2 &mdash; the prototype's job</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Looks-like</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Evokes the right visual semantics</li>
+        <li>Explores proportions and shape</li>
+        <li>Studies placement in context &mdash; on the charger, in the room, in the hand</li>
+        <li>Typically foam core, cardboard, XPS, colour studies, 3D printed shells</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>Works-like</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Explores the mechanism, e.g. dimming by rotating the lamp on its foot</li>
+        <li>Explores the weight and feel of the device</li>
+        <li>Carries the electronics, so it can be field-tested</li>
+        <li>Typically Arduino, sensors, actuators and a rough enclosure</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="font-size:1.05rem; margin-top:1.5rem;">Axis 3 &mdash; the cost structure</h3>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Process</th><th>Set-up cost</th><th>Marginal cost</th><th>Volume it suits</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hand-cut foam core</td><td>Tools only</td><td>Your time</td><td>One, and only one</td></tr>
+        <tr><td>Laser cutting</td><td>Machine booking and a test cut</td><td>Sheet material</td><td>Small runs of flat parts</td></tr>
+        <tr><td>FDM / SLA / SLS printing</td><td>Machine time and queue</td><td>Filament or resin ($ &rarr; $$$)</td><td>One-offs and complex geometry</td></tr>
+        <tr><td>Resin casting</td><td>A printed, sanded master and a silicone mould</td><td>Resin and hardener</td><td>Small production runs</td></tr>
+        <tr><td>Injection moulding</td><td>High &mdash; metal tooling</td><td>Low per part</td><td>Large volumes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Notation used on this page</div>
+    <p>The lecture is written in prose and illustrated with photographs. The symbols below are a <em>revision aid</em> introduced here so that you can write about the week's quantities compactly; they are not lecture notation and should not be quoted as such.</p>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-notation"></div>
+  <script type="application/json" id="ix-m-notation">
+  {
+    "title": "Match the symbol to what it means",
+    "subtitle": "Click a symbol on the left, then its reading on the right.",
+    "pairs": [
+      ["W(board)", "The measured dimension of the object you are enclosing (for the tutorial, the Arduino Uno)"],
+      ["delta — the tolerance per side", "The error tolerance allowed on each side: 1.00 mm in the Week 5 tutorial"],
+      ["W(in)", "The inside dimension of the enclosure: W(board) + 2 × delta"],
+      ["t — wall thickness", "The tutorial's 2 mm offset from the sketched rectangle"],
+      ["k — kerf", "The width of material the cut removes along its path"],
+      ["h(layer) — layer height", "Vertical resolution: 0.3–0.1 mm for FDM, 0.025–0.01 mm for SLA, 0.1–0.01 mm for SLS"],
+      ["N — layer count", "The number of printed layers: the ceiling of H divided by h(layer)"],
+      ["C(tool) — tooling cost", "The up-front cost paid once; the term that dominates injection moulding economics"]
+    ]
+  }
+  </script>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning</div>
+    <div class="sym-cell">\(W_{board}\)</div><div class="sym-cell">measured width</div><div class="sym-cell">The dimension of the real object, taken with a scale or callipers rather than from a datasheet</div>
+    <div class="sym-cell">\(\delta\)</div><div class="sym-cell">tolerance per side</div><div class="sym-cell">Clearance allowed on each side; the tutorial uses 1.00&nbsp;mm</div>
+    <div class="sym-cell">\(W_{in}\)</div><div class="sym-cell">inside width</div><div class="sym-cell">\(W_{board} + 2\delta\) &mdash; the hole the board has to drop into</div>
+    <div class="sym-cell">\(W_{out}\)</div><div class="sym-cell">outside width</div><div class="sym-cell">\(W_{in} + 2t\) &mdash; the footprint of the finished enclosure</div>
+    <div class="sym-cell">\(t\)</div><div class="sym-cell">wall thickness</div><div class="sym-cell">The tutorial's offset distance: 2&nbsp;mm</div>
+    <div class="sym-cell">\(h_{base}\)</div><div class="sym-cell">base thickness</div><div class="sym-cell">The first extrusion: 2&nbsp;mm in the tutorial</div>
+    <div class="sym-cell">\(h_{wall}\)</div><div class="sym-cell">wall height</div><div class="sym-cell">Must exceed \(h_{base}\); the tutorial adds about 3&nbsp;mm</div>
+    <div class="sym-cell">\(k\)</div><div class="sym-cell">kerf</div><div class="sym-cell">Material removed by the cut; a slot is drawn undersize by \(k\)</div>
+    <div class="sym-cell">\(t_{meas}\)</div><div class="sym-cell">measured thickness</div><div class="sym-cell">The real thickness of the sheet, which is not the nominal one</div>
+    <div class="sym-cell">\(h_{layer}\)</div><div class="sym-cell">layer height</div><div class="sym-cell">Vertical resolution: 0.3&ndash;0.1&nbsp;mm (FDM), 0.025&ndash;0.01&nbsp;mm (SLA), 0.1&ndash;0.01&nbsp;mm (SLS)</div>
+    <div class="sym-cell">\(N\)</div><div class="sym-cell">layer count</div><div class="sym-cell">\(\lceil H / h_{layer} \rceil\) for a part of height \(H\)</div>
+    <div class="sym-cell">\(\phi\)</div><div class="sym-cell">infill fraction</div><div class="sym-cell">How much of the interior is filled rather than hollow</div>
+    <div class="sym-cell">\(C_{tool}\)</div><div class="sym-cell">tooling cost</div><div class="sym-cell">Paid once: silicone mould at the low end, metal injection tooling at the high end</div>
+    <div class="sym-cell">\(c_{part}\)</div><div class="sym-cell">cost per part</div><div class="sym-cell">The marginal cost that dominates once volume is high</div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-models">
+  <h2 class="section-title">Tolerance, kerf and cost arithmetic</h2>
+  <p class="section-lead">Four relationships decide whether a prototype actually goes together and what it costs. Every number below is either from the Week 5 deck or from the Autodesk Fusion tutorial.</p>
+
+  <div class="theorem-box">
+    <h3>1. The enclosure is a tolerance stack</h3>
+    <p>The tutorial measures the Arduino Uno and then adds a deliberate error tolerance of &ldquo;1.00&nbsp;mm each side&rdquo; before sketching. In notation, with \(\delta = 1.00\ \text{mm}\):</p>
+    \[ W_{in} = W_{board} + 2\delta \qquad H_{in} = H_{board} + 2\delta \]
+    <p style="margin-top:0.6rem;">The wall is then created with an offset rather than a second rectangle, and the tutorial uses \(t = 2\ \text{mm}\):</p>
+    \[ W_{out} = W_{in} + 2t = W_{board} + 2\delta + 2t \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Practical consequence: the enclosure is not &ldquo;the board plus a bit&rdquo;. It is a sum of named contributions, and if the board arrives 0.4&nbsp;mm wider than measured, the 1.00&nbsp;mm per side is what absorbs it.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Base and walls are two extrusions with a direction</h3>
+    <p>The base is extruded by \(h_{base} = 2\ \text{mm}\); the walls are extruded from the offset profile by more than that, with \(h_{wall} \ge h_{base} + c\) where the tutorial simply adds about 3&nbsp;mm of clearance. Two rules come with the operation:</p>
+    \[ \text{distance} > 0 \Rightarrow \text{one direction}, \qquad \text{distance} < 0 \Rightarrow \text{the opposite direction} \]
+    <p style="margin-top:0.6rem;">The sign is direction, not size: the wall extrude must be <em>+2</em> and not &minus;2, while the text engraving is deliberately extruded with a negative distance so the cut goes into the model. The operation matters too &mdash; <strong>Join</strong> merges the new extrusion with the existing body so the enclosure prints as one piece, whereas <strong>New Body</strong> would leave two separate overlapping solids; <strong>Cut</strong> removes material, which is what turns text into an engraving.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. Kerf turns a nominal dimension into a cut dimension</h3>
+    <p>A laser removes the kerf \(k\) along every path. To end up with a slot that the sheet actually fits into, you draw the slot undersize by the kerf and add the clearance you want:</p>
+    \[ w_{slot} = t_{meas} - k + c \]
+    <p style="margin-top:0.6rem;">where \(t_{meas}\) is the <em>measured</em> sheet thickness, not the nominal one. Two further numbers from the deck belong in the same breath: every shape must be a <strong>0.01&nbsp;pt single-path outline</strong>, and</p>
+    \[ 0.01\ \text{pt} = 0.01 \times \tfrac{1}{72}\ \text{in} \approx 0.00353\ \text{mm} \approx 3.5\ \mu\text{m} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">So the line weight the cutter follows is three orders of magnitude thinner than the tolerance a 3D printer works to. The imprecision in a laser-cut joint comes from the stock and the kerf, never from the path.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Layer count, material volume and time</h3>
+    <p>A printed part of height \(H\) at layer height \(h_{layer}\) is a stack of \(N\) layers:</p>
+    \[ N = \left\lceil \frac{H}{h_{layer}} \right\rceil \]
+    <p style="margin-top:0.6rem;">With the deck's ranges, a 60&nbsp;mm-tall shell is 200 layers at FDM's finest 0.3&ndash;0.1&nbsp;mm setting, and 2400+ layers at SLA's 0.025&nbsp;mm. Material use is set by the shells plus the infill fraction \(\phi\) of the interior volume:</p>
+    \[ V \approx V_{shells} + \phi\, V_{interior} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Print time tracks \(V\) plus the number of layers, which is why the two cheap levers are a thicker layer and less infill &mdash; and why both levers cost you surface quality and stiffness respectively.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>5. Tooling cost is amortised over the run</h3>
+    <p>The deck gives two cost structures: injection moulding has &ldquo;high upfront costs, low cost per part&rdquo; and is used for large volumes; resin casting is &ldquo;cheap and suitable for small production runs&rdquo;. For a run of \(n\) parts with tooling cost \(C_{tool}\):</p>
+    \[ C(n) = \frac{C_{tool}}{n} + c_{part} \]
+    <p style="margin-top:0.6rem;">The break-even between a cheap-to-tool, expensive-per-part route (resin casting) and an expensive-to-tool, cheap-per-part route (injection moulding) sits where the two curves cross:</p>
+    \[ n^{*} = \frac{C_{tool}^{inj} - C_{tool}^{cast}}{c_{cast} - c_{inj}} \]
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Below \(n^{*}\), the silicone mould wins; above it, the steel tool does. This is why the deck places resin casting <em>between</em> the 3D printed prototype and the production tool in the lifecycle diagram.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>The single design rule behind all five:</strong> decide what a dimension is for before you write it down. A dimension that has to locate two parts is a fit dimension and needs the measured stock plus clearance; a dimension that only has to look right can be nominal. Most failed assemblies in this unit are dimensions that were never classified.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A board measures 68.6&nbsp;mm &times; 53.4&nbsp;mm. Following the tutorial's 1.00&nbsp;mm per side and a 2&nbsp;mm wall, what is the outside footprint of the enclosure?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the inside dimension only: 68.6 + 2 × 1.00 = 70.6 mm. The walls add a further 2 mm on each side.">70.6&nbsp;mm &times; 55.4&nbsp;mm</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Inside = board + 2 × 1.00 mm tolerance; outside = inside + 2 × 2 mm wall, so 70.6 + 4 = 74.6 mm and 55.4 + 4 = 59.4 mm." data-bad="">74.6&nbsp;mm &times; 59.4&nbsp;mm</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That adds the tolerance and the wall on one side only, which would make the enclosure asymmetric. The tolerance and the wall are applied on both sides.">72.6&nbsp;mm &times; 57.4&nbsp;mm</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-select">
+  <h2 class="section-title">Choosing a process</h2>
+  <p class="section-lead">Most Week 5 questions reduce to &ldquo;which process, and why?&rdquo;. Run the brief through these steps in order and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-select-seq"></div>
+  <script type="application/json" id="ix-m-select-seq">
+  {
+    "title": "Order the process-selection procedure",
+    "subtitle": "Rebuild the order in which to interrogate a brief before you name a machine.",
+    "steps": [
+      "State exactly what the prototype must teach you",
+      "Decide whether that makes it a looks-like or a works-like prototype",
+      "Measure the real object and write down every fit dimension with its tolerance",
+      "Reject every process whose material, size or thickness limits exclude the part",
+      "Compare the surviving processes on cost at the quantity you actually need",
+      "Design the joints and test the fit on cheap stock before the final material"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. The question</td><td>Exploration, user testing, communication or validation?</td><td>You start from a machine you want to use</td></tr>
+        <tr><td>2. Fidelity</td><td>Looks-like, works-like, or both in sequence</td><td>You promise one prototype that does both</td></tr>
+        <tr><td>3. Dimensions</td><td>Measured values plus a named tolerance per side</td><td>You use nominal dimensions and no clearance</td></tr>
+        <tr><td>4. Constraints</td><td>Bed size (600 &times; 900&nbsp;mm), thickness (3&nbsp;cm), material safety, print volume</td><td>You design a part the machine cannot make</td></tr>
+        <tr><td>5. Cost at quantity</td><td>Tooling plus cost per part for the real run size</td><td>You quote per-part cost and ignore tooling</td></tr>
+        <tr><td>6. Fit before finish</td><td>Kerf, measured thickness, a test cut in cardboard</td><td>You cut the expensive material first</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team must deliver 300 identical hand-sized shells with a production-quality surface finish, and the client has approved tooling budget. Which route does the deck's cost structure point at?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="SLS gives excellent functional parts and needs no supports, but it is the deck's $$$ option and does not scale to 300 identical shells the way a mould does.">300 SLS prints, because SLS needs no support structures</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Injection moulding takes granular pellets, melts them and injects them at high pressure into a mould: high upfront costs, low cost per part, and it is the process the deck places at the production end of the lifecycle." data-bad="">Injection moulding, because the tooling cost is amortised over a large volume and the cost per part is low</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Resin casting is the deck's small-production-run route — cheap to tool, but it does not compete with injection moulding at 300 parts with a production finish.">Resin casting, because silicone moulds are cheap</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; dimensioning an enclosure and checking that it is manufacturable.</strong> Take a board measured at 68.6&nbsp;&times;&nbsp;53.4&nbsp;mm, \(\delta = 1.00\)&nbsp;mm per side, wall \(t = 2\)&nbsp;mm, base 2&nbsp;mm, wall height 5&nbsp;mm.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Inside dimensions.</strong> \(W_{in} = 68.6 + 2(1.00) = 70.6\)&nbsp;mm and \(H_{in} = 53.4 + 2(1.00) = 55.4\)&nbsp;mm. These are the sketch dimensions of the inner rectangle.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Outside dimensions.</strong> Offset the rectangle by \(t = 2\)&nbsp;mm: \(W_{out} = 70.6 + 4 = 74.6\)&nbsp;mm, \(H_{out} = 55.4 + 4 = 59.4\)&nbsp;mm. If the offset appears outside the blue line, flip its direction before accepting it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Height.</strong> Base extrusion \(h_{base} = 2\)&nbsp;mm, wall extrusion \(h_{wall} = 5\)&nbsp;mm with the <em>Join</em> operation, so the total is one body 5&nbsp;mm tall with a 2&nbsp;mm floor &mdash; 3&nbsp;mm of internal depth above the base, which is exactly the clearance the tutorial adds over the 2&nbsp;mm base.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Layers.</strong> At \(h_{layer} = 0.2\)&nbsp;mm, \(N = \lceil 5 / 0.2 \rceil = 25\) layers. At SLA's 0.025&nbsp;mm the same part is 200 layers, which is the resolution you are paying the $$ for.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Manufacturability check.</strong> 74.6&nbsp;&times;&nbsp;59.4&nbsp;&times;&nbsp;5&nbsp;mm fits the 600&nbsp;&times;&nbsp;900&nbsp;mm laser bed many times over and is far below the 3&nbsp;cm thickness limit &mdash; so if the enclosure is to be laser cut from sheet, the constraint is not the bed but the joinery: the walls and base must be finger-jointed, and the joint must be cut from the measured sheet thickness plus kerf. If it is to be printed, the constraint is overhangs and supports.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; a kerf and fit calculation, and what to do when it fails.</strong> Nominal 3&nbsp;mm acrylic, measured at 2.85&nbsp;mm; the laser kerf measures 0.2&nbsp;mm; you want a hand-tight finger joint with 0.1&nbsp;mm of clearance.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Start from the measured thickness, not the nominal one.</strong> \(t_{meas} = 2.85\)&nbsp;mm. Designing to 3.00&nbsp;mm produces a slot 0.15&nbsp;mm too wide before the kerf is even considered.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Subtract the kerf and add the clearance.</strong> \(w_{slot} = t_{meas} - k + c = 2.85 - 0.2 + 0.1 = 2.75\)&nbsp;mm. A 2.75&nbsp;mm drawn slot comes out at 2.95&nbsp;mm after the beam has removed its 0.2&nbsp;mm, which is 0.1&nbsp;mm looser than the sheet &mdash; a hand-tight fit.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Test the assumption before trusting it.</strong> Cut a comb of slots at 2.65, 2.75 and 2.85&nbsp;mm in <em>cardboard or plywood</em>, as the deck instructs, and measure which one fits. Kerf varies with material, thickness, power and focus, so the arithmetic gives you the starting point, not the answer.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Check the file, not just the numbers.</strong> Every shape must be a 0.01&nbsp;pt single-path outline; press Ctrl+Y and if a shape does not appear it will not cut. A correct dimension on a path the cutter ignores is still a failed part.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Dry-fit before adhesives.</strong> Interior cuts, then exterior cuts, then assemble with no glue. Acrylic cement is flagged &ldquo;caution!&rdquo; in the deck: it is a solvent with no second chance, so the dry fit is where you discover that the slot is 0.1&nbsp;mm wrong.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-tutorial">
+  <h2 class="section-title">Tutorial numbers &amp; self-test</h2>
+  <p class="section-lead">The Autodesk Fusion tutorial is the week's worked procedure. These are the numbers and settings it commits to, and the checks that catch the common mistakes.</p>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Sketch</h3>
+      <p>Create sketch &rarr; choose the bottom plane &rarr; two-point rectangle from the axis intersection (<strong>R</strong>) &rarr; type dimensions and <strong>Tab</strong> between them &rarr; edit later with Sketch Dimension (<strong>D</strong>).</p>
+    </div>
+    <div class="glance-card">
+      <h3>Offset</h3>
+      <p>Offset (<strong>O</strong>) with a value of <strong>2</strong> builds the wall boundary; if the red line lands outside the blue rectangle, press <strong>Flip</strong>. Then Finish Sketch and Orbit to check the profile in 3D.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Extrude</h3>
+      <p>Base: inner profile, distance <strong>+2&nbsp;mm</strong>. Walls: outer offset profile, distance greater than the base (about <strong>+3&nbsp;mm</strong>) with the <strong>Join</strong> operation, never New Body.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Text and export</h3>
+      <p>New sketch on the base &rarr; Text tool &rarr; extrude with a <strong>negative</strong> distance and the <strong>Cut</strong> operation. Then right-click Body1 &rarr; Save as Mesh &rarr; <strong>STL (Binary)</strong>, which is preferred over ASCII because the file is smaller.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Check</th><th>Where it fails</th><th>The fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Is the sketch visible again?</td><td>The sketch disappears after the first extrude</td><td>Browser &rarr; Sketches &rarr; click the eye next to Sketch1</td></tr>
+        <tr><td>Is the extrusion signed correctly?</td><td>A wall that goes into the base instead of up from it</td><td>Positive distance for the wall, negative only for the text cut</td></tr>
+        <tr><td>Is the operation correct?</td><td>Two overlapping bodies instead of one enclosure</td><td>Join for the walls, Cut for the text</td></tr>
+        <tr><td>Is the text tool available?</td><td>No Text option in the Create menu</td><td>Create another sketch on the base first &mdash; Text appears only inside a sketch</td></tr>
+        <tr><td>Is the mesh clean?</td><td>Slicer repairs, holes or missing walls in the print</td><td>Look for boundary edges, intersecting faces and non-manifold edges before slicing</td></tr>
+        <tr><td>Is the print job realistic?</td><td>A print that cannot finish inside the booking</td><td>Slice and read the time estimate in preview; it can run from an hour to days</td></tr>
+        <tr><td>Can you undo a design decision?</td><td>Rebuilding the model from scratch after a change</td><td>Use the Design History timeline: right-click a feature to Edit Sketch or Edit Feature, and remember that a child cannot be dragged before its parent</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-m-deck"></div>
+  <script type="application/json" id="ix-m-deck">
+  {
+    "title": "Self-test: numbers and their meaning",
+    "subtitle": "Say the number and what it controls before you flip the card.",
+    "cards": [
+      { "front": "1.00 mm", "back": "The error tolerance per side added to the measured board dimensions in the tutorial — the enclosure is the board plus 2 × 1.00 mm.", "hint": "Tolerance" },
+      { "front": "2 mm", "back": "Both the offset used to create the wall boundary and the extrusion distance of the base.", "hint": "Offset and base" },
+      { "front": "≈ 3 mm", "back": "The extra height added to the wall extrusion so that the wall is taller than the 2 mm base.", "hint": "Wall height" },
+      { "front": "0.3–0.1 mm", "back": "FDM layer height: the coarsest of the three printer families, which is why layer lines are visible.", "hint": "FDM resolution" },
+      { "front": "0.025–0.01 mm", "back": "SLA layer height — an order of magnitude finer than FDM, at twice the cost index.", "hint": "SLA resolution" },
+      { "front": "0.01 pt", "back": "The single-path outline weight every laser-cut shape must have: about 0.0035 mm, or 3.5 µm. Check with Ctrl+Y.", "hint": "Laser paths" },
+      { "front": "600 × 900 mm", "back": "The bed of the Epilog Fusion M2 named in the deck — the size limit that decides how a design is split into parts.", "hint": "Laser bed" },
+      { "front": "3 cm", "back": "The example maximum material thickness for the laser cutter in the deck.", "hint": "Thickness limit" },
+      { "front": "$ / $$ / $$$", "back": "The deck's relative cost for FDM, SLA and SLS respectively.", "hint": "Cost index" },
+      { "front": "Six steps", "back": "Resin casting: master (printed, sanded, polished) → mould box → vent and fill port → silicone mould → fill with resin and cure → post-processing.", "hint": "Casting workflow" }
+    ]
+  }
+  </script>
+
+  <div class="quick-check">
+    <div class="qc-question">Which statement about the tutorial's design history is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="A child feature is built from an earlier feature, so it cannot be dragged before its parent — the tutorial states this limitation explicitly.">Any feature can be dragged anywhere in the timeline, including before its parent</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The design history at the bottom of the screen lists every operation, lets you right-click to Edit Sketch or Edit Feature, and the history marker can be dragged to temporarily hide features — but a child cannot be moved before its parent." data-bad="">Features can be edited or reordered, but a child cannot be dragged before its parent, and the history marker can temporarily hide features</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The history is exactly where you edit previous sketches and features: right-click the relevant icon and choose Edit Sketch or Edit Feature.">The design history is read-only and exists only to show which operations were used</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A print fails overnight and the booking system limits you to two bookings per piece of equipment per week. What does the tutorial's guidance imply for your schedule?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The tutorial says the opposite: prints can fail and it can take multiple bookings to get a result, so you should allow enough time when working to a deadline.">One booking is always enough if the model is repaired before slicing</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Prints can fail, so it can take multiple bookings to obtain the desired result; with bookings limited to two per equipment per week and required at least 24 hours in advance, the model has to be started early and the schedule has to include a retry." data-bad="">You should start early and budget for more than one attempt, because failures are normal and bookings are limited</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Overnight printing is only permissible when you have booked in as the final print of the day, and all prints must be started before 4 pm on weekdays — it is not a general way to bypass the limits.">Book the final slot of the day and print overnight whenever a part is large</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; selecting a process for three briefs.</strong> Answer each in two sentences with the checklist from this page.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>&ldquo;I need to feel ten different grip shapes tomorrow.&rdquo;</strong> The question is about form in the hand, so it is a looks-like study. Foam core or polyurethane foam, cut by hand &mdash; the Duo case study's route &mdash; because ten variants cost an afternoon and no machine booking. Failure mode: foam cannot tell you how the electronics will fit.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>&ldquo;I need a working sensor node I can leave in a garden for a month.&rdquo;</strong> This is a works-like prototype that also has to survive weather, so the question is functionality plus enclosure. FDM in a suitable filament for the housing, because 3D printing is the most versatile route for a one-off enclosure with cable exits, and the electronics are the point. Post-process and seal the part; layer lines are pathways for water.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>&ldquo;I need 200 identical translucent covers for a user study.&rdquo;</strong> Quantity plus a finish printing cannot reach. Resin casting from a printed, sanded master: cheap to tool with a silicone mould and suitable for small production runs &mdash; and if the study grows into a product, the same master feeds an injection mould, where the tooling cost is finally amortised.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;The process follows from the question and the quantity: a looks-like grip study is hand-cut foam because it is cheap and fast; a one-off functional enclosure is printed because printing is the most versatile route; 200 identical covers are cast because tooling is affordable at that volume and the finish is unreachable by printing.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> definitions and the three axes on this page, the fabrication families and the CAD&nbsp;&rarr;&nbsp;CAM pipeline on the study guide, then the Quiz Hub and Flashcards for retrieval practice.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initCOMP5047ChapterUI) return;
+    try {
+      window.initCOMP5047ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[COMP5047 chapter 5] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

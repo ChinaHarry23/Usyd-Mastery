@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 4: Cryptography Basics Part 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter4-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 4 foundations for INFO5995: the algebra of XOR and the one-time pad, modular arithmetic and search spaces, key-size and entropy arithmetic, the AES round as a diffusion argument, and the birthday bound behind hash collisions.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 4: Cryptography Basics Part 1">
+<meta property="og:description" content="Week 4 foundations for INFO5995: the algebra of XOR and the one-time pad, modular arithmetic and search spaces, key-size and entropy arithmetic, the AES round as a diffusion argument, and the birthday bound behind hash collisions.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter4-study.html">&larr; Study guide</a>
+  <span style="color:rgba(var(--sidebar-text-rgb),0.35);">|</span>
+  <a href="../../../index.html">&larr; Home</a>
+  <span class="page-title-bar">Foundations</span>
+</div>
+
+<nav class="toc-sidebar">
+  <a href="../../../index.html" class="home-link">&larr; Course Home</a>
+  <div class="sidebar-brand">
+    <span class="brand-icon">&#128272;</span>
+    <h2>Week 4 Foundations</h2>
+  </div>
+  <div class="toc-group">Confidentiality by the numbers</div>
+  <ul>
+    <li><a href="#sec-m-xor" class="toc-link">XOR, the one-time pad and perfect secrecy</a></li>
+    <li><a href="#sec-m-modular" class="toc-link">Modular arithmetic and search spaces</a></li>
+    <li><a href="#sec-m-keysize" class="toc-link">Key length, entropy and security levels</a></li>
+  </ul>
+  <div class="toc-group">Inside the primitives</div>
+  <ul>
+    <li><a href="#sec-m-aes" class="toc-link">The AES round as a diffusion argument</a></li>
+    <li><a href="#sec-m-hash" class="toc-link">Hash properties and the birthday bound</a></li>
+  </ul>
+  <div class="toc-group">Exam technique</div>
+  <ul>
+    <li><a href="#sec-m-checklist" class="toc-link">Construct-selection checklist</a></li>
+  </ul>
+  <a href="chapter4-study.html" class="back-to-study">&larr; Back to study guide</a>
+</nav>
+
+<div class="math-content" id="mainContent">
+
+<section class="section math-hero" id="sec-m-hero">
+  <p class="hero-tag">INFO5995 &mdash; Week 4 supplement</p>
+  <h1>Foundations: the arithmetic behind Week 4's confidentiality</h1>
+  <p class="hero-desc">Week 4 is the most quantitative week of the unit: a cipher is a function, key strength is a number of bits, and every failure mode has a formula behind it. This page writes those formulas down, works them on the deck's own numbers, and ends with the checklist that turns &ldquo;use AES&rdquo; into a defensible construction.</p>
+  <div class="chip-list">
+    <span>Every formula derived from the Week 4 deck</span>
+    <span>KaTeX: \(C = M \oplus K\), \(2^{n}\), \(2^{n/2}\)</span>
+    <span>Worked arithmetic for key sizes and entropy</span>
+    <span>Checklist for choosing a construction</span>
+  </div>
+</section>
+
+<section class="section" id="sec-m-xor">
+  <h2 class="section-title">XOR, the One-Time Pad and Perfect Secrecy</h2>
+  <p class="section-lead">Everything the one-time pad can do follows from four properties of the XOR operation. Nothing else in this week's confidentiality material is as cheap to prove or as easy to get wrong.</p>
+
+  <div class="theorem-box">
+    <h3>1. XOR is its own inverse</h3>
+    <p>Bitwise exclusive-OR, written \(\oplus\), returns 1 exactly when its two inputs differ. The identity that makes the one-time pad work is that any value XORed with itself cancels:</p>
+    \[ x \oplus x = 0, \qquad x \oplus 0 = x \]
+    <p style="margin-top:0.6rem;">Therefore encryption and decryption are the <em>same</em> operation applied with the same key:</p>
+    \[ C = M \oplus K \qquad\text{and}\qquad C \oplus K = (M \oplus K) \oplus K = M \]
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The ciphertext of a one-time pad is independent of the plaintext</h3>
+    <p>Fix a ciphertext value \(c\) and a candidate message \(m\). There is exactly one key that produces \(c\) from \(m\), namely \(k = m \oplus c\). If \(K\) is uniform over \(\{0,1\}^{n}\), then</p>
+    \[ \Pr[C = c \mid M = m] = \Pr[K = m \oplus c] = 2^{-n} \]
+    <p style="margin-top:0.6rem;">which does not depend on \(m\) at all. By Bayes' rule the posterior equals the prior, \(\Pr[M = m \mid C = c] = \Pr[M = m]\): the ciphertext gives the attacker <em>no</em> information about the message. That is perfect secrecy, and it is why the deck says the ciphertext reveals nothing when all four conditions hold.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>3. The four conditions are the proof's assumptions</h3>
+    <p>Drop any one and the argument above fails. The table states which term of the derivation each condition protects.</p>
+    <div class="table-responsive" style="margin-top:0.6rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Condition</th><th>Formal statement</th><th>What breaks without it</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Truly random</strong></td><td>\(K\) uniform on \(\{0,1\}^{n}\)</td><td>\(\Pr[K = k]\) is not \(2^{-n}\), so the posterior no longer equals the prior</td></tr>
+          <tr><td><strong>Same length</strong></td><td>\(|K| = |M| = n\) bits</td><td>A short key must repeat, and repetition is reuse</td></tr>
+          <tr><td><strong>Kept secret</strong></td><td>Only sender and receiver know \(K\)</td><td>The attacker can compute \(M = C \oplus K\) directly</td></tr>
+          <tr><td><strong>Never reused</strong></td><td>\(K_i \neq K_j\) for \(i \neq j\)</td><td>The key cancels out of \(C_1 \oplus C_2\)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. Key reuse collapses the secrecy to \(M_1 \oplus M_2\)</h3>
+    <p>Encrypt two messages with the same key and XOR the ciphertexts:</p>
+    \[ C_1 \oplus C_2 = (M_1 \oplus K) \oplus (M_2 \oplus K) = M_1 \oplus M_2 \]
+    <p style="margin-top:0.6rem;">The key has vanished. What remains is the XOR of two plaintexts &mdash; a classical cryptogram that falls to frequency analysis and crib dragging, because English text XORed with English text leaks letter-position structure. <strong>Key reuse destroys perfect secrecy</strong>, and this is the identity to quote whenever an exam question asks why the one-time pad is impractical.</p>
+  </div>
+
+  <div class="code-block">
+WORKED XOR — the deck's eight-bit example
+
+M            1 0 1 1 0 0 1 0
+K            0 1 0 1 1 0 0 1
+             ---------------  XOR
+C            1 1 1 0 1 0 1 1
+
+CHECK:  C &oplus; K  =  1 1 1 0 1 0 1 1
+                    &oplus; 0 1 0 1 1 0 0 1
+                    =  1 0 1 1 0 0 1 0  =  M   &#10003;
+
+KEY LENGTH = MESSAGE LENGTH: a 1 GB message needs a fresh 1 GB key.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Two 8-bit messages are encrypted with the same one-time pad, giving \(C_1\) and \(C_2\). An attacker computes \(C_1 \oplus C_2\) and recognises readable English fragments. What did the attacker actually recover?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is the mistake the algebra forbids. The key is present in both ciphertexts, so XORing them cancels it — the attacker learns nothing about K and does not need it.">The key K, because both ciphertexts use it</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. C₁ ⊕ C₂ = (M₁ ⊕ K) ⊕ (M₂ ⊕ K) = M₁ ⊕ M₂. The key cancels, so the attacker holds the XOR of the two plaintexts, which is enough to separate them with language statistics. This is why the one-time pad's “never reused” condition is absolute." data-bad="">The XOR of the two plaintexts, \(M_1 \oplus M_2\) — the key cancels out of the difference</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Perfect secrecy fails at the moment of reuse, not gradually. A single reuse already yields M₁ ⊕ M₂, which is a solvable cryptogram.">Half of each message, with the remainder requiring a second reuse</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-modular">
+  <h2 class="section-title">Modular Arithmetic and Search Spaces</h2>
+  <p class="section-lead">Symmetric ciphers hide the message with the key. Public-key cryptography, which arrives in Week 5, hides the <em>key</em> behind a hard mathematical problem instead &mdash; and that problem is stated in modular arithmetic. The deck plants the seed with Diffie&ndash;Hellman's one-way gap, so it belongs on this page as a preview.</p>
+
+  <div class="def-box">
+    <div class="def-label">Notation</div>
+    <p>\(a \bmod n\) is the remainder of \(a\) on division by \(n\), always in \(\{0, 1, \dots, n-1\}\). The set of remainders is written \(\mathbb{Z}_n\). Two integers are <strong>congruent</strong> modulo \(n\), written \(a \equiv b \pmod{n}\), when \(n\) divides \(a - b\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>Modular exponentiation is efficient in one direction</h3>
+    <p>Diffie&ndash;Hellman works in \(\mathbb{Z}_p^{*}\) for a large prime \(p\) and a generator \(g\). Each side picks a private exponent and publishes the corresponding value:</p>
+    \[ y = g^{x} \bmod p \]
+    <p style="margin-top:0.6rem;"><strong>Easy forward.</strong> Given \(g\), \(p\) and \(x\), computing \(y\) costs about \(\log_2 x\) modular squarings and multiplications by repeated squaring &mdash; a few hundred operations for a 256-bit exponent, not \(2^{256}\).</p>
+    <p><strong>Hard backward.</strong> Given \(g\), \(p\) and \(y\), recovering \(x\) is the discrete-logarithm problem, for which no efficient classical method is known for suitable large parameters. Publishing \(y\) therefore does not reveal \(x\), and this one-way gap is what makes key agreement possible.</p>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why this is a preview, not this week's material.</strong> Week 4 needs only the <em>shape</em> of the argument: a published public value plus a hidden private value. The full construction, the man-in-the-middle substitution attack and the countermeasure &mdash; binding the public values to a verified identity &mdash; are Week 5, and the deck introduces them in the same section.
+  </div>
+
+  <div class="theorem-box">
+    <h3>Search space is exponentiation, not multiplication</h3>
+    <p>The size of the key space grows exponentially in the key length, which is why adding bits to a key is so much more effective than lengthening a password:</p>
+    \[ \bigl|\{0,1\}^{n}\bigr| = 2^{n} \]
+    <p style="margin-top:0.6rem;">The deck's comparison of a 4-bit key with a 128-bit key is a comparison of \(2^{4} = 16\) with \(2^{128} \approx 3.4 \times 10^{38}\). The useful identity for mental arithmetic is the doubling rule:</p>
+    \[ 2^{n+1} = 2 \cdot 2^{n} \qquad\text{and}\qquad 2^{10} \approx 10^{3} \]
+    <p style="margin-top:0.6rem;">So each extra key bit doubles the work for a brute-force attacker, and every ten bits multiplies it by roughly a thousand. A 56-bit key (DES) is \(2^{56} \approx 7.2 \times 10^{16}\) candidates; a 112-bit effective key (3DES) is \(2^{112} \approx 5.2 \times 10^{33}\) &mdash; about \(2^{56}\) times larger.</p>
+  </div>
+
+  <div class="symbol-grid">
+    <div class="sym-header">Symbol</div><div class="sym-header">Reads as</div><div class="sym-header">Meaning in Week 4</div>
+    <div class="sym-cell">\(M\)</div><div class="sym-cell">message</div><div class="sym-cell">The plaintext, in bits or in 128-bit blocks</div>
+    <div class="sym-cell">\(C\)</div><div class="sym-cell">ciphertext</div><div class="sym-cell">The output of encryption; safe to publish</div>
+    <div class="sym-cell">\(K\)</div><div class="sym-cell">key</div><div class="sym-cell">The shared secret; the only thing Kerckhoffs's principle protects</div>
+    <div class="sym-cell">\(\mathrm{Enc}(K, M)\)</div><div class="sym-cell">encryption</div><div class="sym-cell">The public algorithm applied under K; \(\mathrm{Dec}(K, C) = M\)</div>
+    <div class="sym-cell">\(\oplus\)</div><div class="sym-cell">XOR</div><div class="sym-cell">Bitwise addition without carry; its own inverse</div>
+    <div class="sym-cell">\(n\)</div><div class="sym-cell">key length in bits</div><div class="sym-cell">Sets the maximum search space \(2^{n}\)</div>
+    <div class="sym-cell">\(H(m)\)</div><div class="sym-cell">hash</div><div class="sym-cell">Fixed-length digest of an arbitrary-length message</div>
+    <div class="sym-cell">\(N\)</div><div class="sym-cell">nonce</div><div class="sym-cell">Public, unique per encryption under one AEAD key; never secret, never repeated</div>
+    <div class="sym-cell">\(T\)</div><div class="sym-cell">authentication tag</div><div class="sym-cell">The AEAD output that must verify before plaintext is released</div>
+    <div class="sym-cell">\(\mathbb{Z}_{p}^{*}\)</div><div class="sym-cell">multiplicative group mod p</div><div class="sym-cell">Where Diffie&ndash;Hellman computes \(g^{x} \bmod p\)</div>
+    <div class="sym-cell">\(g^{ab} \bmod p\)</div><div class="sym-cell">shared secret</div><div class="sym-cell">Both sides reach the same value from different exponents</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A protocol is upgraded from a 64-bit session key to a 72-bit session key. By what factor does the brute-force search space grow?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the additive view, and it is the classic error. Search space is 2^n, not n, so adding bits multiplies the work rather than adding to it.">By a factor of 8, because 8 bits were added</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. 2^72 / 2^64 = 2^8 = 256. Search space grows exponentially in key length, which is why each added bit doubles the attacker's work and ten added bits multiply it by about a thousand." data-bad="">By a factor of \(2^{8} = 256\)</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="The exponential identity works in your favour here. Going from n to n+8 bits multiplies the space by 2^8; you do not need the absolute value of 2^72 to answer.">It cannot be determined without computing \(2^{72}\) exactly</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-keysize">
+  <h2 class="section-title">Key Length, Entropy and Security Levels</h2>
+  <p class="section-lead">Two numbers are constantly confused. Key <em>length</em> is how many bits the field occupies; <em>entropy</em> is how many bits an attacker actually has to guess. Only the second one measures strength.</p>
+
+  <div class="theorem-box">
+    <h3>1. Effective work is bounded by entropy, not by field width</h3>
+    <p>Let \(H\) be the Shannon entropy of the key-generation process, in bits, and \(n\) the number of bits in the key field. Then</p>
+    \[ W \;\le\; 2^{H} \;\le\; 2^{n} \]
+    <p style="margin-top:0.6rem;">A perfectly uniform \(n\)-bit key has \(H = n\) and the two bounds meet. A key derived from a memorable phrase has \(H \ll n\): the deck's <code>INFO5995-INFO5995!</code> occupies 18 characters but is generated by a guessable rule, so if only about 16 bits vary, \(W \le 2^{16} = 65{,}536\) &mdash; even inside a 128-bit field. <strong>LONG &ne; STRONG.</strong></p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. Estimating the entropy of a passphrase</h3>
+    <p>For a phrase drawn from a known structure, entropy is (number of free choices) &times; (bits per choice). Approximating a common English word as one of about \(2^{11}\) plausible words and a random digit as \(2^{3.3}\):</p>
+    \[ H \;\approx\; 11 \cdot w \;+\; 3.3 \cdot d \;+\; 5 \cdot s \]
+    <p style="margin-top:0.6rem;">where \(w\) is the number of independently chosen words, \(d\) the number of random digits and \(s\) the number of random symbols. Three well-chosen words and two symbols gives \(33 + 10 \approx 43\) bits &mdash; respectable for a password, hopeless for a cipher key. Cipher keys are generated, never composed: use the operating system CSPRNG, which the deck names as the source in the lifecycle's first stage.</p>
+  </div>
+
+  <div id="ix-birthday"></div>
+
+  <div class="theorem-box">
+    <h3>3. Key sizes are not comparable across families</h3>
+    <p>&ldquo;Bigger is stronger&rdquo; only holds within one family. A 256-bit RSA modulus is trivially factorable; a 256-bit AES key is not attackable. The comparison is made at a stated <strong>security level</strong> &mdash; the classical work factor of the best known attack &mdash; not at the bit length of the key.</p>
+    <div class="table-responsive" style="margin-top:0.6rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Security level</th><th>Symmetric</th><th>Hash digest (collision)</th><th>RSA / DH modulus</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>\(\approx 2^{80}\)</td><td>&mdash;</td><td>&mdash;</td><td>1024-bit &mdash; historical only</td></tr>
+          <tr><td>\(\approx 2^{112}\)</td><td>3DES (2-key)</td><td>&mdash;</td><td>2048-bit &mdash; minimum in current guidance</td></tr>
+          <tr><td>\(\approx 2^{128}\)</td><td>AES-128</td><td>SHA-256 (birthday gives \(2^{128}\))</td><td>3072-bit</td></tr>
+          <tr><td>\(\approx 2^{192}\)</td><td>AES-192</td><td>SHA-384</td><td>7680-bit</td></tr>
+          <tr><td>\(\approx 2^{256}\)</td><td>AES-256</td><td>SHA-512</td><td>15360-bit</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.6rem; color:var(--text-muted);">Read the table as an engineering aid, not as lecture content: the deck's own worked numbers are \(2^{4} = 16\) and \(2^{128}\), and its point is that a 128-bit symmetric key and a 3072-bit RSA key sit at the same security level. Quote the levels, not the raw lengths, when you compare families.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. The lifecycle stages as a coverage checklist</h3>
+    <p>Write the five stages as a product of indicators, each of which must be 1 for the key to survive:</p>
+    \[ S_{\text{key}} = G \cdot St \cdot U \cdot R \cdot D \]
+    <p style="margin-top:0.6rem;">Generate with a CSPRNG, store in a keystore or HSM, use with least exposure, rotate or revoke on policy and on suspicion, destroy every active and backup copy. A zero anywhere makes the product zero, exactly as with grounded innovation on the Week 1 foundations page: a perfectly generated key that is written to a log has no security at all.</p>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A service generates its AES-256 key as the SHA-256 digest of the string <code>"correct horse battery staple"</code>. Which statement is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The field is 256 bits, but H is the guessing entropy of the phrase, so W ≤ 2^H ≪ 2^256. A SHA-256 digest of a low-entropy input is still a low-entropy key. The fix is the operating system CSPRNG, which is the deck's first lifecycle stage." data-bad="">It is much weaker than 256-bit AES should be, because the entropy of the input phrase is far below 256 bits</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="SHA-256 is not broken and its digest really is 256 bits wide. The problem is the entropy of the input, not the hash function — the same construction over a CSPRNG output would be fine.">It is weak because SHA-256 is no longer considered collision resistant</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Length is not entropy. Deriving the key from a longer phrase with the same guessable structure does not raise H proportionally; only genuinely random choices do.">It is secure because a longer passphrase always produces a stronger key</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A design review compares two proposals: (A) AES-128 in GCM mode with a fresh nonce per message, and (B) AES-256 in ECB mode with a fixed nonce. Which is the better choice, and why?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This is the “bigger numbers win” error. ECB encrypts each block independently, so repeated plaintext blocks produce repeated ciphertext blocks regardless of key length, and there is no integrity at all.">Proposal B, because a 256-bit key is stronger than a 128-bit key</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Within one family, AES-128 already sits at the 128-bit security level, which no classical attack threatens — so the extra bits in B buy nothing, while ECB leaks repeated plaintext patterns and provides no authentication. A also uses a fresh nonce per message, which is what GCM requires. The construction decides the guarantee; the key length only sets the ceiling." data-bad="">Proposal A: AES-128 already reaches the 128-bit security level, while ECB leaks patterns and adds no integrity, and a fixed nonce breaks the AEAD requirement</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Nonce secrecy is not the requirement. A nonce is public; the requirement is that it never repeats under the same AEAD key, which proposal B violates by fixing it.">The two are equivalent, because both use AES and both keep the nonce secret</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-aes">
+  <h2 class="section-title">The AES Round as a Diffusion Argument</h2>
+  <p class="section-lead">AES's rounds are not decoration. Each step exists to defeat one specific kind of attack, and the arithmetic of the round tells you which.</p>
+
+  <div class="theorem-box">
+    <h3>The state, the S-box and the round key</h3>
+    <p>The 128-bit block is arranged as a 4&times;4 matrix of bytes, \(s_{r,c}\) for row \(r\) and column \(c\), filled column by column. Each round applies four operations in a fixed order:</p>
+    \[ \text{SubBytes} \;\to\; \text{ShiftRows} \;\to\; \text{MixColumns} \;\to\; \text{AddRoundKey} \]
+    <p style="margin-top:0.6rem;"><strong>SubBytes</strong> replaces each byte with its entry in a fixed 16&times;16 S-box. Formally it is the affine transformation of the multiplicative inverse in \(\mathrm{GF}(2^{8})\), which is where the non-linearity comes from: without a non-linear step the whole cipher would be a system of linear equations over bits and would fall to linear algebra.</p>
+    <p><strong>ShiftRows</strong> rotates row \(r\) left by \(r\) bytes, so row 0 is unchanged and row 3 moves by three. <strong>MixColumns</strong> multiplies each column by a fixed polynomial modulo \(x^{4}+1\) over \(\mathrm{GF}(2^{8})\). <strong>AddRoundKey</strong> XORs the state with the round key from the key schedule &mdash; the only key-dependent step.</p>
+  </div>
+
+  <div id="ix-avalanche"></div>
+
+  <div class="theorem-box">
+    <h3>Why the order of the steps matters</h3>
+    <p>Confusion and diffusion are the two classical design goals, and each AES step serves exactly one of them:</p>
+    <div class="table-responsive" style="margin-top:0.6rem;">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Step</th><th>Goal served</th><th>Effect on the state</th><th>Attack it defeats</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>SubBytes</strong></td><td>Confusion</td><td>Non-linear per-byte substitution</td><td>Linear and differential cryptanalysis over the byte structure</td></tr>
+          <tr><td><strong>ShiftRows</strong></td><td>Diffusion</td><td>Moves bytes between columns without changing them</td><td>Attacks that treat each column as an independent 32-bit cipher</td></tr>
+          <tr><td><strong>MixColumns</strong></td><td>Diffusion</td><td>One byte in a column changes all four bytes of that column</td><td>Keeping a plaintext difference confined to a single byte</td></tr>
+          <tr><td><strong>AddRoundKey</strong></td><td>Key injection</td><td>XOR with a round key; no non-linearity</td><td>Recovering the key from plaintext&ndash;ciphertext pairs without the schedule</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:0.6rem;">ShiftRows alone spreads a byte across columns; MixColumns alone spreads it within a column. Applied together over several rounds, a change in <em>one</em> input bit reaches <em>every</em> byte of the state. That is the diffusion argument, and it is why the round count is 10 for AES-128, 12 for AES-192 and 14 for AES-256: longer keys need more rounds to keep the same margin against the best known attacks.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>The avalanche measurement</h3>
+    <p>Diffusion is testable. Encrypt two plaintexts that differ in exactly one bit under the same key and count the differing output bits:</p>
+    \[ D = \frac{1}{128}\sum_{i=1}^{128} \bigl[\, C_i \neq C'_i \,\bigr] \]
+    <p style="margin-top:0.6rem;">A well-designed cipher drives the expected value of \(D\) towards \(\tfrac{1}{2}\). Measured over many random input pairs, AES's result is statistically indistinguishable from that figure, which is the practical statement of the avalanche property. The same property, applied to a hash function, is what makes a digest detect a single altered bit.</p>
+  </div>
+
+  <div class="code-block">
+THE FOUR STEPS ON A 4 &times; 4 STATE (rows = words of the state)
+
+SUB-BYTES    every byte replaced by S[byte]         non-linear
+SHIFT-ROWS   row 0 &rarr; 0, row 1 &rarr; 1, row 2 &rarr; 2, row 3 &rarr; 3   diffuse
+MIX-COLUMNS  each column &times; fixed polynomial in GF(2^8)              diffuse
+ADD-ROUND-KEY  state &oplus; round key                                key only
+
+ROUND COUNT  10 (AES-128) | 12 (AES-192) | 14 (AES-256)
+FINAL ROUND  omits MixColumns
+  </div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-m-aes-pipe"></div>
+  <script type="application/json" id="ix-m-aes-pipe">
+  {
+    "title": "One full AES encryption, end to end",
+    "subtitle": "The key schedule runs once; the round function runs once per round.",
+    "nodes": [
+      { "label": "Key schedule", "note": "Expand the 128-bit key into 11 round keys using the S-box and round constants." },
+      { "label": "Initial AddRoundKey", "note": "XOR the plaintext state with round key 0 — the whitening step before round 1." },
+      { "label": "Rounds 1 to 9", "note": "SubBytes → ShiftRows → MixColumns → AddRoundKey, each under its own round key." },
+      { "label": "Round 10 (final)", "note": "The same sequence without MixColumns; the last round needs no further diffusion." },
+      { "label": "Ciphertext block", "note": "128 bits out. The mode of operation then decides how this block relates to the rest of the message." }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m1">Show solution</button>
+  <div class="solution-content" id="sol-m1">
+    <p><strong>Worked answer &mdash; a diffusion question.</strong> &ldquo;Explain why AES uses both ShiftRows and MixColumns, when MixColumns already changes four bytes for every one that changes.&rdquo;</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Say what each step does to a change.</strong> MixColumns spreads one changed byte across the four bytes <em>of its own column</em> only. ShiftRows moves bytes <em>between columns</em> but does not change any byte value on its own.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Show why one alone is not enough.</strong> With MixColumns and no ShiftRows, a difference that starts in one column stays in that column forever: the state decomposes into four independent 32-bit ciphers, and an attacker can attack each column separately. With ShiftRows and no MixColumns, a changed byte moves around but never multiplies, so the number of active bytes grows far too slowly to defeat differential cryptanalysis in 10 rounds.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Combine them.</strong> SubBytes makes the transformation non-linear; ShiftRows relocates bytes into new columns; MixColumns then spreads each relocated byte across its new column. Two rounds are enough for a single-byte difference to reach every byte of the state, and the remaining rounds keep it there.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Name the pay-off.</strong> Full diffusion is what makes the avalanche measurement come out near one half, and it is why the round count is fixed at 10, 12 or 14 rather than chosen per message. The argument is structural: it does not depend on the key, which is exactly what Kerckhoffs's principle requires of a public design.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-hash">
+  <h2 class="section-title">Hash Properties and the Birthday Bound</h2>
+  <p class="section-lead">Hash functions are the one primitive this week whose security margin is <em>half</em> what its output size suggests. The reason is a counting argument, and it decides which digests are still acceptable.</p>
+
+  <div class="theorem-box">
+    <h3>1. Three properties, three different work factors</h3>
+    <p>For a hash function with an \(n\)-bit output, the three standard security properties have different costs:</p>
+    \[ \text{preimage: } 2^{n} \qquad \text{second preimage: } 2^{n} \qquad \text{collision: } 2^{n/2} \]
+    <p style="margin-top:0.6rem;"><strong>Preimage resistance</strong> &mdash; given a digest, find a message mapping to it. The only known generic method is brute force, so the cost is about \(2^{n}\). <strong>Second preimage resistance</strong> &mdash; given one message, find a different one with the same digest &mdash; also \(2^{n}\). <strong>Collision resistance</strong> &mdash; find <em>any</em> two messages with the same digest &mdash; is the odd one out, and the birthday bound is why.</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>2. The birthday bound</h3>
+    <p>Generate \(q\) digests at random from a space of \(N = 2^{n}\) values. The probability that at least two of them match is, to a very good approximation,</p>
+    \[ P(\text{collision}) \;\approx\; 1 - e^{-q(q-1)/(2N)} \;\approx\; 1 - e^{-q^{2}/(2N)} \]
+    <p style="margin-top:0.6rem;">Setting the exponent to about 1 gives the collision threshold:</p>
+    \[ q \;\approx\; \sqrt{2N} \;=\; \sqrt{2 \cdot 2^{n}} \;\approx\; 2^{n/2} \]
+    <p style="margin-top:0.6rem;">So a collision becomes likely after only about \(2^{n/2}\) messages &mdash; not \(2^{n}\). For SHA-256 with \(n = 256\), that is \(2^{128}\) work, which is still out of reach and equal to the AES-128 security level. For MD5 with \(n = 128\), it is \(2^{64}\): achievable on ordinary hardware, and the reason MD5 is unusable for any security purpose. For SHA-1 with \(n = 160\), the bound is \(2^{80}\), and practical collisions have been demonstrated &mdash; which is why SHA-1 is deprecated rather than merely discouraged.</p>
+  </div>
+
+  <div data-ix="race" data-ix-src="#ix-m-hash-race"></div>
+  <script type="application/json" id="ix-m-hash-race">
+  {
+    "title": "Collision work factor by digest size",
+    "subtitle": "Birthday-bound work 2^(n/2), plotted on a log scale. Illustrative magnitudes from the formula, not measured attack costs.",
+    "max": 128,
+    "rows": [
+      { "name": "MD5 (128-bit)", "value": 64, "display": "2^64 — broken in practice" },
+      { "name": "SHA-1 (160-bit)", "value": 80, "display": "2^80 — collisions demonstrated" },
+      { "name": "SHA-256 (256-bit)", "value": 128, "display": "2^128 — out of reach" },
+      { "name": "SHA-512 (512-bit)", "value": 256, "display": "2^256 — far out of reach" },
+      { "name": "AES-128 key search (for comparison)", "value": 128, "display": "2^128 — the 128-bit level" }
+    ]
+  }
+  </script>
+
+  <div class="theorem-box">
+    <h3>3. Why a digest length must be twice the intended security level</h3>
+    <p>The table above is the practical consequence. If a system needs a 128-bit security level from a hash &mdash; to match AES-128, say &mdash; then it needs a digest whose birthday bound is \(2^{128}\), which means \(n/2 = 128\), which means \(n = 256\) bits. A 128-bit digest can never deliver 128-bit collision resistance, no matter how good the hash function is, because the counting argument applies to any function with a 128-bit output.</p>
+    <p style="margin-top:0.6rem;">This is why the modern default is SHA-256 or larger, and why a design that says &ldquo;we hash with MD5 for speed and the output is 128 bits&rdquo; is off by \(2^{64}\).</p>
+  </div>
+
+  <div class="theorem-box">
+    <h3>4. What the properties do <em>not</em> give you</h3>
+    <p>None of the three properties is integrity against an active attacker. Formally, a hash is unkeyed: anyone can compute \(H(m')\) for a modified message \(m'\). Given a message&ndash;digest pair \((m, H(m))\) from an untrusted channel, an attacker who can modify the message simply supplies \((m', H(m'))\). Integrity against that attacker requires a value the attacker cannot recompute:</p>
+    \[ \text{MAC: } \mathrm{tag} = F(K, m) \qquad \text{signature: } \sigma = \mathrm{Sign}(sk, H(m)) \]
+    <p style="margin-top:0.6rem;">In both cases the attacker lacks the key. The hash inside a signature is there to compress an arbitrary-length message to a fixed size that the signature scheme can handle &mdash; not to provide the security. In an AEAD construction the tag \(T\) does the same job for a ciphertext. This is precisely the deck's asterisk on the word &ldquo;hash&rdquo; in the goal table, and it is the most commonly examined distinction of the week.</p>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m2">Show solution</button>
+  <div class="solution-content" id="sol-m2">
+    <p><strong>Worked answer &mdash; sizes and levels.</strong> &ldquo;A system needs to protect 1 GB backups, verify firmware images and sign invoices, all at a 128-bit security level. Choose the primitives and justify the sizes.&rdquo;</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Backups &mdash; confidentiality plus integrity.</strong> A symmetric AEAD at the 128-bit level: AES-128-GCM. Key length 128 bits gives a search space of \(2^{128}\), which meets the stated level. The nonce must be unique per encryption under the key: reuse breaks GCM's confidentiality and authentication together.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Firmware &mdash; integrity against an attacker.</strong> A hash alone is not enough: the attacker who replaces the image replaces the published digest too. Use a digital signature, or a MAC when the device already shares a secret with the publisher. The digest inside the signature should be SHA-256, because the signature's collision resistance is limited by the hash's birthday bound \(2^{n/2} = 2^{128}\), which matches the required level.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Invoices &mdash; non-repudiation.</strong> A MAC cannot give it, because both parties hold the same key and either could have produced the tag. Only a signature with a private key held by one owner can. At the 128-bit level the recommended key size is RSA-3072 (or an equivalent elliptic-curve key, which is far shorter for the same level), with SHA-256 as the digest. Note the asymmetry the table showed: 3072 bits of RSA is required to match 128 bits of AES.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>State the levels, not the lengths.</strong> The markable sentence is: &ldquo;All three sit at the 128-bit security level: AES-128 for the bulk data, SHA-256 as the digest, and RSA-3072 or an equivalent elliptic-curve key for the signature &mdash; because key sizes are only comparable within a family, and a hash's collision resistance is capped at half its digest length.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A design uses SHA-1 to fingerprint a 1 GB software release and argues that a 160-bit digest is plenty because the attacker would need \(2^{160}\) work. What is wrong with the argument?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="true" data-good="Correct. The figure quoted is the preimage cost. For collisions the birthday bound applies, so the work is about 2^(n/2) = 2^80 for a 160-bit digest — and practical SHA-1 collisions have been demonstrated, which is why it is deprecated. Also, a bare hash cannot stop an attacker who can replace both the release and its published digest." data-bad="">Collision resistance costs about \(2^{80}\), not \(2^{160}\), because of the birthday bound — and SHA-1 collisions have been demonstrated in practice</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="SHA-1's digest really is 160 bits. The problem is which property that 160 bits buys, not the arithmetic of the output size.">SHA-1 outputs 128 bits, not 160, so the work factor is even lower</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="This reverses the requirement. Larger digests increase the cost of finding a collision; a smaller digest makes the birthday bound smaller and the attack cheaper.">The digest must be smaller to raise the birthday bound</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-m-checklist">
+  <h2 class="section-title">Construct-Selection Checklist</h2>
+  <p class="section-lead">Most Week 4 exam questions reduce to &ldquo;is this construction fit for the stated goal?&rdquo;. Run the six steps in order and the justification writes itself.</p>
+
+  <div data-ix="sequence" data-ix-src="#ix-m-checklist-seq"></div>
+  <script type="application/json" id="ix-m-checklist-seq">
+  {
+    "title": "Order the construct-selection checklist",
+    "subtitle": "Rebuild the order in which to interrogate a cryptographic design before you judge it.",
+    "steps": [
+      "Name the security goal: confidentiality, integrity, authentication, non-repudiation or key establishment",
+      "Name the attacker's capability: passive observer, active modifier, or holder of a compromised key",
+      "Choose the primitive family that can deliver that goal against that attacker",
+      "Choose the complete construction: cipher, mode, nonce or IV strategy and authentication mechanism",
+      "Check the key: length, generation source, entropy and custody",
+      "Check the lifecycle: storage, least exposure, rotation, revocation and destruction"
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Step</th><th>Look for</th><th>Marks are lost when&hellip;</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Goal</td><td>One of the five goals from the deck's table</td><td>You answer &ldquo;which algorithm is strongest?&rdquo; instead</td></tr>
+        <tr><td>2. Attacker</td><td>Passive, active, or in possession of the key</td><td>You claim a bare hash gives integrity against an active attacker</td></tr>
+        <tr><td>3. Primitive family</td><td>Symmetric for bulk, asymmetric for trust, hybrid for a protocol</td><td>You propose public-key encryption for bulk data</td></tr>
+        <tr><td>4. Construction</td><td>Cipher + mode + nonce strategy + authentication</td><td>You name AES and stop, without saying which mode</td></tr>
+        <tr><td>5. Key</td><td>\(2^{n}\) search space and \(H\) bits of real entropy</td><td>You equate key length with entropy</td></tr>
+        <tr><td>6. Lifecycle</td><td>Five stages, each with an owner</td><td>You say &ldquo;the key is stored securely&rdquo; and stop there</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="matcher" data-ix-src="#ix-m-mode-matcher"></div>
+  <script type="application/json" id="ix-m-mode-matcher">
+  {
+    "title": "Match the construction to what it guarantees",
+    "subtitle": "Click a construction on the left, then the guarantee it actually delivers on the right.",
+    "pairs": [
+      ["AES in ECB mode", "Confidentiality only, and repeated plaintext blocks remain visible"],
+      ["AES in CBC mode", "Confidentiality that hides repeated patterns, with authentication still to be designed"],
+      ["AES in GCM mode", "Confidentiality and integrity in one pass, verified by an authentication tag"],
+      ["SHA-256 digest alone", "A fingerprint that detects accidental corruption, not an active attacker"],
+      ["HMAC-SHA-256", "Integrity and origin for parties who already share a key"],
+      ["RSA-PSS signature", "Integrity, origin and non-repudiation through a private key"]
+    ]
+  }
+  </script>
+
+  <div data-ix="deck" data-ix-src="#ix-m-self-test"></div>
+  <script type="application/json" id="ix-m-self-test">
+  {
+    "title": "Self-test: say the number before you flip",
+    "subtitle": "These are the values and rules most likely to be asked for directly.",
+    "cards": [
+      { "front": "AES block size", "back": "128 bits — 16 bytes. Every mode of operation works in units of this block (or of the counter block for GCM).", "hint": "AES" },
+      { "front": "AES round count", "back": "10 rounds for a 128-bit key, 12 for 192 bits and 14 for 256 bits; the final round omits MixColumns.", "hint": "AES" },
+      { "front": "Search space of an n-bit key", "back": "2^n candidates — but only if every string can really occur, so the effective work is bounded by 2^H where H is the entropy.", "hint": "Key strength" },
+      { "front": "Collision work for an n-bit digest", "back": "About 2^(n/2) by the birthday bound, which is why a digest must be twice as long as the security level it must support.", "hint": "Hash" },
+      { "front": "Key reuse identity", "back": "C1 ⊕ C2 = (M1 ⊕ K) ⊕ (M2 ⊕ K) = M1 ⊕ M2 — the key cancels and the attacker holds the XOR of two plaintexts.", "hint": "One-time pad" },
+      { "front": "Modern AEAD defaults", "back": "AES-GCM where AES is hardware accelerated, ChaCha20-Poly1305 where strong software performance is needed. Both return ciphertext plus a tag.", "hint": "Selection" },
+      { "front": "The deck's closing formula", "back": "Strong cryptography = strong primitive + unpredictable key + disciplined lifecycle. A zero in any term makes the whole product zero.", "hint": "Takeaway" }
+    ]
+  }
+  </script>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-m3">Show solution</button>
+  <div class="solution-content" id="sol-m3">
+    <p><strong>Worked answer &mdash; a full review in six steps.</strong> Design under review: &ldquo;we encrypt user documents with AES-256 in CBC mode using a fixed IV, hash each document with MD5 to prove it has not been changed, and store the key in the database next to the data.&rdquo;</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Goal.</strong> The stated goals are confidentiality of stored documents and proof that they have not been changed. Those are two goals, so one primitive will not cover both.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Attacker.</strong> Documents live in a database alongside their keys, so the relevant attacker is someone who reaches the database &mdash; an active attacker with the ciphertext and the key. That is the strongest realistic case here, and it defeats both choices.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Primitive family.</strong> Symmetric is correct for bulk document data. No asymmetric primitive is needed for confidentiality here.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Construction.</strong> Two faults. A fixed IV in CBC means the first block of every document encrypts identically, so two documents with the same opening reveal that fact. And MD5 is collision-broken: at \(n = 128\) the birthday bound is \(2^{64}\), and practical collisions exist, so it cannot support a claim of integrity. In any case an unkeyed hash cannot prove integrity against an attacker who can also edit the stored hash. <em>Replace with</em> AES-GCM (or ChaCha20-Poly1305) under a unique per-document nonce, which delivers both goals with one tag.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><p><strong>Key.</strong> AES-256 gives a \(2^{256}\) search space, which is more than enough &mdash; but it is the wrong thing to worry about, because the key is stored in the same database as the ciphertext. No key length survives that, and the effective entropy of the key is irrelevant once the attacker simply reads it.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">6</div>
+        <div class="step-body"><p><strong>Lifecycle.</strong> Storage fails stage 2 and stage 3 of the five-stage lifecycle. <em>Replace with</em> envelope encryption: a per-document data key wrapped by a key-encryption key held in a keystore or HSM, with access restricted, key material never logged, and a rotation plan that re-wraps the data keys rather than re-encrypting every document.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">7</div>
+        <div class="step-body"><p><strong>The one-sentence verdict.</strong> &ldquo;The primitive is fine and everything around it is wrong: a fixed IV leaks equality of first blocks, MD5 cannot support an integrity claim at \(2^{64}\) collision work and is unkeyed anyway, and a key stored beside its own ciphertext has no protection regardless of its length. Move to AES-GCM with a unique nonce per document and put the key in a keystore under envelope encryption.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Back to the week:</strong> the study guide carries the guarantees table, the AES round picture and the key lifecycle; this page carries the arithmetic behind them. Finish with the Quiz Hub and the Flashcards, then preview Week 5 &mdash; Diffie&ndash;Hellman, RSA, signatures and PKI, which is where the key-distribution question left open at the end of this page is finally answered.
+  </div>
+</section>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function initChrome() {
+    if (!window.initINFO5995ChapterUI) return;
+    try {
+      window.initINFO5995ChapterUI();
+    } catch (err) {
+      if (window.console && window.console.error) {
+        window.console.error("[INFO5995 chapter 4] chapter chrome failed to initialise:", err);
+      }
+    }
+  }
+  initChrome();
+  var lastLang = typeof window.getLang === "function" ? window.getLang() : "en";
+
+  window.addEventListener("langchange", function () {
+    if (window.Interactive && window.Interactive.mount) {
+      window.Interactive.mount(document);
+    }
+    var lang = typeof window.getLang === "function" ? window.getLang() : "en";
+    if (lang === lastLang) return;
+    lastLang = lang;
+    initChrome();
+  });
+});
+</script>
+<script src="../../../../shared/katex-loader.js"></script>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

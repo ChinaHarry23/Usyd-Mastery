@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind map — Week 7: Secure Network, TCP/UDP, TLS and HTTPS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind map — Week 7 — Hierarchical map of secure networking concepts: the untrusted path, IP/UDP/TCP, network attacks, man-in-the-middle, TLS 1.3, certificates, HTTPS deployment and implementation failures.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind map — Week 7: Secure Network, TCP/UDP, TLS and HTTPS">
+<meta property="og:description" content="Mind map — Week 7 — Hierarchical map of secure networking concepts: the untrusted path, IP/UDP/TCP, network attacks, man-in-the-middle, TLS 1.3, certificates, HTTPS deployment and implementation failures.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter7-study.html">&larr; Study guide</a>
+  <a href="chapter7-math.html">Foundations</a>
+  <a href="../../../index.html">&#127968; Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Week 7 mind map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand all</button>
+    <button id="btnCollapseAll">Collapse all</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Untrusted path &amp; transport</span>
+  <span><span class="dot" style="background:var(--green)"></span> TLS &amp; certificates</span>
+  <span><span class="dot" style="background:var(--purple)"></span> Attacks &amp; deployment</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Operations &amp; foundations</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Week 7: Secure Network, TCP/UDP, TLS and HTTPS",
+  label_zh: "第 7 周：安全网络、TCP/UDP、TLS 与 HTTPS",
+  children: [
+    {
+      label: "Data crossing an untrusted path",
+      label_zh: "穿越不可信路径的数据",
+      color: "blue",
+      href: "chapter7-study.html#sec-travel",
+      children: [
+        { label: "Network security protects data while it moves", label_zh: "网络安全保护的是移动中的数据", href: "chapter7-study.html#sec-travel" },
+        { label: "Split into packets, then reassembled at the destination", label_zh: "先分成分组，再在目的地重组", href: "chapter7-study.html#sec-travel" },
+        { label: "Many networks, ISPs and routers — none of them yours", label_zh: "众多网络、ISP 与路由器——没有一个是你的", href: "chapter7-study.html#sec-travel" },
+        { label: "Read, change, pretend, block", label_zh: "读取、篡改、冒充、阻断", href: "chapter7-study.html#sec-travel" }
+      ]
+    },
+    {
+      label: "IP, UDP and TCP",
+      label_zh: "IP、UDP 与 TCP",
+      color: "blue",
+      href: "chapter7-study.html#sec-transport",
+      children: [
+        { label: "IP: addressing with best-effort delivery", label_zh: "IP：寻址与尽力而为的投递", href: "chapter7-study.html#sec-transport" },
+        { label: "Lost, late, out of order, duplicated", label_zh: "丢失、迟到、乱序、重复", href: "chapter7-study.html#sec-transport" },
+        { label: "UDP: no setup, no retransmission, no ordering", label_zh: "UDP：无建立、无重传、无顺序", href: "chapter7-study.html#sec-transport" },
+        { label: "TCP: SYN, SYN-ACK, ACK then an ordered byte stream", label_zh: "TCP：SYN、SYN-ACK、ACK，随后是有序字节流", href: "chapter7-study.html#sec-transport" },
+        { label: "Still no secrecy and no server identity", label_zh: "仍然没有保密性，也没有服务器身份", href: "chapter7-study.html#sec-transport" }
+      ]
+    },
+    {
+      label: "Network attacks",
+      label_zh: "网络攻击",
+      color: "purple",
+      href: "chapter7-study.html#sec-attacks",
+      children: [
+        { label: "Port scanning: an open port reveals a reachable service", label_zh: "端口扫描：开放端口暴露可到达的服务", href: "chapter7-study.html#sec-attacks" },
+        { label: "22 SSH, 80 HTTP, 443 HTTPS, 3306 MySQL", label_zh: "22 SSH、80 HTTP、443 HTTPS、3306 MySQL", href: "chapter7-study.html#sec-attacks" },
+        { label: "SYN flood: half-open state attacks availability", label_zh: "SYN 洪泛：半开状态攻击可用性", href: "chapter7-study.html#sec-attacks" },
+        { label: "ARP spoofing: an IP address appears to map to the attacker's MAC", label_zh: "ARP 欺骗：某 IP 似乎映射到攻击者的 MAC", href: "chapter7-study.html#sec-attacks" },
+        { label: "IP spoofing: the source address is forged", label_zh: "IP 欺骗：源地址被伪造", href: "chapter7-study.html#sec-attacks" }
+      ]
+    },
+    {
+      label: "Man-in-the-middle",
+      label_zh: "中间人攻击",
+      color: "purple",
+      href: "chapter7-study.html#sec-mitm",
+      children: [
+        { label: "Get in the path: rogue Wi-Fi, ARP spoofing, compromised device", label_zh: "进入路径：恶意 Wi-Fi、ARP 欺骗、被攻陷的设备", href: "chapter7-study.html#sec-mitm" },
+        { label: "Impersonate or relay on two channels", label_zh: "在两条信道上冒充或中转", href: "chapter7-study.html#sec-mitm" },
+        { label: "Stay unnoticed: both endpoints look normal", label_zh: "不被发现：两端看起来都正常", href: "chapter7-study.html#sec-mitm" },
+        { label: "Read, change, redirect, block", label_zh: "读取、篡改、重定向、阻断", href: "chapter7-study.html#sec-mitm" },
+        { label: "Defeated by client-side certificate and hostname validation", label_zh: "由客户端的证书与主机名校验击败", href: "chapter7-study.html#sec-mitm" }
+      ]
+    },
+    {
+      label: "TLS 1.3",
+      label_zh: "TLS 1.3",
+      color: "green",
+      href: "chapter7-study.html#sec-tls",
+      children: [
+        { label: "Four moves: hello, certificate, key exchange, finished", label_zh: "四个动作：问候、证书、密钥交换、完成", href: "chapter7-study.html#sec-tls" },
+        { label: "AEAD-only record protocol: encrypt, then tag", label_zh: "仅用 AEAD 的记录协议：先加密，再打标签", href: "chapter7-study.html#sec-tls" },
+        { label: "1 RTT, or 0-RTT early data on resumption", label_zh: "1 个 RTT，恢复会话时可 0-RTT 早期数据", href: "chapter7-math.html#sec-m-tcp" },
+        { label: "Forward secrecy is mandatory; legacy crypto removed", label_zh: "强制前向保密；移除遗留密码学", href: "chapter7-math.html#sec-m-tls" },
+        { label: "Downgrade sentinel in ServerHello.random", label_zh: "ServerHello.random 中的降级哨兵", href: "chapter7-math.html#sec-m-https" }
+      ]
+    },
+    {
+      label: "Certificates and trust",
+      label_zh: "证书与信任",
+      color: "green",
+      href: "chapter7-study.html#sec-certs",
+      children: [
+        { label: "A certificate binds a server name to a public key", label_zh: "证书把服务器名称与公钥绑定", href: "chapter7-study.html#sec-certs" },
+        { label: "A trusted CA signs it; a signature lets the browser verify the binding", label_zh: "受信 CA 签名；签名让浏览器验证该绑定", href: "chapter7-study.html#sec-certs" },
+        { label: "Chain to a trusted root, then check time and usage", label_zh: "链接到受信根，再检查时间与用途", href: "chapter7-math.html#sec-m-certs" },
+        { label: "Hostname match is what proves the name is yours", label_zh: "主机名匹配才证明这个名字属于你", href: "chapter7-study.html#sec-certs" },
+        { label: "Revocation, transparency logs and 398-day lifetimes", label_zh: "吊销、透明日志与 398 天有效期", href: "chapter7-math.html#sec-m-certs" }
+      ]
+    },
+    {
+      label: "HTTPS in practice",
+      label_zh: "HTTPS 实践",
+      color: "purple",
+      href: "chapter7-study.html#sec-https",
+      children: [
+        { label: "HTTP request over TLS on port 443", label_zh: "HTTP 请求经 TLS 在 443 端口传输", href: "chapter7-study.html#sec-https" },
+        { label: "HSTS with includeSubDomains and preload", label_zh: "带 includeSubDomains 与 preload 的 HSTS", href: "chapter7-study.html#sec-https" },
+        { label: "Downgrade and SSL stripping", label_zh: "协议降级与 SSL 剥离", href: "chapter7-math.html#sec-m-https" },
+        { label: "Mixed content hands the protection back", label_zh: "混合内容会把保护拱手让出", href: "chapter7-study.html#sec-https" },
+        { label: "HTTPS does not fix passwords, malware or server breaches", label_zh: "HTTPS 不能修复弱口令、恶意软件或服务器入侵", href: "chapter7-study.html#sec-https" }
+      ]
+    },
+    {
+      label: "Implementation and operations",
+      label_zh: "实现与运维",
+      color: "yellow",
+      href: "chapter7-study.html#sec-impl",
+      children: [
+        { label: "Heartbleed: the claimed length was never validated", label_zh: "Heartbleed：声称的长度从未被校验", href: "chapter7-study.html#sec-impl" },
+        { label: "What leaks: keys, passwords, session cookies, memory contents", label_zh: "泄露内容：密钥、口令、会话 Cookie、内存数据", href: "chapter7-study.html#sec-impl" },
+        { label: "Patch, rotate keys, invalidate sessions, monitor", label_zh: "打补丁、轮换密钥、作废会话、持续监控", href: "chapter7-study.html#sec-impl" },
+        { label: "Segmentation limits what one foothold can reach", label_zh: "分段限制单个立足点所能触及的范围", href: "chapter7-study.html#sec-attacks" }
+      ]
+    },
+    {
+      label: "Foundations bridge",
+      label_zh: "基础知识衔接",
+      color: "yellow",
+      href: "chapter7-math.html#sec-m-layers",
+      children: [
+        { label: "Encapsulation overhead and record efficiency", label_zh: "封装开销与记录效率", href: "chapter7-math.html#sec-m-layers" },
+        { label: "Sequence numbers, windows and RTT budgets", label_zh: "序列号、窗口与 RTT 预算", href: "chapter7-math.html#sec-m-tcp" },
+        { label: "HKDF key schedule, key sizes and entropy", label_zh: "HKDF 密钥编排、密钥长度与熵", href: "chapter7-math.html#sec-m-tls" },
+        { label: "HSTS windows and certificate lifetimes", label_zh: "HSTS 时间窗与证书有效期", href: "chapter7-math.html#sec-m-https" },
+        { label: "Exam checklist for the five question shapes", label_zh: "五类题型的应试检查清单", href: "chapter7-math.html#sec-m-checklist" }
+      ]
+    }
+  ]
+};
+renderMindmap('mindmapCanvas', data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>

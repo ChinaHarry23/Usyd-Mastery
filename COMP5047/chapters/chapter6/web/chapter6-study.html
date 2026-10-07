@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6: Gestural Interaction — COMP5047</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../../shared/progress-tracker.js"></script>
+<script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../../shared/interactive.js"></script>
+<script defer src="chapter6-study.js"></script>
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 6 study guide for COMP5047: the path from SketchPad to multi-touch, the challenges of direct input, extrinsic vs intrinsic sensing for mid-air gestures, a six-way gesture taxonomy, recognition as a pipeline, guessability studies and the challenges of gestural input.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 6: Gestural Interaction — COMP5047">
+<meta property="og:description" content="Week 6 study guide for COMP5047: the path from SketchPad to multi-touch, the challenges of direct input, extrinsic vs intrinsic sensing for mid-air gestures, a six-way gesture taxonomy, recognition as a pipeline, guessability studies and the challenges of gestural input.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div>
+      <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.4rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Course Home</a>
+      <span class="sidebar-icon">&#x1F590;</span>
+      <h2>Week 6</h2>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-surface" class="nav-link" data-section="surface">Surface Lineage</a></li>
+    <li><a href="#sec-direct" class="nav-link" data-section="direct">Direct Input</a></li>
+    <li><a href="#sec-sensing" class="nav-link" data-section="sensing">Mid-Air Sensing</a></li>
+    <li><a href="#sec-taxonomy" class="nav-link" data-section="taxonomy">Gesture Taxonomy</a></li>
+    <li><a href="#sec-recognition" class="nav-link" data-section="recognition">Recognition</a></li>
+    <li><a href="#sec-intuitive" class="nav-link" data-section="intuitive">Guessability</a></li>
+    <li><a href="#sec-challenges" class="nav-link" data-section="challenges">Design Challenges</a></li>
+    <li><a href="#sec-recap" class="nav-link" data-section="recap">Recap</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter6-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li>
+      <a href="chapter6-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a>
+    </li>
+    <li>
+      <a href="../../../tools/quiz-hub.html" class="nav-link" style="color:var(--accent);">&#x1F4DD; Quiz Hub</a>
+    </li>
+    <li>
+      <a href="../../../tools/flashcards.html" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a>
+    </li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Week Status</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-text">Lecture 6 built</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5047 — Pervasive Computing</p>
+    <h1>Week 6: Gestural Interaction</h1>
+    <p class="hero-subtitle">Gesture as an input channel: the direct-touch lineage from SketchPad to multi-touch, what breaks when a finger replaces a mouse, how bodies are tracked in mid-air, a six-way taxonomy of gestures, recognition as a pipeline, and the design problems gesture leaves unsolved.</p>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F590;</span>
+        <span>SketchPad 1963 &rarr; multi-touch 2007</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F4F7;</span>
+        <span>Extrinsic vs intrinsic tracking</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9E0;</span>
+        <span>Taxonomy before algorithm</span>
+      </div>
+      <div class="hero-card">
+        <span class="hero-card-icon">&#x1F9EA;</span>
+        <span>Guessability before design</span>
+      </div>
+    </div>
+    <div style="margin-top: 2rem;">
+      <a href="chapter6-math.html" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">
+        &#x1F4D0; Foundations &rarr;
+      </a>
+      <a href="chapter6-mindmap.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; padding: 0.75rem 2rem; font-size: 1rem; margin-left:0.75rem;">
+        &#x1F5FA; Mind Map &rarr;
+      </a>
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.6rem;">Built from the Week 6 lecture deck (Velloso, <em>Gestural Interaction</em>) and the Week 6 required reading (Aigner et al., <em>Understanding Mid-Air Hand Gestures</em>)</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-surface" class="section" data-track="surface">
+  <h2 class="section-title">From SketchPad to Multi-Touch</h2>
+  <p class="section-lead">The lecture opens with a lineage rather than a definition: gestural interaction on a surface is not a recent invention, and every step in the line adds one capability that the previous step lacked.</p>
+
+  <div class="concept-box">
+    <p><strong>The framing quote from the deck:</strong> &ldquo;And we have invented a new technology called multi-touch, which is phenomenal.&rdquo; &mdash; Steve Jobs, 2007. The interesting question for this unit is what had to be invented <em>before</em> that sentence could be said, and what the sentence quietly leaves out.</p>
+  </div>
+
+  <div data-ix="timeline" data-ix-src="#ix-surface-timeline"></div>
+  <script type="application/json" id="ix-surface-timeline">
+  {
+    "title": "Four milestones on the way to the touchscreen",
+    "subtitle": "The deck's own illustrations: each system adds a capability the previous one did not have.",
+    "events": [
+      { "label": "1963", "title": "SketchPad — Ivan Sutherland", "detail": "Drawing directly on a display with a light pen: the computer draws what you point at, and the drawing is a data structure you can constrain and copy. Direct manipulation is demonstrated decades before the hardware is cheap." },
+      { "label": "1986", "title": "Sensor Frame — Paul McAvinney", "detail": "A frame of sensors around a surface that reports where the hand is, and how many fingers are involved. Touch stops being a single point and starts being a set of contact points the system has to interpret." },
+      { "label": "1991", "title": "Digital Desk — Pierre Wellner", "detail": "Paper on a physical desk, camera above, projector below: the digital and the physical share one workspace. The surface becomes a place where the world and the model are overlaid, not a screen you type into." },
+      { "label": "2007", "title": "Multi-touch ships — iPhone", "detail": "Capacitive multi-touch at consumer scale, with the gesture vocabulary (tap, pinch, swipe, flick) built into the platform rather than into one application." }
+    ]
+  }
+  </script>
+
+  <div class="def-box">
+    <div class="def-label">Working definition</div>
+    <p><strong>Gestural interaction</strong> is input in which the system infers intent from the movement, configuration or contact pattern of the hand and body, rather than from the actuation of a dedicated control. Two families dominate this week: <strong>surface gestures</strong> on a touch-sensitive plane, and <strong>mid-air gestures</strong> performed in the space around the device.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What direct touch buys you</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>The finger <em>is</em> the pointer &mdash; no intermediate device to acquire</li>
+        <li>The on-screen object is touched where it appears</li>
+        <li>Bimanual and multi-finger input become possible</li>
+        <li>The vocabulary is learnable in seconds (tap, drag, pinch)</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What it costs you</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>The hand covers what it manipulates</li>
+        <li>Contact geometry is ambiguous and changes with posture</li>
+        <li>There is no hover state, so nothing can be previewed</li>
+        <li>Precision and fatigue limits arrive with the finger itself</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Exam framing:</strong> the lineage is not a story about screens getting better. It is a story about the <em>input problem</em> changing shape &mdash; from &ldquo;how does the machine know where the pen is?&rdquo; (1963) to &ldquo;how does the machine know which of these contact points is a fingertip and which is a palm?&rdquo; (2007).
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">What does the Sensor Frame (McAvinney, 1986) add to the lineage that SketchPad does not already demonstrate?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="SketchPad already draws on a display from a pointing device. Rendering is not what the Sensor Frame contributes.">The ability to draw directly on a display</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The frame reports a set of contact points rather than one cursor position, which is what turns touch into an interpretation problem — the theme of the next section." data-bad="">A set of simultaneous contact points instead of a single pointer position</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Mixing paper and projected digital content is the Digital Desk (Wellner, 1991), not the Sensor Frame.">The overlaying of paper and projected digital content</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+</section>
+
+<section id="sec-direct" class="section" data-track="direct">
+  <h2 class="section-title">The Challenges of Direct Input</h2>
+  <p class="section-lead">Touch is only &ldquo;direct&rdquo; from the user's point of view. From the system's point of view the finger is a large, soft, opaque blob whose contact geometry is ambiguous &mdash; and the list below is the deck's own account of what that costs.</p>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Challenge</th><th>Why it happens</th><th>What the designer can do about it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Fat finger</strong></td><td>A fingertip covers roughly 1&ndash;2&nbsp;cm of a display, so a contact point is a region, not a coordinate</td><td>Enlarge targets, snap to the nearest selectable item, offset the target away from the point of contact</td></tr>
+        <tr><td><strong>Occlusion</strong></td><td>The hand that touches also hides the content underneath it</td><td>Displace the visual feedback above the finger, or move the control surface away from the display</td></tr>
+        <tr><td><strong>Palm rejection</strong></td><td>Heel, thumb base and forearm rest on the surface while writing or drawing</td><td>Classify contacts by size and shape, ignore the largest blob, require a stylus to switch modes</td></tr>
+        <tr><td><strong>Support for bimanual skills</strong></td><td>Human hands are asymmetric: a non-dominant hand holds and orients while the dominant hand acts</td><td>Give the non-dominant hand a continuous role (anchor, frame, tool palette) instead of treating it as a second pointer</td></tr>
+        <tr><td><strong>Soft vs hard touch</strong></td><td>A press carries force and duration information that a binary contact does not</td><td>Add pressure or contact-area sensing where the hardware supports it</td></tr>
+        <tr><td><strong>Points of contact</strong></td><td>Sensors report blobs, and blobs merge or split</td><td>Use temporal tracking: identities persist across frames, so merging can be resolved by continuity</td></tr>
+        <tr><td><strong>Parallax</strong></td><td>The sensing layer sits behind the display layer, so the reported position is offset from what the eye sees</td><td>Calibrate the layers, or keep the sensing plane and the display plane optically coincident</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>The two point-of-contact failure modes, straight from the deck.</strong> Two fingers touching close together are reported as <em>one</em> point; a single large contact &mdash; a thumb, a palm edge, a resting forearm &mdash; is reported as <em>two</em>. Both errors are geometric rather than electrical, which is why they are fixed with tracking and classification rather than with a better sensor.
+  </div>
+
+  <div id="ix-touch-problems"></div>
+
+  <div class="quick-check">
+    <div class="qc-question">A drawing app on a tablet registers a long stroke across the canvas every time the user's resting hand shifts. Which challenge of direct input is this?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Occlusion is about the hand hiding content from the eye. Nothing is hidden here — an unintended contact was accepted as input.">Occlusion</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. The resting heel of the hand is a large contact that the sensor reports as a touch; rejecting it by size, shape or context is palm rejection." data-bad="">Palm rejection</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Parallax is a fixed offset between the sensing plane and the display plane. It would misplace every stroke slightly, not add strokes.">Parallax</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-1">Show solution</button>
+  <div class="solution-content" id="sol-1">
+    <p><strong>Worked example &mdash; designing one control for a gloved finger on a wet screen.</strong> A field device for orchard workers must be used outdoors, one-handed, with work gloves, in the rain. Work through the deck's list in order.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Fat finger, amplified.</strong> A gloved fingertip is far wider than a bare one, so the effective target size grows again. Every control becomes a large tile with generous spacing; the smallest interactive element is a swipe, not a tap.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Soft vs hard touch.</strong> A glove removes the pressure signal that a bare finger still leaks through contact area. The interface must therefore not depend on press force at all: selection is by dwell or by an explicit confirm.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Points of contact.</strong> Water on the surface and a loosely fitting glove both create spurious and merging contacts. Temporal tracking with stable identities is required before any gesture is recognised, or a raindrop becomes a tap.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--purple);">4</div>
+        <div class="step-body"><p><strong>Occlusion and bimanual skill.</strong> One-handed use in the field means the other hand is holding the branch, not the device. Feedback must be displaced (above the finger, or as audio/haptic output) because the finger covers the control, and no design may assume a second hand is available.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--purple);">5</div>
+        <div class="step-body"><p><strong>The sentence that earns the mark.</strong> &ldquo;Direct touch moves the input device onto the display, which removes the acquisition step but imports the properties of the hand: a large ambiguous contact region, self-occlusion, resting contacts that must be rejected, and no hover. Each is a sensing problem with a design consequence, not just an engineering defect.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-sensing" class="section" data-track="sensing">
+  <h2 class="section-title">Tracking the Body: Extrinsic and Intrinsic Sensing</h2>
+  <p class="section-lead">Mid-air interaction begins with a question the deck asks directly: <em>how can we track people's bodies?</em> The first answer is not a sensor but a decision about where the sensors live.</p>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Extrinsic &mdash; sensors in the environment</h3>
+      <p>The body is tracked by sensors placed in the environment. Nothing is worn. Covered in the deck by structured light (RGB camera plus IR illumination, IR camera &mdash; Kinect v1), time-of-flight (Kinect v2), passive and active IR markers, and plain RGB cameras running pose estimation.</p>
+    </div>
+    <div class="col-card">
+      <h3>Intrinsic &mdash; sensors on the body</h3>
+      <p>The body is tracked through sensors directly attached to it. Nothing external is needed, and the person can leave the room. Covered in the deck by inertial measurement units: accelerometer, gyroscope, magnetometer &mdash; sensitive enough to pick up <strong>microgestures</strong>.</p>
+    </div>
+  </div>
+
+  <div data-ix="hotspot" data-ix-src="#ix-sensing-map"></div>
+  <script type="application/json" id="ix-sensing-map">
+  {
+    "title": "One person, both sensing strategies",
+    "subtitle": "Click each marker to see what it measures and which category of tracking it belongs to.",
+    "svg": "<svg viewBox=\"0 0 820 440\" role=\"img\" aria-label=\"Sketch of a room with an extrinsic camera rig on one side and a person wearing intrinsic inertial sensors\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"820\" height=\"440\" fill=\"#fbfdfe\"></rect><path d=\"M30 62 Q410 54 790 64\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.6\" stroke-linecap=\"round\" opacity=\"0.45\"></path><path d=\"M44 66 Q42 230 46 400 L776 400 Q780 230 778 66\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.4\" stroke-linecap=\"round\" opacity=\"0.4\"></path><path d=\"M46 402 Q300 398 540 404\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"1.6\" stroke-linecap=\"round\" opacity=\"0.3\"></path><ellipse cx=\"400\" cy=\"392\" rx=\"210\" ry=\"16\" fill=\"#0891b2\" opacity=\"0.07\"></ellipse><path d=\"M26 100 L110 100 L110 176 L26 176 Z\" fill=\"#e6f2f5\" stroke=\"#0e7490\" stroke-width=\"2\" opacity=\"0.9\"></path><path d=\"M26 138 L110 138\" stroke=\"#0e7490\" stroke-width=\"1.4\" opacity=\"0.5\"></path><rect x=\"52\" y=\"56\" width=\"34\" height=\"34\" rx=\"6\" fill=\"#fbfdfe\" stroke=\"#0e7490\" stroke-width=\"2.2\"></rect><circle cx=\"69\" cy=\"73\" r=\"9\" fill=\"#0891b2\" opacity=\"0.18\" stroke=\"#0e7490\" stroke-width=\"1.8\"></circle><path d=\"M120 74 Q220 96 268 132\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.6\" stroke-dasharray=\"6 5\" opacity=\"0.5\"></path><path d=\"M120 92 Q230 140 268 164\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.6\" stroke-dasharray=\"6 5\" opacity=\"0.4\"></path><path d=\"M120 110 Q240 190 272 196\" fill=\"none\" stroke=\"#0891b2\" stroke-width=\"1.6\" stroke-dasharray=\"6 5\" opacity=\"0.3\"></path><ellipse cx=\"290\" cy=\"168\" rx=\"104\" ry=\"150\" fill=\"#0891b2\" opacity=\"0.05\" stroke=\"#0e7490\" stroke-width=\"1.6\" stroke-dasharray=\"7 6\"></ellipse><circle cx=\"352\" cy=\"118\" r=\"30\" fill=\"#fbfdfe\" stroke=\"#0e7490\" stroke-width=\"2.4\"></circle><path d=\"M352 148 Q348 216 352 262\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.6\" stroke-linecap=\"round\"></path><path d=\"M352 158 Q300 176 276 214 M352 158 Q406 168 436 124\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.6\" stroke-linecap=\"round\" opacity=\"0.9\"></path><path d=\"M436 124 Q470 106 486 90\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.6\" stroke-linecap=\"round\" opacity=\"0.9\"></path><circle cx=\"490\" cy=\"86\" r=\"11\" fill=\"#fbfdfe\" stroke=\"#0e7490\" stroke-width=\"2.2\"></circle><path d=\"M352 262 Q330 322 322 372 M352 262 Q382 322 392 372\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.6\" stroke-linecap=\"round\"></path><path d=\"M310 374 Q322 366 336 374 M380 374 Q392 366 404 374\" fill=\"none\" stroke=\"#0e7490\" stroke-width=\"2.4\" stroke-linecap=\"round\" opacity=\"0.8\"></path><circle cx=\"392\" cy=\"206\" r=\"13\" fill=\"#f59e0b\" opacity=\"0.28\" stroke=\"#0e7490\" stroke-width=\"1.6\"></circle><rect x=\"318\" y=\"228\" width=\"30\" height=\"34\" rx=\"6\" fill=\"#7c3aed\" opacity=\"0.16\" stroke=\"#7c3aed\" stroke-width=\"1.8\"></rect><rect x=\"412\" y=\"150\" width=\"26\" height=\"20\" rx=\"5\" fill=\"#7c3aed\" opacity=\"0.16\" stroke=\"#7c3aed\" stroke-width=\"1.8\"></rect><rect x=\"474\" y=\"62\" width=\"24\" height=\"18\" rx=\"5\" fill=\"#7c3aed\" opacity=\"0.16\" stroke=\"#7c3aed\" stroke-width=\"1.8\"></rect><path d=\"M486 120 Q520 150 552 178\" fill=\"none\" stroke=\"#7c3aed\" stroke-width=\"1.6\" stroke-dasharray=\"5 5\" opacity=\"0.5\"></path><rect x=\"540\" y=\"120\" width=\"252\" height=\"166\" rx=\"10\" fill=\"#f5f7fb\" stroke=\"#94a3b8\" stroke-width=\"2\"></rect><path d=\"M556 142 L640 142\" stroke=\"#94a3b8\" stroke-width=\"2\" stroke-linecap=\"round\"></path><path d=\"M556 156 L700 156 M556 166 L672 166\" stroke=\"#94a3b8\" stroke-width=\"1.6\" stroke-linecap=\"round\" opacity=\"0.45\"></path><rect x=\"556\" y=\"186\" width=\"104\" height=\"12\" rx=\"3\" fill=\"#0891b2\" opacity=\"0.14\" stroke=\"#0e7490\" stroke-width=\"1.2\"></rect><rect x=\"556\" y=\"208\" width=\"150\" height=\"12\" rx=\"3\" fill=\"#0891b2\" opacity=\"0.14\" stroke=\"#0e7490\" stroke-width=\"1.2\"></rect><rect x=\"556\" y=\"230\" width=\"78\" height=\"12\" rx=\"3\" fill=\"#0891b2\" opacity=\"0.14\" stroke=\"#0e7490\" stroke-width=\"1.2\"></rect><path d=\"M556 258 L676 258 M556 270 L630 270\" stroke=\"#7c3aed\" stroke-width=\"1.8\" stroke-linecap=\"round\" opacity=\"0.55\"></path><rect x=\"300\" y=\"30\" width=\"230\" height=\"30\" rx=\"8\" fill=\"#7c3aed\" opacity=\"0.08\" stroke=\"#7c3aed\" stroke-width=\"1.4\"></rect><text x=\"415\" y=\"49\" font-family=\"monospace\" font-size=\"13\" fill=\"#565d75\" text-anchor=\"middle\">worn IMU chain</text><rect x=\"104\" y=\"250\" width=\"150\" height=\"30\" rx=\"8\" fill=\"#0891b2\" opacity=\"0.08\" stroke=\"#0e7490\" stroke-width=\"1.4\"></rect><text x=\"179\" y=\"269\" font-family=\"monospace\" font-size=\"13\" fill=\"#565d75\" text-anchor=\"middle\">camera volume</text></svg>",
+    "points": [
+      { "x": 8.4, "y": 16.6, "label": "Extrinsic camera rig", "detail": "Sensors bolted to the environment. Structured light projects an IR pattern and reads its deformation; time-of-flight times an emitted pulse. Nothing is worn, but the person must stay inside the capture volume." },
+      { "x": 59.3, "y": 15.7, "label": "Tracking volume and self-occlusion", "detail": "The dashed ellipse is the region where the body is actually observable. Outside it, tracking fails; inside it, the body still occludes itself whenever one limb crosses in front of another." },
+      { "x": 23.5, "y": 24.5, "label": "Line of sight is the constraint", "detail": "Optical sensing needs an unbroken view. This is why the deck pairs occlusion and space requirements with tracking volume when asking how to choose a mocap system." },
+      { "x": 47.8, "y": 19.5, "label": "Inertial measurement unit", "detail": "Accelerometer for acceleration or change in velocity, gyroscope for angular acceleration or change in rotational speed, magnetometer as an electronic compass. Attached to the body, so no camera can lose it." },
+      { "x": 58.7, "y": 34.1, "label": "Wrist-mounted IMU", "detail": "Directly attached sensing is what makes microgestures practical: finger and wrist motion too small for a room-scale camera to resolve is measurable at the source." },
+      { "x": 59.3, "y": 6.5, "label": "Head-mounted IMU", "detail": "The same three sensors, used for orientation rather than position. Cheap, low-power and always available — at the cost of drift, because orientation has to be integrated from rate." },
+      { "x": 65.1, "y": 61.1, "label": "Where the inference runs", "detail": "Both strategies end in the same place: a stream of numbers that must be segmented, turned into features and classified. The sensing choice changes the noise, not the recognition problem." }
+    ]
+  }
+  </script>
+
+  <div id="ix-mocap-choice"></div>
+
+  <div class="insight-box">
+    <strong>Open-source pose estimation, named in the deck:</strong> MMPose, MediaPipe's pose landmarker and OpenPose make markerless extrinsic tracking a software problem rather than a hardware one. Whenever a technique becomes a library, the research question moves up a level &mdash; from &ldquo;can we track the body?&rdquo; to &ldquo;what should the interface do with a tracked body?&rdquo;
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A researcher needs to detect finger movements of a few millimetres while the participant walks around a city block. Which approach fits, and why?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="An extrinsic camera fixes the participant to a capture volume. Walking a city block leaves that volume immediately, and millimetre finger detail needs a very close, very stable view.">Extrinsic structured light, because it is the most accurate for small movements</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Intrinsic sensing travels with the body and resolves movement at the source, which is what makes microgestures measurable; the accepted cost is drift over time." data-bad="">Intrinsic inertial sensing, because the sensors travel with the body and resolve motion at the source</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="RGB pose estimation is extrinsic: it needs cameras in the environment and gives coarse joint positions, not millimetre finger detail.">RGB pose estimation with OpenPose, because it needs no markers</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-taxonomy" class="section" data-track="taxonomy">
+  <h2 class="section-title">A Taxonomy of Gestures</h2>
+  <p class="section-lead">Before asking how to recognise a gesture, the deck asks what kind of thing a gesture is. Six types are named, and each one carries a different recognition problem and a different design obligation.</p>
+
+  <div data-ix="matcher" data-ix-src="#ix-taxonomy-match"></div>
+  <script type="application/json" id="ix-taxonomy-match">
+  {
+    "title": "Match the gesture type to the deck's definition",
+    "subtitle": "Click a type on the left, then its definition on the right.",
+    "pairs": [
+      ["Deictic", "Pointing to establish identity or spatial location of an object within the context of the application domain"],
+      ["Manipulative", "Controlling an entity by applying a tight relationship between the actual movements of the gesturing hand or arm and the entity being manipulated"],
+      ["Semaphoric", "Employing a stylized dictionary of static or dynamic hand or arm gestures, serving as a universe of symbols communicated to the machine"],
+      ["Motion correlation", "Selecting an object by matching its motion"],
+      ["Gesticulation", "Short, repetitive, rhythmic movements closely tied with prosody in verbal speech"],
+      ["Sign language", "Linguistically based, performed as a series of individual signs that combine into grammatical structures for conversational interfaces"]
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Type</th><th>What the machine must recover</th><th>Where it is used</th><th>Characteristic failure</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Deictic</strong></td><td>A target: which object, and where it is</td><td>Pointing at a screen, a lamp, a shop; disambiguating &ldquo;that one&rdquo;</td><td>Pointing is a line, not a coordinate &mdash; the intended target is under-determined</td></tr>
+        <tr><td><strong>Manipulative</strong></td><td>A continuous parameter that tracks the hand</td><td>Dragging, pinching, rotating, physically moving a proxy</td><td>Mapping breaks when the hand's degrees of freedom exceed the parameter's</td></tr>
+        <tr><td><strong>Semaphoric</strong></td><td>A label from a fixed dictionary</td><td>Shortcuts, media control, stroke alphabets (Graffiti, unistroke, multistroke, $N-protractor)</td><td>Users cannot guess the dictionary; the same gesture means different things to different people</td></tr>
+        <tr><td><strong>Motion correlation</strong></td><td>Which moving target the user is matching</td><td>Selecting one of several independent moving objects</td><td>Slower than pointing; requires the target to be moving and distinguishable</td></tr>
+        <tr><td><strong>Gesticulation</strong></td><td>Meaning carried alongside speech</td><td>Augmenting a spoken interface; expressive systems</td><td>Idiosyncratic and continuous &mdash; there is no dictionary to classify against</td></tr>
+        <tr><td><strong>Sign language</strong></td><td>Linguistic structure: signs plus grammar</td><td>Conversational interfaces for deaf users</td><td>Real linguistic systems, not gesture sets; recognition must handle grammar, not just vocabulary</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Deictic techniques named in the deck</div>
+    <p>Turning a point into a screen coordinate is a design choice, not a measurement. <strong>Image-plane pointing</strong> intersects the pointing ray with the camera image plane. <strong>Fixed-point pointing</strong> assumes a stable origin and works from the ray's direction. <strong>Shadow reaching</strong> uses the hand's shadow as the pointer, keeping the arm low. <strong>MultiRay</strong> (Matulic &amp; Vogel, 2018) reads several rays at once &mdash; through the metacarpophalangeal (MCP) and distal interphalangeal (DIP) joints &mdash; so one pointing posture yields more than one target estimate.</p>
+  </div>
+
+  <div class="algo-diagram">
+    <div class="algo-box input-box">Pointing posture</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box algo-core">Ray estimate (MCP / DIP joints)</div>
+    <div class="algo-arrow">&rarr;</div>
+    <div class="algo-box output-box">Target on the display</div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A user swipes two fingers upwards to dismiss a notification. Which category does this belong to, and what must the recogniser produce?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Deictic gestures establish identity or spatial location. A dismiss gesture identifies nothing — it invokes a command.">Deictic; the recogniser must recover the screen coordinate being indicated</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. This is a semaphoric gesture: a stylized dynamic pattern drawn from a dictionary, so the recogniser must output a label, not a parameter or a coordinate." data-bad="">Semaphoric; the recogniser must output which dictionary symbol was performed</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Manipulative gestures map hand movement continuously onto an entity being manipulated. Dismiss is discrete and arbitrary, not a tight spatial mapping.">Manipulative; the recogniser must output the continuous position of the fingers</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recognition" class="section" data-track="recognition">
+  <h2 class="section-title">How a Gesture Becomes a Command</h2>
+  <p class="section-lead">Every gesture system, on a touchscreen or in mid-air, runs the same four stages. The taxonomy tells you what the last stage must produce; the sensing choice tells you what the first stage has to work with.</p>
+
+  <div id="ix-recognition-pipeline"></div>
+
+  <div data-ix="pipeline" data-ix-src="#ix-path"></div>
+  <script type="application/json" id="ix-path">
+  {
+    "title": "Path of one gesture through a system",
+    "subtitle": "The same six nodes describe a pinch on a phone and a wave at a camera; only the numbers change.",
+    "nodes": [
+      { "label": "Raw frames", "note": "Camera frames, touch blobs or IMU samples, at a fixed rate." },
+      { "label": "Segment", "note": "Decide when the gesture starts and stops; discard everything between." },
+      { "label": "Features", "note": "Reduce the segment to a description: joint angles, velocity profile, contact geometry." },
+      { "label": "Classify", "note": "Compare against the gesture set; template matching or a trained model." },
+      { "label": "Confidence", "note": "Accept, reject, or ask — a classifier that never says \"unsure\" will always act." },
+      { "label": "Feedback", "note": "Show that the gesture was seen and understood, before the action lands." }
+    ]
+  }
+  </script>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Stage</th><th>Question it answers</th><th>Deck vocabulary</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Segmentation</strong></td><td>When does the gesture start and stop?</td><td>&ldquo;Determining when a gesture starts and stops&rdquo; &mdash; the deck's first listed challenge</td></tr>
+        <tr><td><strong>Features</strong></td><td>What is the smallest description that still separates the gesture set?</td><td>Follows from the sensing choice: joint positions extrinisically, rates and orientations intrinsically</td></tr>
+        <tr><td><strong>Recognition</strong></td><td>Which gesture is it?</td><td>&ldquo;Distinguishing between gestures&rdquo;</td></tr>
+        <tr><td><strong>Feedback</strong></td><td>How does the user know it worked?</td><td>&ldquo;How can we make sure the gesture is correct?&rdquo;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div data-ix="deck" data-ix-src="#ix-recognition-deck"></div>
+  <script type="application/json" id="ix-recognition-deck">
+  {
+    "title": "Recognition vocabulary, front to back",
+    "subtitle": "Answer each one out loud before flipping.",
+    "cards": [
+      { "front": "Segmentation", "back": "Determining when a gesture starts and stops — the first challenge in the deck's list, and the one every later stage inherits errors from.", "hint": "Stage" },
+      { "front": "Recognition", "back": "Distinguishing between gestures: mapping a segmented, described movement onto one label from the gesture set.", "hint": "Stage" },
+      { "front": "Unistroke vs multistroke", "back": "Unistroke gestures are drawn in one continuous motion (Graffiti); multistroke gestures need several strokes and therefore a richer representation. The $N-protractor family is the classic recogniser for the unistroke case.", "hint": "Stroke alphabets" },
+      { "front": "Motion correlation", "back": "Selecting an object by matching its motion — the user imitates the movement of the target, and the system correlates the two signals.", "hint": "Selection technique" },
+      { "front": "Microgesture", "back": "A gesture small enough that it is only practical with sensors attached to the body; the reason intrinsic IMU sensing exists in this deck.", "hint": "Intrinsic sensing" },
+      { "front": "Gorilla arms", "back": "The fatigue that follows from holding the arm up to make mid-air gestures — a cost that appears only when the gesture is repeated, never in a single demonstration.", "hint": "Physical cost" }
+    ]
+  }
+  </script>
+
+  <div class="insight-box">
+    <strong>The uncomfortable property of this pipeline.</strong> Errors compound left to right. A classifier cannot repair a bad segmentation, and no amount of feedback repairs a classifier that was never given a reject option. When a gesture system &ldquo;feels unreliable&rdquo;, the fault is usually one stage earlier than where the user notices it.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A recogniser returns &ldquo;swipe left, 0.42 confidence&rdquo; and the system performs the swipe anyway. Which stage of the pipeline is at fault?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Segmentation decided where the gesture began and ended. The complaint here is about what happened to a gesture that was already segmented.">Segmentation, because the gesture boundaries must be wrong</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Classification produced a label and a confidence, and the decision layer ignored the confidence. A gesture system without a reject option acts on its least reliable judgements." data-bad="">The decision after classification: a confidence of 0.42 should have produced a reject or a confirmation, not an action</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Feedback happens after the action. The fault is that the action was taken on an unreliable label in the first place.">Feedback, because the user was not told the gesture was recognised</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <button type="button" class="solution-toggle btn btn-outline" data-target="sol-2">Show solution</button>
+  <div class="solution-content" id="sol-2">
+    <p><strong>Worked example &mdash; debugging a wave-to-dismiss feature that fires at random.</strong> Users report that the TV mutes itself while they are gesturing at someone in the room. Walk the pipeline from the left.</p>
+    <div class="proof-block">
+      <div class="proof-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><p><strong>Segmentation first.</strong> The most likely cause is that the segmenter has no explicit start trigger, so any motion of sufficient magnitude opens a candidate window. Fix: require an explicit onset (a raised hand entering the tracking volume) before a gesture window can open.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><p><strong>Then features.</strong> A wave and a conversational gesture differ in where they happen and in how periodic they are. Adding a feature for periodicity and for distance from the torso separates them far better than a longer template.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><p><strong>Then the classifier's reject option.</strong> If the classifier is forced to choose among the gesture set, every conversational movement becomes the nearest label. A confidence threshold that outputs &ldquo;no gesture&rdquo; is not a nicety; it is the difference between a working system and a haunted one.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><p><strong>Then feedback.</strong> Even with a good classifier, dismissing on recognition alone removes the user's chance to notice a mistake. Show the gesture was seen (an on-screen echo of the recognised label) and let the action commit after it, so a misrecognition is visible rather than mysterious.</p></div>
+      </div>
+      <div class="proof-step">
+        <div class="step-num" style="background:var(--purple);">5</div>
+        <div class="step-body"><p><strong>The takeaway sentence.</strong> &ldquo;Gesture recognition is a pipeline whose stages can only lose information: segmentation defines the candidate, features define the comparison, classification adds a reject option, and feedback gives the user a chance to catch the errors that remain.&rdquo;</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-intuitive" class="section" data-track="intuitive">
+  <h2 class="section-title">Guessability: Finding Intuitive Gestures</h2>
+  <p class="section-lead">The deck states the problem bluntly: different people read different meanings out of the same gesture. It then asks how you would discover intuitive mappings for a gesture set &mdash; and answers with a method, not an intuition.</p>
+
+  <div class="callout">
+    <strong>The claim to memorise, verbatim in spirit:</strong> &ldquo;There is no inherently natural set of gestures for performing anything beyond a couple of the most commonplace manipulations.&rdquo; Any claim that a gesture is &ldquo;natural&rdquo; is therefore an empirical claim that has to be tested on the people who will use it.
+  </div>
+
+  <div id="ix-guessability"></div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Before</h3>
+      <p>Participants are shown the <em>effect</em> &mdash; the command and what it does &mdash; and are asked to invent the gesture that would trigger it. No gesture vocabulary is shown.</p>
+    </div>
+    <div class="glance-card">
+      <h3>After</h3>
+      <p>Every proposal is recorded and pooled across participants. What matters is not any single answer but the distribution of answers.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Agreement</h3>
+      <p>The gesture with the highest agreement score becomes the candidate for that command. Low agreement means the command has no intuitive gesture and needs a visible affordance instead.</p>
+    </div>
+    <div class="glance-card">
+      <h3>The output</h3>
+      <p>A gesture set whose members are ranked by how likely users are to guess them &mdash; the empirical substitute for the designer's intuition.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>What elicitation fixes</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Discoverability &mdash; the set contains gestures users actually produce</li>
+        <li>Learnability &mdash; gestures that were guessed are remembered better than gestures that were taught</li>
+        <li>Ambiguity &mdash; agreement scores expose commands that share a gesture</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h3>What it does not fix</h3>
+      <ul style="padding-left:1.1rem; line-height:1.7;">
+        <li>Fatigue: an intuitive gesture can still be an exhausting one</li>
+        <li>Tracking: agreement says nothing about whether the sensor can see it</li>
+        <li>Social acceptability: what people invent alone is not what they will do in public</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A team runs an elicitation study and finds that &ldquo;next track&rdquo; produced eleven different gestures from twenty participants. What is the correct reading of that result?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Low agreement is a result, not a failure of the study. The study did its job by measuring agreement; the finding is about the command.">The study failed and should be re-run with better instructions</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Low agreement means there is no intuitive gesture for that command, so it needs a visible affordance or a taught shortcut rather than a guessable one." data-bad="">The command has no intuitive gesture, so it should be given a visible control or an explicitly taught shortcut</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Averaging wildly different gestures produces a gesture nobody proposed. The method uses the distribution, not a mean.">The eleven gestures should be averaged into one composite gesture</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-challenges" class="section" data-track="challenges">
+  <h2 class="section-title">Challenges for Gestural Input</h2>
+  <p class="section-lead">The deck closes on a list rather than a conclusion. Two of the items are technical, three are about the user's knowledge, and two are about the user's body &mdash; and the last group is the one that ends deployments.</p>
+
+  <div class="flow-grid">
+    <div class="flow-node">Segment</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Recognise</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Track unobtrusively</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Discover</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Learn</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Disambiguate</div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-node">Feed back</div>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card pro">
+      <h4>Problems of the machine</h4>
+      <ul>
+        <li><strong>Segmentation</strong> &mdash; determining when a gesture starts and stops</li>
+        <li><strong>Recognition</strong> &mdash; distinguishing between gestures</li>
+        <li><strong>Unobtrusive tracking</strong> &mdash; minimising the burden on the user</li>
+      </ul>
+    </div>
+    <div class="why-card con" style="background:var(--blue-bg); border-color:rgba(37,99,235,0.3);">
+      <h4>Problems of the person</h4>
+      <ul>
+        <li><strong>Discoverability</strong> &mdash; how do users find out which gestures exist?</li>
+        <li><strong>Learnability</strong> &mdash; how do users learn and remember them?</li>
+        <li><strong>Ambiguity</strong> &mdash; the same gesture often has multiple meanings</li>
+        <li><strong>Feedback</strong> &mdash; how do we make sure the gesture was correct?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="ix-gesture-cost"></div>
+
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Cost named in the deck</th><th>Why it appears</th><th>Design response</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Gorilla arms</strong></td><td>Mid-air gestures require holding the arm against gravity; the cost scales with repetition, not with a single use</td><td>Keep gestures short and low, allow resting postures, or prefer wrist and finger movement over whole-arm movement</td></tr>
+        <tr><td><strong>Encumbrance</strong></td><td>Intrinsic tracking means wearing something, and worn sensors must be charged, donned and tolerated</td><td>Use what the person already carries; make wearing optional; keep extrinsic tracking as the fallback</td></tr>
+        <tr><td><strong>Social acceptability</strong></td><td>The gesture is visible to everyone nearby, and its meaning is not</td><td>Make the gesture small and quiet, or move the interaction to a private channel &mdash; and treat this as a design requirement, not a matter of taste</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight-box">
+    <strong>Two that the deck leaves implicit, and the exam will not:</strong> gesture sets collide with accessibility when they assume a standard range of motion, and every always-on camera brings a privacy question that a button never raised. Neither is an argument against gesture &mdash; both are reasons the sensing choice (extrinsic camera, worn IMU, or touch) is a design decision with consequences beyond accuracy.
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">A gesture system tracks perfectly, recognises every gesture correctly, and has a well-designed gesture set &mdash; but users stop using it after a week. Which challenge from the deck's list is the most likely explanation?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Segmentation and recognition are ruled out by the premise: the system recognises every gesture correctly.">Segmentation, because gestures that start and stop ambiguously eventually fail</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Technical success does not answer the user-side challenges. Fatigue, encumbrance or social acceptability — or simply forgetting a learned set — is what ends habitual use." data-bad="">Learnability or physical cost: users forget a set they do not use daily, or the gesture is tiring or awkward in public</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Feedback would show up as a wrong action, not as abandonment. The premise says the recognition is correct, so feedback is doing its job.">Feedback, because users never learn that the gesture was recognised</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-recap" class="section" data-track="recap">
+  <h2 class="section-title">Week 6 Recap</h2>
+
+  <div class="toolkit-grid">
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Gesture is old; the sensing is new</h4>
+        <p>SketchPad (1963), the sensor frame (1986), the Digital Desk (1991) and multi-touch (2007) are four answers to the same question: how does the machine know where the hand is?</p>
+        <div class="flip-hint">Lineage</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Direct input imports the hand</h4>
+        <p>Fat finger, occlusion, palm rejection, bimanual asymmetry, soft vs hard touch, merging contact points, parallax &mdash; every one of them is a property of the hand, not a defect of the sensor.</p>
+        <div class="flip-hint">Surface</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Extrinsic or intrinsic</h4>
+        <p>Sensors in the environment (structured light, time-of-flight, markers, RGB pose estimation) or sensors on the body (accelerometer, gyroscope, magnetometer). Tracking volume and occlusion versus drift.</p>
+        <div class="flip-hint">Mid-air</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Taxonomy before recognition</h4>
+        <p>Deictic, manipulative, semaphoric, motion correlation, gesticulation, sign language. The type tells you whether the recogniser must output a target, a parameter or a label.</p>
+        <div class="flip-hint">Classification</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>Guessability beats intuition</h4>
+        <p>There is no inherently natural gesture set beyond a few commonplace manipulations, so it has to be elicited: show the effect, collect the proposals, rank them by agreement.</p>
+        <div class="flip-hint">Method</div>
+      </div>
+    </div>
+    <div class="toolkit-card">
+      <div class="toolkit-front">
+        <h4>The user-side challenges end deployments</h4>
+        <p>Discoverability, learnability, ambiguity, feedback, gorilla arms, encumbrance and social acceptability. Track and classify perfectly and the system can still be abandoned in a week.</p>
+        <div class="flip-hint">Reality check</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>The deck's own conclusion, restated for an exam:</strong> gestural interaction, on a surface or in mid-air, is a powerful input modality because it leverages our intuitions about direct manipulation; those intuitions can be learned to a degree through gesture elicitation studies; and it nevertheless presents challenges ranging from technical tracking problems to supporting users in discovering and learning new gestures.
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Check yourself</h3>
+      <p>Can you name the four milestones, classify a gesture into one of the six types, and state what each stage of the recognition pipeline must produce?</p>
+    </div>
+    <div class="glance-card">
+      <h3>Then do this</h3>
+      <p>Run a miniature elicitation study: pick five commands, ask three people to invent a gesture for each, and see where the agreement is low. That column is where your interface needs a visible control.</p>
+    </div>
+  </div>
+
+  <div class="quick-check">
+    <div class="qc-question">Which pairing of gesture type and recognition output is correct?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Manipulative gestures need a continuous parameter, because the hand's movement is mapped tightly onto the entity being manipulated.">Manipulative &rarr; a label from a fixed dictionary</div>
+      <div class="qc-opt" data-correct="true" data-good="Correct. Deictic gestures establish identity or spatial location, so the output is a target — which is why deictic techniques differ in how they convert a pointing ray into a screen coordinate." data-bad="">Deictic &rarr; a target: which object, and where</div>
+      <div class="qc-opt" data-correct="false" data-good="" data-bad="Motion correlation selects an object by matching its motion, so the output is which of the moving targets the user is tracking, not a dictionary symbol.">Motion correlation &rarr; a stationary screen coordinate</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+<script src="../../../../shared/site-reset.js"></script>
+</body>
+</html>
