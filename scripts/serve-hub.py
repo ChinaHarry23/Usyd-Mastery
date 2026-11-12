@@ -125,8 +125,6 @@ def start_runtime_directly() -> None:
         str(model),
         "--yes",
         "--no-stats-footer",
-        "--cors-origin",
-        "https://chinaharry23.github.io",
     ]
     profile = settings.get("profile")
     if profile:
@@ -137,12 +135,15 @@ def start_runtime_directly() -> None:
     log_path = Path.home() / ".mtplx/logs/study-hub-serve.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_file = open(log_path, "ab")
+    env = dict(os.environ)
+    env["MTPLX_CORS_ORIGINS"] = "https://chinaharry23.github.io"
     subprocess.Popen(
         command,
         stdout=log_file,
         stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
         start_new_session=True,
+        env=env,
     )
 
 
