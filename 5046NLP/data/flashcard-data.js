@@ -110,5 +110,65 @@ var ALL_FLASHCARD_DATA = [
 
   { ch: 6, front: "BERT pre-training objectives.", back: "1) Masked Language Model (MLM): randomly mask ~15% of tokens and predict them from bidirectional context. 2) Next Sentence Prediction (NSP): predict whether sentence B follows sentence A.", front_zh: "BERT 预训练目标。", back_zh: "1) 掩码语言模型（MLM）：随机掩码约 15% 的 token，利用双向上下文预测。2) 下一句预测（NSP）：预测句子 B 是否跟在句子 A 之后。" },
 
-  { ch: 6, front: "GPT vs BERT: key architectural difference.", back: "GPT: autoregressive (left-to-right) transformer decoder with causal masking; optimised for generation. BERT: bidirectional transformer encoder with MLM; optimised for understanding/classification.", front_zh: "GPT 与 BERT 的关键架构差异。", back_zh: "GPT：自回归（从左到右）Transformer 解码器，带因果掩码，擅长生成。BERT：双向 Transformer 编码器，用 MLM，擅长理解/分类。" }
+  { ch: 6, front: "GPT vs BERT: key architectural difference.", back: "GPT: autoregressive (left-to-right) transformer decoder with causal masking; optimised for generation. BERT: bidirectional transformer encoder with MLM; optimised for understanding/classification.", front_zh: "GPT 与 BERT 的关键架构差异。", back_zh: "GPT：自回归（从左到右）Transformer 解码器，带因果掩码，擅长生成。BERT：双向 Transformer 编码器，用 MLM，擅长理解/分类。" },
+
+  // —— Ch7 ——
+  { ch: 7, front: "Bigram language model.", back: "P(w_t | w_{t-1}); first-order Markov assumption on word sequences.", front_zh: "二元语言模型？", back_zh: "P(w_t | w_{t-1})；对词序列做一阶马尔可夫假设。" },
+  { ch: 7, front: "Perplexity definition.", back: "\\(\\text{PP}(W) = P(w_1\\ldots w_N)^{-1/N}\\); equal to \\(\\exp(\\text{cross-entropy})\\). Lower is better.", front_zh: "困惑度定义？", back_zh: "\\(\\text{PP}(W) = P(w_1\\ldots w_N)^{-1/N}\\)；等于 \\(\\exp(\\text{交叉熵})\\)。越低越好。" },
+  { ch: 7, front: "Why smoothing?", back: "MLE counts give 0 to unseen events; zero kills the product. Smoothing distributes probability mass.", front_zh: "为何需要平滑？", back_zh: "MLE 对未见事件给 0，乘积变 0。平滑分配少量质量。" },
+  { ch: 7, front: "Add-k smoothing.", back: "\\(P(w_i | w_{i-1}) = (c(w_{i-1}, w_i) + k) / (c(w_{i-1}) + k|V|)\\).", front_zh: "加-k 平滑？", back_zh: "\\(P(w_i | w_{i-1}) = (c(w_{i-1}, w_i) + k) / (c(w_{i-1}) + k|V|)\\)。" },
+  { ch: 7, front: "Neural LM components.", back: "Embedding lookup → hidden layers (RNN / Transformer / FFN) → softmax over vocabulary.", front_zh: "神经 LM 组成？", back_zh: "词嵌入 → 隐藏层（RNN/Transformer/FFN）→ 词表上的 softmax。" },
+  { ch: 7, front: "Markov assumption (n-gram).", back: "Next word depends only on the previous n−1 words.", front_zh: "n-gram 的马尔可夫假设？", back_zh: "下一个词仅依赖前 n−1 个词。" },
+  { ch: 7, front: "Why uniform LM has perplexity = |V|.", back: "Each token assigned probability 1/|V|; geometric mean^{−1} = |V|.", front_zh: "均匀 LM 困惑度为何 = |V|？", back_zh: "每词概率 1/|V|；几何平均的倒数即 |V|。" },
+  { ch: 7, front: "Cross-entropy and perplexity link.", back: "PP = exp(H) where H = −(1/N) Σ log P(w_t | history). Lower H ↔ lower PP.", front_zh: "交叉熵与困惑度关系？", back_zh: "PP = exp(H)；H = −(1/N) Σ log P(w_t|历史)。H 越小困惑度越小。" },
+  { ch: 7, front: "LMs frame translation as:", back: "argmax_target P(target | source) — pick the most probable target sequence given the source.", front_zh: "LM 框定翻译？", back_zh: "argmax_target P(target | source) —— 给定源句选最可能的目标序列。" },
+  { ch: 7, front: "Kneser-Ney intuition.", back: "Discount counts of seen n-grams and back off to a continuation probability that favours words appearing in many diverse contexts.", front_zh: "Kneser-Ney 直觉？", back_zh: "对已见 n-gram 折扣并回退到延续概率，偏好在多样上下文中出现的词。" },
+
+  // —— Ch8 ——
+  { ch: 8, front: "Big pretraining corpora.", back: "Common Crawl, FineWeb, Wikipedia, books, code; each with different quality/licence/risk trade-offs.", front_zh: "主要预训练语料？", back_zh: "Common Crawl、FineWeb、Wikipedia、图书、代码；各有质量/许可/风险权衡。" },
+  { ch: 8, front: "Penn Treebank.", back: "Hand-annotated syntactic trees of WSJ articles; classical NLP gold-standard dataset.", front_zh: "Penn Treebank？", back_zh: "对华尔街日报手工标注句法树；经典金标数据集。" },
+  { ch: 8, front: "Cohen's kappa.", back: "\\((p_o - p_e) / (1 - p_e)\\) — agreement above chance.", front_zh: "Cohen kappa？", back_zh: "\\((p_o - p_e) / (1 - p_e)\\)——校正偶然后的一致性。" },
+  { ch: 8, front: "Deduplication motivation.", back: "Avoid memorisation and inflated effective dataset size from repeated passages.", front_zh: "为何要去重？", back_zh: "避免记忆与因重复段落而虚增的有效数据规模。" },
+  { ch: 8, front: "Datasheet / model card purpose.", back: "Document dataset composition, collection process, intended uses, and known limitations.", front_zh: "Datasheet / 模型卡的目的？", back_zh: "记录数据集组成、收集过程、预期用途与已知限制。" },
+  { ch: 8, front: "Common annotation risks.", back: "Annotator bias, ambiguous guidelines, fatigue, low pay (crowdsourcing) compromising quality.", front_zh: "标注常见风险？", back_zh: "标注者偏见、规范模糊、疲劳、（众包）低薪降低质量。" },
+  { ch: 8, front: "Crowdsourcing platforms used.", back: "Amazon Mechanical Turk, Prolific, custom panels; require quality control workflows.", front_zh: "众包平台？", back_zh: "Amazon Mechanical Turk、Prolific 或自建池；需要质量控制流程。" },
+  { ch: 8, front: "Data risk: social bias.", back: "Training corpora reflect historical biases (gender, race, etc.) which can be amplified by models.", front_zh: "社会偏见风险？", back_zh: "训练语料反映历史偏见（性别、种族等），可能被模型放大。" },
+  { ch: 8, front: "Why a small high-quality dataset can beat a huge noisy one.", back: "Models learn from signal; noisy data adds variance and may inject undesirable behaviour.", front_zh: "为何小而精数据有时胜大而杂？", back_zh: "模型从信号学习；噪声数据增大方差并可能植入不良行为。" },
+  { ch: 8, front: "Inter-annotator agreement: when high vs low.", back: "High = task is clearly defined; low = guidelines need rework or task is inherently subjective.", front_zh: "标注者一致性高/低？", back_zh: "高 = 任务定义清晰；低 = 规范要重做或任务本就主观。" },
+
+  // —— Ch9 ——
+  { ch: 9, front: "What is PEFT?", back: "Parameter-Efficient Fine-Tuning — adapt a few extra params instead of all weights.", front_zh: "PEFT 是什么？", back_zh: "参数高效微调——仅适配少量参数而非全量权重。" },
+  { ch: 9, front: "LoRA decomposition.", back: "ΔW = B A with B ∈ R^{d×r}, A ∈ R^{r×d}, rank r ≪ d; only A and B trained.", front_zh: "LoRA 分解？", back_zh: "ΔW = B A，B ∈ R^{d×r}，A ∈ R^{r×d}，r ≪ d；仅训练 A、B。" },
+  { ch: 9, front: "QLoRA idea.", back: "Quantise base model to 4-bit and fine-tune only LoRA adapters in higher precision.", front_zh: "QLoRA 思想？", back_zh: "将基模型量化到 4-bit，仅以较高精度微调 LoRA 适配器。" },
+  { ch: 9, front: "Adapter modules.", back: "Tiny down→nonlin→up bottlenecks inserted in each transformer block; freeze the rest.", front_zh: "适配器模块？", back_zh: "在每个 Transformer 块插入「下投影 → 非线性 → 上投影」小瓶颈；冻结其余。" },
+  { ch: 9, front: "Prompt tuning.", back: "Learn soft-token embeddings prepended to the input; base weights frozen.", front_zh: "Prompt tuning？", back_zh: "学习拼在输入前的软 token 嵌入；基础权重冻结。" },
+  { ch: 9, front: "Prefix tuning.", code: "", back: "Learn task-specific prefix activations injected at every transformer layer.", front_zh: "Prefix tuning？", back_zh: "在每层 Transformer 注入任务专属的前缀激活。" },
+  { ch: 9, front: "LoRA parameter saving.", back: "Trainable 2dr vs full d² → ratio 2r/d. For r = 8, d = 4096 → 0.39% trainable.", front_zh: "LoRA 参数节省？", back_zh: "可训练 2dr 对全量 d²，比例 2r/d。r=8, d=4096 时约 0.39%。" },
+  { ch: 9, front: "When PEFT helps most.", back: "Limited compute / memory, many task-specific adapters needed, or want to ship lightweight delta artifacts.", front_zh: "何时 PEFT 受益最大？", back_zh: "算力/内存有限、需多个任务适配器、或希望仅交付轻量增量。" },
+  { ch: 9, front: "LoRA inference cost.", back: "Same as base model after merging \\(W + BA\\); no extra forward overhead.", front_zh: "LoRA 推理代价？", back_zh: "合并 \\(W + BA\\) 后与基模型相同；前向无额外开销。" },
+  { ch: 9, front: "Typical LoRA rank r.", back: "Usually 4–64, often 8 or 16; small r works surprisingly well on many tasks.", front_zh: "LoRA 常用秩 r？", back_zh: "通常 4–64，常用 8 或 16；小 r 在很多任务上效果惊艳。" },
+
+  // —— Ch10 ——
+  { ch: 10, front: "RLHF acronym.", back: "Reinforcement Learning from Human Feedback.", front_zh: "RLHF 全称？", back_zh: "从人类反馈中的强化学习。" },
+  { ch: 10, front: "RLHF three stages.", back: "Collect human preference data → train reward model → fine-tune LM with RL (PPO with KL penalty).", front_zh: "RLHF 三阶段？", back_zh: "收集偏好数据 → 训练奖励模型 → 用 RL（PPO 带 KL 罚）微调 LM。" },
+  { ch: 10, front: "Bradley-Terry preference model.", back: "P(y_w preferred over y_l) = σ(r(y_w) − r(y_l)); train r to match human comparisons.", front_zh: "Bradley-Terry 偏好模型？", back_zh: "P(y_w 优于 y_l) = σ(r(y_w) − r(y_l))；训 r 拟合人类比较。" },
+  { ch: 10, front: "Why KL penalty in PPO?", back: "Keeps policy close to SFT model; without it the LM exploits reward-model weaknesses.", front_zh: "PPO 为何加 KL？", back_zh: "让策略接近 SFT；否则 LM 会利用奖励模型缺陷。" },
+  { ch: 10, front: "DPO key idea.", back: "Directly optimise log-ratios of policy probabilities on preference pairs; skip the explicit reward model.", front_zh: "DPO 核心思想？", back_zh: "直接在偏好对上优化策略对数比；省去显式奖励模型。" },
+  { ch: 10, front: "Reward hacking.", back: "Model exploits proxy reward without becoming actually more helpful — Goodhart's law in RL.", front_zh: "奖励黑客？", back_zh: "模型利用代理奖励而非实质改进——RL 中的 Goodhart 法则。" },
+  { ch: 10, front: "Mode collapse risk.", back: "RL fine-tuning can shrink output diversity; KL to reference and entropy bonuses help.", front_zh: "模式坍塌风险？", back_zh: "RL 微调可能降低多样性；对参考的 KL 与熵奖励可缓解。" },
+  { ch: 10, front: "Why SFT alone insufficient.", back: "SFT teaches stylistic imitation; preferences are needed to pick between several plausible answers.", front_zh: "SFT 单独为何不够？", back_zh: "SFT 教会风格模仿；要在多种可行答案间选优需偏好。" },
+  { ch: 10, front: "Reward-model training data.", back: "Pairs (prompt, y_w, y_l) where humans ranked y_w over y_l.", front_zh: "奖励模型训练数据？", back_zh: "三元组（提示，y_w，y_l），人类标注 y_w 优于 y_l。" },
+  { ch: 10, front: "PPO objective shape.", back: "Maximise E[r(y) − β KL(π || π_SFT)]; clipped policy-gradient updates.", front_zh: "PPO 目标形式？", back_zh: "最大化 E[r(y) − β KL(π || π_SFT)]；带裁剪的策略梯度更新。" },
+
+  // —— Ch12 ——
+  { ch: 12, front: "What is an LLM agent?", back: "An LLM combined with tools and a loop that lets it reason, act in the world, and observe results.", front_zh: "什么是 LLM 智能体？", back_zh: "LLM 加上工具与循环，使其能推理、对环境采取行动并观察结果。" },
+  { ch: 12, front: "Chain-of-Thought prompting.", back: "Ask the model to produce intermediate reasoning steps before the final answer.", front_zh: "思维链提示？", back_zh: "让模型在最终答案前给出中间推理步骤。" },
+  { ch: 12, front: "ReAct pattern.", back: "Alternate Reasoning steps with Actions (e.g. tool calls) and Observations; just prompting, no training.", front_zh: "ReAct 模式？", back_zh: "在推理步骤间穿插动作（如工具调用）与观察；仅靠提示，无需训练。" },
+  { ch: 12, front: "RAG (retrieval-augmented generation).", back: "Retrieve relevant documents from a corpus and condition the LM's generation on them.", front_zh: "检索增强生成（RAG）？", back_zh: "从语料检索相关文档，并据此条件化 LM 的生成。" },
+  { ch: 12, front: "Tool use / function calling.", back: "LLM emits a structured call (e.g. JSON) that the runtime executes; the result is fed back as observation.", front_zh: "工具使用 / 函数调用？", back_zh: "LLM 发出结构化调用（如 JSON），由运行时执行后将结果反馈。" },
+  { ch: 12, front: "Multi-agent system.", back: "Multiple LLMs (with different roles or models) communicate to solve a task; new failure modes from coordination.", front_zh: "多智能体系统？", back_zh: "多个 LLM（角色/模型各异）协作解决任务；引入协同失败模式。" },
+  { ch: 12, front: "Prompt-injection attack.", back: "Malicious instructions hidden in retrieved or read content override the agent's original instructions.", front_zh: "Prompt 注入？", back_zh: "隐藏在检索/读入内容中的恶意指令覆盖智能体原始指令。" },
+  { ch: 12, front: "Cosine similarity (for retrieval).", back: "\\(u \\cdot v / (\\|u\\|\\,\\|v\\|)\\); 1 = identical direction, 0 = orthogonal.", front_zh: "余弦相似度（检索）？", back_zh: "\\(u \\cdot v / (\\|u\\|\\,\\|v\\|)\\)；1 同向，0 正交。" },
+  { ch: 12, front: "Dense vs sparse retrieval.", back: "Dense: embedding-based similarity (e.g. cosine). Sparse: TF-IDF / BM25 over tokens.", front_zh: "稠密 vs 稀疏检索？", back_zh: "稠密：基于嵌入相似度（如余弦）。稀疏：基于词项的 TF-IDF / BM25。" },
+  { ch: 12, front: "Hallucination mitigation via tools.", back: "Ground the model in retrieved facts (RAG) or external calculators / search to verify claims before answering.", front_zh: "用工具缓解幻觉？", back_zh: "用 RAG 检索事实或调用计算/搜索等外部工具，回答前先验证主张。" },
 ];

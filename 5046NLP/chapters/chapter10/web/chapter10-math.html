@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Lecture 10</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<meta name="description" content="Foundations — Lecture 10 — Bradley–Terry RM loss, RLHF/PPO objective with KL penalty, DPO loss.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Lecture 10">
+<meta property="og:description" content="Foundations — Lecture 10 — Bradley–Terry RM loss, RLHF/PPO objective with KL penalty, DPO loss.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter10-study.html">&larr; Study Guide</a>
+  <a href="chapter10-mindmap.html">Mind Map</a>
+  <a href="../../../index.html">Home</a>
+</div>
+
+<main id="mainContent">
+
+<h1 style="font-size:1.6rem; margin-bottom:0.25rem;">Math Foundations — Lecture 10</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">Bradley–Terry preference model, RM loss, RLHF/PPO objective with KL penalty, clipped surrogate, DPO loss derivation.</p>
+
+<!-- ========== Notation ========== -->
+<section class="math-section" id="sec-notation">
+  <h2>Notation</h2>
+  <div class="def-row"><span class="sym">\(x\)</span><span>Input prompt.</span></div>
+  <div class="def-row"><span class="sym">\(y\)</span><span>Model completion (sequence of tokens).</span></div>
+  <div class="def-row"><span class="sym">\(y_w \succ y_l\)</span><span>"Winner beats loser": human ranks completion \(y_w\) above \(y_l\) for the same prompt.</span></div>
+  <div class="def-row"><span class="sym">\(\pi_{\text{SFT}}\)</span><span>Supervised fine-tuned reference policy (frozen anchor).</span></div>
+  <div class="def-row"><span class="sym">\(\pi_\theta\)</span><span>Trainable policy being optimised.</span></div>
+  <div class="def-row"><span class="sym">\(r_\phi(x,y)\)</span><span>Scalar reward model with parameters \(\phi\).</span></div>
+  <div class="def-row"><span class="sym">\(\sigma(z)\)</span><span>Logistic sigmoid \(1/(1+e^{-z})\).</span></div>
+  <div class="def-row"><span class="sym">\(\beta\)</span><span>KL coefficient — fluency vs reward trade-off.</span></div>
+</section>
+
+<!-- ========== Bradley-Terry ========== -->
+<section class="math-section" id="sec-bt">
+  <h2>Bradley–Terry preference model</h2>
+  <p>Model the probability that \(y_w\) is preferred to \(y_l\) by a sigmoid of the reward gap:</p>
+  <div class="formula-block">
+    \[P(y_w \succ y_l \mid x) = \sigma\!\bigl(r_\phi(x,y_w) - r_\phi(x,y_l)\bigr) = \frac{1}{1+\exp\!\bigl(r_\phi(x,y_l)-r_\phi(x,y_w)\bigr)}.\]
+  </div>
+  <p>Only score <em>differences</em> are identifiable: \(r' = r + c\) produces an identical likelihood, so the reward model is unique only up to an additive constant.</p>
+
+  <h3>Reward model loss (negative log-likelihood)</h3>
+  <div class="formula-block">
+    \[\mathcal{L}_{\text{RM}}(\phi) = -\mathbb{E}_{(x,y_w,y_l)\sim\mathcal{D}_{\text{pref}}}\!\left[\log\sigma\!\bigl(r_\phi(x,y_w) - r_\phi(x,y_l)\bigr)\right].\]
+  </div>
+  <p>Equivalent to logistic regression on the score gap with labels always "winner". Minimising this NLL fits \(r_\phi\) so that preferred completions score higher.</p>
+
+  <div class="quick-check" id="qc-bt" data-answer="0" data-explanation="The Bradley–Terry likelihood depends only on r(y_w) − r(y_l). Adding a constant c to every reward leaves all differences unchanged, so the loss and its gradient are identical. The RM is identified only up to an additive constant.">
+    <div class="qc-question">Quick Check: If you shift every reward by a constant \(c\), the Bradley–Terry loss…</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">is unchanged — only differences matter</div>
+      <div class="qc-opt" data-idx="1">scales by \(e^c\)</div>
+      <div class="qc-opt" data-idx="2">becomes undefined</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== RLHF objective ========== -->
+<section class="math-section" id="sec-rlhf">
+  <h2>RLHF objective with KL anchor</h2>
+  <p>After the reward model is trained, freeze \(r_\phi\) and optimise the policy:</p>
+  <div class="formula-block">
+    \[\max_{\theta}\;\mathbb{E}_{x\sim\mathcal{D},\,y\sim\pi_\theta(\cdot\mid x)}\!\left[r_\phi(x,y)\;-\;\beta\,\mathrm{KL}\!\bigl(\pi_\theta(\cdot\mid x)\,\|\,\pi_{\text{SFT}}(\cdot\mid x)\bigr)\right].\]
+  </div>
+  <p>The KL term is implemented in practice as a per-token penalty on the log-ratio \(\log\pi_\theta(y_t\mid x,y_{&lt;t}) - \log\pi_{\text{SFT}}(y_t\mid x,y_{&lt;t})\), folded into the per-step reward used by PPO.</p>
+
+  <h3>Why the KL term?</h3>
+  <ul>
+    <li><strong>Reward hacking:</strong> with no anchor, \(\pi_\theta\) can drift into degenerate text that the imperfect \(r_\phi\) over-scores.</li>
+    <li><strong>Mode collapse:</strong> a pure reward-max objective concentrates probability on one or two completions; KL keeps the distribution spread.</li>
+    <li><strong>Fluency anchor:</strong> \(\pi_{\text{SFT}}\) already speaks like a normal LM; we only want a small corrective shift toward preferred behaviour.</li>
+  </ul>
+
+  <p>The optimal solution to the KL-regularised reward objective is a tilted reference policy:</p>
+  <div class="formula-block">
+    \[\pi^*(y\mid x) = \frac{1}{Z(x)}\,\pi_{\text{SFT}}(y\mid x)\,\exp\!\left(\frac{1}{\beta}\,r_\phi(x,y)\right).\]
+  </div>
+  <p>Reward acts as a log-density tilt of strength \(1/\beta\); large \(\beta\) → stay close to SFT, small \(\beta\) → chase reward.</p>
+</section>
+
+<!-- ========== PPO clipped surrogate ========== -->
+<section class="math-section" id="sec-ppo">
+  <h2>PPO clipped surrogate objective</h2>
+  <p>Define the importance ratio between the current policy and the policy used to collect rollouts:</p>
+  <div class="formula-block">
+    \[\rho_t(\theta) = \frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{\text{old}}}(a_t\mid s_t)},\qquad \hat A_t = \text{advantage estimate}.\]
+  </div>
+  <p>Vanilla policy gradient maximises \(\mathbb{E}[\rho_t \hat A_t]\) but can blow up if \(\rho_t\) drifts far from 1. PPO clips:</p>
+  <div class="formula-block">
+    \[L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\bigl(\rho_t(\theta)\,\hat A_t,\;\mathrm{clip}\!\bigl(\rho_t(\theta),\,1-\epsilon,\,1+\epsilon\bigr)\,\hat A_t\bigr)\right].\]
+  </div>
+  <p>With \(\epsilon\) typically 0.1–0.2. The \(\min\) picks the more conservative of the two terms, so once the ratio leaves \([1-\epsilon, 1+\epsilon]\) in the helpful direction, the gradient is clipped — limiting any single update step. This is what makes PPO "proximal".</p>
+
+  <div class="quick-check" id="qc-clip" data-answer="0" data-explanation="The clip prevents any single update from moving π_θ too far from π_θ_old. Combined with the KL term against π_SFT, this is what stops collapsing rollouts and stabilises training.">
+    <div class="qc-question">Quick Check: The clip in PPO's surrogate exists to…</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">stop any one update from moving the policy too far from \(\pi_{\theta_{\text{old}}}\)</div>
+      <div class="qc-opt" data-idx="1">replace the value function</div>
+      <div class="qc-opt" data-idx="2">make sampling differentiable</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== DPO ========== -->
+<section class="math-section" id="sec-dpo">
+  <h2>Direct Preference Optimisation (DPO)</h2>
+  <p>Start from the closed-form optimum of the KL-regularised reward objective:</p>
+  <div class="formula-block">
+    \[\pi^*(y\mid x) = \frac{1}{Z(x)}\,\pi_{\text{SFT}}(y\mid x)\,\exp\!\left(\frac{1}{\beta} r(x,y)\right).\]
+  </div>
+  <p>Invert to express the implicit reward in terms of the policy:</p>
+  <div class="formula-block">
+    \[r(x,y) = \beta\,\log\frac{\pi^*(y\mid x)}{\pi_{\text{SFT}}(y\mid x)} + \beta\,\log Z(x).\]
+  </div>
+  <p>Plug into the Bradley–Terry likelihood. The intractable \(Z(x)\) cancels because it appears for both \(y_w\) and \(y_l\) at the same prompt, leaving the DPO loss:</p>
+  <div class="formula-block">
+    \[\mathcal{L}_{\text{DPO}}(\theta) = -\mathbb{E}_{(x,y_w,y_l)}\!\left[\log\sigma\!\left(\beta\log\frac{\pi_\theta(y_w\mid x)}{\pi_{\text{SFT}}(y_w\mid x)} - \beta\log\frac{\pi_\theta(y_l\mid x)}{\pi_{\text{SFT}}(y_l\mid x)}\right)\right].\]
+  </div>
+  <p>Train \(\pi_\theta\) directly on preference pairs — <em>no reward model, no PPO sampling loop</em>. Two model passes per pair: score \(y_w\) and \(y_l\) under both \(\pi_\theta\) and \(\pi_{\text{SFT}}\).</p>
+
+  <div class="quick-check" id="qc-dpo" data-answer="0" data-explanation="DPO derives a closed-form link r(x,y) = β log[π*(y|x)/π_SFT(y|x)] + const and substitutes it into the Bradley–Terry likelihood. The reward model is no longer needed; π_θ is trained directly with a classification-style loss on preference pairs.">
+    <div class="qc-question">Quick Check: In DPO, the reward model is…</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">replaced by an implicit reward expressed through \(\pi_\theta\) and \(\pi_{\text{SFT}}\)</div>
+      <div class="qc-opt" data-idx="1">trained jointly with the policy</div>
+      <div class="qc-opt" data-idx="2">still used, but on different data</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<!-- ========== Comparison ========== -->
+<section class="math-section" id="sec-compare">
+  <h2>RLHF (PPO) vs DPO at a glance</h2>
+  <div class="def-row"><span class="sym">RLHF + PPO</span><span>Train RM → sample from \(\pi_\theta\) → score with RM → KL-penalised PPO step. On-policy, exploration-friendly, infrastructure-heavy.</span></div>
+  <div class="def-row"><span class="sym">DPO</span><span>One classification-style loss on preference pairs; no RM, no sampling loop. Off-policy, simpler, no on-policy exploration.</span></div>
+  <p>Both share the Bradley–Terry preference model and a KL-style anchor to \(\pi_{\text{SFT}}\) controlled by \(\beta\). Both inherit the limitations and biases of the preference data, and Lee et al. (2024) show that DPO de-toxification can be brittle — internal toxic feature vectors persist even when outputs no longer expose them.</p>
+</section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, { delimiters: [{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false}], throwOnError: false });
+  }
+});
+</script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

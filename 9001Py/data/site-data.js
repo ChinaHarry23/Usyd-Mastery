@@ -149,42 +149,33 @@ window.COMP9001_SITE = {
     {
       number: 4,
       slug: "chapter4",
-      title: "Containers: Lists, Tuples and Dictionaries",
-      titleZh: "容器：列表、元组与字典",
-      shortTitle: "Containers",
-      summary: "Why container types exist, Python list syntax and zero-based indexing, list methods and slicing, two-dimensional lists, tuples and immutability, dictionaries, and command-line arguments.",
-      summaryZh: "为什么需要容器类型、Python 列表语法与从零开始的索引、列表方法与切片、二维列表、元组与不可变性、字典，以及命令行参数。",
-      status: "Built from lecture material",
-      statusZh: "已基于讲义构建",
-      concepts: ["containers vs basic types", "lists", "zero-based indexing", "list methods", "slicing", "2-D lists", "tuples & immutability", "dictionaries", "keys and values", "command-line arguments"],
-      conceptsZh: ["容器与基本类型", "列表", "从零开始的索引", "列表方法", "切片", "二维列表", "元组与不可变性", "字典", "键与值", "命令行参数"],
+      title: "Lecture 4 Materials",
+      titleZh: "第 4 讲资料",
+      shortTitle: "Lecture 4",
+      summary: "Placeholder chapter wired to the provided Lecture 4 PDF while the exact topic is confirmed from the slides.",
+      summaryZh: "本章为占位页面，已挂上提供的第 4 讲 PDF；具体主题待从课件中确认后再补全。",
+      status: "Needs topic extraction",
+      statusZh: "待从讲稿中提取主题",
+      concepts: ["lecture pdf review", "topic extraction pending", "chapter scaffold ready"],
+      conceptsZh: ["复习讲稿 PDF", "待提取主题", "章节脚手架已就绪"],
       materials: [
         { label: "Lecture 4 PDF", file: "comp9001-lecture4.pdf" }
       ],
       checks: [
-        "Explain when a container type is needed instead of a single variable.",
-        "Trace what `nums[2]` refers to in a zero-based list and why.",
-        "Describe what a slice like `nums[1:4]` returns.",
-        "State why tuples are immutable while lists are not.",
-        "Explain how a dictionary maps keys to values.",
-        "Describe how command-line arguments reach a Python program."
+        "Review the Lecture 4 PDF and note the main topic heading.",
+        "Write three key terms from the slides into your own notes.",
+        "List one coding pattern or example that deserves an interactive demo later."
       ],
       checksZh: [
-        "解释什么时候需要容器类型而不是单个变量。",
-        "说明在从零开始的列表中 `nums[2]` 指向哪个元素，以及为什么。",
-        "描述 `nums[1:4]` 这样的切片会返回什么。",
-        "说明为什么元组不可变而列表可变。",
-        "解释字典如何把键映射到值。",
-        "描述命令行参数如何传入 Python 程序。"
+        "复习第 4 讲 PDF,记录主要的标题主题。",
+        "从课件中挑出三个关键术语,记录到自己的笔记里。",
+        "列出一个值得日后做成交互式演示的代码模式或例子。"
       ],
       mindmap: {
-        label: "Containers",
+        label: "Lecture 4 Materials",
         children: [
-          { label: "Why containers", children: [{ label: "one name, many values" }, { label: "basic vs container types" }] },
-          { label: "Lists", children: [{ label: "literal syntax" }, { label: "zero-based indexing" }, { label: "methods" }, { label: "slicing" }, { label: "2-D lists" }] },
-          { label: "Tuples", children: [{ label: "immutability" }, { label: "strings as sequences" }] },
-          { label: "Dictionaries", children: [{ label: "keys and values" }, { label: "lookup by key" }] },
-          { label: "Program input", children: [{ label: "sys.argv" }, { label: "argument parsing" }] }
+          { label: "Source", children: [{ label: "provided lecture PDF" }] },
+          { label: "Next pass", children: [{ label: "extract chapter title" }, { label: "summarise examples" }, { label: "add quizzes" }] }
         ]
       }
     },

@@ -2,196 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Foundations — Chapter 5</title>
+<title>Chapter 5 Foundations · COMP9001</title>
 <link rel="stylesheet" href="../../../shared/study.css">
+<script defer src="../../../data/site-data.js"></script>
 <script defer src="../../../../shared/progress-tracker.js"></script>
 <script defer src="../../../shared/chapter-ui.js"></script>
+<script defer src="../../../shared/chapter-placeholder.js"></script>
 <link rel="stylesheet" href="../../../../shared/math.css">
 <link rel="stylesheet" href="../../../../shared/chat-panel.css">
-<meta name="description" content="A compact revision page for loop anatomy, count vs event control, while syntax, iteration counting, infinite loops, and sentinel/flag patterns from Lecture 5.">
+<meta name="description" content="Chapter 5 Foundations · COMP9001 — Dedicated formula reference and quick-check exercises for this chapter.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Foundations — Chapter 5">
-<meta property="og:description" content="A compact revision page for loop anatomy, count vs event control, while syntax, iteration counting, infinite loops, and sentinel/flag patterns from Lecture 5.">
+<meta property="og:title" content="Chapter 5 Foundations · COMP9001">
+<meta property="og:description" content="Chapter 5 Foundations · COMP9001 — Dedicated formula reference and quick-check exercises for this chapter.">
 <meta property="og:locale" content="en_AU">
 </head>
 <body>
-
 <div class="back-bar">
   <a href="chapter5-study.html">&larr; Back to Chapter 5 Study Guide</a>
   <span style="margin:0 0.5rem; color:var(--text-dim);">|</span>
   <a href="../../../index.html" style="font-size:0.85rem;">&larr; Course Home</a>
   <span class="page-title-bar">Foundations & Checks</span>
 </div>
-
 <nav class="toc-sidebar">
-  <div class="toc-group">Core Ideas</div>
-  <ul>
-    <li><a href="#sec-anatomy" class="toc-link active">Loop Anatomy</a></li>
-    <li><a href="#sec-types" class="toc-link">Count vs Event</a></li>
-    <li><a href="#sec-while" class="toc-link">while Syntax &amp; Trace</a></li>
-  </ul>
-  <div class="toc-group">Behaviour &amp; Pitfalls</div>
-  <ul>
-    <li><a href="#sec-iterations" class="toc-link">Counting Iterations</a></li>
-    <li><a href="#sec-infinite" class="toc-link">Infinite Loops</a></li>
-    <li><a href="#sec-event" class="toc-link">Sentinels and Flags</a></li>
-  </ul>
+  <div class="toc-group">Revision</div>
+  <ul id="placeholderToc"></ul>
 </nav>
-
-<div class="math-content" id="mainContent">
-
-<section class="section hero-section" id="sec-hero">
-  <div class="hero-inner">
-    <p class="hero-course">COMP9001 — Chapter 5 Supplement</p>
-    <h1>Foundations & Quick Checks</h1>
-    <p class="hero-subtitle">A compact revision page for loop anatomy, count vs event control, while syntax, iteration counting, infinite loops, and sentinel/flag patterns from Lecture 5.</p>
-  </div>
-</section>
-
-<section class="section" id="sec-anatomy">
-  <h2 class="section-title">Loop Anatomy</h2>
-  <div class="def-box">
-    <div class="def-label">Definition</div>
-    <p>A loop repeats a set of statements while a condition holds. The lecture's anatomy has four parts: <strong>initialize</strong> the loop control variable, <strong>test</strong> it, execute the <strong>statement(s)</strong> in the body, and <strong>modify</strong> the loop control variable before testing again.</p>
-  </div>
-  <div class="def-box example-box">
-    <div class="def-label">Race example</div>
-    <p>Run around the track five times: <code>round = 1</code> (initialize), <code>round &lt;= 5</code> (test), RUN!!! (body), <code>round += 1</code> (modify). The shorthand <code>i += 1</code> means the same as <code>i = i + 1</code>.</p>
-  </div>
-  <div class="quick-check">
-    <div class="qc-question">Which component runs immediately before the condition is re-tested?</div>
-    <div class="qc-options">
-      <div class="qc-opt" data-correct="true" data-good="Correct. The flowchart loops from the modify step straight back up to the test." data-bad="">Modification of the loop control variable</div>
-      <div class="qc-opt" data-correct="false" data-good="" data-bad="Initialization happens once, before the first test — never between iterations.">Initialization of the loop control variable</div>
-    </div>
-    <div class="qc-feedback"></div>
-  </div>
-</section>
-
-<section class="section" id="sec-types">
-  <h2 class="section-title">Count vs Event Control</h2>
-  <div class="symbol-grid">
-    <div class="sym-header">Situation</div><div class="sym-header">Loop type</div><div class="sym-header">End condition</div>
-    <div class="sym-cell">Repetitions known in advance</div><div class="sym-cell">Count-controlled</div><div class="sym-cell">Counter passes the limit (e.g. <code>round &lt;= 5</code> fails)</div>
-    <div class="sym-cell">Repetitions unknown</div><div class="sym-cell">Event-controlled</div><div class="sym-cell">Sentinel value received or flag changes</div>
-    <div class="sym-cell">Operate on everything in a set</div><div class="sym-cell">Count-controlled</div><div class="sym-cell">Counter passes the last index</div>
-    <div class="sym-cell">Read a file to the end</div><div class="sym-cell">Event-controlled</div><div class="sym-cell">End-of-file event reached</div>
-  </div>
-  <div class="quick-check">
-    <div class="qc-question">Jeannie grants exactly three wishes. Which loop type models her, per the lecture?</div>
-    <div class="qc-options">
-      <div class="qc-opt" data-correct="true" data-good="Yes. Three is a known number — Jeannie is the lecture's count-controlled mascot." data-bad="">Count-controlled</div>
-      <div class="qc-opt" data-correct="false" data-good="" data-bad="The Sphinx is the event-controlled example — it keeps asking until the correct answer arrives. Three wishes is a known count.">Event-controlled</div>
-    </div>
-    <div class="qc-feedback"></div>
-  </div>
-</section>
-
-<section class="section" id="sec-while">
-  <h2 class="section-title">while Syntax &amp; Trace</h2>
-  <div class="def-box">
-    <div class="def-label">Syntax</div>
-    <p><code>while &lt;boolean expression&gt;:</code> followed by indented <code>Statement(s)</code>. The body runs while the expression is <code>True</code>; when it evaluates to <code>False</code>, execution continues after the loop.</p>
-  </div>
-  <div class="def-box example-box">
-    <div class="def-label">RUN!!! program</div>
-    <p><code>i = 1; while i &lt;= 5: print(f"Round {i}: RUN!!!"); i = i + 1</code> prints Round 1 through Round 5, and the final <code>print(f"Round {i}: Stop!")</code> outside the loop prints <code>Round 6: Stop!</code> because <code>i</code> was incremented to 6 before the test failed.</p>
-  </div>
-  <div class="quick-check">
-    <div class="qc-question">After the RUN!!! loop finishes, what is the value of <code>i</code>?</div>
-    <div class="qc-options">
-      <div class="qc-opt" data-correct="true" data-good="Correct. The modify step pushed i to 6, then the test i &lt;= 5 failed and the loop exited." data-bad="">6</div>
-      <div class="qc-opt" data-correct="false" data-good="" data-bad="i = 5 still passes the test i &lt;= 5, so the body runs once more and i becomes 6 before the loop can exit.">5</div>
-    </div>
-    <div class="qc-feedback"></div>
-  </div>
-</section>
-
-<section class="section" id="sec-iterations">
-  <h2 class="section-title">Counting Iterations</h2>
-  <div class="def-box">
-    <div class="def-label">Lecture point</div>
-    <p>Many ways to implement the same number of known iterations — the start value and the comparison operator must be read together.</p>
-  </div>
-  <div class="symbol-grid">
-    <div class="sym-header">Initialize</div><div class="sym-header">Test (with <code>i += 1</code>)</div><div class="sym-header">Total iterations</div>
-    <div class="sym-cell"><code>i = 0</code></div><div class="sym-cell"><code>i &lt; 5</code></div><div class="sym-cell">5</div>
-    <div class="sym-cell"><code>i = 0</code></div><div class="sym-cell"><code>i &lt;= 4</code></div><div class="sym-cell">5</div>
-    <div class="sym-cell"><code>i = 1</code></div><div class="sym-cell"><code>i &lt; 6</code></div><div class="sym-cell">5</div>
-    <div class="sym-cell"><code>i = 1</code></div><div class="sym-cell"><code>i &lt;= 5</code></div><div class="sym-cell">5</div>
-  </div>
-  <div class="quick-check">
-    <div class="qc-question">Modifying with <code>i += 1</code> each pass, which combination does NOT give exactly 5 iterations?</div>
-    <div class="qc-options">
-      <div class="qc-opt" data-correct="true" data-good="Correct. i takes the values 0, 1, 2, 3, 4, 5 — six iterations. Every row in the lecture's table gives exactly five." data-bad=""><code>i = 0</code> with <code>i &lt;= 5</code></div>
-      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is one of the lecture's rows: i takes 1 through 5, exactly five iterations."><code>i = 1</code> with <code>i &lt;= 5</code></div>
-      <div class="qc-opt" data-correct="false" data-good="" data-bad="That is the lecture's first row: i takes 0 through 4, exactly five iterations."><code>i = 0</code> with <code>i &lt; 5</code></div>
-    </div>
-    <div class="qc-feedback"></div>
-  </div>
-</section>
-
-<section class="section" id="sec-infinite">
-  <h2 class="section-title">Infinite Loops</h2>
-  <div class="def-box warning-box">
-    <div class="def-label">Definition</div>
-    <p>A loop that <em>never</em> exits is called an infinite loop. This happens because the condition is always <code>True</code>. If it is unintentional — you didn't design it — issue a Keyboard Interrupt command <code>&lt;CTRL-C&gt;</code> to stop execution.</p>
-  </div>
-  <div class="def-box example-box">
-    <div class="def-label">Prevention tips</div>
-    <p>Ensure the body contains statements to modify the loop control variable, OR statements to terminate the loop when the event is achieved. A missing modification is a logic error: wrong number of loops at best, infinite loop at worst.</p>
-  </div>
-  <div class="quick-check">
-    <div class="qc-question">Your program is stuck in an unintentional infinite loop. What does the lecture tell you to do?</div>
-    <div class="qc-options">
-      <div class="qc-opt" data-correct="true" data-good="Right. CTRL-C issues a Keyboard Interrupt — the lecture's escape hatch for loops you didn't design to run forever." data-bad="">Press CTRL-C to issue a Keyboard Interrupt</div>
-      <div class="qc-opt" data-correct="false" data-good="" data-bad="Python never times a loop out. While the condition stays True it runs forever, until you interrupt it.">Wait — Python stops loops automatically after a while</div>
-    </div>
-    <div class="qc-feedback"></div>
-  </div>
-</section>
-
-<section class="section" id="sec-event">
-  <h2 class="section-title">Sentinels and Flags</h2>
-  <div class="def-box">
-    <div class="def-label">Sentinel value</div>
-    <p>An unlikely value that the data can take; receiving it ends the loop. The lecture compares it to a safe-word in extreme haunted houses — never confused with normal input.</p>
-  </div>
-  <div class="def-box example-box">
-    <div class="def-label">Flag</div>
-    <p>A boolean that controls the loop. The echo program initialises <code>stop_flag = False</code>, loops on <code>not stop_flag</code>, and the body sets <code>stop_flag = True</code> when the user enters the sentinel <code>"STOP IT!"</code>. Lecture advice: use a flag to make your code clearer, if it makes it clearer.</p>
-  </div>
-  <div class="quick-check">
-    <div class="qc-question">In the echo program, what actually stops the loop?</div>
-    <div class="qc-options">
-      <div class="qc-opt" data-correct="true" data-good="Correct. The sentinel input raises the flag, so not stop_flag becomes False at the next test and the loop exits." data-bad="">The body sets <code>stop_flag = True</code> after the user types "STOP IT!", making the condition <code>False</code></div>
-      <div class="qc-opt" data-correct="false" data-good="" data-bad="input() has no built-in limit. The loop is event-controlled — only the flag change can end it.">The <code>input()</code> function refuses to run more than a fixed number of times</div>
-    </div>
-    <div class="qc-feedback"></div>
-  </div>
-</section>
-
-</div>
-
+<div class="math-content" id="mainContent"></div>
 <script>
 window.addEventListener("DOMContentLoaded", function () {
-  if (window.COMP9001_PROGRESS) {
-    window.COMP9001_PROGRESS.markPage("checks");
-  }
-  if (window.initComp9001ChapterUI) {
-    window.initComp9001ChapterUI();
-  }
+  if (window.COMP9001_PLACEHOLDERS) window.COMP9001_PLACEHOLDERS.renderMathPage();
+  if (window.initComp9001ChapterUI) window.initComp9001ChapterUI();
 });
 </script>
-
 <!-- LANG-INJECT -->
 <script src="../../../shared/translations.js"></script>
 <script src="../../../shared/section-translations.js"></script>
 <script src="../../../shared/lang-config.js"></script>
 <script src="../../../../shared/lang-toggle.js"></script>
 <script src="../../../../shared/chat-panel.js"></script>
-<script src="../../../../shared/site-reset.js"></script>
 </body>
 </html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Lecture 12</title>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/mindmap.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Mind Map — Lecture 12 — Hierarchical mind map of LLM agent concepts: ReAct, RAG, tools, multi-agent, risks.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mind Map — Lecture 12">
+<meta property="og:description" content="Mind Map — Lecture 12 — Hierarchical mind map of LLM agent concepts: ReAct, RAG, tools, multi-agent, risks.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body class="mm-page">
+
+<div class="mm-back-bar">
+  <a href="chapter12-study.html">← Study Guide</a>
+  <a href="chapter12-math.html">Foundations</a>
+  <a href="../../../index.html">🏠 Home</a>
+  <span class="spacer"></span>
+  <span class="mm-title">Lecture 12 Mind Map</span>
+  <div class="mm-controls">
+    <button id="btnExpandAll">Expand All</button>
+    <button id="btnCollapseAll">Collapse All</button>
+  </div>
+</div>
+
+<div class="mm-legend">
+  <span><span class="dot" style="background:var(--accent)"></span> Concepts</span>
+  <span><span class="dot" style="background:var(--green)"></span> Tasks</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> Challenges</span>
+</div>
+
+<div class="mm-canvas" id="mindmapCanvas"></div>
+
+<script src="../../../../shared/mindmap.js"></script>
+<script>
+var data = {
+  label: "Lecture 12: LLM Agents",
+  label_zh: "第12讲：LLM智能体",
+  children: [
+    {
+      label: "Agent Definition",
+      label_zh: "智能体定义",
+      color: "blue",
+      children: [
+        { label: "Model + environment + actions", label_zh: "模型 + 环境 + 动作" },
+        { label: "Internal processing + external interaction", label_zh: "内部处理 + 外部交互" },
+        { label: "Components: LLM · memory · tools · world", label_zh: "组件：LLM·记忆·工具·世界" },
+        { label: "Pre-LLM examples: ELIZA, Siri, SayCan (system-1)", label_zh: "LLM之前的例子：ELIZA、Siri、SayCan（系统1）" },
+        { label: "LLM agents add system-2 reasoning", label_zh: "LLM智能体引入系统2推理" }
+      ]
+    },
+    {
+      label: "Chain-of-Thought (Reasoning)",
+      label_zh: "思维链（推理）",
+      color: "purple",
+      children: [
+        { label: "Intermediate generation = scratch memory", label_zh: "中间生成 = 草稿记忆" },
+        { label: "Few-shot CoT prompting", label_zh: "少样本思维链提示" },
+        { label: "Self-consistency: sample K traces, vote", label_zh: "自一致性：采样K条轨迹并投票" },
+        { label: "Analogical reasoning: recall similar problem first", label_zh: "类比推理：先回忆相似问题" },
+        { label: "Reflexion: reflect on past failures in prompt", label_zh: "Reflexion：在提示中反思过往失败" },
+        { label: "Tree-of-Thoughts: branch and prune paths", label_zh: "思维树：分支并剪枝路径" },
+        { label: "Planning is still hard for LLMs", label_zh: "规划对LLM仍然困难" }
+      ]
+    },
+    {
+      label: "ReAct",
+      label_zh: "ReAct",
+      color: "green",
+      children: [
+        { label: "Thought → Action → Observation loop", label_zh: "思考 → 行动 → 观察 循环" },
+        { label: "Reasoning is one of the actions", label_zh: "推理是可选动作之一" },
+        { label: "Two modes: alternate, or model chooses freely", label_zh: "两种模式：交替，或模型自由选择" },
+        { label: "No training — pure prompting + few-shot examples", label_zh: "无需训练 — 纯提示 + 少样本示例" },
+        { label: "Finish[y] action terminates the loop", label_zh: "Finish[y] 动作结束循环" }
+      ]
+    },
+    {
+      label: "RAG (Retrieval-Augmented Generation)",
+      label_zh: "RAG（检索增强生成）",
+      color: "yellow",
+      children: [
+        { label: "Pipeline: query → retrieve → prepend → generate", label_zh: "流程：查询 → 检索 → 前置 → 生成" },
+        { label: "Sparse: BM25 / tf–idf (lexical match)", label_zh: "稀疏：BM25 / tf–idf（词项匹配）" },
+        { label: "Dense: cosine similarity over embeddings", label_zh: "稠密：嵌入上的余弦相似度" },
+        { label: "Hybrid + re-ranking common in practice", label_zh: "实践中常用混合 + 重排序" },
+        { label: "Doubles as long-term memory", label_zh: "兼作长期记忆" },
+        { label: "Usefulness ← knowledge base + retrieval quality", label_zh: "有用性 ← 知识库 + 检索质量" }
+      ]
+    },
+    {
+      label: "Tool Use",
+      label_zh: "工具使用",
+      color: "blue",
+      children: [
+        { label: "LM emits special symbols → tool called", label_zh: "LM输出特殊符号 → 调用工具" },
+        { label: "Toolformer: self-supervised tool insertion", label_zh: "Toolformer：自监督工具插入" },
+        { label: "Calculators, search, code execution", label_zh: "计算器、搜索、代码执行" },
+        { label: "WebGPT: RL-trained web browsing", label_zh: "WebGPT：RL训练的网页浏览" },
+        { label: "Computer use (Anthropic) — drive desktops", label_zh: "Computer use（Anthropic）— 操作桌面" }
+      ]
+    },
+    {
+      label: "Multi-Agent Systems",
+      label_zh: "多智能体系统",
+      color: "purple",
+      children: [
+        { label: "AutoGen: LLMs talking to each other", label_zh: "AutoGen：LLM之间对话" },
+        { label: "DyLAN: choose among a collection of LLMs", label_zh: "DyLAN：在多个LLM中选择" },
+        { label: "DSPy: declarative computation graphs over LMs", label_zh: "DSPy：在LM之上的声明式计算图" },
+        { label: "Multimodal & embodied (drones, robots)", label_zh: "多模态与具身（无人机、机器人）" },
+        { label: "Language still does the heavy lifting", label_zh: "语言仍承担主要工作" }
+      ]
+    },
+    {
+      label: "Evaluation & Risks",
+      label_zh: "评估与风险",
+      color: "yellow",
+      children: [
+        { label: "WebArena: sandboxed web tasks", label_zh: "WebArena：沙盒网页任务" },
+        { label: "SWE-Bench: real GitHub issue fixing", label_zh: "SWE-Bench：真实GitHub问题修复" },
+        { label: "PrivacyLens: privacy behaviour benchmark", label_zh: "PrivacyLens：隐私行为基准" },
+        { label: "Hallucination amplified by acting", label_zh: "幻觉因行动而放大" },
+        { label: "Prompt injection via retrieved / tool content", label_zh: "通过检索/工具内容的提示注入" },
+        { label: "Runaway actions — loops, paid APIs", label_zh: "失控动作 — 循环、付费API" },
+        { label: "Open-ended → no single ground truth", label_zh: "开放式 → 无单一标准答案" }
+      ]
+    }
+  ]
+};
+renderMindmap("mindmapCanvas", data);
+</script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

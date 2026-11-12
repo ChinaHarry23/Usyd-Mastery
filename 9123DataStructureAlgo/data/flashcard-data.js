@@ -52,4 +52,16 @@ var ALL_FLASHCARD_DATA = [
   { ch: 10, front: "Exchange argument", back: "Show any optimal solution can be transformed to match greedy without worsening cost." },
   { ch: 10, front: "Huffman optimality", back: "Merging two least frequent subtrees is safe for prefix-free codes." },
   { ch: 10, front: "Matroid greedy", back: "On matroids, greedy finds maximum-weight independent set — unifies some problems." },
+
+  // —— Ch11 ——
+  { ch: 11, front: "Three steps of divide and conquer.", back: "Divide into smaller subproblems, recur on each, combine the sub-solutions." },
+  { ch: 11, front: "Binary search recurrence and time.", back: "T(n) = T(n/2) + O(1) → Θ(log n)." },
+  { ch: 11, front: "Merge sort recurrence and time.", back: "T(n) = 2T(n/2) + Θ(n) → Θ(n log n); stable, not in-place." },
+  { ch: 11, front: "Merge step.", back: "Linear-time walk over two sorted arrays, taking the smaller front element at each step." },
+  { ch: 11, front: "Master theorem applies to.", back: "T(n) = aT(n/b) + f(n) with a ≥ 1, b > 1." },
+  { ch: 11, front: "Master theorem Case 1.", back: "f(n) ∈ O(n^{log_b a − ε}) → T(n) ∈ Θ(n^{log_b a})." },
+  { ch: 11, front: "Master theorem Case 2.", back: "f(n) ∈ Θ(n^{log_b a}) → T(n) ∈ Θ(n^{log_b a} · log n)." },
+  { ch: 11, front: "Master theorem Case 3.", back: "f(n) ∈ Ω(n^{log_b a + ε}) and regular → T(n) ∈ Θ(f(n))." },
+  { ch: 11, front: "Strassen multiplication.", back: "T(n) = 7T(n/2) + Θ(n^2) → Θ(n^{log_2 7}) ≈ Θ(n^{2.807}); beats naïve Θ(n^3)." },
+  { ch: 11, front: "Quicksort best vs worst.", back: "Best/avg Θ(n log n) with balanced pivots; worst Θ(n^2) on adversarial pivots; randomisation helps." },
 ];

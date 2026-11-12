@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 11 - Markov Models and Hidden Markov Models</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 11 introduces Markov chains and Hidden Markov Models (HMMs). Topics: Markov property and transition matrices; HMM components (states, observations, A, B, pi); the three core problems - Evaluation (Forward algorithm), Decoding (Viterbi), and Learning (Baum-Welch / EM); applications in speech, NLP, and bioinformatics.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 11 - Markov Models and Hidden Markov Models">
+<meta property="og:description" content="Week 11: Markov chains, HMMs, Forward, Viterbi, and Baum-Welch.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F4F7;</span>
+    <h2 data-i18n="sidebar_h2">Week 11</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-markov" class="nav-link" data-section="sec-markov" data-i18n="nav_markov">Markov models</a></li>
+    <li><a href="#sec-hmm" class="nav-link" data-section="sec-hmm" data-i18n="nav_hmm">Hidden Markov Model</a></li>
+    <li><a href="#sec-evaluation" class="nav-link" data-section="sec-evaluation" data-i18n="nav_eval">Evaluation (Forward)</a></li>
+    <li><a href="#sec-decoding" class="nav-link" data-section="sec-decoding" data-i18n="nav_decode">Decoding (Viterbi)</a></li>
+    <li><a href="#sec-learning" class="nav-link" data-section="sec-learning" data-i18n="nav_learn">Learning (Baum-Welch)</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter11-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter11-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=11" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=11" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=11&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 9</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="1">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 11: Markov Models and Hidden Markov Models</h1>
+    <p class="hero-subtitle">Probabilistic models for sequences. A Markov chain models transitions between observable states; a Hidden Markov Model (HMM) adds a layer of hidden states that emit observations. We meet the three fundamental HMM problems and the dynamic programming algorithms that solve them.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F517;</span><span>Markov chain</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F441;</span><span>Hidden states</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x27A1;</span><span>Forward / Viterbi</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F504;</span><span>Baum-Welch EM</span></div>
+    </div>
+    <div class="chip-list">
+      <span>Markov property</span>
+      <span>Transition matrix A</span>
+      <span>Emission matrix B</span>
+      <span>Initial distribution &pi;</span>
+      <span>Forward algorithm</span>
+      <span>Viterbi + backpointer</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter11-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter11-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">Week 11 introduces a whole new kind of model: probabilistic sequence models. The slides walk a single weather example (Rainy / Cloudy / Sunny with clothing observations) all the way through the Markov chain, the HMM definition, the Forward algorithm, and the Viterbi algorithm. Re-derive each numerical step by hand before reading the worked solution.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What you should learn from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../Materials/ml11.pdf">ml11.pdf</a></td><td>History of Markov chains; the Markov assumption; transition matrix \(A\) and initial vector \(\pi\); sequence-probability formula via the chain rule; HMM components \(\lambda = (A, B, \pi)\); the three problems (Evaluation, Decoding, Learning); enumeration baseline and its \(2T\,N^T\) complexity; Forward algorithm with recurrence \(f_k(i)\); Viterbi algorithm with score \(V_k(i)\) and backpointer \(\text{Ptr}\); EM / Baum-Welch outline for learning; applications in POS tagging, finance, bioinformatics, vision, security.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-markov" class="section" data-track="markov">
+  <h2 class="section-title">Markov models: sequences of observable states</h2>
+  <p class="section-lead">A Markov chain is a probabilistic model of how a system moves through a finite set of states over discrete time. Its defining feature is that the next state depends only on the current state, not on the full history.</p>
+
+  <div class="def-box">
+    <div class="def-label">Markov assumption</div>
+    <p style="margin:0; color:var(--text-muted);">For a sequence of states \(\pi_1, \pi_2, \ldots, \pi_n\), \(P(\pi_i \mid \pi_1, \ldots, \pi_{i-1}) = P(\pi_i \mid \pi_{i-1})\). Only the previous state matters. This memoryless property is what makes the model tractable.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Transition matrix \(A\)</h3>
+      <p>Entry \(a_{ij} = P(\pi_t = j \mid \pi_{t-1} = i)\) is the probability of moving from state \(i\) to state \(j\). Rows sum to 1. Estimated from counts in historical data or from domain knowledge.</p>
+    </div>
+    <div class="col-card">
+      <h3>Initial distribution \(\pi\) (a.k.a. \(A_0\))</h3>
+      <p>A vector \(\pi(s) = P(\text{start in } s)\). Combined with \(A\), it lets us compute the probability of any state sequence.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Weather example</h3>
+      <p>Three states: Rainy, Cloudy, Sunny. From the row "Sunny" of \(A\): \(P(\text{Sunny} \mid \text{Sunny}) = 0.8\), \(P(\text{Rainy} \mid \text{Sunny}) = 0.1\), \(P(\text{Cloudy} \mid \text{Sunny}) = 0.1\). The next day's weather depends only on today.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Sequence probability</h3>
+      <p>\(P(\pi_1, \ldots, \pi_k) = P(\pi_1)\prod_{i=1}^{k-1} P(\pi_{i+1} \mid \pi_i)\). E.g. \(P(\text{S, S, C, R}) = 0.1 \cdot 0.8 \cdot 0.1 \cdot 0.2 = 0.0016\).</p>
+    </div>
+    <div class="glance-card">
+      <h3>As a graph</h3>
+      <p>Nodes are states; directed edges carry transition probabilities. A "Start" node with weights \(\pi(s)\) feeds the chain. Useful diagram for spotting absorbing states or unreachable states.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Historical note:</strong> Markov introduced these chains around 1913 by counting vowel/consonant pairs in Pushkin's <em>Eugene Onegin</em> &mdash; one of the earliest data-driven probabilistic models in history.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="The Markov assumption says the next state depends only on the current state, not on the full history. This is exactly what makes the model tractable and gives the transition matrix its meaning.">
+    <div class="qc-h">Quick check - Markov property</div>
+    <div class="qc-question">What does the Markov assumption state?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The next state depends on all past states equally</div>
+      <div class="qc-opt" data-idx="1">The next state depends only on the current (previous) state</div>
+      <div class="qc-opt" data-idx="2">The states are statistically independent</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-hmm" class="section" data-track="hmm">
+  <h2 class="section-title">Hidden Markov Models: observations from hidden states</h2>
+  <p class="section-lead">In an HMM we cannot directly observe the underlying state &mdash; we only see indirect <em>observations</em> that depend on it. The lecture's running example: you are locked in a room and the only signal about today's weather is the caregiver's clothing (Shirt / Jacket / Hoodie).</p>
+
+  <div class="def-box">
+    <div class="def-label">HMM components &mdash; \(\lambda = (A, B, \pi)\)</div>
+    <p style="margin:0; color:var(--text-muted);">A finite set of \(N\) hidden states \(\{s_1, \ldots, s_N\}\); a set of observation symbols \(\{v_1, \ldots, v_K\}\); a transition matrix \(A\) with \(a_{ij} = P(\pi_t = s_j \mid \pi_{t-1} = s_i)\); an emission matrix \(B\) (also called \(E\)) with \(b_i(v_k) = P(o_t = v_k \mid \pi_t = s_i)\); and an initial distribution \(\pi\) (the slides call it \(A_0\)).</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Weather HMM</h3>
+      <p>Hidden states: Rainy, Cloudy, Sunny. Observations: Shirt, Jacket, Hoodie. The emission matrix \(B\) tells how likely each garment is given today's true weather, e.g. \(b_{\text{Sunny}}(\text{Hoodie}) = 0.79\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Chess example (Kubat)</h3>
+      <p>Hidden states: strong / weak opponent. Observations: win / lose / draw. The mother only sees results; from the sequence and a known \(\lambda\) she can infer opponent strength.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Problem 1 - Evaluation</h3>
+      <p>Given \(\lambda\) and observation sequence \(O\), compute \(P(O \mid \lambda)\). Solved by the <strong>Forward algorithm</strong>.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Problem 2 - Decoding</h3>
+      <p>Given \(\lambda\) and \(O\), find the most likely hidden state sequence \(\arg\max_Q P(Q \mid O, \lambda)\). Solved by <strong>Viterbi</strong>.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Problem 3 - Learning</h3>
+      <p>Given only an observation sequence \(O\), estimate \(\lambda = (A, B, \pi)\). Solved by <strong>Baum-Welch</strong>, an EM algorithm.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Two layers:</strong> a Markov chain over hidden states (governed by \(A\) and \(\pi\)) and an emission step at each time (governed by \(B\)) that produces what we actually see. Inference must therefore reason about hidden trajectories consistent with the observations.
+  </div>
+</section>
+
+<section id="sec-evaluation" class="section" data-track="evaluation">
+  <h2 class="section-title">Problem 1 &mdash; Evaluation with the Forward algorithm</h2>
+  <p class="section-lead">We want \(P(O \mid \lambda)\) for a given observation sequence. A naive enumeration over all \(N^T\) hidden paths costs roughly \(2T\,N^T\) multiplications &mdash; infeasible for long sequences. The Forward algorithm exploits dynamic programming to bring this down to \(O(N^2 T)\).</p>
+
+  <div class="def-box">
+    <div class="def-label">Forward variable</div>
+    <p style="margin:0; color:var(--text-muted);">\(f_k(i)\) is the probability of having seen \(o_1, \ldots, o_i\) <em>and</em> being in state \(k\) at time \(i\). The recurrence is \(f_k(i) = b_k(o_i) \sum_j f_j(i-1)\, a_{jk}\), summed over all predecessor states \(j\).</p>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Step 1 &mdash; Initialise</h3>
+      <p>\(f_k(1) = \pi_k\, b_k(o_1)\) for each state \(k\). Combine the prior of state \(k\) with the chance it emitted the first observation.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Step 2 &mdash; Recurse</h3>
+      <p>For \(t = 2, \ldots, T\), \(f_k(t) = b_k(o_t) \sum_j f_j(t-1)\, a_{jk}\). Sum over <em>all</em> ways to reach state \(k\) from the previous step.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Step 3 &mdash; Terminate</h3>
+      <p>\(P(O \mid \lambda) = \sum_k f_k(T)\). Total probability marginalises over the final hidden state.</p>
+    </div>
+    <div class="metric-card">
+      <h3>Complexity</h3>
+      <p>\(O(N^2 T)\) versus \(O(2T N^T)\) for enumeration. With \(N = 3\) states and \(T = 100\) observations, that is roughly \(900\) vs \(\sim 10^{47}\) operations.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Worked example (lecture, slides 27&ndash;30):</strong> \(O = (\text{Shirt}, \text{Hoodie})\) with \(\pi = (0.6, 0.3, 0.1)\). Initialisation gives \(f_R(1) = 0.48,\ f_C(1) = 0.15,\ f_S(1) = 0.001\). After one step the algorithm yields \(f_R(2) = 0.0035,\ f_C(2) = 0.0189,\ f_S(2) = 0.0739\), so \(P(O \mid \lambda) = 0.0963\).
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="The forward variable f_k(i) stores the joint probability of the partial observation sequence up to time i AND being in state k at time i. Caching this table is what gives the algorithm O(N^2 T) cost.">
+    <div class="qc-h">Quick check - Forward variable</div>
+    <div class="qc-question">What does the forward variable \(f_k(i)\) represent?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">The probability of the full observation sequence given state \(k\)</div>
+      <div class="qc-opt" data-idx="1">The marginal probability of state \(k\) ignoring observations</div>
+      <div class="qc-opt" data-idx="2">\(P(o_1, \ldots, o_i, \pi_i = k \mid \lambda)\) &mdash; partial sequence and being in \(k\) at time \(i\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-decoding" class="section" data-track="decoding">
+  <h2 class="section-title">Problem 2 &mdash; Decoding with the Viterbi algorithm</h2>
+  <p class="section-lead">Now we want the single most likely <em>sequence</em> of hidden states that explains the observations. Viterbi is structurally identical to Forward except it <strong>maximises</strong> over predecessors instead of summing, and stores a backpointer so we can recover the best path.</p>
+
+  <div class="def-box">
+    <div class="def-label">Viterbi score and backpointer</div>
+    <p style="margin:0; color:var(--text-muted);">\(V_k(i) = b_k(o_i) \max_j V_j(i-1)\, a_{jk}\) is the probability of the best path ending at state \(k\) after observing \(o_1, \ldots, o_i\). The backpointer \(\text{Ptr}_k(i) = \arg\max_j V_j(i-1)\, a_{jk}\) records which previous state made the maximum.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Forward vs Viterbi</h3>
+      <p>Forward uses \(\sum\) and answers "how likely is the sequence?". Viterbi uses \(\max\) and answers "what is the best explanation?". Both are \(O(N^2 T)\) dynamic programs over the same trellis.</p>
+    </div>
+    <div class="col-card">
+      <h3>Trace-back</h3>
+      <p>After the final step pick \(q_T = \arg\max_k V_k(T)\). Then walk backwards: \(q_{t-1} = \text{Ptr}_{q_t}(t)\) for \(t = T, \ldots, 2\). The result is the most probable hidden state sequence.</p>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>Step 1</h3>
+      <p>Initialise \(V_k(1) = \pi_k\, b_k(o_1)\).</p>
+    </div>
+    <div class="metric-card">
+      <h3>Step 2</h3>
+      <p>For \(t = 2, \ldots, T\) compute \(V_k(t)\) <em>and</em> \(\text{Ptr}_k(t)\) for every state \(k\).</p>
+    </div>
+    <div class="metric-card">
+      <h3>Step 3a</h3>
+      <p>Pick the final state \(q_T = \arg\max_k V_k(T)\).</p>
+    </div>
+    <div class="metric-card">
+      <h3>Step 3b</h3>
+      <p>Trace back through \(\text{Ptr}\) to recover \(q_{T-1}, \ldots, q_1\).</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Worked example (slides 36&ndash;41):</strong> with \(O = (\text{Shirt}, \text{Hoodie})\) the Viterbi values at \(t=2\) are \(V_R = 0.0029,\ V_C = 0.0144,\ V_S = 0.0379\). The argmax picks Sunny at \(t=2\), and the backpointer points to Rainy at \(t=1\). The most likely hidden sequence is therefore <strong>Rainy, Sunny</strong>.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="Forward sums over predecessor states to give a total probability; Viterbi takes the max to track the single best path. Aside from sum vs max and the backpointer, the trellis structure is identical.">
+    <div class="qc-h">Quick check - Forward vs Viterbi</div>
+    <div class="qc-question">What is the key algorithmic difference between the Forward and Viterbi recurrences?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">Viterbi uses different transition probabilities</div>
+      <div class="qc-opt" data-idx="1">Viterbi replaces the sum over predecessors with a max and adds a backpointer</div>
+      <div class="qc-opt" data-idx="2">Forward runs in exponential time; Viterbi is polynomial</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-learning" class="section" data-track="learning">
+  <h2 class="section-title">Problem 3 &mdash; Learning with Baum-Welch (EM)</h2>
+  <p class="section-lead">When we know only an observation sequence and not the model parameters, we must <em>learn</em> \(\lambda = (A, B, \pi)\). This is solved with the Baum-Welch algorithm, an instance of Expectation-Maximisation.</p>
+
+  <div class="def-box">
+    <div class="def-label">EM outline for HMMs</div>
+    <p style="margin:0; color:var(--text-muted);">1. Initialise \(\lambda = (A, B, \pi)\) to random (but valid) probability distributions. 2. <strong>E step:</strong> using current \(\lambda\), compute the expected counts of state-transitions and emissions consistent with \(O\) (via forward and backward variables). 3. <strong>M step:</strong> re-estimate \(\lambda\) from those expected counts. 4. Iterate. The likelihood \(P(O \mid \lambda)\) is guaranteed to increase (or stay constant) each iteration; stop when it plateaus.</p>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Why iterative?</h3>
+      <p>Maximum likelihood for HMMs has no closed form because the hidden state sequence is unknown. EM treats the hidden states as "missing data" and alternates between filling them in (E) and refitting parameters (M).</p>
+    </div>
+    <div class="glance-card">
+      <h3>Local optima</h3>
+      <p>EM only guarantees a local optimum. Different random initialisations can converge to different solutions, so multiple restarts are common.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Connection to forward / backward</h3>
+      <p>The E step uses the Forward variable \(f_k(t)\) plus a Backward variable \(\beta_k(t)\) to compute the posterior over hidden states &mdash; the same DP machinery as Problem 1.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>HMM applications:</strong> speech recognition (states = phonemes), part-of-speech tagging (states = POS tags, observations = words), gene finding in bioinformatics, gesture recognition in computer vision, malware behaviour modelling in security, regime-switching in finance.
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Study questions to answer before moving on</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 1</div>
+      <div class="problem-tag warm-up">Sequence probability</div>
+    </div>
+    <div class="problem-body">
+      <p>Using the lecture's weather Markov chain with \(\pi = (P(\text{R}), P(\text{C}), P(\text{S})) = (0.6, 0.1, 0.3)\) and transition rows \(P(\cdot \mid \text{S}) = (0.1, 0.1, 0.8)\), \(P(\cdot \mid \text{C}) = (0.2, 0.6, 0.2)\), compute \(P(\text{S, S, C, R})\).</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w11-seq">Show Solution</button>
+      <div class="solution-content" id="sol-w11-seq">
+        <p>Use the Markov product: \(P(\text{S}) \cdot P(\text{S} \mid \text{S}) \cdot P(\text{C} \mid \text{S}) \cdot P(\text{R} \mid \text{C}) = 0.3 \cdot 0.8 \cdot 0.1 \cdot 0.2 = 0.0048\).</p>
+        <p style="color:var(--text-muted);">The slides use a slightly different \(\pi\) where \(P(\text{S}) = 0.1\), giving \(0.1 \cdot 0.8 \cdot 0.1 \cdot 0.2 = 0.0016\). Plug in whichever initial distribution your version of the slides uses.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 2</div>
+      <div class="problem-tag problem-solving">Forward step</div>
+    </div>
+    <div class="problem-body">
+      <p>For the HMM example with \(O = (\text{Shirt}, \text{Hoodie})\), confirm that \(f_{\text{Cloudy}}(2) = 0.0189\) given \(f_R(1) = 0.48\), \(f_C(1) = 0.15\), \(f_S(1) = 0.001\), the transition column for Cloudy \((0.3, 0.3, 0.4)\), and \(b_{\text{Cloudy}}(\text{Hoodie}) = 0.1\).</p>
+      <p style="color:var(--text-muted);">\(f_C(2) = 0.1 \cdot (0.48 \cdot 0.3 + 0.15 \cdot 0.3 + 0.001 \cdot 0.4) = 0.1 \cdot 0.1894 = 0.01894 \approx 0.0189\).</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 3</div>
+      <div class="problem-tag advanced">Viterbi reasoning</div>
+    </div>
+    <div class="problem-body">
+      <p>In the worked Viterbi example the algorithm decides the second hidden state is Sunny and the first is Rainy. Explain in words why the path Rainy &rarr; Sunny wins even though Sunny &rarr; Sunny might intuitively explain a Hoodie better.</p>
+      <p style="color:var(--text-muted);">The prior \(\pi_{\text{Sunny}}\) is small (0.1) and \(b_{\text{Sunny}}(\text{Shirt})\) is tiny (0.01), so \(V_{\text{Sunny}}(1) = 0.001\). Starting from Rainy gives \(V_R(1) = 0.48\), and even with the small transition \(a_{R \to S} = 0.1\) the product \(0.48 \cdot 0.1 = 0.048\) dominates competing predecessors, so the backpointer chooses Rainy. Viterbi balances all three of prior, transition, and emission &mdash; not just the last emission.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=11" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=11&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

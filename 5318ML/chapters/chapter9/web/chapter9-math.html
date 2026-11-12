@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 9</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Scaled dot-product attention, the softmax(QK^T/sqrt(d_k))V formula, multi-head concatenation, and sinusoidal positional encoding.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Math Foundations — Week 9">
+<meta property="og:description" content="Scaled dot-product self-attention, multi-head attention, positional encoding sinusoids.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter9-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 9 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Scaled dot-product attention, the \(\mathrm{softmax}(QK^\top/\sqrt{d_k})V\) formula, multi-head concatenation, and sinusoidal positional encoding.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">Q</span><strong>Projections</strong><span>\(Q=XW^Q,\;K=XW^K,\;V=XW^V\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">attn</span><strong>Attention</strong><span>\(\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">MH</span><strong>Multi-head</strong><span>\(\mathrm{Concat}(h_1,\ldots,h_h)W^O\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">pos</span><strong>Position</strong><span>\(\sin(p/10000^{2i/d}),\;\cos(\cdot)\)</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-self-attention" data-track="self-attention">
+  <h2 class="section-title">Scaled dot-product self-attention</h2>
+  <p class="section-lead">Let the input be a matrix \(X \in \mathbb{R}^{n \times d_{\text{model}}}\) — one row per token. Self-attention learns three projections, scores all query-key pairs, normalises with softmax, and returns a weighted sum of value vectors.</p>
+  <div class="theorem-box">
+    <h3>Q, K, V projections</h3>
+    <p>\[
+      Q = X W^Q, \qquad K = X W^K, \qquad V = X W^V
+    \]</p>
+    <p style="margin-top:0.5rem;">where \(W^Q, W^K \in \mathbb{R}^{d_{\text{model}} \times d_k}\) and \(W^V \in \mathbb{R}^{d_{\text{model}} \times d_v}\). \(Q\) and \(K\) lie in the same space so dot products are meaningful.</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Scaled dot-product attention</h3>
+    <p>\[
+      \mathrm{Attention}(Q, K, V) = \mathrm{softmax}\!\left( \frac{Q K^\top}{\sqrt{d_k}} \right) V
+    \]</p>
+    <p style="margin-top:0.5rem;">The matrix \(QK^\top \in \mathbb{R}^{n \times n}\) holds all pairwise scores. Row \(i\) is softmaxed into a distribution over source positions, and the output for token \(i\) is the corresponding convex combination of value rows of \(V\).</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Why \(\sqrt{d_k}\)?</div>
+    <p>If \(q\) and \(k\) have independent entries of variance 1, then \(q \cdot k\) has variance \(d_k\). For large \(d_k\), un-scaled scores reach extreme magnitudes, the softmax saturates and gradients vanish. Dividing by \(\sqrt{d_k}\) keeps the score variance \(O(1)\).</p>
+  </div>
+</section>
+
+<section class="section" id="sec-multihead-math" data-track="multihead-math">
+  <h2 class="section-title">Multi-head attention</h2>
+  <p>Run \(h\) parallel attention heads. Each head has its own projection matrices \(W_i^Q, W_i^K, W_i^V\) of width \(d_k = d_v = d_{\text{model}}/h\).</p>
+  <div class="theorem-box">
+    <h3>Per-head attention</h3>
+    <p>\[
+      \text{head}_i = \mathrm{Attention}(X W_i^Q,\; X W_i^K,\; X W_i^V)
+    \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Concatenate and project</h3>
+    <p>\[
+      \mathrm{MultiHead}(X) = \mathrm{Concat}(\text{head}_1, \text{head}_2, \ldots, \text{head}_h)\, W^O
+    \]</p>
+    <p style="margin-top:0.5rem;">with \(W^O \in \mathbb{R}^{h d_v \times d_{\text{model}}}\). The result has the same shape as the input, so encoder layers can be stacked.</p>
+  </div>
+  <div class="callout">
+    <strong>Parameter budget:</strong> with \(d_k = d_{\text{model}}/h\), the total cost of multi-head attention matches a single-head layer at full width \(d_{\text{model}}\) — the heads divide the budget rather than multiply it.
+  </div>
+</section>
+
+<section class="section" id="sec-positional" data-track="positional">
+  <h2 class="section-title">Positional encoding</h2>
+  <p class="section-lead">Self-attention is permutation-equivariant, so the model needs an explicit signal of token position. The original Transformer uses fixed sinusoidal encodings added to the input embeddings.</p>
+  <div class="theorem-box">
+    <h3>Sinusoidal positional encoding</h3>
+    <p>For position \(p \in \{0, 1, \ldots, n-1\}\) and embedding dimension index \(2i\) or \(2i+1\):</p>
+    <p>\[
+      PE_{(p, 2i)}   = \sin\!\left( \frac{p}{10000^{2i/d_{\text{model}}}} \right), \qquad
+      PE_{(p, 2i+1)} = \cos\!\left( \frac{p}{10000^{2i/d_{\text{model}}}} \right)
+    \]</p>
+    <p style="margin-top:0.5rem;">Each dimension is a sinusoid of a different wavelength, ranging from \(2\pi\) up to \(10000 \cdot 2\pi\). The encoding is then <em>added</em> to the input embedding: \(\tilde x_p = x_p + PE_p\).</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Relative-position property</div>
+    <p>Because \(\sin(a+b)\) and \(\cos(a+b)\) are linear combinations of \(\sin a, \cos a, \sin b, \cos b\), the encoding for position \(p+k\) is a fixed linear function of the encoding for position \(p\). The model can therefore learn to attend by relative offset.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-stack" data-track="stack">
+  <h2 class="section-title">Putting it together: one encoder/decoder layer</h2>
+  <p>Each encoder layer is two sub-layers with residual + layer norm wrappers:</p>
+  <div class="theorem-box">
+    <h3>Encoder layer</h3>
+    <p>\[
+      z = \mathrm{LayerNorm}\!\bigl(x + \mathrm{MultiHead}(x)\bigr)
+    \]</p>
+    <p>\[
+      \mathrm{out} = \mathrm{LayerNorm}\!\bigl(z + \mathrm{FFN}(z)\bigr)
+    \]</p>
+    <p style="margin-top:0.5rem;">where \(\mathrm{FFN}(z) = \max(0, zW_1 + b_1)W_2 + b_2\) is a position-wise two-layer MLP with ReLU.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Decoder layer</div>
+    <p>Three sub-layers: <em>masked</em> self-attention (causal mask so position \(t\) attends only to positions \(\le t\)), then encoder-decoder attention with \(Q\) from the decoder and \(K, V\) from the top encoder output, then the same FFN. Each is wrapped by residual + layer norm.</p>
+  </div>
+
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="Q·K^T has rows of length d_k whose dot products have variance d_k under unit-variance assumptions. Dividing by sqrt(d_k) brings the variance back to O(1) so softmax does not saturate and gradients can flow." data-explanation-zh="点积 q·k 的方差正比于 d_k，除以 sqrt(d_k) 把方差拉回 O(1)，避免 softmax 饱和，梯度才不消失。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Why does scaled dot-product attention divide \(QK^\top\) by \(\sqrt{d_k}\) before softmax?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">To make the output a probability distribution</div><div class="qc-opt" data-idx="1">To prevent the dot-product magnitudes from growing with \(d_k\) and saturating the softmax</div><div class="qc-opt" data-idx="2">It is the residual connection</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=9" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

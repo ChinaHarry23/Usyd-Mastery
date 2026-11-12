@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 7</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Perceptron rule, sigmoid derivative, backpropagation deltas for output and hidden neurons, weight-update equations, momentum, Xavier initialisation, softmax and cross-entropy.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Math Foundations — Week 7">
+<meta property="og:description" content="Perceptron rule, sigmoid derivative, backpropagation deltas, weight updates, momentum, Xavier init, softmax and cross-entropy.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter7-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 7 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">Perceptron rule, sigmoid derivative, backpropagation deltas for output and hidden neurons, weight-update equations, momentum, Xavier initialisation, softmax and cross-entropy loss.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">P</span><strong>Perceptron</strong><span>\(a = \text{step}(w \cdot x + b)\); rule \(w \leftarrow w + e\,x^\top\).</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&sigma;'</span><strong>Sigmoid derivative</strong><span>\(f'(z) = f(z)(1 - f(z))\) drives the output delta.</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&delta;</span><strong>Backprop deltas</strong><span>Output: \((t-o)o(1-o)\). Hidden: \(o(1-o)\sum w\,\delta\).</span></div>
+      <div class="hero-card"><span class="hero-card-icon">CCE</span><strong>Cross-entropy</strong><span>\(-\sum_j y_j \log \hat y_j\) for one-hot labels and softmax outputs.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-perceptron" data-track="perceptron">
+  <h2 class="section-title">Perceptron: model and learning rule</h2>
+  <p class="section-lead">A perceptron computes a weighted sum, adds a bias, and applies a step transfer function. Training adjusts \(w\) and \(b\) one example at a time, in the direction of the input scaled by the per-example error.</p>
+  <div class="theorem-box">
+    <h3>Core perceptron formulas</h3>
+    <p>Linear combination: \[
+      n = w \cdot x + b
+    \]</p>
+    <p style="margin-top:0.6rem;">Step transfer: \[
+      a = f(n) = \begin{cases} 1 &amp; n \ge 0 \\ 0 &amp; n &lt; 0 \end{cases}
+    \]</p>
+    <p style="margin-top:0.6rem;">Per-example error: \[
+      e = t - a \in \{-1, 0, +1\}
+    \]</p>
+    <p style="margin-top:0.6rem;">Update in matrix form: \[
+      w^{\text{new}} = w^{\text{old}} + e\,x^\top, \qquad b^{\text{new}} = b^{\text{old}} + e
+    \]</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Convergence theorem</div>
+    <p>If the training data are linearly separable, the perceptron learning rule terminates after a finite number of updates with a separating hyperplane. If they are not linearly separable (e.g. XOR), the rule never converges.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: one perceptron update</h2>
+  <p>Take the slide's data: \(x = (1,0,0)\), target \(t = 0\), weights \(w = (0.3, 0.2, 0.4)\), bias \(b = 0.1\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Compute the output</h3>
+      <p>\[
+        n = (0.3)(1) + (0.2)(0) + (0.4)(0) + 0.1 = 0.4
+      \]</p>
+      <p style="margin-top:0.6rem;">\(a = \text{step}(0.4) = 1\), so \(e = t - a = -1\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Apply the update</h3>
+      <p>\[
+        w^{\text{new}} = (0.3, 0.2, 0.4) - (1, 0, 0) = (-0.7, 0.2, 0.4)
+      \]</p>
+      <p style="margin-top:0.6rem;">\[
+        b^{\text{new}} = 0.1 - 1 = -0.9
+      \]</p>
+      <p style="margin-top:0.6rem; color:var(--text-muted);">Repeat the same arithmetic for every training example to finish one epoch.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-backprop" data-track="backprop">
+  <h2 class="section-title">Backpropagation: sigmoid derivative and delta rules</h2>
+  <p class="section-lead">Backpropagation derives the weight update from the chain rule applied to a smooth activation. With sigmoid, the algebra collapses into two clean delta rules — one for output neurons, one for hidden neurons — which is why the algorithm is hand-computable.</p>
+  <div class="theorem-box">
+    <h3>Sigmoid and its derivative</h3>
+    <p>\[
+      f(z) = \frac{1}{1 + e^{-z}}, \qquad f'(z) = f(z)\,\bigl(1 - f(z)\bigr)
+    \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Delta values</h3>
+    <p>Output neuron \(q\): \[
+      \delta_q = (t_q - o_q)\,o_q\,(1 - o_q)
+    \]</p>
+    <p style="margin-top:0.7rem;">Hidden neuron \(q\) with downstream neurons \(i\): \[
+      \delta_q = o_q\,(1 - o_q)\,\sum_i w_{qi}\,\delta_i
+    \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Weight and bias updates</h3>
+    <p>Weight from neuron \(p\) to neuron \(q\): \[
+      w_{pq}^{\text{new}} = w_{pq}^{\text{old}} + \eta\,\delta_q\,o_p
+    \]</p>
+    <p style="margin-top:0.6rem;">Bias of neuron \(q\): \[
+      \theta_q^{\text{new}} = \theta_q^{\text{old}} + \eta\,\delta_q
+    \]</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Momentum</div>
+    <p>\(\Delta w_{pq}(t) = \eta\,\delta_q\,o_p + \mu\,(w_{pq}(t) - w_{pq}(t-1))\). The momentum coefficient \(\mu\) propagates the previous step into the current one, reducing oscillation on noisy error surfaces.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: one backprop iteration</h2>
+  <p>Network with three input neurons, two hidden neurons (\(4,5\)) and one output neuron (\(6\)). Input \(x = (1, 0, 1)\), target \(t = 1\), learning rate \(\eta = 0.9\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Forward pass</h3>
+      <p>Hidden 4: \(z_4 = 1 \cdot 0.2 + 0 \cdot 0.4 + 1 \cdot (-0.5) - 0.4 = -0.7\), \(o_4 = \sigma(-0.7) \approx 0.332\).</p>
+      <p style="margin-top:0.5rem;">Hidden 5: \(z_5 = -0.3 + 0 + 0.2 + 0.2 = 0.1\), \(o_5 = \sigma(0.1) \approx 0.525\).</p>
+      <p style="margin-top:0.5rem;">Output 6: \(z_6 = 0.332 \cdot (-0.3) + 0.525 \cdot (-0.2) + 0.1 = -0.105\), \(o_6 \approx 0.474\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Backward pass</h3>
+      <p>Output delta: \(\delta_6 = (1 - 0.474) \cdot 0.474 \cdot (1 - 0.474) \approx 0.1311\).</p>
+      <p style="margin-top:0.5rem;">\(\Delta w_{46} = 0.9 \cdot 0.1311 \cdot 0.332 \approx 0.039\), so \(w_{46}^{\text{new}} \approx -0.261\).</p>
+      <p style="margin-top:0.5rem;">\(\Delta \theta_6 = 0.9 \cdot 0.1311 \approx 0.118\), so \(\theta_6^{\text{new}} \approx 0.218\).</p>
+      <p style="margin-top:0.5rem;">Hidden delta: \(\delta_4 = 0.332 \cdot (1-0.332) \cdot (-0.3) \cdot 0.1311 \approx -0.0087\).</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Trace it once by hand:</strong> understanding why \(\delta_4\) is so small (because of the sigmoid's \(o(1-o)\) factor and a downstream weight of just \(-0.3\)) is the most direct way to see how vanishing gradients arise.
+  </div>
+</section>
+
+<section class="section" id="sec-modern-math" data-track="modern-math">
+  <h2 class="section-title">Activations, softmax and cross-entropy</h2>
+  <div class="theorem-box">
+    <h3>ReLU and leaky ReLU</h3>
+    <p>\[
+      \text{ReLU}(x) = \max(0, x), \qquad \text{LReLU}(x) = \max(\alpha x, x), \quad \alpha \approx 0.01
+    \]</p>
+    <p>Gradient of ReLU is \(1\) for \(x &gt; 0\) and \(0\) for \(x &lt; 0\), so positive paths preserve gradient magnitude across layers.</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Softmax</h3>
+    <p>\[
+      p_i = \frac{e^{o_i}}{\sum_j e^{o_j}}
+    \]</p>
+    <p style="margin-top:0.5rem;">Slide example: \((0.3, 0.8, 0.2) \mapsto (0.28, 0.46, 0.26)\); the resulting probabilities sum to 1.</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Categorical cross-entropy</h3>
+    <p>For one-hot label \(y_i\) and softmax prediction \(\hat{y}_i\) of class \(j\): \[
+      \text{CCE}_i = -\sum_{j=1}^C y_{ij}\,\log \hat{y}_{ij}
+    \]</p>
+    <p style="margin-top:0.5rem;">Summing over \(N\) examples gives the dataset-level loss minimised by training.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Xavier initialisation</div>
+    <p>Weights of a neuron are drawn from \(\mathcal{N}(0, \sigma^2)\) with \(\sigma = \sqrt{2/(N_\text{in} + N_\text{out})}\). The aim is to keep activation variance approximately constant across layers, which mitigates vanishing/exploding signals at initialisation.</p>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="The sigmoid derivative is exactly f(z)(1 - f(z)). It vanishes when f(z) is near 0 or near 1, which is the source of the vanishing-gradient problem." data-explanation-zh="Sigmoid 的导数为 f(z)(1 - f(z))。当 f(z) 接近 0 或 1 时它会很小，这是梯度消失的根源。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">Which expression is the derivative of \(f(z) = 1/(1+e^{-z})\)?</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">\(f(z)\,(1 + f(z))\)</div><div class="qc-opt" data-idx="1">\(f(z)\,(1 - f(z))\)</div><div class="qc-opt" data-idx="2">\(1 - f(z)\)</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=7" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

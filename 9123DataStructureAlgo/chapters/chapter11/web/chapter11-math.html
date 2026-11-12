@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations — Week 11</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<style>
+.quick-check { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.qc-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+.qc-question { font-size: 0.95rem; line-height: 1.6; }
+.qc-options { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.85rem; }
+.qc-opt { padding: 0.65rem 0.95rem; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+.qc-opt.chosen { pointer-events: none; }
+.qc-opt.right { border-color: var(--green); background: var(--green-bg); }
+.qc-opt.not-right { opacity: 0.7; }
+.qc-feedback { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.68); border-radius: var(--radius-sm); padding: 0.75rem 1rem; }
+.qc-feedback.show { display: block; }
+</style>
+<meta name="description" content="Mathematical foundations for divide and conquer: recurrence relations, recursion-tree analysis, master theorem cases, and worked solutions for binary search, merge sort, and quicksort.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foundations — Week 11">
+<meta property="og:description" content="Mathematical foundations for divide and conquer with the master theorem and recurrence analysis.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="chapter11-study.html">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);">Foundations</span>
+</div>
+
+<main id="mainContent">
+
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP9123 — Week 11 Supplement</p>
+    <h1>Mathematical Foundations</h1>
+    <p class="hero-subtitle">Setting up and solving recurrence relations for divide-and-conquer algorithms; recursion-tree analysis; the master theorem and its three cases; worked classifications for binary search, merge sort, quicksort, and Strassen.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">T</span><strong>Recurrence</strong><span>\(T(n) = a\,T(n/b) + f(n)\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">tree</span><strong>Recursion tree</strong><span>Sum work per level &times; number of levels</span></div>
+      <div class="hero-card"><span class="hero-card-icon">w</span><strong>Watershed</strong><span>\(n^{\log_b a}\) classifies the recurrence</span></div>
+      <div class="hero-card"><span class="hero-card-icon">M</span><strong>Master theorem</strong><span>Three cases give \(T(n)\) directly</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-recurrences" data-track="recurrences">
+  <h2 class="section-title">Recurrences: the divide-and-conquer cost</h2>
+  <p class="section-lead">A divide-and-conquer recurrence captures the cost of an algorithm in terms of its sub-call structure and combine work. The general shape is:</p>
+  <div class="theorem-box">
+    <h3>Standard form</h3>
+    <p>\[
+      T(n) = a\,T\!\left(\tfrac{n}{b}\right) + f(n), \quad a \ge 1,\ b &gt; 1
+    \]</p>
+    <p style="margin-top:0.5rem;">where \(a\) is the number of recursive sub-calls, \(b\) is the input-shrinking factor per call, and \(f(n)\) is the combined cost of the divide and combine steps.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Recursion-tree summary</div>
+    <p>The recursion tree has depth \(\log_b n\), and at level \(k\) it does \(a^k\,f(n/b^k)\) work. Summing the geometric series gives the total cost.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-master" data-track="master">
+  <h2 class="section-title">Master theorem</h2>
+  <p class="section-lead">Compare the combine cost \(f(n)\) to the watershed function \(n^{\log_b a}\) and read off the answer.</p>
+  <div class="theorem-box">
+    <h3>Case 1 &mdash; \(f\) is dominated by the watershed</h3>
+    <p>If \(f(n) \in O(n^{\log_b a - \varepsilon})\) for some \(\varepsilon &gt; 0\): \[ T(n) \in \Theta\!\left(n^{\log_b a}\right) \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Case 2 &mdash; \(f\) matches the watershed</h3>
+    <p>If \(f(n) \in \Theta(n^{\log_b a})\): \[ T(n) \in \Theta\!\left(n^{\log_b a} \log n\right) \]</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Case 3 &mdash; \(f\) dominates the watershed</h3>
+    <p>If \(f(n) \in \Omega(n^{\log_b a + \varepsilon})\) for some \(\varepsilon &gt; 0\) and \(a\,f(n/b) \le c\,f(n)\) for some \(c &lt; 1\) (regularity): \[ T(n) \in \Theta(f(n)) \]</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example1" data-track="example1">
+  <h2 class="section-title">Worked Example 1: merge sort</h2>
+  <p>\(T(n) = 2\,T(n/2) + n\). Identify \(a=2, b=2, f(n)=n\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Watershed</h3>
+      <p>\(n^{\log_b a} = n^{\log_2 2} = n^1 = n\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Classification</h3>
+      <p>\(f(n) = n = \Theta(n^{\log_b a})\), so we are in <strong>Case 2</strong> and \(T(n) \in \Theta(n \log n)\).</p>
+    </div>
+  </div>
+  <div class="callout">
+    <p>The recursion-tree view confirms this: \(\log_2 n\) levels, each doing \(\Theta(n)\) work.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-example2" data-track="example2">
+  <h2 class="section-title">Worked Example 2: Strassen multiplication</h2>
+  <p>Strassen's matrix multiplication has the recurrence \(T(n) = 7\,T(n/2) + n^2\).</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Watershed</h3>
+      <p>\(n^{\log_2 7} \approx n^{2.807}\), strictly above \(n^2\).</p>
+    </div>
+    <div class="col-card">
+      <h3>Classification</h3>
+      <p>\(f(n) = n^2 \in O(n^{\log_2 7 - \varepsilon})\) for any sufficiently small \(\varepsilon\), so we are in <strong>Case 1</strong>: \(T(n) \in \Theta(n^{\log_2 7}) \approx \Theta(n^{2.807})\).</p>
+    </div>
+  </div>
+  <div class="callout">
+    <p>This is the famous result that lets Strassen beat the naive \(\Theta(n^3)\) for matrix multiplication.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-summary" data-track="summary">
+  <h2 class="section-title">Common D&amp;C recurrences cheat sheet</h2>
+  <div class="metric-grid">
+    <div class="metric-card"><h3>Binary search</h3><p>\(T(n) = T(n/2) + 1\) &rarr; \(\Theta(\log n)\)</p></div>
+    <div class="metric-card"><h3>Merge / Quicksort</h3><p>\(T(n) = 2T(n/2) + n\) &rarr; \(\Theta(n \log n)\)</p></div>
+    <div class="metric-card"><h3>Tree height</h3><p>\(T(n) = 2T(n/2) + 1\) &rarr; \(\Theta(n)\)</p></div>
+    <div class="metric-card"><h3>Strassen</h3><p>\(T(n) = 7T(n/2) + n^2\) &rarr; \(\Theta(n^{2.807})\)</p></div>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="1">
+    <div class="qc-h">Quick check &mdash; master theorem</div>
+    <p class="qc-question">For \(T(n) = 4T(n/2) + n\), the master theorem gives:</p>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(\Theta(n)\)</div>
+      <div class="qc-opt" data-idx="1">\(\Theta(n^2)\)</div>
+      <div class="qc-opt" data-idx="2">\(\Theta(n \log n)\)</div>
+    </div>
+    <div class="qc-feedback">Watershed \(n^{\log_2 4} = n^2\); \(f(n) = n\) is dominated, so we are in Case 1 with \(T(n) \in \Theta(n^2)\).</div>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

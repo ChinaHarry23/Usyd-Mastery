@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 12 - Reinforcement Learning</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Week 12 introduces reinforcement learning: the agent-environment loop, Markov decision processes, value and Q-value functions, the Bellman equation, tabular Q-Learning with epsilon-greedy exploration, and Deep Q-Networks (DQN) with experience replay and a target network. Applications include Atari, robotics, and AlphaGo.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Week 12 - Reinforcement Learning">
+<meta property="og:description" content="Week 12: MDPs, value/Q functions, Bellman equation, Q-Learning, Deep Q-Networks, and RL applications.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" data-i18n-home>&larr; Course Home</a>
+    <span class="sidebar-icon">&#x1F3AE;</span>
+    <h2 data-i18n="sidebar_h2">Week 12</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero" data-i18n="nav_overview">Overview</a></li>
+    <li><a href="#sec-materials" class="nav-link" data-section="sec-materials" data-i18n="nav_materials">Course materials</a></li>
+    <li><a href="#sec-mdp" class="nav-link" data-section="sec-mdp" data-i18n="nav_mdp">MDP framework</a></li>
+    <li><a href="#sec-value" class="nav-link" data-section="sec-value" data-i18n="nav_value">Value functions</a></li>
+    <li><a href="#sec-qlearn" class="nav-link" data-section="sec-qlearn" data-i18n="nav_qlearn">Q-Learning</a></li>
+    <li><a href="#sec-dqn" class="nav-link" data-section="sec-dqn" data-i18n="nav_dqn">Deep Q-Network</a></li>
+    <li><a href="#sec-tutorial" class="nav-link" data-section="sec-tutorial" data-i18n="nav_tutorial">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub" data-i18n="nav_quiz_hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter12-math.html" class="nav-link" style="color:var(--purple);" data-i18n="link_math">&#x1F4D0; Math Foundations</a>
+    </li>
+    <li><a href="chapter12-mindmap.html" class="nav-link" style="color:var(--green);" data-i18n="link_mindmap">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=12" class="nav-link" style="color:var(--accent);" data-i18n="link_kg">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/math-knowledge-graph.html?chapter=12" class="nav-link" style="color:var(--blue);" data-i18n="link_mkg">&#x1F4D0; Math Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=12&amp;start=1" class="nav-link" style="color:#f97316;" data-i18n="link_fc">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label" data-i18n="progress_label">Learning progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent" data-progress-study-qc="3" data-progress-math-qc="1">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="hero_course">COMP5318 &mdash; Applied Machine Learning</p>
+    <h1 data-i18n="hero_title">Week 12: Reinforcement Learning</h1>
+    <p class="hero-subtitle">Reinforcement learning (RL) studies how an agent should act inside an environment to maximise cumulative reward. Unlike supervised learning there are no labelled (input, output) pairs — only a scalar reward signal and a sequence of decisions. This week formalises the agent-environment loop as a Markov decision process, derives value and Q-value functions through the Bellman equation, builds tabular Q-Learning, and scales it up to Deep Q-Networks for Atari-scale problems.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">&#x1F916;</span><span>Agent &amp; environment</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F4CA;</span><span>MDP \(\langle S,A,P,R,\gamma\rangle\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F3AF;</span><span>Bellman / Q</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&#x1F9E0;</span><span>DQN</span></div>
+    </div>
+    <div class="chip-list">
+      <span>State, action, reward</span>
+      <span>Policy &amp; return</span>
+      <span>V(s), Q(s,a)</span>
+      <span>&epsilon;-greedy</span>
+      <span>Experience replay</span>
+      <span>Target network</span>
+    </div>
+    <div style="margin-top:2rem;">
+      <a href="chapter12-math.html" class="btn btn-primary" style="text-decoration:none;">&#x1F4D0; Math Foundations &rarr;</a>
+      <a href="chapter12-mindmap.html" class="btn btn-secondary" style="text-decoration:none; margin-left:0.75rem;">&#x1F5FA; Mind Map &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<section id="sec-materials" class="section" data-track="materials">
+  <h2 class="section-title">Course materials</h2>
+  <p class="section-lead">Read the slides with an Atari or grid-world example in mind. The agent-environment diagram is the single most important figure of the week; everything else (return, value, Bellman equation, Q-Learning update, DQN loss) is one step of formalisation away from it.</p>
+  <div class="table-responsive">
+    <table class="styled-table">
+      <thead><tr><th>File</th><th>What you should learn from it</th></tr></thead>
+      <tbody>
+        <tr><td><a href="../Materials/ml12.pdf">ml12.pdf</a></td><td>Why RL differs from supervised learning; the agent-environment loop with state, action, reward; the Markov decision process tuple \(\langle S, A, P, R, \gamma \rangle\); policy \(\pi\) and discounted return \(G_t\); state-value \(V^\pi(s)\) and action-value \(Q^\pi(s,a)\); the Bellman equation for \(Q^*\); tabular Q-Learning update with \(\epsilon\)-greedy exploration; Deep Q-Networks (DQN) with experience replay and a target network; applications to Atari, robotics, and AlphaGo / AlphaZero.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-mdp" class="section" data-track="mdp">
+  <h2 class="section-title">From supervised to reinforcement learning: the MDP</h2>
+  <p class="section-lead">In supervised learning a teacher gives the right answer for every input. Many problems (riding a bike, playing a game, controlling a robot) instead require a <em>sequence</em> of decisions with no explicit per-step label — only a scalar reward telling you how well things turned out. RL formalises this as a Markov decision process (MDP).</p>
+
+  <div class="def-box">
+    <div class="def-label">Agent-environment loop</div>
+    <p style="margin:0; color:var(--text-muted);">At each step \(t\), the <strong>agent</strong> observes state \(s_t\), picks an action \(a_t\), and the <strong>environment</strong> responds with the next state \(s_{t+1}\) and a scalar reward \(r_{t+1}\). The cycle repeats. The agent's goal is to choose actions that maximise long-run cumulative reward.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>The MDP tuple</h3>
+      <p>An MDP is \(\langle S, A, P, R, \gamma \rangle\): a set of states \(S\), a set of actions \(A\), a transition kernel \(P(s' \mid s, a)\), a reward function \(R(s, a, s')\), and a discount factor \(\gamma \in [0, 1]\). The transitions are <strong>Markovian</strong>: the future depends only on the current state and action, not the full history.</p>
+    </div>
+    <div class="col-card">
+      <h3>Policy &amp; return</h3>
+      <p>A <strong>policy</strong> \(\pi(a \mid s)\) maps states to a distribution over actions — the agent's behaviour. The <strong>discounted return</strong> from time \(t\) is \(G_t = \sum_{k=0}^\infty \gamma^k r_{t+k+1}\). The discount factor \(\gamma &lt; 1\) makes far-future rewards count less and keeps infinite sums finite.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>Reward hypothesis</h3>
+      <p>All goals can be described as the maximisation of expected cumulative reward. A reward \(r_t\) is a single scalar — designing it well is the engineer's responsibility.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Examples of reward</h3>
+      <p>Atari: +1 for score increase, &minus;1 for score decrease. Robot walking: positive for forward motion, negative for falling. Grid world: &minus;1 per step until a terminal cell is reached.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Optimal policy \(\pi^*\)</h3>
+      <p>\(\pi^* = \arg\max_\pi \mathbb{E}_\pi[G_0]\). Because the environment is stochastic we maximise the <em>expected</em> sum of rewards, not a single realisation.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why &ldquo;Markov&rdquo; matters:</strong> the Markov property lets us forget the past once we know the present state. Value functions, the Bellman equation, and Q-Learning all rely on this — without it the state would have to include the whole history \(H_t\).
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="1" data-explanation="An MDP is described by states, actions, a transition kernel, a reward function, and a discount factor. There are no labels — RL is not a supervised setup.">
+    <div class="qc-h">Quick check - MDP components</div>
+    <div class="qc-question">Which of the following is NOT part of the formal MDP tuple \(\langle S, A, P, R, \gamma \rangle\)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">A discount factor \(\gamma\)</div>
+      <div class="qc-opt" data-idx="1">A labelled training set \((x_i, y_i)\)</div>
+      <div class="qc-opt" data-idx="2">A transition kernel \(P(s' \mid s, a)\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-value" class="section" data-track="value">
+  <h2 class="section-title">Value functions and the Bellman equation</h2>
+  <p class="section-lead">Two functions tell us how good things are under a fixed policy \(\pi\): the state value \(V^\pi(s)\) and the action value \(Q^\pi(s,a)\). They obey recursive Bellman equations that decompose long-horizon rewards into a one-step reward plus the value of what follows.</p>
+
+  <div class="def-box">
+    <div class="def-label">State-value function</div>
+    <p style="margin:0; color:var(--text-muted);">\(V^\pi(s) = \mathbb{E}_\pi[\, G_t \mid s_t = s\,]\) — the expected return when the agent starts in state \(s\) and then follows policy \(\pi\). Larger \(V\) means a more promising state.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Action-value (Q) function</div>
+    <p style="margin:0; color:var(--text-muted);">\(Q^\pi(s, a) = \mathbb{E}_\pi[\, G_t \mid s_t = s,\, a_t = a\,]\) — the expected return when we commit to action \(a\) in state \(s\), then follow \(\pi\) thereafter. \(Q\) ranks <em>state-action</em> pairs and is the quantity Q-Learning estimates.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Bellman optimality (Q)</h3>
+      <p>\(Q^*(s, a) = \mathbb{E}_{s'}\!\left[\, R(s,a,s') + \gamma\, \max_{a'} Q^*(s', a')\,\right]\). The optimal Q is the immediate reward plus the discounted value of the best next action.</p>
+    </div>
+    <div class="col-card">
+      <h3>Greedy optimal policy</h3>
+      <p>Once \(Q^*\) is known, the optimal policy is simply \(\pi^*(s) = \arg\max_a Q^*(s, a)\). Solving RL is equivalent to estimating \(Q^*\).</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>One-step intuition:</strong> if I knew the value of every state I might reach next, the best action right now is the one whose immediate reward plus discounted next-state value is largest. The Bellman equation just writes that idea down recursively.
+  </div>
+</section>
+
+<section id="sec-qlearn" class="section" data-track="qlearn">
+  <h2 class="section-title">Q-Learning: tabular off-policy TD control</h2>
+  <p class="section-lead">Q-Learning estimates \(Q^*\) without ever knowing the transition kernel \(P\). It stores one number \(Q(s,a)\) per (state, action) pair in a table, samples transitions by acting in the environment, and nudges each \(Q(s,a)\) toward the Bellman target one step at a time.</p>
+
+  <div class="def-box">
+    <div class="def-label">Q-Learning update</div>
+    <p style="margin:0; color:var(--text-muted);">After observing transition \((s, a, r, s')\):
+      \[
+        Q(s, a) \;\leftarrow\; Q(s, a) + \alpha\Bigl[\,r + \gamma \max_{a'} Q(s', a') - Q(s, a)\,\Bigr]
+      \]
+      with learning rate \(\alpha \in (0, 1]\). The bracketed quantity is the <strong>TD error</strong> — target minus current estimate.</p>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h3>1. Initialise</h3>
+      <p>Set \(Q(s, a) = 0\) (or arbitrarily) for every state-action pair, e.g. one row per action and one column per state in a grid world.</p>
+    </div>
+    <div class="metric-card">
+      <h3>2. Act &amp; observe</h3>
+      <p>From state \(s\) pick action \(a\); the environment returns reward \(r\) and next state \(s'\). Use the update above to revise \(Q(s, a)\) toward the bootstrapped target.</p>
+    </div>
+    <div class="metric-card">
+      <h3>3. Off-policy</h3>
+      <p>The update uses \(\max_{a'} Q(s', a')\) — the value of the <em>greedy</em> action at \(s'\) — even when the agent itself explored a different action. This is what makes Q-Learning off-policy.</p>
+    </div>
+    <div class="metric-card">
+      <h3>4. \(\epsilon\)-greedy</h3>
+      <p>With probability \(1-\epsilon\) take the greedy action \(\arg\max_a Q(s,a)\); with probability \(\epsilon\) pick a random action. Anneal \(\epsilon\) so exploration decreases as estimates improve.</p>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <strong>Why exploration is essential:</strong> a purely greedy agent quickly gets stuck — it never tries actions whose Q-values it has under-estimated. \(\epsilon\)-greedy keeps a small probability of random behaviour so the agent keeps probing the action space.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="2" data-explanation="In Q-Learning the target uses the maximum over next actions in s', independent of what the agent actually did next. That decoupling between the behaviour policy (epsilon-greedy) and the evaluated policy (greedy) is what makes Q-Learning off-policy.">
+    <div class="qc-h">Quick check - Q-Learning target</div>
+    <div class="qc-question">In the standard Q-Learning update, the target for \(Q(s,a)\) is</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(r\) only</div>
+      <div class="qc-opt" data-idx="1">\(r + \gamma\, Q(s', a_{\text{taken}})\) where \(a_{\text{taken}}\) is the next action the agent actually picks</div>
+      <div class="qc-opt" data-idx="2">\(r + \gamma\, \max_{a'} Q(s', a')\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-dqn" class="section" data-track="dqn">
+  <h2 class="section-title">Deep Q-Networks: scaling Q-Learning to pixels</h2>
+  <p class="section-lead">In an Atari game the state is a stack of raw frames — the table would have \(256^{210 \times 160}\) entries and is hopeless. Deep Q-Networks (DQN) replace the table with a neural network \(Q_\theta(s, a)\) that takes a state as input and outputs Q-values for every action. Training is still driven by the Bellman target, but with two crucial tricks.</p>
+
+  <div class="def-box">
+    <div class="def-label">DQN loss</div>
+    <p style="margin:0; color:var(--text-muted);">
+      \[
+        L(\theta) \;=\; \mathbb{E}_{(s,a,r,s')}\!\left[\bigl(\,r + \gamma \max_{a'} Q_{\bar\theta}(s', a') - Q_\theta(s, a)\,\bigr)^2\right]
+      \]
+      Minimise by SGD with respect to \(\theta\); the target uses frozen parameters \(\bar\theta\).</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Experience replay</h3>
+      <p>Store transitions \((s, a, r, s')\) in a large buffer and sample <em>random</em> minibatches for SGD updates. This breaks the strong temporal correlations of consecutive samples and reuses each experience many times — much more sample-efficient than learning purely online.</p>
+    </div>
+    <div class="col-card">
+      <h3>Target network</h3>
+      <p>Keep a second copy of the network \(Q_{\bar\theta}\) whose parameters are held fixed and only periodically copied from \(Q_\theta\). The Bellman target uses \(Q_{\bar\theta}\) so it does not move every step — without this the target chases the prediction and training diverges.</p>
+    </div>
+  </div>
+
+  <div class="glance-grid">
+    <div class="glance-card">
+      <h3>End-to-end from pixels</h3>
+      <p>The DQN for Atari takes a stack of 4 raw frames, passes them through convolutional layers, and outputs one Q-value per action. No hand-crafted features.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Double DQN</h3>
+      <p>The plain \(\max\) over-estimates Q-values. Double DQN selects the next action with the online network but evaluates it with the target network, reducing this upward bias.</p>
+    </div>
+    <div class="glance-card">
+      <h3>Prioritised replay</h3>
+      <p>Sample transitions with probability proportional to their TD error so that the most surprising experiences are revisited more often.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Beyond Atari:</strong> the same ingredients (a learned value or policy network, replay, target stabilisation) drive RL successes in robotics and games. AlphaGo and AlphaZero combine policy and value networks with Monte-Carlo tree search to master Go, chess, and shogi from self-play.
+  </div>
+
+  <div class="quick-check" data-qc-context="study" data-answer="0" data-explanation="Experience replay stores past transitions in a buffer and trains on random minibatches. This breaks the temporal correlation of consecutive samples and lets each transition be reused for several gradient steps.">
+    <div class="qc-h">Quick check - DQN tricks</div>
+    <div class="qc-question">What is the main purpose of the replay buffer in DQN?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">To decorrelate samples and reuse past experience</div>
+      <div class="qc-opt" data-idx="1">To replace the reward signal</div>
+      <div class="qc-opt" data-idx="2">To eliminate the need for a discount factor</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-tutorial" class="section" data-track="tutorial">
+  <h2 class="section-title">Study questions to answer before moving on</h2>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 1</div>
+      <div class="problem-tag warm-up">Discounted return</div>
+    </div>
+    <div class="problem-body">
+      <p>An agent receives rewards \(r_1 = 0, r_2 = 0, r_3 = 1\) and then the episode ends. With discount factor \(\gamma = 0.9\), what is the return \(G_0 = r_1 + \gamma r_2 + \gamma^2 r_3\)?</p>
+      <button type="button" class="solution-toggle btn btn-outline" data-target="sol-w12-return">Show Solution</button>
+      <div class="solution-content" id="sol-w12-return">
+        <p>\(G_0 = 0 + 0.9 \cdot 0 + 0.81 \cdot 1 = 0.81\). The single delayed reward is worth less now because of the two-step discount.</p>
+        <p style="color:var(--text-muted);">If \(\gamma = 1\) the return would be 1; if \(\gamma = 0\) it would be 0 — the agent would become myopic.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 2</div>
+      <div class="problem-tag problem-solving">Q-Learning update</div>
+    </div>
+    <div class="problem-body">
+      <p>Suppose \(Q(s, a) = 2.0\), the agent takes action \(a\), receives reward \(r = 1\), and lands in \(s'\) where \(\max_{a'} Q(s', a') = 5.0\). With \(\alpha = 0.5\) and \(\gamma = 0.9\), what is the updated \(Q(s, a)\)?</p>
+      <p style="color:var(--text-muted);">Target \(= r + \gamma \max_{a'} Q(s', a') = 1 + 0.9 \cdot 5 = 5.5\). TD error \(= 5.5 - 2.0 = 3.5\). New \(Q(s, a) = 2.0 + 0.5 \cdot 3.5 = 3.75\).</p>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-header">
+      <div class="problem-num">Question 3</div>
+      <div class="problem-tag advanced">Why a target network</div>
+    </div>
+    <div class="problem-body">
+      <p>Explain why DQN trains badly if the same network \(Q_\theta\) is used to compute both the prediction and the Bellman target, and what the target network does to fix it.</p>
+      <p style="color:var(--text-muted);">If the target uses the same \(\theta\) that we are updating, each gradient step shifts both prediction and target in the same direction — the target becomes a moving goalpost and SGD can oscillate or diverge. Freezing a second copy \(Q_{\bar\theta}\) keeps the target stationary for many steps; only periodically do we set \(\bar\theta \leftarrow \theta\). Combined with experience replay this is what made Atari-scale DQN learnable.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(15,118,110,0.06);">
+    <h3 style="margin-top:0; font-size:1.15rem;" data-i18n="quiz_callout_title">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);" data-i18n="quiz_callout_body">Self-test and math questions for this week are in the Quiz Hub (practice or exam mode).</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=12" class="btn btn-primary" style="text-decoration:none;" data-i18n="quiz_callout_btn">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=12&amp;start=1" class="btn btn-secondary" style="text-decoration:none;" data-i18n="flash_callout_btn">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="../../../shared/chapter-study-base.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

@@ -71,4 +71,18 @@ var ALL_QUIZ_DATA = [
   { ch: 10, type: "math", q: "Fractional knapsack greedy by value/weight is:", opts: ["Optimal", "Never optimal", "NP-hard", "Only for 0/1 knapsack"], answer: 0, exp: "Take fractions of best ratio items." },
   { ch: 10, type: "math", q: "0/1 knapsack greedy by ratio:", opts: ["Not always optimal", "Always optimal", "Solves in O(n)", "Same as fractional"], answer: 0, exp: "Discrete choices break simple greedy." },
   { ch: 10, type: "study", q: "Huffman coding merges:", opts: ["Two smallest frequency subtrees repeatedly", "Random pairs", "All leaves at once", "Largest first"], answer: 0, exp: "Build optimal prefix code bottom-up." },
+
+  // ═══════════════════════════════════════════
+  // Ch11  Divide and Conquer
+  // ═══════════════════════════════════════════
+  { ch: 11, type: "study", q: "The three D&C steps are:", opts: ["Divide, Recur, Conquer (combine)", "Sort, Search, Insert", "Hash, Probe, Insert", "Push, Pop, Top"], answer: 0, exp: "Divide the input, solve each part recursively, combine into the full solution." },
+  { ch: 11, type: "study", q: "Binary search requires the array to be:", opts: ["Hashable", "Sorted", "Unique-valued", "Static"], answer: 1, exp: "Comparison with the middle element only makes sense on a sorted array." },
+  { ch: 11, type: "study", q: "Merge sort time complexity in the worst case:", opts: ["O(n log n)", "O(n^2)", "O(log n)", "O(n)"], answer: 0, exp: "Two halves give T(n) = 2T(n/2) + n → O(n log n) every input." },
+  { ch: 11, type: "study", q: "Merge sort vs quicksort: which is stable?", opts: ["Merge sort", "Quicksort", "Both", "Neither"], answer: 0, exp: "Merge step preserves equal-key order; quicksort partitioning does not." },
+  { ch: 11, type: "study", q: "The recursion tree analysis sums:", opts: ["Work at each level × levels", "Just the root", "Just the leaves", "Only the input size"], answer: 0, exp: "Sum work across all levels; multiply by depth (log_b n)." },
+  { ch: 11, type: "math", q: "Master theorem applies to:", opts: ["T(n) = aT(n/b) + f(n)", "T(n) = T(n-1) + n", "T(n) = 2T(n/2) only", "Any recurrence"], answer: 0, exp: "Specifically recurrences of divide-and-conquer shape with constant a, b." },
+  { ch: 11, type: "math", q: "For T(n) = 2T(n/2) + n, the master theorem gives:", opts: ["Θ(n log n)", "Θ(n)", "Θ(n^2)", "Θ(log n)"], answer: 0, exp: "Watershed n^{log_2 2} = n matches f(n) = n → Case 2." },
+  { ch: 11, type: "math", q: "For T(n) = 4T(n/2) + n, the master theorem gives:", opts: ["Θ(n^2)", "Θ(n)", "Θ(n log n)", "Θ(log n)"], answer: 0, exp: "Watershed n^{log_2 4} = n^2 dominates f = n → Case 1." },
+  { ch: 11, type: "math", q: "Binary search recurrence and solution:", opts: ["T(n) = T(n/2) + 1 → Θ(log n)", "T(n) = T(n-1) + 1 → Θ(n)", "T(n) = T(n/2) + n → Θ(n)", "T(n) = 2T(n-1) → Θ(2^n)"], answer: 0, exp: "One half-sized recursive call with constant work per level." },
+  { ch: 11, type: "math", q: "Strassen multiplication recurrence:", opts: ["T(n) = 7T(n/2) + n^2 → Θ(n^{log_2 7})", "T(n) = 8T(n/2) + n^2 → Θ(n^3)", "T(n) = 2T(n/2) + n → Θ(n log n)", "T(n) = T(n/2) + n"], answer: 0, exp: "Beats the naïve Θ(n^3) — gives ~n^{2.807}." },
 ];

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Foundations — Week 10</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ17nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/math.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="K-means SSE objective and centroid update; GMM responsibilities and the E/M steps; silhouette coefficient for cluster evaluation.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Math Foundations — Week 10">
+<meta property="og:description" content="K-means objective and centroid update, GMM responsibilities, EM steps, and silhouette coefficient.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+<div class="back-bar">
+  <a href="chapter10-study.html" data-i18n="math_back_study">&larr; Back to Study Guide</a>
+  <span style="color:var(--text-dim);">|</span>
+  <a href="../../../index.html" data-i18n="math_back_home">&larr; Course Home</a>
+  <span style="margin-left:auto; font-size:0.75rem; color:var(--text-dim);" data-i18n="math_label_bar">Math Foundations</span>
+</div>
+<main id="mainContent">
+<section class="section hero-section" id="sec-hero" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course" data-i18n="math_hero">COMP5318 — Week 10 Supplement</p>
+    <h1 data-i18n="math_h1">Mathematical Foundations</h1>
+    <p class="hero-subtitle" data-i18n="math_sub">The K-means SSE objective and centroid update, the GMM responsibilities and the E/M steps, and the silhouette coefficient for evaluating clusterings.</p>
+    <div class="hero-cards">
+      <div class="hero-card"><span class="hero-card-icon">J</span><strong>K-means SSE</strong><span>\(\sum_i \|x_i - \mu_{c_i}\|^2\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&mu;</span><strong>Centroid</strong><span>\(\mu_j = \tfrac{1}{|K_j|}\sum_{x\in K_j} x\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">&gamma;</span><strong>Responsibility</strong><span>\(\gamma_{ij} = \tfrac{w_j P(x_i\mid\theta_j)}{\sum_{j'} w_{j'} P(x_i\mid\theta_{j'})}\)</span></div>
+      <div class="hero-card"><span class="hero-card-icon">s</span><strong>Silhouette</strong><span>\(s_i = (b_i - a_i)/\max(a_i,b_i)\)</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sec-kmeans-math" data-track="kmeans-math">
+  <h2 class="section-title">K-means: objective and centroid update</h2>
+  <p class="section-lead">K-means minimises the Sum of Squared Errors between every point and its assigned centroid. The assign / update loop is the block-coordinate descent for this objective.</p>
+  <div class="theorem-box">
+    <h3>K-means objective (SSE)</h3>
+    <p>\[
+      J(\mu, c) \;=\; \sum_{i=1}^{n} \|x_i - \mu_{c_i}\|^2 \;=\; \sum_{j=1}^{k}\sum_{x\in K_j} d(x, \mu_j)^2
+    \]</p>
+    <p style="margin-top:0.6rem;">where \(c_i \in \{1, \ldots, k\}\) is the cluster assignment of point \(x_i\) and \(\mu_j\) is the centroid of cluster \(K_j\).</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Centroid update (M-step of K-means)</h3>
+    <p>Fixing assignments, the optimal \(\mu_j\) is the arithmetic mean:</p>
+    <p>\[
+      \mu_j \;=\; \frac{1}{|K_j|}\sum_{x\in K_j} x
+    \]</p>
+    <p style="margin-top:0.5rem;">Fixing centroids, the optimal assignment puts each point with its nearest centroid: \(c_i = \arg\min_j \|x_i - \mu_j\|^2\). Iterating the two steps monotonically decreases \(J\), so K-means converges to a local minimum.</p>
+  </div>
+  <div class="callout">
+    <strong>Why squared distance?</strong> The mean is the minimiser of squared loss. If you used absolute distance instead, the optimal cluster representative would be the median, giving the related K-medians / K-medoids algorithms.
+  </div>
+</section>
+
+<section class="section" id="sec-gmm-math" data-track="gmm-math">
+  <h2 class="section-title">GMM: responsibilities and EM</h2>
+  <p class="section-lead">A Gaussian mixture model assumes \(p(x) = \sum_{j=1}^k w_j\,\mathcal{N}(x\mid\mu_j, \Sigma_j)\) with mixing weights \(w_j \ge 0\), \(\sum_j w_j = 1\). The EM algorithm finds a local maximum of the log-likelihood.</p>
+  <div class="theorem-box">
+    <h3>E-step: responsibilities</h3>
+    <p>\[
+      \gamma_{ij} \;=\; P(\text{cluster } j \mid x_i, \theta) \;=\; \frac{w_j\,P(x_i\mid\theta_j)}{\sum_{j'=1}^{k} w_{j'}\,P(x_i\mid\theta_{j'})}
+    \]</p>
+    <p style="margin-top:0.5rem;">\(\gamma_{ij}\) is the soft membership of point \(i\) in cluster \(j\); it satisfies \(\sum_j \gamma_{ij} = 1\) for each \(i\).</p>
+  </div>
+  <div class="theorem-box">
+    <h3>M-step: parameter update</h3>
+    <p>Let \(N_j = \sum_{i=1}^n \gamma_{ij}\) be the effective number of points in cluster \(j\). Then</p>
+    <p>\[
+      \mu_j \;=\; \frac{1}{N_j}\sum_{i=1}^{n} \gamma_{ij}\,x_i, \quad
+      \Sigma_j \;=\; \frac{1}{N_j}\sum_{i=1}^{n} \gamma_{ij}\,(x_i-\mu_j)(x_i-\mu_j)^\top, \quad
+      w_j \;=\; \frac{N_j}{n}.
+    \]</p>
+    <p style="margin-top:0.5rem;">Each updated mean is the weighted average of the data, weighted by the responsibilities.</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">EM intuition</div>
+    <p>K-means is the limiting case of EM where the responsibilities are hard (one cluster gets weight 1, the rest 0) and the covariances are fixed to a small multiple of the identity. EM generalises this to soft assignments and elliptical covariances.</p>
+  </div>
+</section>
+
+<section class="section" id="sec-eval-math" data-track="eval-math">
+  <h2 class="section-title">Silhouette coefficient and clustering quality</h2>
+  <p class="section-lead">The silhouette coefficient is the most-cited internal evaluation measure for clusterings. It combines cohesion and separation into a single score per point.</p>
+  <div class="theorem-box">
+    <h3>Silhouette of a point</h3>
+    <p>For point \(i\) in cluster \(K\), let</p>
+    <p>\[
+      a_i \;=\; \frac{1}{|K|-1}\sum_{j\in K,\, j\ne i} d(x_i, x_j), \qquad
+      b_i \;=\; \min_{K'\ne K} \frac{1}{|K'|}\sum_{j\in K'} d(x_i, x_j).
+    \]</p>
+    <p>The silhouette coefficient of point \(i\) is</p>
+    <p>\[
+      s_i \;=\; \frac{b_i - a_i}{\max(a_i, b_i)} \;\in\; [-1, 1].
+    \]</p>
+    <p style="margin-top:0.5rem;">\(s_i\) close to \(+1\) means the point sits well inside its cluster; close to \(0\) means it is on the border between two clusters; negative means it is probably in the wrong cluster.</p>
+  </div>
+  <div class="theorem-box">
+    <h3>Cohesion, separation and SSE/BSE</h3>
+    <p>For cluster \(K_i\) with centroid \(c_i\) and overall centroid \(c\):</p>
+    <p>\[
+      \text{cohesion}(K_i) \;=\; \sum_{x\in K_i} d(x, c_i), \qquad
+      \text{separation}(K_i) \;=\; d(c_i, c).
+    \]</p>
+    <p style="margin-top:0.5rem;">With squared distance, these become \(\text{SSE} = \sum_i \sum_{x\in K_i} d(x, c_i)^2\) (within-cluster) and \(\text{BSE} = \sum_i |K_i|\,d(c_i, c)^2\) (between-cluster).</p>
+  </div>
+  <div class="def-box">
+    <div class="def-label">Elbow method</div>
+    <p>Plot SSE (or another internal score) against \(k\). The curve typically decreases as \(k\) grows; a sharp "knee" indicates a value of \(k\) beyond which extra clusters give diminishing returns.</p>
+  </div>
+  <div class="quick-check" data-qc-context="math" data-answer="1" data-explanation="The silhouette uses a_i = mean intra-cluster distance and b_i = mean distance to the nearest other cluster. A value close to 1 means b_i is much larger than a_i, i.e. the point is much closer to its own cluster than to any other." data-explanation-zh="轮廓系数中 a_i 是簇内平均距离，b_i 是到最近其他簇的平均距离；s_i 接近 1 说明 b_i 远大于 a_i，点紧密属于自己的簇。">
+    <div class="qc-question" style="font-weight:600;margin-bottom:0.75rem;">A point with silhouette coefficient close to 1 indicates:</div>
+    <div class="qc-options"><div class="qc-opt" data-idx="0">The point is on the boundary between two clusters</div><div class="qc-opt" data-idx="1">The point fits its own cluster much better than any other</div><div class="qc-opt" data-idx="2">The point is probably in the wrong cluster</div></div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section class="section" id="sec-quiz" data-track="quiz">
+  <div class="callout" style="border-color:var(--purple);"><h3 style="margin-top:0;">Math quizzes</h3><p style="margin-top:0.5rem;">Open the Quiz Hub, filter <strong>Math</strong> and this chapter.</p><p style="margin-top:0.75rem;"><a href="../../../tools/quiz-hub.html?ch=10" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a></p></div>
+</section>
+</main>
+<script src="../../../shared/math-page.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>

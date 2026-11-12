@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 9 — Training: Pretraining, Finetuning, PEFT</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="../../../shared/study.css">
+<link rel="stylesheet" href="../../../../shared/chat-panel.css">
+<meta name="description" content="Pretraining vs finetuning · full FT cost · PEFT · LoRA · QLoRA · adapters · prompt/prefix tuning · when to use what.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lecture 9 — Training: Pretraining, Finetuning, PEFT">
+<meta property="og:description" content="Pretraining vs finetuning · full FT cost · PEFT · LoRA · QLoRA · adapters · prompt/prefix tuning · when to use what.">
+<meta property="og:locale" content="en_AU">
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <a href="../../../index.html" style="text-decoration:none; color:var(--text-muted); font-size:0.78rem;">&larr; Course Home</a>
+    <span class="sidebar-icon">&#x26A1;</span>
+    <h2>Lecture 9</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#hero" class="nav-link active" data-section="hero">Overview</a></li>
+    <li><a href="#sec-pretrain" class="nav-link" data-section="sec-pretrain">Pretraining</a></li>
+    <li><a href="#sec-finetune" class="nav-link" data-section="sec-finetune">Full finetuning</a></li>
+    <li><a href="#sec-peft" class="nav-link" data-section="sec-peft">PEFT idea</a></li>
+    <li><a href="#sec-lora" class="nav-link" data-section="sec-lora">LoRA</a></li>
+    <li><a href="#sec-qlora" class="nav-link" data-section="sec-qlora">QLoRA</a></li>
+    <li><a href="#sec-other-peft" class="nav-link" data-section="sec-other-peft">Adapters &amp; prompt tuning</a></li>
+    <li><a href="#sec-choose" class="nav-link" data-section="sec-choose">When to use what</a></li>
+    <li><a href="#sec-lab" class="nav-link" data-section="sec-lab">Lab &amp; materials</a></li>
+    <li><a href="#sec-practice" class="nav-link" data-section="sec-practice">Practice</a></li>
+    <li><a href="#sec-quiz-hub" class="nav-link" data-section="sec-quiz-hub">Quiz Hub</a></li>
+    <li style="margin-top:0.5rem; border-top:1px solid var(--border); padding-top:0.5rem;">
+      <a href="chapter9-math.html" class="nav-link" style="color:var(--purple);">&#x1F4D0; Foundations</a>
+    </li>
+    <li><a href="chapter9-mindmap.html" class="nav-link" style="color:var(--green);">&#x1F5FA; Mind Map</a></li>
+    <li><a href="../../../tools/knowledge-graph.html?chapter=9" class="nav-link" style="color:var(--accent);">&#x1F578; Knowledge Graph</a></li>
+    <li><a href="../../../tools/flashcards.html?ch=9" class="nav-link" style="color:#f97316;">&#x1F4E6; Flashcards</a></li>
+  </ul>
+  <div class="progress-container">
+    <div class="progress-label">Learning Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 10</div>
+  </div>
+</nav>
+
+<button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+<main id="mainContent">
+
+<section id="hero" class="section hero-section" data-track="hero">
+  <div class="hero-inner">
+    <p class="hero-course">COMP5046 &mdash; Natural Language Processing</p>
+    <h1>Lecture 9: Training &mdash; Pretraining, Finetuning &amp; PEFT</h1>
+    <p class="hero-subtitle">Foundation models · full fine-tuning cost · LoRA low-rank deltas · QLoRA on quantised bases · adapters &amp; prompt tuning · choosing a recipe.</p>
+    <p class="learn-how" style="margin:1.25rem 0 0; max-width:42rem;"><strong>How to use:</strong> learn each method's parameter footprint and trade-offs · close the page and answer <strong>Recall</strong> lines.</p>
+  </div>
+</section>
+
+<section id="sec-pretrain" class="section" data-track="sec-pretrain">
+  <p class="section-kicker">Foundation</p>
+  <h2 class="section-title">Pretraining vs finetuning</h2>
+  <ul class="kp-list tight">
+    <li><strong>Pretraining:</strong> train a large model on <strong>huge unlabelled text</strong> with next-token prediction (or masked LM). Goal: a general <em>foundation model</em> whose hidden states encode broad linguistic and world knowledge.</li>
+    <li>Cost is enormous — frontier runs spend millions of GPU-hours; most labs reuse a public checkpoint (Llama, Mistral, BERT, GPT-2) instead of training from scratch.</li>
+    <li><strong>Finetuning:</strong> continue training the pretrained model on a smaller <strong>task- or domain-specific</strong> dataset to adapt behaviour (sentiment, summarisation, code, an instruction style).</li>
+    <li>Key intuition: pretraining learns the language, finetuning teaches the job.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What objective is used in pretraining a decoder-only LM, and what changes during finetuning?</p>
+</section>
+
+<section id="sec-finetune" class="section" data-track="sec-finetune">
+  <p class="section-kicker">All weights move</p>
+  <h2 class="section-title">Full finetuning</h2>
+  <ul class="kp-list tight">
+    <li>Standard recipe pre-2021: backprop through <strong>every parameter</strong> in the model, store a fresh optimiser state per parameter, save a fresh checkpoint per task.</li>
+    <li>For a 7B model in mixed precision: weights ~14&nbsp;GB, Adam moments ~28&nbsp;GB, activations &amp; gradients on top — does not fit on a single consumer GPU.</li>
+    <li>Risks: <strong>catastrophic forgetting</strong> of pretraining knowledge if the new data is narrow; per-task checkpoints multiply storage.</li>
+    <li>Still the gold standard when data is plentiful, compute is cheap, and you need maximum quality on one task.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why does full FT on a 7B model usually need multi-GPU memory?</p>
+</section>
+
+<section id="sec-peft" class="section" data-track="sec-peft">
+  <p class="section-kicker">Tune few, freeze many</p>
+  <h2 class="section-title">Parameter-Efficient Fine-Tuning (PEFT)</h2>
+  <ul class="kp-list tight">
+    <li><strong>PEFT idea:</strong> freeze the pretrained weights and learn a <strong>small set of new parameters</strong> that nudge model behaviour. Often &lt;1% of the original parameter count.</li>
+    <li>Benefits: tiny optimiser state, small checkpoints (swap a few MB per task), much less GPU memory, faster training, easier multi-task deployment.</li>
+    <li>Empirical finding: for most downstream tasks, the <em>update</em> a finetuned model applies to its weights has <strong>low intrinsic rank</strong> — you don't need to move every direction in weight space.</li>
+    <li>Families: <strong>LoRA</strong> (low-rank deltas), <strong>adapters</strong> (small inserted MLPs), <strong>prompt / prefix tuning</strong> (learn tokens, not weights).</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>What property of the finetuning update justifies PEFT?</p>
+</section>
+
+<section id="sec-lora" class="section" data-track="sec-lora">
+  <p class="section-kicker">Low-rank deltas</p>
+  <h2 class="section-title">LoRA — Low-Rank Adaptation</h2>
+  <ul class="kp-list tight">
+    <li>Frozen base weight \(W_0 \in \mathbb{R}^{d \times d}\). Add a learnable delta factorised into two narrow matrices: \(\Delta W = B A\) with \(B \in \mathbb{R}^{d \times r}\), \(A \in \mathbb{R}^{r \times d}\), and rank \(r \ll d\).</li>
+    <li>Forward pass: \(h = W_0 x + \Delta W\,x = W_0 x + B A\,x\). Only \(A\) and \(B\) receive gradients; \(W_0\) is frozen.</li>
+    <li>Parameter count drops from \(d^2\) per matrix to \(2 d r\). For \(d=4096, r=8\): \(\sim 2^{24}\) vs \(\sim 6.5\times 10^4\) — a <strong>~250&times;</strong> reduction.</li>
+    <li>Init: \(A\) random Gaussian, \(B = 0\) so \(\Delta W = 0\) at start &mdash; finetuning begins from the exact pretrained function.</li>
+    <li>Inference: optionally merge \(W_0 + BA\) back into a single dense matrix &mdash; <strong>zero added latency</strong> after merge.</li>
+    <li>Usually applied to attention projections (\(W_Q, W_V\), sometimes \(W_K, W_O\) and MLPs).</li>
+  </ul>
+  <div class="arch-diagram">
+    <svg viewBox="0 0 480 200" width="480" height="200">
+      <defs><marker id="a9" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5" fill="#9299ac"/></marker></defs>
+      <!-- Input -->
+      <rect x="20" y="84" width="60" height="28" class="node-box" rx="6"/><text x="50" y="102" class="node-label" style="font-size:11px">x</text>
+      <!-- Frozen W0 -->
+      <rect x="140" y="30" width="120" height="40" class="node-box" rx="6" style="stroke-dasharray:3 3"/><text x="200" y="46" class="node-label" style="font-size:11px">W_0  (frozen)</text>
+      <text x="200" y="60" class="node-label-sm" style="fill:var(--text-muted)">d × d</text>
+      <line x1="80" y1="92" x2="140" y2="55" class="arrow-line" marker-end="url(#a9)"/>
+      <!-- LoRA path: A then B -->
+      <rect x="140" y="130" width="60" height="28" class="node-box-green" rx="6"/><text x="170" y="148" class="node-label" style="font-size:11px;fill:var(--green)">A  (r×d)</text>
+      <rect x="220" y="130" width="60" height="28" class="node-box-green" rx="6"/><text x="250" y="148" class="node-label" style="font-size:11px;fill:var(--green)">B  (d×r)</text>
+      <line x1="80" y1="100" x2="140" y2="144" class="arrow-line" marker-end="url(#a9)"/>
+      <line x1="200" y1="144" x2="220" y2="144" class="arrow-line" marker-end="url(#a9)"/>
+      <text x="210" y="170" class="node-label-sm" style="fill:var(--green)">trainable</text>
+      <!-- Sum -->
+      <circle cx="340" cy="100" r="14" class="node-box-yellow"/><text x="340" y="105" class="node-label" style="font-size:14px">+</text>
+      <line x1="260" y1="50" x2="328" y2="92" class="arrow-line" marker-end="url(#a9)"/>
+      <line x1="280" y1="144" x2="332" y2="110" class="arrow-line" marker-end="url(#a9)"/>
+      <!-- Output -->
+      <rect x="400" y="86" width="60" height="28" class="node-box" rx="6"/><text x="430" y="104" class="node-label" style="font-size:11px">h</text>
+      <line x1="354" y1="100" x2="400" y2="100" class="arrow-line" marker-end="url(#a9)"/>
+      <text x="240" y="20" class="node-label-sm" style="fill:var(--text-muted)">h = W_0 x + B A x</text>
+    </svg>
+    <div class="arch-caption">LoRA: frozen \(W_0\) computes the main path; a rank-\(r\) bypass \(BA\) adds a learnable delta. At init \(B=0\) so the model starts identical to pretrained.</div>
+  </div>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Write the trainable parameter count of one LoRA-adapted \(d \times d\) matrix.</p>
+</section>
+
+<section id="sec-qlora" class="section" data-track="sec-qlora">
+  <p class="section-kicker">Quantise the base</p>
+  <h2 class="section-title">QLoRA &mdash; LoRA on a quantised model</h2>
+  <ul class="kp-list tight">
+    <li>Idea: keep the <strong>frozen base in low-precision</strong> (e.g. 4-bit NF4 quantisation) and train LoRA adapters in higher precision (bf16) on top.</li>
+    <li>Memory wins compound: a 65B model that needs &gt;780&nbsp;GB in fp16 fits in <strong>~48&nbsp;GB at 4-bit</strong> &mdash; finetune frontier-scale models on a <em>single GPU</em>.</li>
+    <li>Tricks: <strong>NF4</strong> data type (normal-distribution-shaped quantiles), <strong>double quantisation</strong> (quantise the quantisation constants), <strong>paged optimisers</strong> (offload Adam moments to CPU when out of memory).</li>
+    <li>Quality: matches 16-bit full FT on benchmarks while using a fraction of the memory.</li>
+    <li>Related: <code>LLM.int8</code> (Dettmers 2022) already showed that you can run inference in 8-bit with outlier-aware mixed precision &mdash; QLoRA pushes the same idea to <em>training</em>.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why is QLoRA more memory-efficient than vanilla LoRA?</p>
+</section>
+
+<section id="sec-other-peft" class="section" data-track="sec-other-peft">
+  <p class="section-kicker">Other PEFT families</p>
+  <h2 class="section-title">Adapters, prompt tuning, prefix tuning</h2>
+  <ul class="kp-list tight">
+    <li><strong>Adapters (Houlsby 2019):</strong> insert small bottleneck MLPs (down-project to \(r\), non-linearity, up-project) inside each Transformer block. Only adapter weights train. Adds inference latency (extra layers); newer variants (parallel/AdapterFusion) mitigate this.</li>
+    <li><strong>Prompt tuning (Lester 2021):</strong> prepend a few <strong>learnable embedding vectors</strong> to the input, freeze everything else. Tiny parameter count; works well only at large model scales.</li>
+    <li><strong>Prefix tuning (Li &amp; Liang 2021):</strong> learn key/value <em>prefix</em> vectors at every Transformer layer (not just the input). Stronger than prompt tuning, smaller than LoRA.</li>
+    <li>Common thread: <em>where</em> you inject extra capacity (input tokens vs every attention K/V vs every weight matrix) trades off expressiveness against parameter count.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Prompt tuning vs prefix tuning: what is added, and where?</p>
+</section>
+
+<section id="sec-choose" class="section" data-track="sec-choose">
+  <p class="section-kicker">Practical recipe</p>
+  <h2 class="section-title">When to use what</h2>
+  <ul class="kp-list tight">
+    <li><strong>Lots of data, lots of GPUs, one target task:</strong> full finetuning &mdash; usually the highest ceiling.</li>
+    <li><strong>Limited GPU memory, base model fits in fp16:</strong> <strong>LoRA</strong> with \(r=4\)&ndash;\(16\) on attention projections. Cheap, mergeable at inference, near-FT quality on most tasks.</li>
+    <li><strong>Limited memory and base is too big for fp16:</strong> <strong>QLoRA</strong> &mdash; quantise base to 4-bit, train LoRA on top, optionally page Adam moments to CPU.</li>
+    <li><strong>Many tasks, must hot-swap:</strong> adapters or LoRA &mdash; ship one base + a folder of small adapter files; load per request.</li>
+    <li><strong>Latency-critical inference:</strong> prefer LoRA (merge into \(W_0\)) over adapters/prefix (extra runtime).</li>
+    <li><strong>Very little labelled data:</strong> in-context learning / few-shot prompting before any training &mdash; only escalate to PEFT when prompting plateaus.</li>
+  </ul>
+  <p class="recall-prompt"><span class="recall-label">Recall</span>Why is LoRA preferred over adapters when inference latency matters?</p>
+</section>
+
+<section id="sec-lab" class="section" data-track="sec-lab">
+  <p class="section-kicker">Lab</p>
+  <h2 class="section-title">Workshop &amp; materials</h2>
+  <ul class="kp-list tight">
+    <li><code>chapters/chapter9/materials/lecture-9.pdf</code> &mdash; original handout slides (efficiency &amp; in-context learning).</li>
+    <li>HuggingFace <code>peft</code> library: \(\sim\)10 lines wrap any model with LoRA / QLoRA / prompt-tuning configs.</li>
+    <li>Try: load a 7B base in 4-bit (<code>bitsandbytes</code>), attach a LoRA config (<code>r=8</code>, target <code>q_proj,v_proj</code>), finetune on a small instruction set, then merge and export.</li>
+  </ul>
+</section>
+
+<section id="sec-practice" class="section" data-track="sec-practice">
+  <h2 class="section-title">Quick practice</h2>
+
+  <div class="quick-check" data-answer="1" data-explanation="LoRA factors the delta as ΔW = BA with rank r ≪ d, so the trainable count is 2dr instead of d² — for d=4096, r=8 this drops from ~16.7M to ~65K per matrix.">
+    <div class="qc-question">For a \(d=4096\) weight matrix with LoRA rank \(r=8\), how many trainable parameters does LoRA add (vs full FT)?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(d^2 = 16{,}777{,}216\) (same as full FT)</div>
+      <div class="qc-opt" data-idx="1">\(2dr = 65{,}536\) — roughly 250&times; fewer</div>
+      <div class="qc-opt" data-idx="2">\(r^2 = 64\)</div>
+      <div class="qc-opt" data-idx="3">\(d + r = 4104\)</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="2" data-explanation="QLoRA quantises the frozen base model to 4-bit (NF4), shrinking its memory footprint by ~4×, while LoRA adapters remain in higher precision. This lets billion-parameter models finetune on a single GPU.">
+    <div class="qc-question">What is the key memory trick that distinguishes QLoRA from plain LoRA?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">QLoRA uses a higher LoRA rank</div>
+      <div class="qc-opt" data-idx="1">QLoRA replaces Adam with SGD</div>
+      <div class="qc-opt" data-idx="2">QLoRA keeps the frozen base model in 4-bit quantised form</div>
+      <div class="qc-opt" data-idx="3">QLoRA finetunes all layers, LoRA only finetunes the last</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+
+  <div class="quick-check" data-answer="0" data-explanation="LoRA's BA factor can be merged into W_0 to form a single dense matrix at deploy time, adding zero inference latency. Adapter and prefix methods insert extra computation that runs every forward pass.">
+    <div class="qc-question">Why is LoRA usually preferred over adapters when inference latency matters?</div>
+    <div class="qc-options">
+      <div class="qc-opt" data-idx="0">\(W_0 + BA\) can be merged into one matrix — no extra layers at inference</div>
+      <div class="qc-opt" data-idx="1">LoRA has more trainable parameters</div>
+      <div class="qc-opt" data-idx="2">LoRA does not need a pretrained base</div>
+      <div class="qc-opt" data-idx="3">Adapters cannot be applied to attention layers</div>
+    </div>
+    <div class="qc-feedback"></div>
+  </div>
+</section>
+
+<section id="sec-quiz-hub" class="section" data-track="sec-quiz-hub">
+  <div class="callout quiz-hub-callout" style="border-color:var(--accent); background:rgba(108,140,255,0.06);">
+    <h3 style="margin-top:0;">Chapter quizzes</h3>
+    <p style="margin:0.5rem 0 0; color:var(--text-muted);">Retrieval practice for this lecture.</p>
+    <p style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.65rem;">
+      <a href="../../../tools/quiz-hub.html?ch=9" class="btn btn-primary" style="text-decoration:none;">Open Quiz Hub</a>
+      <a href="../../../tools/flashcards.html?ch=9&amp;start=1" class="btn btn-secondary" style="text-decoration:none;">Chapter flashcards</a>
+    </p>
+  </div>
+</section>
+
+</main>
+
+<script src="../../../../shared/katex-loader.js" defer></script>
+<script src="chapter9-study.js"></script>
+<script src="../../../../shared/progress-tracker.js"></script>
+<script src="../../../shared/quick-check.js"></script>
+<script src="../../../shared/scroll-anim.js"></script>
+<!-- LANG-INJECT -->
+<script src="../../../shared/translations.js"></script>
+<script src="../../../shared/section-translations.js"></script>
+<script src="../../../shared/lang-config.js"></script>
+<script src="../../../../shared/lang-toggle.js"></script>
+<script src="../../../../shared/chat-panel.js"></script>
+</body>
+</html>
