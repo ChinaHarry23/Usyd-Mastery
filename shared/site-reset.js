@@ -262,7 +262,9 @@
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
     if (location.protocol === "file:") return; // SW needs http(s)
-    navigator.serviceWorker.register(swUrl()).catch(function () {
+    navigator.serviceWorker.register(swUrl(), { updateViaCache: "none" }).then(function (reg) {
+      reg.update();
+    }).catch(function () {
       /* offline support is a bonus; never surface a failure to the learner */
     });
   }

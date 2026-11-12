@@ -1,6 +1,6 @@
 // Bump the version whenever canonical shared assets change — activate() will
 // purge old named caches.
-var CACHE_NAME = "usyd-mastery-v8";
+var CACHE_NAME = "usyd-mastery-v9";
 var PRECACHE_URLS = [
   "",
   "index.html",
@@ -56,6 +56,12 @@ self.addEventListener("activate", function(event) {
       return cache.addAll(PRECACHE_URLS);
     }).then(function() {
       return self.clients.claim();
+    }).then(function() {
+      return self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    }).then(function(clients) {
+      clients.forEach(function(client) {
+        if (client.navigate && client.url) client.navigate(client.url);
+      });
     })
   );
 });
@@ -92,7 +98,28 @@ self.addEventListener("fetch", function(event) {
     return;
   }
   
-  // For local static files: stale-while-revalidate
+  // Scripts and styles must come from the network when it is available.
+  // A cached chat-panel.js was keeping LM Studio selected after MTPLX shipped.
+  if (url.origin === self.location.origin && /\.(js|css|html)$/.test(url.pathname)) {
+    event.respondWith(
+      fetch(event.request).then(function(response) {
+        if (response.ok) {
+          var responseClone = response.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      }).catch(function() {
+        return caches.match(event.request).then(function(cached) {
+          return cached || new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain" } });
+        });
+      })
+    );
+    return;
+  }
+
+  // Other local files: stale-while-revalidate
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(event.request).then(function(cached) {
