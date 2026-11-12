@@ -1,6 +1,6 @@
 // Bump the version whenever canonical shared assets change — activate() will
 // purge old named caches.
-var CACHE_NAME = "usyd-mastery-v7";
+var CACHE_NAME = "usyd-mastery-v8";
 var PRECACHE_URLS = [
   "",
   "index.html",
@@ -63,9 +63,11 @@ self.addEventListener("activate", function(event) {
 self.addEventListener("fetch", function(event) {
   var url = new URL(event.request.url);
   
-  // Skip non-GET requests and external API calls (LM Studio etc)
+  // Skip non-GET requests, the local MTPLX bridge, and direct local model servers.
   if (event.request.method !== "GET") return;
-  if (url.hostname === "localhost" && url.port === "1234") return;
+  if (url.origin === self.location.origin && url.pathname.indexOf("/__local/mtplx/") === 0) return;
+  if ((url.hostname === "localhost" || url.hostname === "127.0.0.1") &&
+      (url.port === "1234" || url.port === "8000")) return;
   
   // For Google Fonts and CDN resources: cache-first
   if (url.hostname === "fonts.googleapis.com" || 

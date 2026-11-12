@@ -6,9 +6,11 @@
     return m ? "comp" + (m[1] || m[2]) + "_chat_config" : "chat_config";
   })();
 
+  var MTPLX_ENDPOINT = "http://127.0.0.1:8000/v1/chat/completions";
+  var LMSTUDIO_ENDPOINT = "http://localhost:1234/v1/chat/completions";
   var DEFAULT_ENDPOINT = window.CHAT_ENDPOINT ||
     (function () { try { var c = JSON.parse(localStorage.getItem(STORAGE_KEY)); return c && c.endpoint ? c.endpoint : null; } catch (e) { return null; } })() ||
-    "http://localhost:1234/v1/chat/completions";
+    MTPLX_ENDPOINT;
 
   /* Hostname allowlist — protects against tutorial/doc content that tricks the
      user into pasting a remote endpoint URL. Override by setting
@@ -25,7 +27,8 @@
     "api.together.xyz": 1
   };
   var PROVIDERS = [
-    { id: "lmstudio", label: "LM Studio (local)", endpoint: "http://localhost:1234/v1/chat/completions", needsKey: false, defaultModels: [] },
+    { id: "mtplx", label: "MTPLX (local)", endpoint: MTPLX_ENDPOINT, needsKey: false, defaultModels: [] },
+    { id: "lmstudio", label: "LM Studio (local)", endpoint: LMSTUDIO_ENDPOINT, needsKey: false, defaultModels: [] },
     { id: "openai", label: "OpenAI", endpoint: "https://api.openai.com/v1/chat/completions", needsKey: true, defaultModels: ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o", "o4-mini"] },
     { id: "openrouter", label: "OpenRouter", endpoint: "https://openrouter.ai/api/v1/chat/completions", needsKey: true, defaultModels: ["openai/gpt-4o-mini", "anthropic/claude-sonnet-4", "google/gemini-2.5-flash", "x-ai/grok-3"] },
     { id: "groq", label: "Groq", endpoint: "https://api.groq.com/openai/v1/chat/completions", needsKey: true, defaultModels: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"] },
@@ -39,10 +42,60 @@
     for (var i = 0; i < PROVIDERS.length; i++) if (PROVIDERS[i].id === id) return PROVIDERS[i];
     return PROVIDERS[0];
   }
+  function isMtplxEndpoint(url) {
+    try {
+      var parsed = new URL(url, location.origin);
+      if (parsed.pathname.indexOf("/__local/mtplx/") === 0) return true;
+      return LOCAL_HOSTS[parsed.hostname] === 1 && parsed.port === "8000";
+    } catch (e) { return false; }
+  }
+  /* The local hub can start MTPLX and proxy the API. GitHub Pages cannot,
+     so there the browser talks to 127.0.0.1:8000 directly. */
+  function hubCanLaunchMtplx() {
+    return LOCAL_HOSTS[location.hostname] === 1;
+  }
+  function runtimeRequestUrl(endpoint) {
+    if (!isMtplxEndpoint(endpoint) || !hubCanLaunchMtplx()) return endpoint;
+    try {
+      var parsed = new URL(endpoint, location.origin);
+      var path = parsed.pathname.indexOf("/__local/mtplx/") === 0
+        ? parsed.pathname
+        : "/__local/mtplx" + parsed.pathname;
+      return location.origin + path + parsed.search;
+    } catch (e) { return endpoint; }
+  }
+  function ensureMtplx() {
+    if (!hubCanLaunchMtplx()) return Promise.resolve();
+    if (ensureMtplx.pending) return ensureMtplx.pending;
+    ensureMtplx.pending = fetch(location.origin + "/__local/mtplx/ensure", { method: "POST" })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          if (!res.ok || body.ok === false) {
+            throw new Error((body && body.error) || ("MTPLX did not start (HTTP " + res.status + ")"));
+          }
+          return body;
+        });
+      })
+      .finally(function () { ensureMtplx.pending = null; });
+    return ensureMtplx.pending;
+  }
+  function preferMtplxDefault(cfg) {
+    if (window.CHAT_ENDPOINT) return cfg;
+    var endpoint = cfg.endpoint || "";
+    var provider = cfg.provider || "";
+    var factoryLm = (!provider || provider === "lmstudio") &&
+      (!endpoint || endpoint === LMSTUDIO_ENDPOINT || endpoint === "http://127.0.0.1:1234/v1/chat/completions");
+    if (factoryLm) {
+      cfg.provider = "mtplx";
+      cfg.endpoint = MTPLX_ENDPOINT;
+      saveConfig(cfg);
+    }
+    return cfg;
+  }
   function inferProviderId(url) {
     try {
       var host = new URL(url).hostname;
-      if (LOCAL_HOSTS[host]) return "lmstudio";
+      if (LOCAL_HOSTS[host]) return isMtplxEndpoint(url) ? "mtplx" : "lmstudio";
       if (host === "api.openai.com") return "openai";
       if (host === "openrouter.ai") return "openrouter";
       if (host === "api.groq.com") return "groq";
@@ -162,7 +215,7 @@
     }
 
     var opts = { headers: authHeaders(cfg, provider) };
-    fetch(modelsUrl, opts)
+    fetch(runtimeRequestUrl(modelsUrl), opts)
       .then(function (res) { return res.json(); })
       .then(function (data) {
         var models = [];
@@ -188,7 +241,7 @@
       window.ChatMarkdown.ensureDOMPurify();
     }
 
-    var cfg = loadConfig();
+    var cfg = preferMtplxDefault(loadConfig());
     var endpoint = cfg.endpoint || DEFAULT_ENDPOINT;
     var panelWidth = cfg.panelWidth || 420;
 
@@ -222,7 +275,7 @@
           '<input type="password" id="chatApiKey" autocomplete="off" spellcheck="false" placeholder="sk-\u2026"/>' +
         '</div>' +
         '<label for="chatEndpoint">Endpoint</label>' +
-        '<input type="text" id="chatEndpoint" placeholder="http://localhost:1234/v1/chat/completions"/>' +
+        '<input type="text" id="chatEndpoint" placeholder="http://127.0.0.1:8000/v1/chat/completions"/>' +
         '<p class="chat-cors-hint" id="chatCorsHint"></p>' +
         '<label class="chat-allow-remote">' +
           '<input type="checkbox" id="chatAllowRemote"/> ' +
@@ -291,19 +344,21 @@
     customModelInput.value = cfg.customModel || "";
 
     function currentProvider() {
-      return getProvider(providerSelect.value || "lmstudio");
+      return getProvider(providerSelect.value || "mtplx");
     }
     function updateProviderUi() {
       var p = currentProvider();
       apiKeyRow.style.display = p.needsKey ? "" : "none";
-      if (p.id === "lmstudio") {
+      if (p.id === "mtplx") {
+        corsHint.textContent = "MTPLX is the default. Sending a message starts the app and loads the saved model (API at 127.0.0.1:8000).";
+      } else if (p.id === "lmstudio") {
         corsHint.textContent = "LM Studio must be running locally with the server started (default port 1234).";
       } else if (p.id === "openrouter" || p.id === "groq") {
         corsHint.textContent = "This provider usually works from the browser. Paste an API key, then pick or type a model.";
       } else if (p.id === "custom") {
         corsHint.textContent = "Use any OpenAI-compatible /v1/chat/completions URL. Tick \"Allow custom remote endpoint\" if the host is not local.";
       } else {
-        corsHint.textContent = "Some vendors block browser calls (CORS). If a request fails, use OpenRouter, Groq, LM Studio, or a local proxy.";
+        corsHint.textContent = "Some vendors block browser calls (CORS). If a request fails, use OpenRouter, Groq, MTPLX, or LM Studio.";
       }
     }
     updateProviderUi();
@@ -392,7 +447,7 @@
       }
 
       var visionModels = models.filter(function (m) { return VISION_PATTERNS.test(m); });
-      if (currentProvider().id !== "lmstudio") {
+      if (currentProvider().id !== "lmstudio" && currentProvider().id !== "mtplx") {
         visionModels = visionModels.concat(models.filter(function (m) {
           return /gpt-4o|gpt-4\.1|claude|gemini|grok|vision/i.test(m);
         }));
@@ -431,11 +486,19 @@
       saveConfig(c);
     }
 
-    function refreshModels() {
+    function refreshModels(startRuntime) {
       var ep = endpointInput.value.trim() || DEFAULT_ENDPOINT;
       modelSelect.innerHTML = '<option value="">Loading…</option>';
       visionModelSelect.innerHTML = '<option value="">Loading…</option>';
-      fetchModels(ep, populateModelSelect);
+      var launch = startRuntime && (currentProvider().id === "mtplx" || isMtplxEndpoint(ep));
+      var ready = launch ? ensureMtplx() : Promise.resolve();
+      ready.then(function () {
+        fetchModels(ep, populateModelSelect);
+      }).catch(function (err) {
+        modelSelect.innerHTML = '<option value="">Type a model id below</option>';
+        visionModelSelect.innerHTML = '<option value="">No vision models</option>';
+        addErrorMsg("Could not start MTPLX: " + (err && err.message ? err.message : err));
+      });
     }
 
     modelSelect.addEventListener("change", function () {
@@ -450,11 +513,11 @@
       saveConfig(c);
     });
 
-    modelRefreshBtn.addEventListener("click", refreshModels);
+    modelRefreshBtn.addEventListener("click", function () { refreshModels(true); });
 
     refreshModels();
 
-    addSystemMsg("Page content is loaded as context. Choose a provider (LM Studio or a cloud API), then ask about this page. Drag the left edge to resize.");
+    addSystemMsg("Page content is loaded as context. MTPLX is the default and starts when you send a message. Drag the left edge to resize.");
 
     /* ===== RESIZE DRAG ===== */
     var isResizing = false;
@@ -506,7 +569,7 @@
       messages = [];
       try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
       messagesDiv.innerHTML = "";
-      addSystemMsg("Page content is loaded as context. Choose a provider (LM Studio or a cloud API), then ask about this page. Drag the left edge to resize.");
+      addSystemMsg("Page content is loaded as context. MTPLX is the default and starts when you send a message. Drag the left edge to resize.");
     });
 
     endpointInput.addEventListener("change", function () {
@@ -709,7 +772,7 @@
 
     function describeImage(imageUrl, userText, visionModel, endpoint) {
       var cfgNow = loadConfig();
-      return fetch(endpoint, {
+      return fetch(runtimeRequestUrl(endpoint), {
         method: "POST",
         headers: authHeaders(cfgNow, currentProvider()),
         body: JSON.stringify({
@@ -848,15 +911,43 @@
         return;
       }
 
-      var selectedModel = getSelectedModel();
-      if (!selectedModel) {
-        msgWrapper.remove();
-        addErrorMsg("Select a model from the list or type a model id.");
+      function failSend(err) {
+        if (msgWrapper.parentNode) msgWrapper.remove();
+        var msg = err && err.message ? err.message : String(err);
+        addErrorMsg("Error: " + msg);
         isStreaming = false;
         sendBtn.disabled = false;
-        return;
       }
 
+      var selectedModel = "";
+      var launchRuntime = currentProvider().id === "mtplx" || isMtplxEndpoint(endpoint);
+      if (launchRuntime) {
+        var startingLabel = thinkingEl.querySelector("summary");
+        if (startingLabel) startingLabel.textContent = "Starting MTPLX\u2026";
+      }
+      (launchRuntime ? ensureMtplx() : Promise.resolve())
+        .then(function () {
+          selectedModel = getSelectedModel();
+          if (selectedModel) return;
+          if (!launchRuntime) throw new Error("Select a model from the list or type a model id.");
+          return new Promise(function (resolve, reject) {
+            fetchModels(endpoint, function (models) {
+              populateModelSelect(models);
+              selectedModel = getSelectedModel();
+              if (selectedModel) resolve();
+              else reject(new Error("MTPLX is running, but it did not list a model. Type a model id and send again."));
+            });
+          });
+        })
+        .then(function () {
+          var summary = thinkingEl.querySelector("summary");
+          if (summary && summary.textContent.indexOf("Starting MTPLX") === 0) summary.textContent = "Thinking\u2026";
+          beginRequest();
+        })
+        .catch(failSend);
+      return;
+
+      function beginRequest() {
       var cfgNow = loadConfig();
       var provider = currentProvider();
       if (provider.needsKey && !String(cfgNow.apiKey || "").trim()) {
@@ -1027,7 +1118,7 @@
         var msg = err && err.message ? err.message : String(err);
         if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
           msg =
-            "Could not reach the API from this page (often CORS). Try OpenRouter, Groq, or LM Studio, or run a local OpenAI-compatible proxy.";
+            "Could not reach the API from this page (often CORS). Try MTPLX, OpenRouter, Groq, or LM Studio.";
         }
         addErrorMsg("Error: " + msg);
         isStreaming = false;
@@ -1036,7 +1127,7 @@
 
       function doMainRequest(msgs) {
         var cfgNow = loadConfig();
-        return fetch(endpoint, {
+        return fetch(runtimeRequestUrl(endpoint), {
           method: "POST",
           headers: authHeaders(cfgNow, currentProvider()),
           body: JSON.stringify(buildBody(msgs))
@@ -1074,6 +1165,7 @@
         }
       } else {
         doMainRequest(apiMessages).catch(handleError);
+      }
       }
     }
   }
