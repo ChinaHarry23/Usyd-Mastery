@@ -6,8 +6,18 @@
     return m ? "comp" + (m[1] || m[2]) + "_chat_config" : "chat_config";
   })();
 
-  var MTPLX_ENDPOINT = "http://127.0.0.1:8000/v1/chat/completions";
+  var MTPLX_LOCAL_ENDPOINT = "http://127.0.0.1:8000/v1/chat/completions";
+  var MTPLX_PUBLIC_ENDPOINT = "https://chinaharrymbpm5max.tail59ceb6.ts.net/v1/chat/completions";
+  var MTPLX_PUBLIC_HOST = "chinaharrymbpm5max.tail59ceb6.ts.net";
   var LMSTUDIO_ENDPOINT = "http://localhost:1234/v1/chat/completions";
+  var LOCAL_HOSTS = { "localhost": 1, "127.0.0.1": 1, "::1": 1, "[::1]": 1 };
+  function hubCanLaunchMtplx() {
+    return LOCAL_HOSTS[location.hostname] === 1;
+  }
+  function mtplxEndpointForThisPage() {
+    return hubCanLaunchMtplx() ? MTPLX_LOCAL_ENDPOINT : MTPLX_PUBLIC_ENDPOINT;
+  }
+  var MTPLX_ENDPOINT = mtplxEndpointForThisPage();
   var DEFAULT_ENDPOINT = window.CHAT_ENDPOINT ||
     (function () { try { var c = JSON.parse(localStorage.getItem(STORAGE_KEY)); return c && c.endpoint ? c.endpoint : null; } catch (e) { return null; } })() ||
     MTPLX_ENDPOINT;
@@ -16,7 +26,6 @@
      user into pasting a remote endpoint URL. Override by setting
      window.CHAT_ALLOW_REMOTE = true BEFORE this script loads, or by ticking
      the "Allow remote endpoint" box in the chat settings. */
-  var LOCAL_HOSTS = { "localhost": 1, "127.0.0.1": 1, "::1": 1, "[::1]": 1 };
   var TRUSTED_API_HOSTS = {
     "api.openai.com": 1,
     "api.groq.com": 1,
@@ -24,10 +33,11 @@
     "api.x.ai": 1,
     "api.deepseek.com": 1,
     "generativelanguage.googleapis.com": 1,
-    "api.together.xyz": 1
+    "api.together.xyz": 1,
+    "chinaharrymbpm5max.tail59ceb6.ts.net": 1
   };
   var PROVIDERS = [
-    { id: "mtplx", label: "MTPLX (local)", endpoint: MTPLX_ENDPOINT, needsKey: false, defaultModels: [] },
+    { id: "mtplx", label: "MTPLX", endpoint: MTPLX_ENDPOINT, needsKey: false, defaultModels: [] },
     { id: "lmstudio", label: "LM Studio (local)", endpoint: LMSTUDIO_ENDPOINT, needsKey: false, defaultModels: [] },
     { id: "openai", label: "OpenAI", endpoint: "https://api.openai.com/v1/chat/completions", needsKey: true, defaultModels: ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o", "o4-mini"] },
     { id: "openrouter", label: "OpenRouter", endpoint: "https://openrouter.ai/api/v1/chat/completions", needsKey: true, defaultModels: ["openai/gpt-4o-mini", "anthropic/claude-sonnet-4", "google/gemini-2.5-flash", "x-ai/grok-3"] },
@@ -46,14 +56,12 @@
     try {
       var parsed = new URL(url, location.origin);
       if (parsed.pathname.indexOf("/__local/mtplx/") === 0) return true;
+      if (parsed.hostname === MTPLX_PUBLIC_HOST) return true;
       return LOCAL_HOSTS[parsed.hostname] === 1 && parsed.port === "8000";
     } catch (e) { return false; }
   }
-  /* The local hub can start MTPLX and proxy the API. GitHub Pages cannot,
-     so there the browser talks to 127.0.0.1:8000 directly. */
-  function hubCanLaunchMtplx() {
-    return LOCAL_HOSTS[location.hostname] === 1;
-  }
+  /* The local hub can start MTPLX and proxy the API. GitHub Pages calls the
+     Tailscale address that publishes this Mac's port 8000. */
   function runtimeRequestUrl(endpoint) {
     if (!isMtplxEndpoint(endpoint) || !hubCanLaunchMtplx()) return endpoint;
     try {
@@ -83,11 +91,13 @@
     if (window.CHAT_ENDPOINT) return cfg;
     var endpoint = cfg.endpoint || "";
     var provider = cfg.provider || "";
+    var knownMtplx = endpoint === MTPLX_LOCAL_ENDPOINT || endpoint === MTPLX_PUBLIC_ENDPOINT ||
+      endpoint === "http://localhost:8000/v1/chat/completions";
     var factoryLm = (!provider || provider === "lmstudio") &&
       (!endpoint || endpoint === LMSTUDIO_ENDPOINT || endpoint === "http://127.0.0.1:1234/v1/chat/completions");
-    if (factoryLm) {
+    if (factoryLm || ((provider === "mtplx" || !provider) && (!endpoint || knownMtplx))) {
       cfg.provider = "mtplx";
-      cfg.endpoint = MTPLX_ENDPOINT;
+      cfg.endpoint = mtplxEndpointForThisPage();
       saveConfig(cfg);
     }
     return cfg;
@@ -95,6 +105,7 @@
   function inferProviderId(url) {
     try {
       var host = new URL(url).hostname;
+      if (host === MTPLX_PUBLIC_HOST) return "mtplx";
       if (LOCAL_HOSTS[host]) return isMtplxEndpoint(url) ? "mtplx" : "lmstudio";
       if (host === "api.openai.com") return "openai";
       if (host === "openrouter.ai") return "openrouter";
@@ -350,7 +361,9 @@
       var p = currentProvider();
       apiKeyRow.style.display = p.needsKey ? "" : "none";
       if (p.id === "mtplx") {
-        corsHint.textContent = "MTPLX is the default. Sending a message starts the app and loads the saved model (API at 127.0.0.1:8000).";
+        corsHint.textContent = hubCanLaunchMtplx()
+          ? "MTPLX is the default. Sending a message starts the app and loads the saved model (API at 127.0.0.1:8000)."
+          : "MTPLX on this Mac is published at chinaharrymbpm5max.tail59ceb6.ts.net. Ask from this page and the request goes there.";
       } else if (p.id === "lmstudio") {
         corsHint.textContent = "LM Studio must be running locally with the server started (default port 1234).";
       } else if (p.id === "openrouter" || p.id === "groq") {
@@ -517,7 +530,9 @@
 
     refreshModels();
 
-    addSystemMsg("Page content is loaded as context. MTPLX is the default and starts when you send a message. Drag the left edge to resize.");
+    addSystemMsg(hubCanLaunchMtplx()
+      ? "Page content is loaded as context. MTPLX is the default and starts when you send a message. Drag the left edge to resize."
+      : "Page content is loaded as context. MTPLX is the default and is reached through Tailscale. Drag the left edge to resize.");
 
     /* ===== RESIZE DRAG ===== */
     var isResizing = false;
@@ -569,7 +584,9 @@
       messages = [];
       try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
       messagesDiv.innerHTML = "";
-      addSystemMsg("Page content is loaded as context. MTPLX is the default and starts when you send a message. Drag the left edge to resize.");
+      addSystemMsg(hubCanLaunchMtplx()
+      ? "Page content is loaded as context. MTPLX is the default and starts when you send a message. Drag the left edge to resize."
+      : "Page content is loaded as context. MTPLX is the default and is reached through Tailscale. Drag the left edge to resize.");
     });
 
     endpointInput.addEventListener("change", function () {

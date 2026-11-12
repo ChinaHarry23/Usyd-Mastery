@@ -48,7 +48,7 @@ const CSP_CONTENT = [
   "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'",
   "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
-  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz",
+  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://chinaharrymbpm5max.tail59ceb6.ts.net https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -56,7 +56,7 @@ const CSP_CONTENT = [
 ].join("; ");
 const CSP_TAG = `<meta http-equiv="Content-Security-Policy" content="${CSP_CONTENT}">`;
 const CONNECT_SRC =
-  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz";
+  "connect-src 'self' http://localhost:* http://127.0.0.1:* https://chinaharrymbpm5max.tail59ceb6.ts.net https://*.trycloudflare.com https://api.openai.com https://api.groq.com https://openrouter.ai https://api.x.ai https://api.deepseek.com https://generativelanguage.googleapis.com https://api.together.xyz";
 
 // ───── Description templates ───────────────────────────────────────────────
 function inferDescription(relPath, html) {
@@ -118,7 +118,7 @@ function patchSRI(html) {
 }
 
 const CONNECT_SRC_RE =
-  /connect-src 'self' http:\/\/localhost:\* http:\/\/127\.0\.0\.1:\*(?: https:\/\/\*\.trycloudflare\.com)?(?: https:\/\/api\.openai\.com https:\/\/api\.groq\.com https:\/\/openrouter\.ai https:\/\/api\.x\.ai https:\/\/api\.deepseek\.com https:\/\/generativelanguage\.googleapis\.com https:\/\/api\.together\.xyz)?/g;
+  /connect-src 'self' http:\/\/localhost:\* http:\/\/127\.0\.0\.1:\*(?: https:\/\/chinaharrymbpm5max\.tail59ceb6\.ts\.net)?(?: https:\/\/\*\.trycloudflare\.com)?(?: https:\/\/api\.openai\.com https:\/\/api\.groq\.com https:\/\/openrouter\.ai https:\/\/api\.x\.ai https:\/\/api\.deepseek\.com https:\/\/generativelanguage\.googleapis\.com https:\/\/api\.together\.xyz)?/g;
 
 function patchCSP(html) {
   let changes = 0;

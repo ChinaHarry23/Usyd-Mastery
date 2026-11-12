@@ -98,6 +98,10 @@ def quit_app() -> None:
 def open_app() -> None:
     if not APP_PATH.exists():
         raise RuntimeError(f"MTPLX.app was not found at {APP_PATH}")
+    subprocess.run(
+        ["launchctl", "setenv", "MTPLX_CORS_ORIGINS", "https://chinaharry23.github.io"],
+        check=False,
+    )
     subprocess.run(["open", "-a", str(APP_PATH)], check=True)
 
 
@@ -121,6 +125,8 @@ def start_runtime_directly() -> None:
         str(model),
         "--yes",
         "--no-stats-footer",
+        "--cors-origin",
+        "https://chinaharry23.github.io",
     ]
     profile = settings.get("profile")
     if profile:

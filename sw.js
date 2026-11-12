@@ -1,6 +1,6 @@
 // Bump the version whenever canonical shared assets change — activate() will
 // purge old named caches.
-var CACHE_NAME = "usyd-mastery-v9";
+var CACHE_NAME = "usyd-mastery-v10";
 var PRECACHE_URLS = [
   "",
   "index.html",
